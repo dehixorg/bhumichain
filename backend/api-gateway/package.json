@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
-    "test": "jest --runInBand"
+    "test": "jest --runInBand",
+    "build": "echo 'No build step required for API gateway'"
   },
   "dependencies": {
     "@grpc/grpc-js": "^1.9.14",
@@ -19,6 +20,7 @@
     "express-validator": "^7.0.1",
     "helmet": "^7.1.0",
     "jsonwebtoken": "^9.0.2",
+    "mongoose": "^9.7.1",
     "morgan": "^1.10.0",
     "uuid": "^9.0.1",
     "ws": "^8.16.0"
