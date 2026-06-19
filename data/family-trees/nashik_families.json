@@ -1,0 +1,3483 @@
+[
+  {
+    "familyId": "FAM-MH-SNN-001",
+    "patriarch": {
+      "name": "Ramesh Dattatray Patil",
+      "aadhaarHash": "bda0ff20ec4faab52219ed902a7f5e99",
+      "dob": "1958-03-15",
+      "dod": "2026-05-20",
+      "isAlive": false
+    },
+    "surname": "Patil",
+    "applicableLaw": "Hindu Succession Act 1956/2005",
+    "coparcenaryType": "Mitakshara",
+    "members": [
+      {
+        "memberId": "MBR-001-S1",
+        "name": "Arun Ramesh Patil",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1982-07-10",
+        "aadhaarHash": "66a8370e1ff9af78d44d71895cd09785",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/3",
+        "shareDecimal": 0.3333,
+        "phone": "+91-9876543210"
+      },
+      {
+        "memberId": "MBR-001-S2",
+        "name": "Vijay Ramesh Patil",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1985-11-22",
+        "aadhaarHash": "51989dac23adba225e34e6dd1e3d196a",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/3",
+        "shareDecimal": 0.3333,
+        "phone": "+91-9876543211"
+      },
+      {
+        "memberId": "MBR-001-D1",
+        "name": "Sunita Ramesh Patil",
+        "relation": "Daughter",
+        "gender": "F",
+        "dob": "1988-04-05",
+        "aadhaarHash": "6cac6bfbd50420238e52510b2570a345",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/3",
+        "shareDecimal": 0.3333,
+        "legalNote": "Equal coparcenary right per HSA 2005 S.6(3) — non-bypassable",
+        "phone": "+91-9876543212",
+        "whatsapp": "+91-9876543212"
+      }
+    ],
+    "totalHeirs": 3,
+    "parcelsOwned": [
+      "DLPI-MH-SNN-00142"
+    ],
+    "successionStatus": "PENDING_CONSENT",
+    "disputeInfo": null,
+    "deathCertificateIPFS": "QmRameshDeathCertificateMay2026",
+    "crsRegistrationNo": "CRS/NSK/2026/84231",
+    "triggeredAt": "2026-05-20T09:15:00Z",
+    "isDemoFamily": true
+  },
+  {
+    "familyId": "FAM-MH-NSK-002",
+    "patriarch": {
+      "name": "Tukaram Suresh Pawar",
+      "aadhaarHash": "23cd4c5f7ce9bd80c3c2770884896dc4",
+      "dob": "1945-04-30",
+      "dod": "2021-03-25",
+      "isAlive": false
+    },
+    "surname": "Pawar",
+    "applicableLaw": "Hindu Succession Act 1956/2005",
+    "coparcenaryType": "Mitakshara",
+    "members": [
+      {
+        "memberId": "MBR-002-W",
+        "name": "Usha Vijay Pawar",
+        "relation": "Widow",
+        "gender": "F",
+        "dob": "1963-10-23",
+        "aadhaarHash": "d775b08e6c2a82e181ff04e6b356063c",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/5",
+        "shareDecimal": 0.2
+      },
+      {
+        "memberId": "MBR-002-S1",
+        "name": "Dnyaneshwar Tukaram Pawar",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1977-01-05",
+        "aadhaarHash": "573dbdb25101a39962f1b5534b1785ae",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/5",
+        "shareDecimal": 0.2
+      },
+      {
+        "memberId": "MBR-002-S2",
+        "name": "Tukaram Tukaram Pawar",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1985-12-22",
+        "aadhaarHash": "9ed18a36db10a4322718391feb469ff1",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/5",
+        "shareDecimal": 0.2
+      },
+      {
+        "memberId": "MBR-002-S3",
+        "name": "Mahesh Tukaram Pawar",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1991-03-14",
+        "aadhaarHash": "017ad3474b97dd41e0fc25677b0b5c5d",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/5",
+        "shareDecimal": 0.2
+      },
+      {
+        "memberId": "MBR-002-D1",
+        "name": "Meena Tukaram Pawar",
+        "relation": "Daughter",
+        "gender": "F",
+        "dob": "1996-06-11",
+        "aadhaarHash": "7e15654f050baa6c35953d166ee049e7",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/5",
+        "shareDecimal": 0.2,
+        "legalNote": "Equal coparcenary right per HSA 2005 S.6(3) — non-bypassable"
+      }
+    ],
+    "totalHeirs": 5,
+    "parcelsOwned": [],
+    "successionStatus": "PENDING_CONSENT",
+    "disputeInfo": null,
+    "deathCertificateIPFS": "QmDeathCert0002",
+    "crsRegistrationNo": "CRS/NSK/2021/29959",
+    "triggeredAt": "2021-03-25T08:00:00Z"
+  },
+  {
+    "familyId": "FAM-MH-NSK-003",
+    "patriarch": {
+      "name": "Tukaram Arun Jadhav",
+      "aadhaarHash": "89638e7f615618b4b90bee9a7682f81f",
+      "dob": "1938-09-21",
+      "dod": "2025-09-22",
+      "isAlive": false
+    },
+    "surname": "Jadhav",
+    "applicableLaw": "Hindu Succession Act 1956/2005",
+    "coparcenaryType": "Mitakshara",
+    "members": [
+      {
+        "memberId": "MBR-003-S1",
+        "name": "Rajesh Tukaram Jadhav",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1984-01-12",
+        "aadhaarHash": "f36ede0d8905afb8d6e73720b77902ab",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/4",
+        "shareDecimal": 0.25
+      },
+      {
+        "memberId": "MBR-003-S2",
+        "name": "Sanjay Tukaram Jadhav",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1987-07-07",
+        "aadhaarHash": "88fa58ee9f44021b89ba42c29aec4586",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/4",
+        "shareDecimal": 0.25
+      },
+      {
+        "memberId": "MBR-003-D1",
+        "name": "Anita Tukaram Jadhav",
+        "relation": "Daughter",
+        "gender": "F",
+        "dob": "1986-02-17",
+        "aadhaarHash": "55d500119da52246b4d4d9664c69b298",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/4",
+        "shareDecimal": 0.25,
+        "legalNote": "Equal coparcenary right per HSA 2005 S.6(3) — non-bypassable"
+      },
+      {
+        "memberId": "MBR-003-D2",
+        "name": "Nanda Tukaram Jadhav",
+        "relation": "Daughter",
+        "gender": "F",
+        "dob": "1979-10-25",
+        "aadhaarHash": "afe611bddcae83d2b8a535ed2340589c",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/4",
+        "shareDecimal": 0.25,
+        "legalNote": "Equal coparcenary right per HSA 2005 S.6(3) — non-bypassable"
+      }
+    ],
+    "totalHeirs": 4,
+    "parcelsOwned": [],
+    "successionStatus": "PENDING_CONSENT",
+    "disputeInfo": null,
+    "deathCertificateIPFS": "QmDeathCert0003",
+    "crsRegistrationNo": "CRS/NSK/2025/89365",
+    "triggeredAt": "2025-09-22T08:00:00Z"
+  },
+  {
+    "familyId": "FAM-MH-NSK-004",
+    "patriarch": {
+      "name": "Rajesh Suresh Patil",
+      "aadhaarHash": "614722125cf9ab3a178bd7c0ccf706f6",
+      "dob": "1944-09-06",
+      "dod": "2025-03-24",
+      "isAlive": false
+    },
+    "surname": "Patil",
+    "applicableLaw": "Hindu Succession Act 1956/2005",
+    "coparcenaryType": "Mitakshara",
+    "members": [
+      {
+        "memberId": "MBR-004-S1",
+        "name": "Arun Rajesh Patil",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1986-04-15",
+        "aadhaarHash": "1213134ce0608484941215a6e1350c05",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/5",
+        "shareDecimal": 0.2
+      },
+      {
+        "memberId": "MBR-004-S2",
+        "name": "Arun Rajesh Patil",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1975-10-31",
+        "aadhaarHash": "510e7c5ded3c4c95398fda7de64ce9b9",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/5",
+        "shareDecimal": 0.2
+      },
+      {
+        "memberId": "MBR-004-S3",
+        "name": "Ramesh Rajesh Patil",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1978-11-03",
+        "aadhaarHash": "7cd5678c8f22653d6867b12ab51d828f",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/5",
+        "shareDecimal": 0.2
+      },
+      {
+        "memberId": "MBR-004-D1",
+        "name": "Priya Rajesh Patil",
+        "relation": "Daughter",
+        "gender": "F",
+        "dob": "1987-07-18",
+        "aadhaarHash": "3f927b4627433c13f30dfcbff89fb1bb",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/5",
+        "shareDecimal": 0.2,
+        "legalNote": "Equal coparcenary right per HSA 2005 S.6(3) — non-bypassable"
+      },
+      {
+        "memberId": "MBR-004-D2",
+        "name": "Priya Rajesh Patil",
+        "relation": "Daughter",
+        "gender": "F",
+        "dob": "1981-03-16",
+        "aadhaarHash": "50346bc5085c76bfd84d5a33812439b2",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/5",
+        "shareDecimal": 0.2,
+        "legalNote": "Equal coparcenary right per HSA 2005 S.6(3) — non-bypassable"
+      }
+    ],
+    "totalHeirs": 5,
+    "parcelsOwned": [],
+    "successionStatus": "PENDING_CONSENT",
+    "disputeInfo": null,
+    "deathCertificateIPFS": "QmDeathCert0004",
+    "crsRegistrationNo": "CRS/NSK/2025/53214",
+    "triggeredAt": "2025-03-24T08:00:00Z"
+  },
+  {
+    "familyId": "FAM-MH-NSK-005",
+    "patriarch": {
+      "name": "Vijay Ramesh More",
+      "aadhaarHash": "1006d726951ae4f53621aa4d4bbac608",
+      "dob": "1944-06-26",
+      "dod": "2023-05-18",
+      "isAlive": false
+    },
+    "surname": "More",
+    "applicableLaw": "Hindu Succession Act 1956/2005",
+    "coparcenaryType": "Mitakshara",
+    "members": [
+      {
+        "memberId": "MBR-005-W",
+        "name": "Kavita Arun More",
+        "relation": "Widow",
+        "gender": "F",
+        "dob": "1961-05-11",
+        "aadhaarHash": "a10367c5c04a566b0302a10e0ed93996",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/3",
+        "shareDecimal": 0.333333
+      },
+      {
+        "memberId": "MBR-005-S1",
+        "name": "Arun Vijay More",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1991-07-26",
+        "aadhaarHash": "5e4c4d2602ab787a582d59267109429f",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/3",
+        "shareDecimal": 0.333333
+      },
+      {
+        "memberId": "MBR-005-D1",
+        "name": "Shobha Vijay More",
+        "relation": "Daughter",
+        "gender": "F",
+        "dob": "1987-02-27",
+        "aadhaarHash": "1cfb78ebae553d4db1b47e42d88829bb",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/3",
+        "shareDecimal": 0.333333,
+        "legalNote": "Equal coparcenary right per HSA 2005 S.6(3) — non-bypassable"
+      }
+    ],
+    "totalHeirs": 3,
+    "parcelsOwned": [],
+    "successionStatus": "COURT_REFERRED",
+    "disputeInfo": {
+      "type": "ContestingShare",
+      "filedBy": "Kavita Arun More",
+      "eCourtsNo": "CNS/5849/2021",
+      "court": "Civil Court Nashik",
+      "status": "PENDING"
+    },
+    "deathCertificateIPFS": "QmDeathCert0005",
+    "crsRegistrationNo": "CRS/NSK/2023/29072",
+    "triggeredAt": "2023-05-18T08:00:00Z"
+  },
+  {
+    "familyId": "FAM-MH-NSK-006",
+    "patriarch": {
+      "name": "Rajesh Vijay Deshmukh",
+      "aadhaarHash": "7b3dcff4b1b05ef62be09814d77eb453",
+      "dob": "1945-06-29",
+      "dod": "2026-05-04",
+      "isAlive": false
+    },
+    "surname": "Deshmukh",
+    "applicableLaw": "Indian Succession Act 1925",
+    "coparcenaryType": "Christian",
+    "members": [
+      {
+        "memberId": "MBR-006-S1",
+        "name": "Arun Rajesh Deshmukh",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1990-03-19",
+        "aadhaarHash": "21d3500faeb9f0f0a1a1081572517865",
+        "isAlive": true,
+        "isAdult": true
+      },
+      {
+        "memberId": "MBR-006-S2",
+        "name": "Dnyaneshwar Rajesh Deshmukh",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1981-06-14",
+        "aadhaarHash": "6f014f619c8643bc25418d3995173d3e",
+        "isAlive": true,
+        "isAdult": true
+      },
+      {
+        "memberId": "MBR-006-D1",
+        "name": "Meena Rajesh Deshmukh",
+        "relation": "Daughter",
+        "gender": "F",
+        "dob": "1982-11-08",
+        "aadhaarHash": "bde61f1afcfa167b978133380c96b71f",
+        "isAlive": true,
+        "isAdult": true
+      }
+    ],
+    "totalHeirs": 3,
+    "parcelsOwned": [],
+    "successionStatus": "PENDING_CONSENT",
+    "disputeInfo": null,
+    "deathCertificateIPFS": "QmDeathCert0006",
+    "crsRegistrationNo": "CRS/NSK/2026/62351",
+    "triggeredAt": "2026-05-04T08:00:00Z"
+  },
+  {
+    "familyId": "FAM-MH-NSK-007",
+    "patriarch": {
+      "name": "Dnyaneshwar Ramesh Bhosale",
+      "aadhaarHash": "a2b42408b370a68c9352a2b5a6bca05f",
+      "dob": "1943-02-17",
+      "dod": "2020-06-24",
+      "isAlive": false
+    },
+    "surname": "Bhosale",
+    "applicableLaw": "Hindu Succession Act 1956/2005",
+    "coparcenaryType": "Mitakshara",
+    "members": [
+      {
+        "memberId": "MBR-007-S1",
+        "name": "Vijay Dnyaneshwar Bhosale",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1981-12-26",
+        "aadhaarHash": "2e3ad4affe1e9b89c76c886e36d8da5e",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/4",
+        "shareDecimal": 0.25
+      },
+      {
+        "memberId": "MBR-007-S2",
+        "name": "Namdev Dnyaneshwar Bhosale",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1980-01-26",
+        "aadhaarHash": "7081a30eea1b759002bc593436bb63cb",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/4",
+        "shareDecimal": 0.25
+      },
+      {
+        "memberId": "MBR-007-D1",
+        "name": "Priya Dnyaneshwar Bhosale",
+        "relation": "Daughter",
+        "gender": "F",
+        "dob": "1997-08-10",
+        "aadhaarHash": "549660cc42c979e7f687ba356a48d35f",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/4",
+        "shareDecimal": 0.25,
+        "legalNote": "Equal coparcenary right per HSA 2005 S.6(3) — non-bypassable"
+      },
+      {
+        "memberId": "MBR-007-D2",
+        "name": "Usha Dnyaneshwar Bhosale",
+        "relation": "Daughter",
+        "gender": "F",
+        "dob": "1985-01-15",
+        "aadhaarHash": "7890fce24107d39b1016eec9c12e1046",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/4",
+        "shareDecimal": 0.25,
+        "legalNote": "Equal coparcenary right per HSA 2005 S.6(3) — non-bypassable"
+      }
+    ],
+    "totalHeirs": 4,
+    "parcelsOwned": [],
+    "successionStatus": "PENDING_CONSENT",
+    "disputeInfo": null,
+    "deathCertificateIPFS": "QmDeathCert0007",
+    "crsRegistrationNo": "CRS/NSK/2020/98381",
+    "triggeredAt": "2020-06-24T08:00:00Z"
+  },
+  {
+    "familyId": "FAM-MH-NSK-008",
+    "patriarch": {
+      "name": "Sanjay Vijay More",
+      "aadhaarHash": "746ad7eefa580eb46c93cb8676f477b8",
+      "dob": "1938-08-05",
+      "dod": "2023-07-09",
+      "isAlive": false
+    },
+    "surname": "More",
+    "applicableLaw": "Hindu Succession Act 1956/2005",
+    "coparcenaryType": "Mitakshara",
+    "members": [
+      {
+        "memberId": "MBR-008-W",
+        "name": "Rekha Arun More",
+        "relation": "Widow",
+        "gender": "F",
+        "dob": "1961-05-26",
+        "aadhaarHash": "8ce9cf894448cfe3e76dcba05bdb5bd2",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/4",
+        "shareDecimal": 0.25
+      },
+      {
+        "memberId": "MBR-008-S1",
+        "name": "Sanjay Sanjay More",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1984-08-31",
+        "aadhaarHash": "744dfde30f2564cf073f5a0a466d0e2a",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/4",
+        "shareDecimal": 0.25
+      },
+      {
+        "memberId": "MBR-008-D1",
+        "name": "Lata Sanjay More",
+        "relation": "Daughter",
+        "gender": "F",
+        "dob": "1992-10-06",
+        "aadhaarHash": "b28cb02a0ec98f60d871c5b2a3bd33e4",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/4",
+        "shareDecimal": 0.25,
+        "legalNote": "Equal coparcenary right per HSA 2005 S.6(3) — non-bypassable"
+      },
+      {
+        "memberId": "MBR-008-D2",
+        "name": "Shobha Sanjay More",
+        "relation": "Daughter",
+        "gender": "F",
+        "dob": "1981-07-29",
+        "aadhaarHash": "1867a43114a5af4521f39a4e4804b288",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/4",
+        "shareDecimal": 0.25,
+        "legalNote": "Equal coparcenary right per HSA 2005 S.6(3) — non-bypassable"
+      }
+    ],
+    "totalHeirs": 4,
+    "parcelsOwned": [],
+    "successionStatus": "PENDING_CONSENT",
+    "disputeInfo": null,
+    "deathCertificateIPFS": "QmDeathCert0008",
+    "crsRegistrationNo": "CRS/NSK/2023/89203",
+    "triggeredAt": "2023-07-09T08:00:00Z"
+  },
+  {
+    "familyId": "FAM-MH-NSK-009",
+    "patriarch": {
+      "name": "Namdev Vijay Kulkarni",
+      "aadhaarHash": "232a25fe8ce255d187a505ade34b7976",
+      "dob": "1943-09-22",
+      "dod": "2023-06-07",
+      "isAlive": false
+    },
+    "surname": "Kulkarni",
+    "applicableLaw": "Muslim Personal Law (Shariat) 1937",
+    "coparcenaryType": "Hanafi",
+    "members": [
+      {
+        "memberId": "MBR-009-W",
+        "name": "Vandana Arun Kulkarni",
+        "relation": "Widow",
+        "gender": "F",
+        "dob": "1953-04-01",
+        "aadhaarHash": "98baaec81a2bdd29da66fc501945b9da",
+        "isAlive": true,
+        "isAdult": true
+      },
+      {
+        "memberId": "MBR-009-S1",
+        "name": "Namdev Namdev Kulkarni",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1989-12-23",
+        "aadhaarHash": "36edc30310586f2133e626f7037a8eb3",
+        "isAlive": true,
+        "isAdult": true
+      },
+      {
+        "memberId": "MBR-009-D1",
+        "name": "Vandana Namdev Kulkarni",
+        "relation": "Daughter",
+        "gender": "F",
+        "dob": "1987-05-07",
+        "aadhaarHash": "5fc49b3e39df2437c14e8e8ecb80829c",
+        "isAlive": true,
+        "isAdult": true
+      },
+      {
+        "memberId": "MBR-009-D2",
+        "name": "Usha Namdev Kulkarni",
+        "relation": "Daughter",
+        "gender": "F",
+        "dob": "1983-03-10",
+        "aadhaarHash": "26b64f73020243a58c9830d3dfe03698",
+        "isAlive": true,
+        "isAdult": true
+      }
+    ],
+    "totalHeirs": 4,
+    "parcelsOwned": [],
+    "successionStatus": "PENDING_CONSENT",
+    "disputeInfo": null,
+    "deathCertificateIPFS": "QmDeathCert0009",
+    "crsRegistrationNo": "CRS/NSK/2023/96056",
+    "triggeredAt": "2023-06-07T08:00:00Z"
+  },
+  {
+    "familyId": "FAM-MH-NSK-010",
+    "patriarch": {
+      "name": "Dnyaneshwar Sanjay Shinde",
+      "aadhaarHash": "ef45ddfb89672080ddfdc22ff5f0bb74",
+      "dob": "1944-01-31",
+      "dod": "2020-09-10",
+      "isAlive": false
+    },
+    "surname": "Shinde",
+    "applicableLaw": "Hindu Succession Act 1956/2005",
+    "coparcenaryType": "Mitakshara",
+    "members": [
+      {
+        "memberId": "MBR-010-S1",
+        "name": "Arun Dnyaneshwar Shinde",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1986-06-19",
+        "aadhaarHash": "2ee354c9975edbb35bb18b20e47712c9",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/5",
+        "shareDecimal": 0.2
+      },
+      {
+        "memberId": "MBR-010-S2",
+        "name": "Ganesh Dnyaneshwar Shinde",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1984-12-17",
+        "aadhaarHash": "21f815efdda4426ea56ea548b7fe7c9b",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/5",
+        "shareDecimal": 0.2
+      },
+      {
+        "memberId": "MBR-010-S3",
+        "name": "Vijay Dnyaneshwar Shinde",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1980-12-01",
+        "aadhaarHash": "7dc07e5f35f3d9a32d7d871df83caf01",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/5",
+        "shareDecimal": 0.2
+      },
+      {
+        "memberId": "MBR-010-D1",
+        "name": "Savita Dnyaneshwar Shinde",
+        "relation": "Daughter",
+        "gender": "F",
+        "dob": "1990-07-27",
+        "aadhaarHash": "9fd9ae1341496ae1fc2abe2ec9462f88",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/5",
+        "shareDecimal": 0.2,
+        "legalNote": "Equal coparcenary right per HSA 2005 S.6(3) — non-bypassable"
+      },
+      {
+        "memberId": "MBR-010-D2",
+        "name": "Vandana Dnyaneshwar Shinde",
+        "relation": "Daughter",
+        "gender": "F",
+        "dob": "1991-11-26",
+        "aadhaarHash": "2c5b6a177adec8234c9d8e87cfd92843",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/5",
+        "shareDecimal": 0.2,
+        "legalNote": "Equal coparcenary right per HSA 2005 S.6(3) — non-bypassable"
+      }
+    ],
+    "totalHeirs": 5,
+    "parcelsOwned": [],
+    "successionStatus": "PENDING_CONSENT",
+    "disputeInfo": null,
+    "deathCertificateIPFS": "QmDeathCert0010",
+    "crsRegistrationNo": "CRS/NSK/2020/89421",
+    "triggeredAt": "2020-09-10T08:00:00Z"
+  },
+  {
+    "familyId": "FAM-MH-NSK-011",
+    "patriarch": {
+      "name": "Eknath Ramesh Pawar",
+      "aadhaarHash": "8c07c86a4837244f3917af6ccc0af607",
+      "dob": "1939-09-19",
+      "dod": "2026-05-03",
+      "isAlive": false
+    },
+    "surname": "Pawar",
+    "applicableLaw": "Muslim Personal Law (Shariat) 1937",
+    "coparcenaryType": "Hanafi",
+    "members": [
+      {
+        "memberId": "MBR-011-S1",
+        "name": "Mahesh Eknath Pawar",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1981-09-21",
+        "aadhaarHash": "cd0c00f0981d4de3d836c8c40f43e261",
+        "isAlive": true,
+        "isAdult": true
+      },
+      {
+        "memberId": "MBR-011-D1",
+        "name": "Anita Eknath Pawar",
+        "relation": "Daughter",
+        "gender": "F",
+        "dob": "1994-12-21",
+        "aadhaarHash": "c052d7008f3271e79940f51c0cd99eff",
+        "isAlive": true,
+        "isAdult": true
+      },
+      {
+        "memberId": "MBR-011-D2",
+        "name": "Lata Eknath Pawar",
+        "relation": "Daughter",
+        "gender": "F",
+        "dob": "1986-12-09",
+        "aadhaarHash": "8f867dbf3143d216206e696ed9c11d32",
+        "isAlive": true,
+        "isAdult": true
+      }
+    ],
+    "totalHeirs": 3,
+    "parcelsOwned": [],
+    "successionStatus": "PENDING_CONSENT",
+    "disputeInfo": null,
+    "deathCertificateIPFS": "QmDeathCert0011",
+    "crsRegistrationNo": "CRS/NSK/2026/53130",
+    "triggeredAt": "2026-05-03T08:00:00Z"
+  },
+  {
+    "familyId": "FAM-MH-NSK-012",
+    "patriarch": {
+      "name": "Balasaheb Vijay Jadhav",
+      "aadhaarHash": "63cec7f4bec69f2366570522c8c7e4ac",
+      "dob": "1953-10-04",
+      "dod": "2024-12-06",
+      "isAlive": false
+    },
+    "surname": "Jadhav",
+    "applicableLaw": "Hindu Succession Act 1956/2005",
+    "coparcenaryType": "Mitakshara",
+    "members": [
+      {
+        "memberId": "MBR-012-W",
+        "name": "Anita Arun Jadhav",
+        "relation": "Widow",
+        "gender": "F",
+        "dob": "1960-10-10",
+        "aadhaarHash": "857d62ab611c73d973ae7fa24ae41157",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/6",
+        "shareDecimal": 0.166667
+      },
+      {
+        "memberId": "MBR-012-S1",
+        "name": "Mahesh Balasaheb Jadhav",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1979-02-13",
+        "aadhaarHash": "6547463699b22cee77b3d7f2bebc4f69",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/6",
+        "shareDecimal": 0.166667
+      },
+      {
+        "memberId": "MBR-012-S2",
+        "name": "Balasaheb Balasaheb Jadhav",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1987-11-06",
+        "aadhaarHash": "3e5ce78a8bed2180d4430ead73c20d0f",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/6",
+        "shareDecimal": 0.166667
+      },
+      {
+        "memberId": "MBR-012-S3",
+        "name": "Namdev Balasaheb Jadhav",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1994-12-11",
+        "aadhaarHash": "016584d9f769a63afce0e4ff4623384a",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/6",
+        "shareDecimal": 0.166667
+      },
+      {
+        "memberId": "MBR-012-D1",
+        "name": "Vandana Balasaheb Jadhav",
+        "relation": "Daughter",
+        "gender": "F",
+        "dob": "1981-10-20",
+        "aadhaarHash": "be7d2d9862c108578b6cf0225a2579a3",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/6",
+        "shareDecimal": 0.166667,
+        "legalNote": "Equal coparcenary right per HSA 2005 S.6(3) — non-bypassable"
+      },
+      {
+        "memberId": "MBR-012-D2",
+        "name": "Nanda Balasaheb Jadhav",
+        "relation": "Daughter",
+        "gender": "F",
+        "dob": "1983-05-17",
+        "aadhaarHash": "80a934979063b2eef326f2dc0971c323",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/6",
+        "shareDecimal": 0.166667,
+        "legalNote": "Equal coparcenary right per HSA 2005 S.6(3) — non-bypassable"
+      }
+    ],
+    "totalHeirs": 6,
+    "parcelsOwned": [],
+    "successionStatus": "PENDING_CONSENT",
+    "disputeInfo": null,
+    "deathCertificateIPFS": "QmDeathCert0012",
+    "crsRegistrationNo": "CRS/NSK/2024/53220",
+    "triggeredAt": "2024-12-06T08:00:00Z"
+  },
+  {
+    "familyId": "FAM-MH-NSK-013",
+    "patriarch": {
+      "name": "Rajesh Ramesh Shinde",
+      "aadhaarHash": "ad278d6f5d47c674dc52ab4f5c2fec49",
+      "dob": "1960-07-20",
+      "dod": "2025-09-09",
+      "isAlive": false
+    },
+    "surname": "Shinde",
+    "applicableLaw": "Muslim Personal Law (Shariat) 1937",
+    "coparcenaryType": "Hanafi",
+    "members": [
+      {
+        "memberId": "MBR-013-S1",
+        "name": "Rajesh Rajesh Shinde",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1984-04-13",
+        "aadhaarHash": "99b15899706c6d670cb5e606e662d81f",
+        "isAlive": true,
+        "isAdult": true
+      },
+      {
+        "memberId": "MBR-013-S2",
+        "name": "Arun Rajesh Shinde",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1978-01-20",
+        "aadhaarHash": "806ef3c05766fdf8478d27890371f2d0",
+        "isAlive": true,
+        "isAdult": true
+      },
+      {
+        "memberId": "MBR-013-S3",
+        "name": "Ramesh Rajesh Shinde",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1983-11-29",
+        "aadhaarHash": "4edd08f6aa79f3fe344ac8ff79df383f",
+        "isAlive": true,
+        "isAdult": true
+      },
+      {
+        "memberId": "MBR-013-D1",
+        "name": "Meena Rajesh Shinde",
+        "relation": "Daughter",
+        "gender": "F",
+        "dob": "1989-06-20",
+        "aadhaarHash": "d536b9121bdf09778cf08ccdfb6186fe",
+        "isAlive": true,
+        "isAdult": true
+      }
+    ],
+    "totalHeirs": 4,
+    "parcelsOwned": [],
+    "successionStatus": "PENDING_CONSENT",
+    "disputeInfo": null,
+    "deathCertificateIPFS": "QmDeathCert0013",
+    "crsRegistrationNo": "CRS/NSK/2025/30777",
+    "triggeredAt": "2025-09-09T08:00:00Z"
+  },
+  {
+    "familyId": "FAM-MH-NSK-014",
+    "patriarch": {
+      "name": "Eknath Vijay Patil",
+      "aadhaarHash": "11fb23814fa1eba421f6d6a5f3b61f8a",
+      "dob": "1945-04-19",
+      "dod": "2026-04-04",
+      "isAlive": false
+    },
+    "surname": "Patil",
+    "applicableLaw": "Muslim Personal Law (Shariat) 1937",
+    "coparcenaryType": "Hanafi",
+    "members": [
+      {
+        "memberId": "MBR-014-W",
+        "name": "Rekha Arun Patil",
+        "relation": "Widow",
+        "gender": "F",
+        "dob": "1956-05-18",
+        "aadhaarHash": "87c5aca15b9115ccf9b29f553a08e668",
+        "isAlive": true,
+        "isAdult": true
+      },
+      {
+        "memberId": "MBR-014-S1",
+        "name": "Vijay Eknath Patil",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1992-05-24",
+        "aadhaarHash": "93071ee9cc31715214c3f62df6c391ca",
+        "isAlive": true,
+        "isAdult": true
+      },
+      {
+        "memberId": "MBR-014-S2",
+        "name": "Arun Eknath Patil",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1990-09-28",
+        "aadhaarHash": "b4f3e29223a7461c00b2ee4a1d0a23d9",
+        "isAlive": true,
+        "isAdult": true
+      },
+      {
+        "memberId": "MBR-014-S3",
+        "name": "Namdev Eknath Patil",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1993-04-14",
+        "aadhaarHash": "bf2f1e7e65ea87d4b9d1c9d29608ba91",
+        "isAlive": true,
+        "isAdult": true
+      },
+      {
+        "memberId": "MBR-014-D1",
+        "name": "Usha Eknath Patil",
+        "relation": "Daughter",
+        "gender": "F",
+        "dob": "1993-03-16",
+        "aadhaarHash": "1e1e1eb5c001360d497e88da09c13581",
+        "isAlive": true,
+        "isAdult": true
+      }
+    ],
+    "totalHeirs": 5,
+    "parcelsOwned": [],
+    "successionStatus": "PENDING_CONSENT",
+    "disputeInfo": null,
+    "deathCertificateIPFS": "QmDeathCert0014",
+    "crsRegistrationNo": "CRS/NSK/2026/27950",
+    "triggeredAt": "2026-04-04T08:00:00Z"
+  },
+  {
+    "familyId": "FAM-MH-NSK-015",
+    "patriarch": {
+      "name": "Ramesh Sanjay Shinde",
+      "aadhaarHash": "ad66021d6069906237cbd168a753639e",
+      "dob": "1952-01-05",
+      "dod": "2021-06-28",
+      "isAlive": false
+    },
+    "surname": "Shinde",
+    "applicableLaw": "Hindu Succession Act 1956/2005",
+    "coparcenaryType": "Mitakshara",
+    "members": [
+      {
+        "memberId": "MBR-015-S1",
+        "name": "Tukaram Ramesh Shinde",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1988-08-22",
+        "aadhaarHash": "1a7b3e2d69321c90931457a5869ca39c",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/2",
+        "shareDecimal": 0.5
+      },
+      {
+        "memberId": "MBR-015-D1",
+        "name": "Meena Ramesh Shinde",
+        "relation": "Daughter",
+        "gender": "F",
+        "dob": "1995-05-05",
+        "aadhaarHash": "c95ec7f8b57d8b5d959902d82be54f34",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/2",
+        "shareDecimal": 0.5,
+        "legalNote": "Equal coparcenary right per HSA 2005 S.6(3) — non-bypassable"
+      }
+    ],
+    "totalHeirs": 2,
+    "parcelsOwned": [],
+    "successionStatus": "PENDING_CONSENT",
+    "disputeInfo": null,
+    "deathCertificateIPFS": "QmDeathCert0015",
+    "crsRegistrationNo": "CRS/NSK/2021/91928",
+    "triggeredAt": "2021-06-28T08:00:00Z"
+  },
+  {
+    "familyId": "FAM-MH-NSK-016",
+    "patriarch": {
+      "name": "Arun Ramesh Salve",
+      "aadhaarHash": "d7466fb6eedd9020d5d326d11d9b310f",
+      "dob": "1941-07-29",
+      "dod": "2023-11-17",
+      "isAlive": false
+    },
+    "surname": "Salve",
+    "applicableLaw": "Hindu Succession Act 1956/2005",
+    "coparcenaryType": "Mitakshara",
+    "members": [
+      {
+        "memberId": "MBR-016-S1",
+        "name": "Vijay Arun Salve",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1983-06-15",
+        "aadhaarHash": "70e49accecfb75feab13b15c81a50281",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/2",
+        "shareDecimal": 0.5
+      },
+      {
+        "memberId": "MBR-016-D1",
+        "name": "Anita Arun Salve",
+        "relation": "Daughter",
+        "gender": "F",
+        "dob": "1990-09-17",
+        "aadhaarHash": "882bbaa522317ca871374ceeaae7f3a1",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/2",
+        "shareDecimal": 0.5,
+        "legalNote": "Equal coparcenary right per HSA 2005 S.6(3) — non-bypassable"
+      }
+    ],
+    "totalHeirs": 2,
+    "parcelsOwned": [],
+    "successionStatus": "PENDING_CONSENT",
+    "disputeInfo": null,
+    "deathCertificateIPFS": "QmDeathCert0016",
+    "crsRegistrationNo": "CRS/NSK/2023/20509",
+    "triggeredAt": "2023-11-17T08:00:00Z"
+  },
+  {
+    "familyId": "FAM-MH-NSK-017",
+    "patriarch": {
+      "name": "Arun Vijay Jadhav",
+      "aadhaarHash": "780c7f22dc1eee296a783d3adad17151",
+      "dob": "1951-09-27",
+      "dod": "2022-06-19",
+      "isAlive": false
+    },
+    "surname": "Jadhav",
+    "applicableLaw": "Muslim Personal Law (Shariat) 1937",
+    "coparcenaryType": "Hanafi",
+    "members": [
+      {
+        "memberId": "MBR-017-W",
+        "name": "Lata Ramesh Jadhav",
+        "relation": "Widow",
+        "gender": "F",
+        "dob": "1953-06-26",
+        "aadhaarHash": "bf23b10f8480e3e29469bfd40c185996",
+        "isAlive": true,
+        "isAdult": true
+      },
+      {
+        "memberId": "MBR-017-S1",
+        "name": "Arun Arun Jadhav",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1975-04-03",
+        "aadhaarHash": "741311c70ef3d20bd024d5da06d47f37",
+        "isAlive": true,
+        "isAdult": true
+      },
+      {
+        "memberId": "MBR-017-D1",
+        "name": "Nanda Arun Jadhav",
+        "relation": "Daughter",
+        "gender": "F",
+        "dob": "1984-08-19",
+        "aadhaarHash": "73bbd961dfc7b1dc3dbceabc3333c9cf",
+        "isAlive": true,
+        "isAdult": true
+      },
+      {
+        "memberId": "MBR-017-D2",
+        "name": "Priya Arun Jadhav",
+        "relation": "Daughter",
+        "gender": "F",
+        "dob": "1989-01-17",
+        "aadhaarHash": "f486ec2027da004bc1a542fd268da017",
+        "isAlive": true,
+        "isAdult": true
+      }
+    ],
+    "totalHeirs": 4,
+    "parcelsOwned": [],
+    "successionStatus": "PENDING_CONSENT",
+    "disputeInfo": null,
+    "deathCertificateIPFS": "QmDeathCert0017",
+    "crsRegistrationNo": "CRS/NSK/2022/56365",
+    "triggeredAt": "2022-06-19T08:00:00Z"
+  },
+  {
+    "familyId": "FAM-MH-NSK-018",
+    "patriarch": {
+      "name": "Rajesh Arun Joshi",
+      "aadhaarHash": "4a836a68a93b0c27133ded15fae8dff7",
+      "dob": "1949-08-31",
+      "dod": "2026-01-13",
+      "isAlive": false
+    },
+    "surname": "Joshi",
+    "applicableLaw": "Hindu Succession Act 1956/2005",
+    "coparcenaryType": "Mitakshara",
+    "members": [
+      {
+        "memberId": "MBR-018-S1",
+        "name": "Vijay Rajesh Joshi",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1987-04-17",
+        "aadhaarHash": "4ed9241319697ade21fbc5ee5b54be66",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/5",
+        "shareDecimal": 0.2
+      },
+      {
+        "memberId": "MBR-018-S2",
+        "name": "Eknath Rajesh Joshi",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1990-02-15",
+        "aadhaarHash": "6a5aa0d339e3518d14bea9f71aa2be83",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/5",
+        "shareDecimal": 0.2
+      },
+      {
+        "memberId": "MBR-018-S3",
+        "name": "Ganesh Rajesh Joshi",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1994-05-11",
+        "aadhaarHash": "417b82d7a1fcafacccc7bfd018fa2ea8",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/5",
+        "shareDecimal": 0.2
+      },
+      {
+        "memberId": "MBR-018-D1",
+        "name": "Usha Rajesh Joshi",
+        "relation": "Daughter",
+        "gender": "F",
+        "dob": "1986-12-18",
+        "aadhaarHash": "1aca1a1770f2cb6c5f37479c4291e65c",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/5",
+        "shareDecimal": 0.2,
+        "legalNote": "Equal coparcenary right per HSA 2005 S.6(3) — non-bypassable"
+      },
+      {
+        "memberId": "MBR-018-D2",
+        "name": "Nanda Rajesh Joshi",
+        "relation": "Daughter",
+        "gender": "F",
+        "dob": "1994-01-19",
+        "aadhaarHash": "f6c8d2237cd2db6a8555d69a5be7046f",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/5",
+        "shareDecimal": 0.2,
+        "legalNote": "Equal coparcenary right per HSA 2005 S.6(3) — non-bypassable"
+      }
+    ],
+    "totalHeirs": 5,
+    "parcelsOwned": [],
+    "successionStatus": "PENDING_CONSENT",
+    "disputeInfo": null,
+    "deathCertificateIPFS": "QmDeathCert0018",
+    "crsRegistrationNo": "CRS/NSK/2026/78697",
+    "triggeredAt": "2026-01-13T08:00:00Z"
+  },
+  {
+    "familyId": "FAM-MH-NSK-019",
+    "patriarch": {
+      "name": "Vijay Suresh Patil",
+      "aadhaarHash": "cbd2227db985f348e8892179934e42d3",
+      "dob": "1946-08-27",
+      "dod": "2021-10-04",
+      "isAlive": false
+    },
+    "surname": "Patil",
+    "applicableLaw": "Hindu Succession Act 1956/2005",
+    "coparcenaryType": "Mitakshara",
+    "members": [
+      {
+        "memberId": "MBR-019-W",
+        "name": "Shobha Ramesh Patil",
+        "relation": "Widow",
+        "gender": "F",
+        "dob": "1949-01-23",
+        "aadhaarHash": "e4e300099868a2ae1d788c8cc6c7186c",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/4",
+        "shareDecimal": 0.25
+      },
+      {
+        "memberId": "MBR-019-S1",
+        "name": "Namdev Vijay Patil",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1981-09-27",
+        "aadhaarHash": "49c4a89a5aaff1f9c02c058882d859b7",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/4",
+        "shareDecimal": 0.25
+      },
+      {
+        "memberId": "MBR-019-D1",
+        "name": "Kavita Vijay Patil",
+        "relation": "Daughter",
+        "gender": "F",
+        "dob": "1991-01-02",
+        "aadhaarHash": "09106f1a1b3299c0f70afb307377da51",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/4",
+        "shareDecimal": 0.25,
+        "legalNote": "Equal coparcenary right per HSA 2005 S.6(3) — non-bypassable"
+      },
+      {
+        "memberId": "MBR-019-D2",
+        "name": "Lata Vijay Patil",
+        "relation": "Daughter",
+        "gender": "F",
+        "dob": "1981-05-04",
+        "aadhaarHash": "c33313f7b8f9499727c46b0d433c5f75",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/4",
+        "shareDecimal": 0.25,
+        "legalNote": "Equal coparcenary right per HSA 2005 S.6(3) — non-bypassable"
+      }
+    ],
+    "totalHeirs": 4,
+    "parcelsOwned": [],
+    "successionStatus": "PENDING_CONSENT",
+    "disputeInfo": null,
+    "deathCertificateIPFS": "QmDeathCert0019",
+    "crsRegistrationNo": "CRS/NSK/2021/75926",
+    "triggeredAt": "2021-10-04T08:00:00Z"
+  },
+  {
+    "familyId": "FAM-MH-NSK-020",
+    "patriarch": {
+      "name": "Suresh Suresh Gaikwad",
+      "aadhaarHash": "94e03553dd63b8f5922cd6f8004e7ebd",
+      "dob": "1945-06-19",
+      "dod": "2022-07-05",
+      "isAlive": false
+    },
+    "surname": "Gaikwad",
+    "applicableLaw": "Hindu Succession Act 1956/2005",
+    "coparcenaryType": "Mitakshara",
+    "members": [
+      {
+        "memberId": "MBR-020-W",
+        "name": "Shobha Ramesh Gaikwad",
+        "relation": "Widow",
+        "gender": "F",
+        "dob": "1956-07-30",
+        "aadhaarHash": "f54ba7c44edc83415e9f7d15c9d8f42b",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/4",
+        "shareDecimal": 0.25
+      },
+      {
+        "memberId": "MBR-020-S1",
+        "name": "Vijay Suresh Gaikwad",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1991-06-15",
+        "aadhaarHash": "adfadfa146ee05b79fec047fcfca98f4",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/4",
+        "shareDecimal": 0.25
+      },
+      {
+        "memberId": "MBR-020-D1",
+        "name": "Anita Suresh Gaikwad",
+        "relation": "Daughter",
+        "gender": "F",
+        "dob": "1994-01-18",
+        "aadhaarHash": "892a2159a515d6e283c63eea48bdf392",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/4",
+        "shareDecimal": 0.25,
+        "legalNote": "Equal coparcenary right per HSA 2005 S.6(3) — non-bypassable"
+      },
+      {
+        "memberId": "MBR-020-D2",
+        "name": "Priya Suresh Gaikwad",
+        "relation": "Daughter",
+        "gender": "F",
+        "dob": "1987-10-15",
+        "aadhaarHash": "fcf0fc4245b7ba5bbfd526f7cf74b612",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/4",
+        "shareDecimal": 0.25,
+        "legalNote": "Equal coparcenary right per HSA 2005 S.6(3) — non-bypassable"
+      }
+    ],
+    "totalHeirs": 4,
+    "parcelsOwned": [],
+    "successionStatus": "PENDING_CONSENT",
+    "disputeInfo": null,
+    "deathCertificateIPFS": "QmDeathCert0020",
+    "crsRegistrationNo": "CRS/NSK/2022/32751",
+    "triggeredAt": "2022-07-05T08:00:00Z"
+  },
+  {
+    "familyId": "FAM-MH-NSK-021",
+    "patriarch": {
+      "name": "Vijay Suresh Rane",
+      "aadhaarHash": "72df296410a88ef4c9ad0960007fa376",
+      "dob": "1946-07-04",
+      "dod": "2021-11-17",
+      "isAlive": false
+    },
+    "surname": "Rane",
+    "applicableLaw": "Hindu Succession Act 1956/2005",
+    "coparcenaryType": "Mitakshara",
+    "members": [
+      {
+        "memberId": "MBR-021-S1",
+        "name": "Dnyaneshwar Vijay Rane",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1976-09-24",
+        "aadhaarHash": "831fddb86389f7ca65e1ea75fa78d319",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/5",
+        "shareDecimal": 0.2
+      },
+      {
+        "memberId": "MBR-021-S2",
+        "name": "Vijay Vijay Rane",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1986-10-06",
+        "aadhaarHash": "f82aae90e3c0efb756c67369543c441f",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/5",
+        "shareDecimal": 0.2
+      },
+      {
+        "memberId": "MBR-021-S3",
+        "name": "Namdev Vijay Rane",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1990-10-24",
+        "aadhaarHash": "c438514f4a4cc7e30e35e777ee0a61d5",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/5",
+        "shareDecimal": 0.2
+      },
+      {
+        "memberId": "MBR-021-D1",
+        "name": "Nanda Vijay Rane",
+        "relation": "Daughter",
+        "gender": "F",
+        "dob": "1990-08-05",
+        "aadhaarHash": "9adf3ed1fc72a81845cf9092162877d4",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/5",
+        "shareDecimal": 0.2,
+        "legalNote": "Equal coparcenary right per HSA 2005 S.6(3) — non-bypassable"
+      },
+      {
+        "memberId": "MBR-021-D2",
+        "name": "Anita Vijay Rane",
+        "relation": "Daughter",
+        "gender": "F",
+        "dob": "1983-08-15",
+        "aadhaarHash": "f29ef7cc1d70e94c79720017543899c8",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/5",
+        "shareDecimal": 0.2,
+        "legalNote": "Equal coparcenary right per HSA 2005 S.6(3) — non-bypassable"
+      }
+    ],
+    "totalHeirs": 5,
+    "parcelsOwned": [],
+    "successionStatus": "PENDING_CONSENT",
+    "disputeInfo": null,
+    "deathCertificateIPFS": "QmDeathCert0021",
+    "crsRegistrationNo": "CRS/NSK/2021/74971",
+    "triggeredAt": "2021-11-17T08:00:00Z"
+  },
+  {
+    "familyId": "FAM-MH-NSK-022",
+    "patriarch": {
+      "name": "Namdev Ramesh Naik",
+      "aadhaarHash": "353cfb10fdd7934f182dd4ac3ea41120",
+      "dob": "1936-09-18",
+      "dod": "2023-01-11",
+      "isAlive": false
+    },
+    "surname": "Naik",
+    "applicableLaw": "Hindu Succession Act 1956/2005",
+    "coparcenaryType": "Mitakshara",
+    "members": [
+      {
+        "memberId": "MBR-022-W",
+        "name": "Sunita Arun Naik",
+        "relation": "Widow",
+        "gender": "F",
+        "dob": "1948-04-20",
+        "aadhaarHash": "700824474f9fc0493ffd4aa47d9a4a44",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/5",
+        "shareDecimal": 0.2
+      },
+      {
+        "memberId": "MBR-022-S1",
+        "name": "Sanjay Namdev Naik",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1975-03-25",
+        "aadhaarHash": "1bee7ec881838cf7aacb8cd94430d747",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/5",
+        "shareDecimal": 0.2
+      },
+      {
+        "memberId": "MBR-022-S2",
+        "name": "Dnyaneshwar Namdev Naik",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1981-08-16",
+        "aadhaarHash": "f5f315bb482affb8a8e3fc524c477053",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/5",
+        "shareDecimal": 0.2
+      },
+      {
+        "memberId": "MBR-022-S3",
+        "name": "Eknath Namdev Naik",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1983-03-06",
+        "aadhaarHash": "2bee6755d56b26475d1f9e76037ca301",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/5",
+        "shareDecimal": 0.2
+      },
+      {
+        "memberId": "MBR-022-D1",
+        "name": "Meena Namdev Naik",
+        "relation": "Daughter",
+        "gender": "F",
+        "dob": "1986-09-24",
+        "aadhaarHash": "4f1c650a0078f731a40d6454918569ce",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/5",
+        "shareDecimal": 0.2,
+        "legalNote": "Equal coparcenary right per HSA 2005 S.6(3) — non-bypassable"
+      }
+    ],
+    "totalHeirs": 5,
+    "parcelsOwned": [],
+    "successionStatus": "PENDING_CONSENT",
+    "disputeInfo": null,
+    "deathCertificateIPFS": "QmDeathCert0022",
+    "crsRegistrationNo": "CRS/NSK/2023/44128",
+    "triggeredAt": "2023-01-11T08:00:00Z"
+  },
+  {
+    "familyId": "FAM-MH-NSK-023",
+    "patriarch": {
+      "name": "Ramesh Arun Patil",
+      "aadhaarHash": "598f5ace9d00616f6bf32b56d07bb575",
+      "dob": "1945-05-22",
+      "dod": "2021-10-03",
+      "isAlive": false
+    },
+    "surname": "Patil",
+    "applicableLaw": "Hindu Succession Act 1956/2005",
+    "coparcenaryType": "Mitakshara",
+    "members": [
+      {
+        "memberId": "MBR-023-S1",
+        "name": "Ramesh Ramesh Patil",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1983-01-18",
+        "aadhaarHash": "07f7c1e2fa48c97a99703f0c1bcd9002",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/3",
+        "shareDecimal": 0.333333
+      },
+      {
+        "memberId": "MBR-023-S2",
+        "name": "Rajesh Ramesh Patil",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1994-12-16",
+        "aadhaarHash": "4bb00473d0c683c927142cde1e632cf1",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/3",
+        "shareDecimal": 0.333333
+      },
+      {
+        "memberId": "MBR-023-D1",
+        "name": "Nanda Ramesh Patil",
+        "relation": "Daughter",
+        "gender": "F",
+        "dob": "1981-06-10",
+        "aadhaarHash": "edde8a2c8040922f600c71a367a040ce",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/3",
+        "shareDecimal": 0.333333,
+        "legalNote": "Equal coparcenary right per HSA 2005 S.6(3) — non-bypassable"
+      }
+    ],
+    "totalHeirs": 3,
+    "parcelsOwned": [],
+    "successionStatus": "COURT_REFERRED",
+    "disputeInfo": {
+      "type": "ContestingShare",
+      "filedBy": "Ramesh Ramesh Patil",
+      "eCourtsNo": "CNS/3882/2021",
+      "court": "Civil Court Nashik",
+      "status": "PENDING"
+    },
+    "deathCertificateIPFS": "QmDeathCert0023",
+    "crsRegistrationNo": "CRS/NSK/2021/91360",
+    "triggeredAt": "2021-10-03T08:00:00Z"
+  },
+  {
+    "familyId": "FAM-MH-NSK-024",
+    "patriarch": {
+      "name": "Namdev Ramesh Shinde",
+      "aadhaarHash": "8ee6acb2afb27f30bdb7c3fd8abd3232",
+      "dob": "1954-06-21",
+      "dod": "2020-11-14",
+      "isAlive": false
+    },
+    "surname": "Shinde",
+    "applicableLaw": "Hindu Succession Act 1956/2005",
+    "coparcenaryType": "Mitakshara",
+    "members": [
+      {
+        "memberId": "MBR-024-W",
+        "name": "Usha Arun Shinde",
+        "relation": "Widow",
+        "gender": "F",
+        "dob": "1962-04-20",
+        "aadhaarHash": "723b473adcaad4df3d4d9771c346792e",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/5",
+        "shareDecimal": 0.2
+      },
+      {
+        "memberId": "MBR-024-S1",
+        "name": "Mahesh Namdev Shinde",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1992-03-20",
+        "aadhaarHash": "e31c66e840269ec8f72adb7e04d0bc74",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/5",
+        "shareDecimal": 0.2
+      },
+      {
+        "memberId": "MBR-024-S2",
+        "name": "Namdev Namdev Shinde",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1980-11-23",
+        "aadhaarHash": "787a7c5709aa4fc36fc5d1247610a37f",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/5",
+        "shareDecimal": 0.2
+      },
+      {
+        "memberId": "MBR-024-S3",
+        "name": "Eknath Namdev Shinde",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1982-09-26",
+        "aadhaarHash": "dbff05ec7260d3391ae016e3120c2671",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/5",
+        "shareDecimal": 0.2
+      },
+      {
+        "memberId": "MBR-024-D1",
+        "name": "Rekha Namdev Shinde",
+        "relation": "Daughter",
+        "gender": "F",
+        "dob": "1989-11-30",
+        "aadhaarHash": "cb716c009e7cac9c2a6187651f3c5911",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/5",
+        "shareDecimal": 0.2,
+        "legalNote": "Equal coparcenary right per HSA 2005 S.6(3) — non-bypassable"
+      }
+    ],
+    "totalHeirs": 5,
+    "parcelsOwned": [],
+    "successionStatus": "COURT_REFERRED",
+    "disputeInfo": {
+      "type": "ContestingShare",
+      "filedBy": "Usha Arun Shinde",
+      "eCourtsNo": "CNS/4599/2022",
+      "court": "Civil Court Sinnar",
+      "status": "PENDING"
+    },
+    "deathCertificateIPFS": "QmDeathCert0024",
+    "crsRegistrationNo": "CRS/NSK/2020/23430",
+    "triggeredAt": "2020-11-14T08:00:00Z"
+  },
+  {
+    "familyId": "FAM-MH-NSK-025",
+    "patriarch": {
+      "name": "Tukaram Sanjay Salve",
+      "aadhaarHash": "bf710f34d4ce62b3316719ad12e95009",
+      "dob": "1945-11-27",
+      "dod": "2021-08-22",
+      "isAlive": false
+    },
+    "surname": "Salve",
+    "applicableLaw": "Hindu Succession Act 1956/2005",
+    "coparcenaryType": "Mitakshara",
+    "members": [
+      {
+        "memberId": "MBR-025-W",
+        "name": "Sunita Sanjay Salve",
+        "relation": "Widow",
+        "gender": "F",
+        "dob": "1951-10-01",
+        "aadhaarHash": "23e9dee727cc8b97924575c8435acf9c",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/5",
+        "shareDecimal": 0.2
+      },
+      {
+        "memberId": "MBR-025-S1",
+        "name": "Suresh Tukaram Salve",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1991-07-19",
+        "aadhaarHash": "90bd6d9ff7aa72a8d405ea1ae332a829",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/5",
+        "shareDecimal": 0.2
+      },
+      {
+        "memberId": "MBR-025-S2",
+        "name": "Sanjay Tukaram Salve",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1986-01-31",
+        "aadhaarHash": "66323d1e16fc3b29142aa68363cbbdc1",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/5",
+        "shareDecimal": 0.2
+      },
+      {
+        "memberId": "MBR-025-D1",
+        "name": "Lata Tukaram Salve",
+        "relation": "Daughter",
+        "gender": "F",
+        "dob": "1995-10-23",
+        "aadhaarHash": "7d8ea1d0e59db25fa8135ed8411790b9",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/5",
+        "shareDecimal": 0.2,
+        "legalNote": "Equal coparcenary right per HSA 2005 S.6(3) — non-bypassable"
+      },
+      {
+        "memberId": "MBR-025-D2",
+        "name": "Meena Tukaram Salve",
+        "relation": "Daughter",
+        "gender": "F",
+        "dob": "1989-06-07",
+        "aadhaarHash": "2982f4fb5cd95479de8aaf33b24f20ae",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/5",
+        "shareDecimal": 0.2,
+        "legalNote": "Equal coparcenary right per HSA 2005 S.6(3) — non-bypassable"
+      }
+    ],
+    "totalHeirs": 5,
+    "parcelsOwned": [],
+    "successionStatus": "PENDING_CONSENT",
+    "disputeInfo": null,
+    "deathCertificateIPFS": "QmDeathCert0025",
+    "crsRegistrationNo": "CRS/NSK/2021/23872",
+    "triggeredAt": "2021-08-22T08:00:00Z"
+  },
+  {
+    "familyId": "FAM-MH-NSK-026",
+    "patriarch": {
+      "name": "Ganesh Suresh More",
+      "aadhaarHash": "e9f1cdcd5824c2935f8f23a4ca114edb",
+      "dob": "1938-01-21",
+      "dod": "2024-05-15",
+      "isAlive": false
+    },
+    "surname": "More",
+    "applicableLaw": "Indian Succession Act 1925",
+    "coparcenaryType": "Christian",
+    "members": [
+      {
+        "memberId": "MBR-026-S1",
+        "name": "Tukaram Ganesh More",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1976-11-28",
+        "aadhaarHash": "b6fc210d4afff5071df90d11e79e191b",
+        "isAlive": true,
+        "isAdult": true
+      },
+      {
+        "memberId": "MBR-026-S2",
+        "name": "Ramesh Ganesh More",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1976-01-25",
+        "aadhaarHash": "dd6a22a9259c2f5f77da1c323c8d667e",
+        "isAlive": true,
+        "isAdult": true
+      },
+      {
+        "memberId": "MBR-026-D1",
+        "name": "Vandana Ganesh More",
+        "relation": "Daughter",
+        "gender": "F",
+        "dob": "1980-11-28",
+        "aadhaarHash": "8243d48b4bbaf9db4c6a3f2467704e50",
+        "isAlive": true,
+        "isAdult": true
+      }
+    ],
+    "totalHeirs": 3,
+    "parcelsOwned": [],
+    "successionStatus": "PENDING_CONSENT",
+    "disputeInfo": null,
+    "deathCertificateIPFS": "QmDeathCert0026",
+    "crsRegistrationNo": "CRS/NSK/2024/96902",
+    "triggeredAt": "2024-05-15T08:00:00Z"
+  },
+  {
+    "familyId": "FAM-MH-NSK-027",
+    "patriarch": {
+      "name": "Ramesh Ramesh Kulkarni",
+      "aadhaarHash": "c9a7eaf18df82bcc6600d4ae8af216cc",
+      "dob": "1940-06-11",
+      "dod": "2026-06-07",
+      "isAlive": false
+    },
+    "surname": "Kulkarni",
+    "applicableLaw": "Hindu Succession Act 1956/2005",
+    "coparcenaryType": "Mitakshara",
+    "members": [
+      {
+        "memberId": "MBR-027-W",
+        "name": "Vandana Ramesh Kulkarni",
+        "relation": "Widow",
+        "gender": "F",
+        "dob": "1940-07-27",
+        "aadhaarHash": "856bd9e5a7576d2ab6293fa784387e34",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/4",
+        "shareDecimal": 0.25
+      },
+      {
+        "memberId": "MBR-027-S1",
+        "name": "Arun Ramesh Kulkarni",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1993-10-17",
+        "aadhaarHash": "6341d83010c3f0040903ade59cfecbf7",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/4",
+        "shareDecimal": 0.25
+      },
+      {
+        "memberId": "MBR-027-S2",
+        "name": "Ganesh Ramesh Kulkarni",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1990-06-29",
+        "aadhaarHash": "13bf716aa70c054b0758933f1fdf42cc",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/4",
+        "shareDecimal": 0.25
+      },
+      {
+        "memberId": "MBR-027-D1",
+        "name": "Usha Ramesh Kulkarni",
+        "relation": "Daughter",
+        "gender": "F",
+        "dob": "1987-04-26",
+        "aadhaarHash": "5091250d51c611a2b4640f42919b73d0",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/4",
+        "shareDecimal": 0.25,
+        "legalNote": "Equal coparcenary right per HSA 2005 S.6(3) — non-bypassable"
+      }
+    ],
+    "totalHeirs": 4,
+    "parcelsOwned": [],
+    "successionStatus": "PENDING_CONSENT",
+    "disputeInfo": null,
+    "deathCertificateIPFS": "QmDeathCert0027",
+    "crsRegistrationNo": "CRS/NSK/2026/64871",
+    "triggeredAt": "2026-06-07T08:00:00Z"
+  },
+  {
+    "familyId": "FAM-MH-NSK-028",
+    "patriarch": {
+      "name": "Suresh Arun Shinde",
+      "aadhaarHash": "3f2eeff22ea4530259956f02a2b01fa0",
+      "dob": "1958-08-12",
+      "dod": "2022-05-28",
+      "isAlive": false
+    },
+    "surname": "Shinde",
+    "applicableLaw": "Hindu Succession Act 1956/2005",
+    "coparcenaryType": "Mitakshara",
+    "members": [
+      {
+        "memberId": "MBR-028-S1",
+        "name": "Ganesh Suresh Shinde",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1981-02-23",
+        "aadhaarHash": "0bc16e3fa7523f07f60973d16f9237e1",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/2",
+        "shareDecimal": 0.5
+      },
+      {
+        "memberId": "MBR-028-D1",
+        "name": "Sunita Suresh Shinde",
+        "relation": "Daughter",
+        "gender": "F",
+        "dob": "1994-10-16",
+        "aadhaarHash": "317c15aa76622f24e113a7d6808f0eec",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/2",
+        "shareDecimal": 0.5,
+        "legalNote": "Equal coparcenary right per HSA 2005 S.6(3) — non-bypassable"
+      }
+    ],
+    "totalHeirs": 2,
+    "parcelsOwned": [],
+    "successionStatus": "PENDING_CONSENT",
+    "disputeInfo": null,
+    "deathCertificateIPFS": "QmDeathCert0028",
+    "crsRegistrationNo": "CRS/NSK/2022/72057",
+    "triggeredAt": "2022-05-28T08:00:00Z"
+  },
+  {
+    "familyId": "FAM-MH-NSK-029",
+    "patriarch": {
+      "name": "Tukaram Vijay Salve",
+      "aadhaarHash": "e920082cfe450e9a7b32414cfb8c78b0",
+      "dob": "1944-10-03",
+      "dod": "2026-09-10",
+      "isAlive": false
+    },
+    "surname": "Salve",
+    "applicableLaw": "Hindu Succession Act 1956/2005",
+    "coparcenaryType": "Mitakshara",
+    "members": [
+      {
+        "memberId": "MBR-029-S1",
+        "name": "Dnyaneshwar Tukaram Salve",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1980-09-03",
+        "aadhaarHash": "d5df61666ed107e0d327d6c02b920355",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/3",
+        "shareDecimal": 0.333333
+      },
+      {
+        "memberId": "MBR-029-S2",
+        "name": "Arun Tukaram Salve",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1985-04-21",
+        "aadhaarHash": "a8e3534393985528bf466d0f053a14c0",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/3",
+        "shareDecimal": 0.333333
+      },
+      {
+        "memberId": "MBR-029-D1",
+        "name": "Anita Tukaram Salve",
+        "relation": "Daughter",
+        "gender": "F",
+        "dob": "1985-05-20",
+        "aadhaarHash": "ed2382293c7760f8020eb212064992d9",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/3",
+        "shareDecimal": 0.333333,
+        "legalNote": "Equal coparcenary right per HSA 2005 S.6(3) — non-bypassable"
+      }
+    ],
+    "totalHeirs": 3,
+    "parcelsOwned": [],
+    "successionStatus": "PENDING_CONSENT",
+    "disputeInfo": null,
+    "deathCertificateIPFS": "QmDeathCert0029",
+    "crsRegistrationNo": "CRS/NSK/2026/40140",
+    "triggeredAt": "2026-09-10T08:00:00Z"
+  },
+  {
+    "familyId": "FAM-MH-NSK-030",
+    "patriarch": {
+      "name": "Dnyaneshwar Ramesh Kulkarni",
+      "aadhaarHash": "7f30b0520ce1ce22d945d21a064a00d4",
+      "dob": "1945-03-04",
+      "dod": "2024-07-26",
+      "isAlive": false
+    },
+    "surname": "Kulkarni",
+    "applicableLaw": "Hindu Succession Act 1956/2005",
+    "coparcenaryType": "Mitakshara",
+    "members": [
+      {
+        "memberId": "MBR-030-W",
+        "name": "Sunita Arun Kulkarni",
+        "relation": "Widow",
+        "gender": "F",
+        "dob": "1957-12-03",
+        "aadhaarHash": "397f6efef4f7344f0fdcf21523938839",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/4",
+        "shareDecimal": 0.25
+      },
+      {
+        "memberId": "MBR-030-S1",
+        "name": "Ramesh Dnyaneshwar Kulkarni",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1984-06-19",
+        "aadhaarHash": "efca2f843b5ee83c1fc62142d863592b",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/4",
+        "shareDecimal": 0.25
+      },
+      {
+        "memberId": "MBR-030-D1",
+        "name": "Savita Dnyaneshwar Kulkarni",
+        "relation": "Daughter",
+        "gender": "F",
+        "dob": "1980-05-23",
+        "aadhaarHash": "1a9e0e3b8601313555431eead92ed3c0",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/4",
+        "shareDecimal": 0.25,
+        "legalNote": "Equal coparcenary right per HSA 2005 S.6(3) — non-bypassable"
+      },
+      {
+        "memberId": "MBR-030-D2",
+        "name": "Sunita Dnyaneshwar Kulkarni",
+        "relation": "Daughter",
+        "gender": "F",
+        "dob": "1982-05-18",
+        "aadhaarHash": "f9af5072a70cc6c44e2404e8929b05c2",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/4",
+        "shareDecimal": 0.25,
+        "legalNote": "Equal coparcenary right per HSA 2005 S.6(3) — non-bypassable"
+      }
+    ],
+    "totalHeirs": 4,
+    "parcelsOwned": [],
+    "successionStatus": "PENDING_CONSENT",
+    "disputeInfo": null,
+    "deathCertificateIPFS": "QmDeathCert0030",
+    "crsRegistrationNo": "CRS/NSK/2024/41679",
+    "triggeredAt": "2024-07-26T08:00:00Z"
+  },
+  {
+    "familyId": "FAM-MH-NSK-031",
+    "patriarch": {
+      "name": "Arun Arun Shinde",
+      "aadhaarHash": "74c75759d9bc92465278a05a3711c4f0",
+      "dob": "1948-12-05",
+      "dod": "2021-09-22",
+      "isAlive": false
+    },
+    "surname": "Shinde",
+    "applicableLaw": "Hindu Succession Act 1956/2005",
+    "coparcenaryType": "Mitakshara",
+    "members": [
+      {
+        "memberId": "MBR-031-S1",
+        "name": "Tukaram Arun Shinde",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1977-07-02",
+        "aadhaarHash": "fd015389ec2c205417f3e8e9a121dac5",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/2",
+        "shareDecimal": 0.5
+      },
+      {
+        "memberId": "MBR-031-D1",
+        "name": "Anita Arun Shinde",
+        "relation": "Daughter",
+        "gender": "F",
+        "dob": "1984-09-05",
+        "aadhaarHash": "8a25ed854d3823c61e4db765661cce3d",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/2",
+        "shareDecimal": 0.5,
+        "legalNote": "Equal coparcenary right per HSA 2005 S.6(3) — non-bypassable"
+      }
+    ],
+    "totalHeirs": 2,
+    "parcelsOwned": [],
+    "successionStatus": "PENDING_CONSENT",
+    "disputeInfo": null,
+    "deathCertificateIPFS": "QmDeathCert0031",
+    "crsRegistrationNo": "CRS/NSK/2021/68065",
+    "triggeredAt": "2021-09-22T08:00:00Z"
+  },
+  {
+    "familyId": "FAM-MH-NSK-032",
+    "patriarch": {
+      "name": "Balasaheb Sanjay Salve",
+      "aadhaarHash": "e9545d3fd506c8eb533e5ebee7cd8076",
+      "dob": "1950-09-04",
+      "dod": "2021-06-05",
+      "isAlive": false
+    },
+    "surname": "Salve",
+    "applicableLaw": "Hindu Succession Act 1956/2005",
+    "coparcenaryType": "Mitakshara",
+    "members": [
+      {
+        "memberId": "MBR-032-W",
+        "name": "Meena Sanjay Salve",
+        "relation": "Widow",
+        "gender": "F",
+        "dob": "1950-05-21",
+        "aadhaarHash": "1efa19df4c6ededf8d49ed6b63b1f04f",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/4",
+        "shareDecimal": 0.25
+      },
+      {
+        "memberId": "MBR-032-S1",
+        "name": "Ganesh Balasaheb Salve",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1992-12-04",
+        "aadhaarHash": "d8ff38af260bc4439c6004721a6fb85c",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/4",
+        "shareDecimal": 0.25
+      },
+      {
+        "memberId": "MBR-032-D1",
+        "name": "Usha Balasaheb Salve",
+        "relation": "Daughter",
+        "gender": "F",
+        "dob": "1988-09-06",
+        "aadhaarHash": "0aafb38ce36a784a346bacb586885d3e",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/4",
+        "shareDecimal": 0.25,
+        "legalNote": "Equal coparcenary right per HSA 2005 S.6(3) — non-bypassable"
+      },
+      {
+        "memberId": "MBR-032-D2",
+        "name": "Shobha Balasaheb Salve",
+        "relation": "Daughter",
+        "gender": "F",
+        "dob": "1985-10-18",
+        "aadhaarHash": "a43a74b2e40fbcedfa1eb2021a9228e9",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/4",
+        "shareDecimal": 0.25,
+        "legalNote": "Equal coparcenary right per HSA 2005 S.6(3) — non-bypassable"
+      }
+    ],
+    "totalHeirs": 4,
+    "parcelsOwned": [],
+    "successionStatus": "PENDING_CONSENT",
+    "disputeInfo": null,
+    "deathCertificateIPFS": "QmDeathCert0032",
+    "crsRegistrationNo": "CRS/NSK/2021/79979",
+    "triggeredAt": "2021-06-05T08:00:00Z"
+  },
+  {
+    "familyId": "FAM-MH-NSK-033",
+    "patriarch": {
+      "name": "Tukaram Sanjay Patil",
+      "aadhaarHash": "79242b9dc574c9046756626bdb9a5f8b",
+      "dob": "1950-06-07",
+      "dod": "2021-03-14",
+      "isAlive": false
+    },
+    "surname": "Patil",
+    "applicableLaw": "Hindu Succession Act 1956/2005",
+    "coparcenaryType": "Mitakshara",
+    "members": [
+      {
+        "memberId": "MBR-033-W",
+        "name": "Nanda Arun Patil",
+        "relation": "Widow",
+        "gender": "F",
+        "dob": "1965-01-12",
+        "aadhaarHash": "7392ab4a08c1ac6656209a8e8113dcc3",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/4",
+        "shareDecimal": 0.25
+      },
+      {
+        "memberId": "MBR-033-S1",
+        "name": "Arun Tukaram Patil",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1987-06-01",
+        "aadhaarHash": "9a8b46499412a63563cb03dc3d143e98",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/4",
+        "shareDecimal": 0.25
+      },
+      {
+        "memberId": "MBR-033-S2",
+        "name": "Eknath Tukaram Patil",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1992-05-04",
+        "aadhaarHash": "b014d8adb27e22d17331982779f6cb72",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/4",
+        "shareDecimal": 0.25
+      },
+      {
+        "memberId": "MBR-033-D1",
+        "name": "Usha Tukaram Patil",
+        "relation": "Daughter",
+        "gender": "F",
+        "dob": "1990-04-27",
+        "aadhaarHash": "8896ab55bb83c15ff7f8aca87052a3bc",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/4",
+        "shareDecimal": 0.25,
+        "legalNote": "Equal coparcenary right per HSA 2005 S.6(3) — non-bypassable"
+      }
+    ],
+    "totalHeirs": 4,
+    "parcelsOwned": [],
+    "successionStatus": "COURT_REFERRED",
+    "disputeInfo": {
+      "type": "ContestingShare",
+      "filedBy": "Eknath Tukaram Patil",
+      "eCourtsNo": "CNS/7940/2021",
+      "court": "Civil Court Dindori",
+      "status": "PENDING"
+    },
+    "deathCertificateIPFS": "QmDeathCert0033",
+    "crsRegistrationNo": "CRS/NSK/2021/15276",
+    "triggeredAt": "2021-03-14T08:00:00Z"
+  },
+  {
+    "familyId": "FAM-MH-NSK-034",
+    "patriarch": {
+      "name": "Balasaheb Vijay Shinde",
+      "aadhaarHash": "b022c11e28710416fd8316d937daed94",
+      "dob": "1954-03-26",
+      "dod": "2026-09-18",
+      "isAlive": false
+    },
+    "surname": "Shinde",
+    "applicableLaw": "Hindu Succession Act 1956/2005",
+    "coparcenaryType": "Mitakshara",
+    "members": [
+      {
+        "memberId": "MBR-034-W",
+        "name": "Shobha Vijay Shinde",
+        "relation": "Widow",
+        "gender": "F",
+        "dob": "1951-08-13",
+        "aadhaarHash": "101c08f0a2cd2bc39d5e64f60f4b3492",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/3",
+        "shareDecimal": 0.333333
+      },
+      {
+        "memberId": "MBR-034-S1",
+        "name": "Ganesh Balasaheb Shinde",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1982-11-21",
+        "aadhaarHash": "ad0200ff1d73ff12e3493aa0981cc30e",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/3",
+        "shareDecimal": 0.333333
+      },
+      {
+        "memberId": "MBR-034-D1",
+        "name": "Rekha Balasaheb Shinde",
+        "relation": "Daughter",
+        "gender": "F",
+        "dob": "1993-04-11",
+        "aadhaarHash": "e5ca7c3fc0054d6eceff731d9bd81630",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/3",
+        "shareDecimal": 0.333333,
+        "legalNote": "Equal coparcenary right per HSA 2005 S.6(3) — non-bypassable"
+      }
+    ],
+    "totalHeirs": 3,
+    "parcelsOwned": [],
+    "successionStatus": "PENDING_CONSENT",
+    "disputeInfo": null,
+    "deathCertificateIPFS": "QmDeathCert0034",
+    "crsRegistrationNo": "CRS/NSK/2026/61175",
+    "triggeredAt": "2026-09-18T08:00:00Z"
+  },
+  {
+    "familyId": "FAM-MH-NSK-035",
+    "patriarch": {
+      "name": "Tukaram Ramesh Pawar",
+      "aadhaarHash": "b88f67c6b249d818ab2d8bbd56b70e0d",
+      "dob": "1947-12-24",
+      "dod": "2022-07-05",
+      "isAlive": false
+    },
+    "surname": "Pawar",
+    "applicableLaw": "Hindu Succession Act 1956/2005",
+    "coparcenaryType": "Mitakshara",
+    "members": [
+      {
+        "memberId": "MBR-035-W",
+        "name": "Kavita Arun Pawar",
+        "relation": "Widow",
+        "gender": "F",
+        "dob": "1941-03-19",
+        "aadhaarHash": "87959749b6d03a1547866d07fa548a4f",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/6",
+        "shareDecimal": 0.166667
+      },
+      {
+        "memberId": "MBR-035-S1",
+        "name": "Dnyaneshwar Tukaram Pawar",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1980-11-18",
+        "aadhaarHash": "b33230b2a2f1a7ed61dd61f343f1c151",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/6",
+        "shareDecimal": 0.166667
+      },
+      {
+        "memberId": "MBR-035-S2",
+        "name": "Vijay Tukaram Pawar",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1984-03-23",
+        "aadhaarHash": "da3a63be796f380fdfeda9a570905c29",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/6",
+        "shareDecimal": 0.166667
+      },
+      {
+        "memberId": "MBR-035-S3",
+        "name": "Dnyaneshwar Tukaram Pawar",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1977-11-17",
+        "aadhaarHash": "0118b8e943a0363aa2b5cb95c09e64cc",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/6",
+        "shareDecimal": 0.166667
+      },
+      {
+        "memberId": "MBR-035-D1",
+        "name": "Lata Tukaram Pawar",
+        "relation": "Daughter",
+        "gender": "F",
+        "dob": "1994-08-28",
+        "aadhaarHash": "abc1f7cfbe3d1701579d67c066f64974",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/6",
+        "shareDecimal": 0.166667,
+        "legalNote": "Equal coparcenary right per HSA 2005 S.6(3) — non-bypassable"
+      },
+      {
+        "memberId": "MBR-035-D2",
+        "name": "Priya Tukaram Pawar",
+        "relation": "Daughter",
+        "gender": "F",
+        "dob": "1996-10-14",
+        "aadhaarHash": "340c04a0b1174583f4da6c428c29dc87",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/6",
+        "shareDecimal": 0.166667,
+        "legalNote": "Equal coparcenary right per HSA 2005 S.6(3) — non-bypassable"
+      }
+    ],
+    "totalHeirs": 6,
+    "parcelsOwned": [],
+    "successionStatus": "COURT_REFERRED",
+    "disputeInfo": {
+      "type": "ContestingShare",
+      "filedBy": "Dnyaneshwar Tukaram Pawar",
+      "eCourtsNo": "CNS/4743/2023",
+      "court": "Civil Court Dindori",
+      "status": "PENDING"
+    },
+    "deathCertificateIPFS": "QmDeathCert0035",
+    "crsRegistrationNo": "CRS/NSK/2022/75508",
+    "triggeredAt": "2022-07-05T08:00:00Z"
+  },
+  {
+    "familyId": "FAM-MH-NSK-036",
+    "patriarch": {
+      "name": "Ganesh Sanjay Pawar",
+      "aadhaarHash": "77ecd8572055527775aa6908849b3df2",
+      "dob": "1936-09-12",
+      "dod": "2021-08-26",
+      "isAlive": false
+    },
+    "surname": "Pawar",
+    "applicableLaw": "Muslim Personal Law (Shariat) 1937",
+    "coparcenaryType": "Hanafi",
+    "members": [
+      {
+        "memberId": "MBR-036-S1",
+        "name": "Dnyaneshwar Ganesh Pawar",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1977-11-22",
+        "aadhaarHash": "9da9e768a74fd403f57612371e34a982",
+        "isAlive": true,
+        "isAdult": true
+      },
+      {
+        "memberId": "MBR-036-S2",
+        "name": "Rajesh Ganesh Pawar",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1992-05-26",
+        "aadhaarHash": "9053e3da71ede9a245fd1f8f3d357f16",
+        "isAlive": true,
+        "isAdult": true
+      },
+      {
+        "memberId": "MBR-036-D1",
+        "name": "Priya Ganesh Pawar",
+        "relation": "Daughter",
+        "gender": "F",
+        "dob": "1978-05-04",
+        "aadhaarHash": "e33bcfc2de006850ca4cee6cd77774b1",
+        "isAlive": true,
+        "isAdult": true
+      }
+    ],
+    "totalHeirs": 3,
+    "parcelsOwned": [],
+    "successionStatus": "PENDING_CONSENT",
+    "disputeInfo": null,
+    "deathCertificateIPFS": "QmDeathCert0036",
+    "crsRegistrationNo": "CRS/NSK/2021/12044",
+    "triggeredAt": "2021-08-26T08:00:00Z"
+  },
+  {
+    "familyId": "FAM-MH-NSK-037",
+    "patriarch": {
+      "name": "Dnyaneshwar Vijay Joshi",
+      "aadhaarHash": "e7b18d63b95d332c0fd436bd5883df7f",
+      "dob": "1957-04-11",
+      "dod": "2025-12-01",
+      "isAlive": false
+    },
+    "surname": "Joshi",
+    "applicableLaw": "Hindu Succession Act 1956/2005",
+    "coparcenaryType": "Mitakshara",
+    "members": [
+      {
+        "memberId": "MBR-037-W",
+        "name": "Sunita Sanjay Joshi",
+        "relation": "Widow",
+        "gender": "F",
+        "dob": "1949-11-16",
+        "aadhaarHash": "c4237c7f05c0897aa8051d1cd97309c8",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/6",
+        "shareDecimal": 0.166667
+      },
+      {
+        "memberId": "MBR-037-S1",
+        "name": "Mahesh Dnyaneshwar Joshi",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1979-02-20",
+        "aadhaarHash": "63847e17c643e3d44325c6d9e9384762",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/6",
+        "shareDecimal": 0.166667
+      },
+      {
+        "memberId": "MBR-037-S2",
+        "name": "Arun Dnyaneshwar Joshi",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1994-04-24",
+        "aadhaarHash": "9fec3ded6798c253ce91b0aa62c00ad4",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/6",
+        "shareDecimal": 0.166667
+      },
+      {
+        "memberId": "MBR-037-S3",
+        "name": "Ganesh Dnyaneshwar Joshi",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1987-04-27",
+        "aadhaarHash": "dc6872be17a79e6fe8d4a43cb8fd9a7c",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/6",
+        "shareDecimal": 0.166667
+      },
+      {
+        "memberId": "MBR-037-D1",
+        "name": "Shobha Dnyaneshwar Joshi",
+        "relation": "Daughter",
+        "gender": "F",
+        "dob": "1978-06-20",
+        "aadhaarHash": "3d81f057886167525357a08fb77f2e21",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/6",
+        "shareDecimal": 0.166667,
+        "legalNote": "Equal coparcenary right per HSA 2005 S.6(3) — non-bypassable"
+      },
+      {
+        "memberId": "MBR-037-D2",
+        "name": "Usha Dnyaneshwar Joshi",
+        "relation": "Daughter",
+        "gender": "F",
+        "dob": "1996-04-21",
+        "aadhaarHash": "97f47080befa022f4578dc715154c765",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/6",
+        "shareDecimal": 0.166667,
+        "legalNote": "Equal coparcenary right per HSA 2005 S.6(3) — non-bypassable"
+      }
+    ],
+    "totalHeirs": 6,
+    "parcelsOwned": [],
+    "successionStatus": "PENDING_CONSENT",
+    "disputeInfo": null,
+    "deathCertificateIPFS": "QmDeathCert0037",
+    "crsRegistrationNo": "CRS/NSK/2025/14270",
+    "triggeredAt": "2025-12-01T08:00:00Z"
+  },
+  {
+    "familyId": "FAM-MH-NSK-038",
+    "patriarch": {
+      "name": "Mahesh Arun Kulkarni",
+      "aadhaarHash": "889130ae8ee3e8643ff0bc1e5b22d4fa",
+      "dob": "1957-05-08",
+      "dod": "2026-03-10",
+      "isAlive": false
+    },
+    "surname": "Kulkarni",
+    "applicableLaw": "Hindu Succession Act 1956/2005",
+    "coparcenaryType": "Mitakshara",
+    "members": [
+      {
+        "memberId": "MBR-038-S1",
+        "name": "Arun Mahesh Kulkarni",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1990-07-04",
+        "aadhaarHash": "aba0f480c4fc98f369668dc30b50c54c",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/4",
+        "shareDecimal": 0.25
+      },
+      {
+        "memberId": "MBR-038-S2",
+        "name": "Ramesh Mahesh Kulkarni",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1992-08-30",
+        "aadhaarHash": "459a94c55d8c62f822d0e02de3d9cd61",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/4",
+        "shareDecimal": 0.25
+      },
+      {
+        "memberId": "MBR-038-S3",
+        "name": "Tukaram Mahesh Kulkarni",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1993-06-20",
+        "aadhaarHash": "98226578ce45848b16c0407c01d6b5bf",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/4",
+        "shareDecimal": 0.25
+      },
+      {
+        "memberId": "MBR-038-D1",
+        "name": "Vandana Mahesh Kulkarni",
+        "relation": "Daughter",
+        "gender": "F",
+        "dob": "1987-04-22",
+        "aadhaarHash": "42a7cce35c9de90604475f2b9157bba3",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/4",
+        "shareDecimal": 0.25,
+        "legalNote": "Equal coparcenary right per HSA 2005 S.6(3) — non-bypassable"
+      }
+    ],
+    "totalHeirs": 4,
+    "parcelsOwned": [],
+    "successionStatus": "PENDING_CONSENT",
+    "disputeInfo": null,
+    "deathCertificateIPFS": "QmDeathCert0038",
+    "crsRegistrationNo": "CRS/NSK/2026/43300",
+    "triggeredAt": "2026-03-10T08:00:00Z"
+  },
+  {
+    "familyId": "FAM-MH-NSK-039",
+    "patriarch": {
+      "name": "Mahesh Vijay Shinde",
+      "aadhaarHash": "c83d14aa87befdf7f390797cffd1c98a",
+      "dob": "1946-09-04",
+      "dod": "2024-05-16",
+      "isAlive": false
+    },
+    "surname": "Shinde",
+    "applicableLaw": "Hindu Succession Act 1956/2005",
+    "coparcenaryType": "Mitakshara",
+    "members": [
+      {
+        "memberId": "MBR-039-W",
+        "name": "Kavita Ramesh Shinde",
+        "relation": "Widow",
+        "gender": "F",
+        "dob": "1951-03-21",
+        "aadhaarHash": "d4e223ead92b29e7e188aa03ed9a625f",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/3",
+        "shareDecimal": 0.333333
+      },
+      {
+        "memberId": "MBR-039-S1",
+        "name": "Namdev Mahesh Shinde",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1994-09-02",
+        "aadhaarHash": "efb83cdc490c388227e494849d950918",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/3",
+        "shareDecimal": 0.333333
+      },
+      {
+        "memberId": "MBR-039-D1",
+        "name": "Kavita Mahesh Shinde",
+        "relation": "Daughter",
+        "gender": "F",
+        "dob": "1989-11-09",
+        "aadhaarHash": "f63e6cb650fd10cf90c8bb5153e5fe60",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/3",
+        "shareDecimal": 0.333333,
+        "legalNote": "Equal coparcenary right per HSA 2005 S.6(3) — non-bypassable"
+      }
+    ],
+    "totalHeirs": 3,
+    "parcelsOwned": [],
+    "successionStatus": "PENDING_CONSENT",
+    "disputeInfo": null,
+    "deathCertificateIPFS": "QmDeathCert0039",
+    "crsRegistrationNo": "CRS/NSK/2024/52187",
+    "triggeredAt": "2024-05-16T08:00:00Z"
+  },
+  {
+    "familyId": "FAM-MH-NSK-040",
+    "patriarch": {
+      "name": "Arun Arun More",
+      "aadhaarHash": "7c7863e6fdc41682251714e2716e0969",
+      "dob": "1951-10-20",
+      "dod": "2026-03-01",
+      "isAlive": false
+    },
+    "surname": "More",
+    "applicableLaw": "Hindu Succession Act 1956/2005",
+    "coparcenaryType": "Mitakshara",
+    "members": [
+      {
+        "memberId": "MBR-040-W",
+        "name": "Savita Vijay More",
+        "relation": "Widow",
+        "gender": "F",
+        "dob": "1952-06-14",
+        "aadhaarHash": "051d83037ee00b207cdc3926be829256",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/4",
+        "shareDecimal": 0.25
+      },
+      {
+        "memberId": "MBR-040-S1",
+        "name": "Namdev Arun More",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1982-02-22",
+        "aadhaarHash": "2fde6e5ae3e332efeea348b269d2c93d",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/4",
+        "shareDecimal": 0.25
+      },
+      {
+        "memberId": "MBR-040-S2",
+        "name": "Namdev Arun More",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1978-12-23",
+        "aadhaarHash": "d298c3b499bf45d8c971f478445e8fc3",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/4",
+        "shareDecimal": 0.25
+      },
+      {
+        "memberId": "MBR-040-D1",
+        "name": "Usha Arun More",
+        "relation": "Daughter",
+        "gender": "F",
+        "dob": "1991-11-04",
+        "aadhaarHash": "cb9426a28723e7dae8b008f4edc1d0df",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/4",
+        "shareDecimal": 0.25,
+        "legalNote": "Equal coparcenary right per HSA 2005 S.6(3) — non-bypassable"
+      }
+    ],
+    "totalHeirs": 4,
+    "parcelsOwned": [],
+    "successionStatus": "PENDING_CONSENT",
+    "disputeInfo": null,
+    "deathCertificateIPFS": "QmDeathCert0040",
+    "crsRegistrationNo": "CRS/NSK/2026/97569",
+    "triggeredAt": "2026-03-01T08:00:00Z"
+  },
+  {
+    "familyId": "FAM-MH-NSK-041",
+    "patriarch": {
+      "name": "Balasaheb Suresh Naik",
+      "aadhaarHash": "bcaa2e9c64bc02e99d0a640d78764fc5",
+      "dob": "1957-06-08",
+      "dod": "2020-12-13",
+      "isAlive": false
+    },
+    "surname": "Naik",
+    "applicableLaw": "Hindu Succession Act 1956/2005",
+    "coparcenaryType": "Mitakshara",
+    "members": [
+      {
+        "memberId": "MBR-041-S1",
+        "name": "Dnyaneshwar Balasaheb Naik",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1982-02-03",
+        "aadhaarHash": "3d671c5ff06a9e050ea3165270e18761",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/3",
+        "shareDecimal": 0.333333
+      },
+      {
+        "memberId": "MBR-041-S2",
+        "name": "Vijay Balasaheb Naik",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1990-10-16",
+        "aadhaarHash": "2ebb772e116f5a038532a08a1ab2c92c",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/3",
+        "shareDecimal": 0.333333
+      },
+      {
+        "memberId": "MBR-041-D1",
+        "name": "Anita Balasaheb Naik",
+        "relation": "Daughter",
+        "gender": "F",
+        "dob": "1992-02-07",
+        "aadhaarHash": "fc528f082cbc15c702d35c26539fc159",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/3",
+        "shareDecimal": 0.333333,
+        "legalNote": "Equal coparcenary right per HSA 2005 S.6(3) — non-bypassable"
+      }
+    ],
+    "totalHeirs": 3,
+    "parcelsOwned": [],
+    "successionStatus": "PENDING_CONSENT",
+    "disputeInfo": null,
+    "deathCertificateIPFS": "QmDeathCert0041",
+    "crsRegistrationNo": "CRS/NSK/2020/30539",
+    "triggeredAt": "2020-12-13T08:00:00Z"
+  },
+  {
+    "familyId": "FAM-MH-NSK-042",
+    "patriarch": {
+      "name": "Mahesh Suresh Rane",
+      "aadhaarHash": "8c347b7d06fe26accf408df4d004de7b",
+      "dob": "1950-04-21",
+      "dod": "2020-03-02",
+      "isAlive": false
+    },
+    "surname": "Rane",
+    "applicableLaw": "Indian Succession Act 1925",
+    "coparcenaryType": "Christian",
+    "members": [
+      {
+        "memberId": "MBR-042-S1",
+        "name": "Namdev Mahesh Rane",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1985-07-23",
+        "aadhaarHash": "6e98a7fe01dcd4e3f0c54d8744ec1bd0",
+        "isAlive": true,
+        "isAdult": true
+      },
+      {
+        "memberId": "MBR-042-D1",
+        "name": "Usha Mahesh Rane",
+        "relation": "Daughter",
+        "gender": "F",
+        "dob": "1983-11-15",
+        "aadhaarHash": "8d4701559e1c2d4f9b9465fbb9c9ed4e",
+        "isAlive": true,
+        "isAdult": true
+      }
+    ],
+    "totalHeirs": 2,
+    "parcelsOwned": [],
+    "successionStatus": "PENDING_CONSENT",
+    "disputeInfo": null,
+    "deathCertificateIPFS": "QmDeathCert0042",
+    "crsRegistrationNo": "CRS/NSK/2020/33919",
+    "triggeredAt": "2020-03-02T08:00:00Z"
+  },
+  {
+    "familyId": "FAM-MH-NSK-043",
+    "patriarch": {
+      "name": "Mahesh Sanjay Joshi",
+      "aadhaarHash": "89cece2540e6b54eca8853ec321658ac",
+      "dob": "1954-06-29",
+      "dod": "2022-05-24",
+      "isAlive": false
+    },
+    "surname": "Joshi",
+    "applicableLaw": "Hindu Succession Act 1956/2005",
+    "coparcenaryType": "Mitakshara",
+    "members": [
+      {
+        "memberId": "MBR-043-S1",
+        "name": "Arun Mahesh Joshi",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1985-10-17",
+        "aadhaarHash": "ff13e0e343e8708437a914bea189b0af",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/5",
+        "shareDecimal": 0.2
+      },
+      {
+        "memberId": "MBR-043-S2",
+        "name": "Rajesh Mahesh Joshi",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1990-07-02",
+        "aadhaarHash": "0b1c92303ecd558464a2ec232851150a",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/5",
+        "shareDecimal": 0.2
+      },
+      {
+        "memberId": "MBR-043-S3",
+        "name": "Arun Mahesh Joshi",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1985-11-04",
+        "aadhaarHash": "b56d707dc23fd63a0d58f0b85720f642",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/5",
+        "shareDecimal": 0.2
+      },
+      {
+        "memberId": "MBR-043-D1",
+        "name": "Kavita Mahesh Joshi",
+        "relation": "Daughter",
+        "gender": "F",
+        "dob": "1988-03-13",
+        "aadhaarHash": "e6b99cb5ca3b5c5371e527489400d308",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/5",
+        "shareDecimal": 0.2,
+        "legalNote": "Equal coparcenary right per HSA 2005 S.6(3) — non-bypassable"
+      },
+      {
+        "memberId": "MBR-043-D2",
+        "name": "Nanda Mahesh Joshi",
+        "relation": "Daughter",
+        "gender": "F",
+        "dob": "1988-12-05",
+        "aadhaarHash": "d6896d2f3226ba886d240a72c28ef48e",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/5",
+        "shareDecimal": 0.2,
+        "legalNote": "Equal coparcenary right per HSA 2005 S.6(3) — non-bypassable"
+      }
+    ],
+    "totalHeirs": 5,
+    "parcelsOwned": [],
+    "successionStatus": "PENDING_CONSENT",
+    "disputeInfo": null,
+    "deathCertificateIPFS": "QmDeathCert0043",
+    "crsRegistrationNo": "CRS/NSK/2022/68548",
+    "triggeredAt": "2022-05-24T08:00:00Z"
+  },
+  {
+    "familyId": "FAM-MH-NSK-044",
+    "patriarch": {
+      "name": "Suresh Vijay Naik",
+      "aadhaarHash": "21e600a3d2b40c0e6632ff47fb4d77b5",
+      "dob": "1936-07-02",
+      "dod": "2025-08-07",
+      "isAlive": false
+    },
+    "surname": "Naik",
+    "applicableLaw": "Hindu Succession Act 1956/2005",
+    "coparcenaryType": "Mitakshara",
+    "members": [
+      {
+        "memberId": "MBR-044-W",
+        "name": "Savita Ramesh Naik",
+        "relation": "Widow",
+        "gender": "F",
+        "dob": "1957-02-02",
+        "aadhaarHash": "cb94f2cd355cec6bda03d171192dc3c5",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/4",
+        "shareDecimal": 0.25
+      },
+      {
+        "memberId": "MBR-044-S1",
+        "name": "Ramesh Suresh Naik",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1991-05-09",
+        "aadhaarHash": "5aa19b4a45ab23267b5f537fa2464503",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/4",
+        "shareDecimal": 0.25
+      },
+      {
+        "memberId": "MBR-044-S2",
+        "name": "Arun Suresh Naik",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1994-09-09",
+        "aadhaarHash": "8cf38dd2431c5ec624e8b0557f17fb96",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/4",
+        "shareDecimal": 0.25
+      },
+      {
+        "memberId": "MBR-044-D1",
+        "name": "Nanda Suresh Naik",
+        "relation": "Daughter",
+        "gender": "F",
+        "dob": "1987-08-21",
+        "aadhaarHash": "7e09a8db619c10627628ff0fbebe2d3c",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/4",
+        "shareDecimal": 0.25,
+        "legalNote": "Equal coparcenary right per HSA 2005 S.6(3) — non-bypassable"
+      }
+    ],
+    "totalHeirs": 4,
+    "parcelsOwned": [],
+    "successionStatus": "PENDING_CONSENT",
+    "disputeInfo": null,
+    "deathCertificateIPFS": "QmDeathCert0044",
+    "crsRegistrationNo": "CRS/NSK/2025/10043",
+    "triggeredAt": "2025-08-07T08:00:00Z"
+  },
+  {
+    "familyId": "FAM-MH-NSK-045",
+    "patriarch": {
+      "name": "Eknath Suresh Kulkarni",
+      "aadhaarHash": "304e604ea74dbab378aefff339d478d0",
+      "dob": "1941-01-01",
+      "dod": "2021-05-01",
+      "isAlive": false
+    },
+    "surname": "Kulkarni",
+    "applicableLaw": "Hindu Succession Act 1956/2005",
+    "coparcenaryType": "Mitakshara",
+    "members": [
+      {
+        "memberId": "MBR-045-W",
+        "name": "Sunita Ramesh Kulkarni",
+        "relation": "Widow",
+        "gender": "F",
+        "dob": "1949-01-01",
+        "aadhaarHash": "94dcd16bf83097c090f8362249bebe1c",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/3",
+        "shareDecimal": 0.333333
+      },
+      {
+        "memberId": "MBR-045-S1",
+        "name": "Vijay Eknath Kulkarni",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1988-07-13",
+        "aadhaarHash": "6d232f23e9670bbd77e6f15ec37da86f",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/3",
+        "shareDecimal": 0.333333
+      },
+      {
+        "memberId": "MBR-045-D1",
+        "name": "Nanda Eknath Kulkarni",
+        "relation": "Daughter",
+        "gender": "F",
+        "dob": "1994-11-24",
+        "aadhaarHash": "516343cd7cb038be7c0a943a5b65fbbd",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/3",
+        "shareDecimal": 0.333333,
+        "legalNote": "Equal coparcenary right per HSA 2005 S.6(3) — non-bypassable"
+      }
+    ],
+    "totalHeirs": 3,
+    "parcelsOwned": [],
+    "successionStatus": "PENDING_CONSENT",
+    "disputeInfo": null,
+    "deathCertificateIPFS": "QmDeathCert0045",
+    "crsRegistrationNo": "CRS/NSK/2021/72425",
+    "triggeredAt": "2021-05-01T08:00:00Z"
+  },
+  {
+    "familyId": "FAM-MH-NSK-046",
+    "patriarch": {
+      "name": "Rajesh Arun Bhosale",
+      "aadhaarHash": "ff2fe014aacafd23c2244f156a418ced",
+      "dob": "1945-12-09",
+      "dod": "2022-01-21",
+      "isAlive": false
+    },
+    "surname": "Bhosale",
+    "applicableLaw": "Hindu Succession Act 1956/2005",
+    "coparcenaryType": "Mitakshara",
+    "members": [
+      {
+        "memberId": "MBR-046-W",
+        "name": "Kavita Sanjay Bhosale",
+        "relation": "Widow",
+        "gender": "F",
+        "dob": "1941-11-04",
+        "aadhaarHash": "9fb44d24b7ea2f4020f058d80472dee3",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/4",
+        "shareDecimal": 0.25
+      },
+      {
+        "memberId": "MBR-046-S1",
+        "name": "Ganesh Rajesh Bhosale",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1994-08-15",
+        "aadhaarHash": "abac9d7609642a3358ee42b12578d550",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/4",
+        "shareDecimal": 0.25
+      },
+      {
+        "memberId": "MBR-046-D1",
+        "name": "Meena Rajesh Bhosale",
+        "relation": "Daughter",
+        "gender": "F",
+        "dob": "1985-08-18",
+        "aadhaarHash": "54af48731933df4de641cdeef7f7660c",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/4",
+        "shareDecimal": 0.25,
+        "legalNote": "Equal coparcenary right per HSA 2005 S.6(3) — non-bypassable"
+      },
+      {
+        "memberId": "MBR-046-D2",
+        "name": "Usha Rajesh Bhosale",
+        "relation": "Daughter",
+        "gender": "F",
+        "dob": "1993-03-04",
+        "aadhaarHash": "324abf73f642d1ea0392157af0167dd9",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/4",
+        "shareDecimal": 0.25,
+        "legalNote": "Equal coparcenary right per HSA 2005 S.6(3) — non-bypassable"
+      }
+    ],
+    "totalHeirs": 4,
+    "parcelsOwned": [],
+    "successionStatus": "PENDING_CONSENT",
+    "disputeInfo": null,
+    "deathCertificateIPFS": "QmDeathCert0046",
+    "crsRegistrationNo": "CRS/NSK/2022/94485",
+    "triggeredAt": "2022-01-21T08:00:00Z"
+  },
+  {
+    "familyId": "FAM-MH-NSK-047",
+    "patriarch": {
+      "name": "Ramesh Vijay Gaikwad",
+      "aadhaarHash": "b5d77eeba36cdb77abfe48c0c3e31907",
+      "dob": "1936-04-14",
+      "dod": "2022-09-20",
+      "isAlive": false
+    },
+    "surname": "Gaikwad",
+    "applicableLaw": "Hindu Succession Act 1956/2005",
+    "coparcenaryType": "Mitakshara",
+    "members": [
+      {
+        "memberId": "MBR-047-W",
+        "name": "Priya Ramesh Gaikwad",
+        "relation": "Widow",
+        "gender": "F",
+        "dob": "1959-01-19",
+        "aadhaarHash": "2080ab66e3b0e2cdf87ac0f0831d826c",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/5",
+        "shareDecimal": 0.2
+      },
+      {
+        "memberId": "MBR-047-S1",
+        "name": "Eknath Ramesh Gaikwad",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1995-06-24",
+        "aadhaarHash": "66c8b853479b6f0c5082932c6499fa2c",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/5",
+        "shareDecimal": 0.2
+      },
+      {
+        "memberId": "MBR-047-S2",
+        "name": "Eknath Ramesh Gaikwad",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1975-01-29",
+        "aadhaarHash": "79abd71db39c174c0f10bd59e524b663",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/5",
+        "shareDecimal": 0.2
+      },
+      {
+        "memberId": "MBR-047-D1",
+        "name": "Meena Ramesh Gaikwad",
+        "relation": "Daughter",
+        "gender": "F",
+        "dob": "1986-03-13",
+        "aadhaarHash": "c952f80211d59696fcf4acb642d63edb",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/5",
+        "shareDecimal": 0.2,
+        "legalNote": "Equal coparcenary right per HSA 2005 S.6(3) — non-bypassable"
+      },
+      {
+        "memberId": "MBR-047-D2",
+        "name": "Meena Ramesh Gaikwad",
+        "relation": "Daughter",
+        "gender": "F",
+        "dob": "1993-02-13",
+        "aadhaarHash": "010267cf0d35be90c78f48cdd8457adc",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/5",
+        "shareDecimal": 0.2,
+        "legalNote": "Equal coparcenary right per HSA 2005 S.6(3) — non-bypassable"
+      }
+    ],
+    "totalHeirs": 5,
+    "parcelsOwned": [],
+    "successionStatus": "PENDING_CONSENT",
+    "disputeInfo": null,
+    "deathCertificateIPFS": "QmDeathCert0047",
+    "crsRegistrationNo": "CRS/NSK/2022/44774",
+    "triggeredAt": "2022-09-20T08:00:00Z"
+  },
+  {
+    "familyId": "FAM-MH-NSK-048",
+    "patriarch": {
+      "name": "Vijay Arun Kulkarni",
+      "aadhaarHash": "65ac3645bcca8de788d60ccc93d966b7",
+      "dob": "1959-02-27",
+      "dod": "2020-02-22",
+      "isAlive": false
+    },
+    "surname": "Kulkarni",
+    "applicableLaw": "Hindu Succession Act 1956/2005",
+    "coparcenaryType": "Mitakshara",
+    "members": [
+      {
+        "memberId": "MBR-048-W",
+        "name": "Priya Suresh Kulkarni",
+        "relation": "Widow",
+        "gender": "F",
+        "dob": "1944-12-31",
+        "aadhaarHash": "aa5bad584254ce6c2af1f2e7ffc5e679",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/4",
+        "shareDecimal": 0.25
+      },
+      {
+        "memberId": "MBR-048-S1",
+        "name": "Rajesh Vijay Kulkarni",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1979-12-15",
+        "aadhaarHash": "42aa9000fa6c149b587e3a61736b1089",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/4",
+        "shareDecimal": 0.25
+      },
+      {
+        "memberId": "MBR-048-S2",
+        "name": "Vijay Vijay Kulkarni",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1976-03-16",
+        "aadhaarHash": "53e37f958642e8e00598255155f59ec1",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/4",
+        "shareDecimal": 0.25
+      },
+      {
+        "memberId": "MBR-048-D1",
+        "name": "Nanda Vijay Kulkarni",
+        "relation": "Daughter",
+        "gender": "F",
+        "dob": "1983-08-20",
+        "aadhaarHash": "bec2a0ff6660bf3c2d7cf2f824626add",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/4",
+        "shareDecimal": 0.25,
+        "legalNote": "Equal coparcenary right per HSA 2005 S.6(3) — non-bypassable"
+      }
+    ],
+    "totalHeirs": 4,
+    "parcelsOwned": [],
+    "successionStatus": "PENDING_CONSENT",
+    "disputeInfo": null,
+    "deathCertificateIPFS": "QmDeathCert0048",
+    "crsRegistrationNo": "CRS/NSK/2020/95336",
+    "triggeredAt": "2020-02-22T08:00:00Z"
+  },
+  {
+    "familyId": "FAM-MH-NSK-049",
+    "patriarch": {
+      "name": "Rajesh Suresh Bhosale",
+      "aadhaarHash": "5f67c91faba962d08461b36f83dbcb6b",
+      "dob": "1951-11-30",
+      "dod": "2022-08-24",
+      "isAlive": false
+    },
+    "surname": "Bhosale",
+    "applicableLaw": "Hindu Succession Act 1956/2005",
+    "coparcenaryType": "Mitakshara",
+    "members": [
+      {
+        "memberId": "MBR-049-S1",
+        "name": "Eknath Rajesh Bhosale",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1987-12-29",
+        "aadhaarHash": "a2a889fc3c04c63e582ca8234c9b4db9",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/2",
+        "shareDecimal": 0.5
+      },
+      {
+        "memberId": "MBR-049-D1",
+        "name": "Vandana Rajesh Bhosale",
+        "relation": "Daughter",
+        "gender": "F",
+        "dob": "1979-05-22",
+        "aadhaarHash": "c23189c7a194c9cbed691696474e8144",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/2",
+        "shareDecimal": 0.5,
+        "legalNote": "Equal coparcenary right per HSA 2005 S.6(3) — non-bypassable"
+      }
+    ],
+    "totalHeirs": 2,
+    "parcelsOwned": [],
+    "successionStatus": "COURT_REFERRED",
+    "disputeInfo": {
+      "type": "ContestingShare",
+      "filedBy": "Vandana Rajesh Bhosale",
+      "eCourtsNo": "CNS/8689/2021",
+      "court": "Civil Court Nashik",
+      "status": "PENDING"
+    },
+    "deathCertificateIPFS": "QmDeathCert0049",
+    "crsRegistrationNo": "CRS/NSK/2022/47697",
+    "triggeredAt": "2022-08-24T08:00:00Z"
+  },
+  {
+    "familyId": "FAM-MH-NSK-050",
+    "patriarch": {
+      "name": "Sanjay Suresh Kulkarni",
+      "aadhaarHash": "5cbe732f6c1a6ca40e1ca20dc16aab7f",
+      "dob": "1949-02-17",
+      "dod": "2021-01-08",
+      "isAlive": false
+    },
+    "surname": "Kulkarni",
+    "applicableLaw": "Hindu Succession Act 1956/2005",
+    "coparcenaryType": "Mitakshara",
+    "members": [
+      {
+        "memberId": "MBR-050-W",
+        "name": "Priya Sanjay Kulkarni",
+        "relation": "Widow",
+        "gender": "F",
+        "dob": "1943-10-06",
+        "aadhaarHash": "015aaee1e74887867226ac44bc4feca0",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/6",
+        "shareDecimal": 0.166667
+      },
+      {
+        "memberId": "MBR-050-S1",
+        "name": "Arun Sanjay Kulkarni",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1975-01-09",
+        "aadhaarHash": "73ae244b26c40802e4067ef6b142bd75",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/6",
+        "shareDecimal": 0.166667
+      },
+      {
+        "memberId": "MBR-050-S2",
+        "name": "Tukaram Sanjay Kulkarni",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1990-05-20",
+        "aadhaarHash": "867b93e5a196a78fa811088ed565b96f",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/6",
+        "shareDecimal": 0.166667
+      },
+      {
+        "memberId": "MBR-050-S3",
+        "name": "Rajesh Sanjay Kulkarni",
+        "relation": "Son",
+        "gender": "M",
+        "dob": "1985-12-25",
+        "aadhaarHash": "e9de99877ae89a9575066877b37d767d",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/6",
+        "shareDecimal": 0.166667
+      },
+      {
+        "memberId": "MBR-050-D1",
+        "name": "Kavita Sanjay Kulkarni",
+        "relation": "Daughter",
+        "gender": "F",
+        "dob": "1991-10-26",
+        "aadhaarHash": "c738d8dfb8f4bbac5e7adcb518544afc",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/6",
+        "shareDecimal": 0.166667,
+        "legalNote": "Equal coparcenary right per HSA 2005 S.6(3) — non-bypassable"
+      },
+      {
+        "memberId": "MBR-050-D2",
+        "name": "Anita Sanjay Kulkarni",
+        "relation": "Daughter",
+        "gender": "F",
+        "dob": "1982-10-25",
+        "aadhaarHash": "df7272a785782e5cb99218aa1835f48e",
+        "isAlive": true,
+        "isAdult": true,
+        "share": "1/6",
+        "shareDecimal": 0.166667,
+        "legalNote": "Equal coparcenary right per HSA 2005 S.6(3) — non-bypassable"
+      }
+    ],
+    "totalHeirs": 6,
+    "parcelsOwned": [],
+    "successionStatus": "PENDING_CONSENT",
+    "disputeInfo": null,
+    "deathCertificateIPFS": "QmDeathCert0050",
+    "crsRegistrationNo": "CRS/NSK/2021/69460",
+    "triggeredAt": "2021-01-08T08:00:00Z"
+  }
+]

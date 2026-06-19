@@ -1,0 +1,72 @@
+services:
+  # ─── API Gateway ───────────────────────────────────────────────────────────
+  - type: web
+    name: bhumichain-api-gateway
+    env: node
+    region: singapore # Adjust based on preference
+    rootDir: backend/api-gateway
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 4000
+      - key: FABRIC_MODE
+        value: mock # Using mock for prototype deployment
+      - key: ORACLE_MODE
+        value: mock
+      - key: CORS_ORIGIN
+        value: "*" # Update this to your Vercel URL in production
+      - key: ORACLE_SERVICE_URL
+        value: "https://bhumichain-oracle-service.onrender.com"
+      - key: AI_SERVICE_URL
+        value: "https://bhumichain-record-scan.onrender.com"
+      - key: BHUMI_GPT_URL
+        value: "https://bhumichain-bhumi-gpt.onrender.com"
+
+  # ─── Oracle Service ─────────────────────────────────────────────────────────
+  - type: web
+    name: bhumichain-oracle-service
+    env: python
+    region: singapore
+    rootDir: backend/oracle-service
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: ORACLE_MODE
+        value: mock
+      - key: CORS_ORIGINS
+        value: "https://bhumichain-api-gateway.onrender.com"
+
+  # ─── RecordScan AI ──────────────────────────────────────────────────────────
+  - type: web
+    name: bhumichain-record-scan
+    env: python
+    region: singapore
+    rootDir: backend/ai-services/record-scan
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: RECORD_SCAN_MODE
+        value: mock
+      - key: API_GATEWAY_URL
+        value: "https://bhumichain-api-gateway.onrender.com"
+      - key: CORS_ORIGINS
+        value: "https://bhumichain-api-gateway.onrender.com"
+      # IMPORTANT: Add AZURE_FORM_RECOGNIZER_ENDPOINT and KEY in the Render Dashboard if using real mode
+
+  # ─── BhumiGPT ───────────────────────────────────────────────────────────────
+  - type: web
+    name: bhumichain-bhumi-gpt
+    env: python
+    region: singapore
+    rootDir: backend/ai-services/bhumi-gpt
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: BHUMI_GPT_MODE
+        value: mock
+      - key: CORS_ORIGINS
+        value: "https://bhumichain-api-gateway.onrender.com"
+      # IMPORTANT: Add ANTHROPIC_API_KEY in the Render Dashboard if using real mode
