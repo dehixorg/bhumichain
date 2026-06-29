@@ -8,63 +8,102 @@ import (
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
 )
 
-// ─── Data Structures ──────────────────────────────────────────────────────────
+// ─── Transfer Types ───────────────────────────────────────────────────────────
+//
+// FULL_SALE:   ALL current owners sell together → one or more buyers take 100% of parcel.
+//              Every current owner MUST consent. Most common for single-owner parcels.
+//
+// SHARE_SALE:  ONE co-owner sells only their share to an outsider.
+//              Preemption right: other co-owners get 30 days to buy at same price first.
+//              (UP Revenue Code 2006 S.54)
+//              Only the selling co-owner + buyer need to consent.
+//              Non-selling co-owners either exercise preemption OR waive within 30 days.
+//
+// GIFT:        Same as FULL_SALE but zero or nominal consideration.
+//              Stamp duty: UP gift deed rate (different from sale deed rate).
 
+const (
+	TransferTypeFull  = "FULL_SALE"
+	TransferTypeShare = "SHARE_SALE"
+	TransferTypeGift  = "GIFT"
+)
+
+// ─── Data Structures ─────────────────────────────────────────────────────────
+
+// TransferParty — a seller or buyer in a transfer, with their share info
+type TransferParty struct {
+	AadhaarHash   string  `json:"aadhaarHash"`
+	Name          string  `json:"name"`
+	ShareFraction string  `json:"shareFraction"` // "1/3", "1/2" etc.
+	ShareDecimal  float64 `json:"shareDecimal"`
+	HasConsented  bool    `json:"hasConsented"`
+	ConsentedAt   string  `json:"consentedAt,omitempty"`
+	ESignTxHash   string  `json:"eSignTxHash,omitempty"`
+}
+
+// PreemptionRecord — tracks co-owner preemption rights for SHARE_SALE
+type PreemptionRecord struct {
+	IsApplicable      bool     `json:"isApplicable"`
+	CoOwnerHashes     []string `json:"coOwnerHashes"`    // co-owners notified
+	Waivers           []string `json:"waivers"`          // co-owners who waived
+	PreemptionClaimed string   `json:"preemptionClaimed,omitempty"` // hash of co-owner exercising preemption
+	WindowOpensAt     string   `json:"windowOpensAt"`
+	WindowClosesAt    string   `json:"windowClosesAt"` // 30 days (UP Rev Code S.54)
+	Resolved          bool     `json:"resolved"`        // true when window passed or preemption exercised
+}
+
+// TransferProposal — the main transfer record
 type TransferProposal struct {
-	TransferID        string          `json:"transferId"`
-	DLPIId            string          `json:"dlpiId"`
-	SellerAadhaarHash string          `json:"sellerAadhaarHash"`
-	BuyerName         string          `json:"buyerName"`
-	BuyerAadhaarHash  string          `json:"buyerAadhaarHash"`
-	DeclaredValueINR  int64           `json:"declaredValueINR"`
-	OracleValueINR    int64           `json:"oracleValueINR"`   // from ValuationOracle
-	StampDutyINR      int64           `json:"stampDutyINR"`
-	StampDutyPaidTx   string          `json:"stampDutyPaidTx"`  // UPI/NEFT ref
-	SaleAgreementCID  string          `json:"saleAgreementCID"` // IPFS CID of signed deed
-	Status            string          `json:"status"`           // see TransferStatus consts
-	Consents          []PartyConsent  `json:"consents"`
-	FraudScore        float64         `json:"fraudScore"`
-	FraudSignals      map[string]float64 `json:"fraudSignals,omitempty"`
-	PreemptionWindow  *PreemptionInfo `json:"preemptionWindow,omitempty"`
-	InitiatedAt       string          `json:"initiatedAt"`
-	UpdatedAt         string          `json:"updatedAt"`
-	CompletedAt       string          `json:"completedAt,omitempty"`
-	SROOfficerHash    string          `json:"sroOfficerHash"`
-	MutationNo        string          `json:"mutationNo"`
-	NewTitleCID       string          `json:"newTitleCID,omitempty"` // DigiLocker digital title
-	RejectionReason   string          `json:"rejectionReason,omitempty"`
-}
+	TransferID   string `json:"transferId"`
+	DLPIId       string `json:"dlpiId"`
+	TransferType string `json:"transferType"` // FULL_SALE | SHARE_SALE | GIFT
 
-type PartyConsent struct {
-	PartyType    string `json:"partyType"`   // SELLER | BUYER | COPARCENER | SRO | STAMP_DEPT
-	Name         string `json:"name"`
-	AadhaarHash  string `json:"aadhaarHash"`
-	HasConsented bool   `json:"hasConsented"`
-	ConsentedAt  string `json:"consentedAt,omitempty"`
-	ESignTxHash  string `json:"eSignTxHash,omitempty"`
-}
+	// Who is selling (with their shares)
+	Sellers []TransferParty `json:"sellers"`
+	// Who is buying (with their new shares after transfer)
+	Buyers []TransferParty `json:"buyers"`
 
-type PreemptionInfo struct {
-	IsApplicable     bool     `json:"isApplicable"`
-	AdjacentDLPIs    []string `json:"adjacentDlpis"`
-	NotifiedOwners   []string `json:"notifiedOwnerHashes"`
-	WindowOpensAt    string   `json:"windowOpensAt"`
-	WindowClosesAt   string   `json:"windowClosesAt"`  // 7 days
-	PreemptionClaimed bool    `json:"preemptionClaimed"`
+	// Preemption — only relevant for SHARE_SALE
+	Preemption *PreemptionRecord `json:"preemption,omitempty"`
+
+	// Endorsing officer (Tehsildar acts as SRO for demo)
+	OfficerHash string `json:"officerHash"`
+
+	// Financial
+	DeclaredValueINR int64  `json:"declaredValueINR"`
+	OracleValueINR   int64  `json:"oracleValueINR"`
+	StampDutyINR     int64  `json:"stampDutyINR"`
+	StampDutyPaidTx  string `json:"stampDutyPaidTx,omitempty"`
+	SaleAgreementCID string `json:"saleAgreementCID,omitempty"`
+
+	// Fraud
+	FraudScore   float64            `json:"fraudScore"`
+	FraudSignals map[string]float64 `json:"fraudSignals,omitempty"`
+
+	// Status tracking
+	Status          string `json:"status"`
+	RejectionReason string `json:"rejectionReason,omitempty"`
+	MutationNo      string `json:"mutationNo"`
+	NewTitleCID     string `json:"newTitleCID,omitempty"`
+
+	InitiatedAt string `json:"initiatedAt"`
+	UpdatedAt   string `json:"updatedAt"`
+	CompletedAt string `json:"completedAt,omitempty"`
 }
 
 // Transfer status constants
 const (
-	StatusInitiated       = "INITIATED"
-	StatusAwaitingConsent = "AWAITING_CONSENT"
-	StatusStampDutyPending = "STAMP_DUTY_PENDING"
-	StatusStampDutyPaid   = "STAMP_DUTY_PAID"
-	StatusFabricEndorsed  = "FABRIC_ENDORSED"
-	StatusCompleted       = "COMPLETED"
-	StatusRejectedFraud   = "REJECTED_FRAUD"
-	StatusRejectedLock    = "REJECTED_LOCKED"
-	StatusRejectedConsent = "REJECTED_CONSENT"
-	StatusExpired         = "EXPIRED"
+	StatusInitiated            = "INITIATED"
+	StatusPreemptionWindow     = "PREEMPTION_WINDOW" // SHARE_SALE only
+	StatusAwaitingConsent      = "AWAITING_CONSENT"
+	StatusStampDutyPending     = "STAMP_DUTY_PENDING"
+	StatusStampDutyPaid        = "STAMP_DUTY_PAID"
+	StatusCompleted            = "COMPLETED"
+	StatusRejectedFraud        = "REJECTED_FRAUD"
+	StatusRejectedLocked       = "REJECTED_LOCKED"
+	StatusRejectedConsent      = "REJECTED_CONSENT"
+	StatusPreemptionExercised  = "PREEMPTION_EXERCISED" // co-owner bought the share instead
+	StatusExpired              = "EXPIRED"
 )
 
 // ─── Smart Contract ───────────────────────────────────────────────────────────
@@ -73,44 +112,78 @@ type PropertyTransferContract struct {
 	contractapi.Contract
 }
 
-// InitiateTransfer — Step 1: buyer/seller initiate, places national parcel lock
-// Endorsement: AND(SRO.member, Seller.consent, Buyer.consent)
+// InitiateTransfer — Step 1: start a transfer proposal and place national parcel lock
+//
+// sellersJSON:  JSON array of TransferParty (the owners selling — all for FULL_SALE, one for SHARE_SALE)
+// buyersJSON:   JSON array of TransferParty (the buyers and their incoming shares)
+// coOwnerHashesJSON: JSON array of strings — other co-owners (for preemption notification in SHARE_SALE)
 func (c *PropertyTransferContract) InitiateTransfer(
 	ctx contractapi.TransactionContextInterface,
-	dlpiId, sellerAadhaarHash, buyerName, buyerAadhaarHash string,
+	dlpiId, transferType,
+	sellersJSON, buyersJSON,
+	officerHash,
+	coOwnerHashesJSON string,
 	declaredValueINR, oracleValueINR int64,
-	sroOfficerHash, preemptionJSON string,
 ) (string, error) {
 
-	txID := ctx.GetStub().GetTxID()
 	now := time.Now().UTC()
+	txID := ctx.GetStub().GetTxID()
 
-	// Compute stamp duty: max(declared, 80% of oracle) × state rate (Maharashtra = 5%)
+	// Validate transfer type
+	if transferType != TransferTypeFull && transferType != TransferTypeShare && transferType != TransferTypeGift {
+		return "", fmt.Errorf("invalid transferType: %s", transferType)
+	}
+
+	var sellers []TransferParty
+	if err := json.Unmarshal([]byte(sellersJSON), &sellers); err != nil {
+		return "", fmt.Errorf("invalid sellers JSON: %w", err)
+	}
+	if len(sellers) == 0 {
+		return "", fmt.Errorf("at least one seller required")
+	}
+
+	var buyers []TransferParty
+	if err := json.Unmarshal([]byte(buyersJSON), &buyers); err != nil {
+		return "", fmt.Errorf("invalid buyers JSON: %w", err)
+	}
+	if len(buyers) == 0 {
+		return "", fmt.Errorf("at least one buyer required")
+	}
+
+	// Validate buyer shares sum to the total share being sold
+	if err := validateBuyerShares(sellers, buyers, transferType); err != nil {
+		return "", err
+	}
+
+	// Stamp duty: UP residential = 7%, agricultural = 5%
+	// Use max(declared, 80% of oracle)
 	effectiveValue := declaredValueINR
-	oracleFloor := int64(float64(oracleValueINR) * 0.80)
-	if oracleFloor > effectiveValue {
-		effectiveValue = oracleFloor
+	if floor := int64(float64(oracleValueINR) * 0.80); floor > effectiveValue {
+		effectiveValue = floor
 	}
-	stampDuty := int64(float64(effectiveValue) * 0.05) // 5% Maharashtra stamp duty
-
-	// Build initial consent list
-	consents := []PartyConsent{
-		{PartyType: "SELLER", AadhaarHash: sellerAadhaarHash, HasConsented: false},
-		{PartyType: "BUYER", Name: buyerName, AadhaarHash: buyerAadhaarHash, HasConsented: false},
-		{PartyType: "SRO", AadhaarHash: sroOfficerHash, HasConsented: false},
-		{PartyType: "STAMP_DEPT", HasConsented: false}, // auto-consented after UPI confirmation
+	stampDutyRate := 0.07 // UP default; caller should pass correct rate
+	if transferType == TransferTypeGift {
+		stampDutyRate = 0.02 // UP gift deed rate
 	}
+	stampDuty := int64(float64(effectiveValue) * stampDutyRate)
 
-	// Parse preemption info if provided
-	var preemption *PreemptionInfo
-	if preemptionJSON != "" && preemptionJSON != "null" {
-		preemption = &PreemptionInfo{}
-		if err := json.Unmarshal([]byte(preemptionJSON), preemption); err != nil {
-			return "", fmt.Errorf("invalid preemption JSON: %w", err)
+	// Build preemption record for SHARE_SALE
+	var preemption *PreemptionRecord
+	if transferType == TransferTypeShare {
+		var coOwnerHashes []string
+		if coOwnerHashesJSON != "" && coOwnerHashesJSON != "[]" {
+			_ = json.Unmarshal([]byte(coOwnerHashesJSON), &coOwnerHashes)
 		}
-		if preemption.IsApplicable {
-			preemption.WindowOpensAt = now.Format(time.RFC3339)
-			preemption.WindowClosesAt = now.Add(7 * 24 * time.Hour).Format(time.RFC3339)
+		if len(coOwnerHashes) > 0 {
+			preemption = &PreemptionRecord{
+				IsApplicable:  true,
+				CoOwnerHashes: coOwnerHashes,
+				Waivers:       []string{},
+				WindowOpensAt: now.Format(time.RFC3339),
+				// 30-day preemption window per UP Revenue Code 2006 S.54
+				WindowClosesAt: now.Add(30 * 24 * time.Hour).Format(time.RFC3339),
+				Resolved:       false,
+			}
 		}
 	}
 
@@ -118,63 +191,164 @@ func (c *PropertyTransferContract) InitiateTransfer(
 	mutationNo := fmt.Sprintf("MUT/%d/%s", now.Year(), txID[:6])
 
 	proposal := TransferProposal{
-		TransferID:        transferID,
-		DLPIId:            dlpiId,
-		SellerAadhaarHash: sellerAadhaarHash,
-		BuyerName:         buyerName,
-		BuyerAadhaarHash:  buyerAadhaarHash,
-		DeclaredValueINR:  declaredValueINR,
-		OracleValueINR:    oracleValueINR,
-		StampDutyINR:      stampDuty,
-		Status:            StatusInitiated,
-		Consents:          consents,
-		FraudScore:        0,
-		PreemptionWindow:  preemption,
-		InitiatedAt:       now.Format(time.RFC3339),
-		UpdatedAt:         now.Format(time.RFC3339),
-		SROOfficerHash:    sroOfficerHash,
-		MutationNo:        mutationNo,
+		TransferID:       transferID,
+		DLPIId:           dlpiId,
+		TransferType:     transferType,
+		Sellers:          sellers,
+		Buyers:           buyers,
+		Preemption:       preemption,
+		OfficerHash:      officerHash,
+		DeclaredValueINR: declaredValueINR,
+		OracleValueINR:   oracleValueINR,
+		StampDutyINR:     stampDuty,
+		FraudScore:       0,
+		MutationNo:       mutationNo,
+		InitiatedAt:      now.Format(time.RFC3339),
+		UpdatedAt:        now.Format(time.RFC3339),
 	}
 
-	// Save proposal to state
+	// Determine initial status
+	if preemption != nil && preemption.IsApplicable {
+		proposal.Status = StatusPreemptionWindow
+	} else {
+		proposal.Status = StatusInitiated
+	}
+
 	if err := c.saveProposal(ctx, &proposal); err != nil {
 		return "", err
 	}
 
-	// Place national parcel lock via DLPI chaincode cross-call
-	lockArgs := [][]byte{
-		[]byte("SetTransferLock"),
-		[]byte(dlpiId),
-		[]byte(txID),
-	}
-	lockResponse := ctx.GetStub().InvokeChaincode("dlpi", lockArgs, "")
-	if lockResponse.Status != 200 {
-		// Roll back proposal if lock fails
+	// Place national parcel lock via DLPI cross-chaincode call
+	lockArgs := [][]byte{[]byte("SetTransferLock"), []byte(dlpiId), []byte(txID)}
+	if resp := ctx.GetStub().InvokeChaincode("dlpi", lockArgs, ""); resp.Status != 200 {
 		_ = ctx.GetStub().DelState(transferID)
-		return "", fmt.Errorf("LOCK_FAILED: %s", lockResponse.Message)
+		return "", fmt.Errorf("LOCK_FAILED: %s", resp.Message)
 	}
 
-	// Emit event for frontend — both terminals will see the lock
 	event, _ := json.Marshal(map[string]interface{}{
-		"transferId":   transferID,
-		"dlpiId":       dlpiId,
-		"status":       StatusInitiated,
-		"stampDutyINR": stampDuty,
-		"lockedAt":     now.Format(time.RFC3339),
-		"expiresAt":    now.Add(24 * time.Hour).Format(time.RFC3339),
+		"transferId": transferID, "dlpiId": dlpiId,
+		"transferType": transferType, "sellers": len(sellers), "buyers": len(buyers),
+		"stampDutyINR": stampDuty, "status": proposal.Status,
+		"preemptionWindow": preemption != nil,
 	})
 	_ = ctx.GetStub().SetEvent("TransferInitiated", event)
 
 	return transferID, nil
 }
 
-// RecordFraudScore — Step 2: FraudSense oracle submits anomaly score before consents collected
+// WaivePreemption — co-owner waives their 30-day preemption right for a SHARE_SALE
+func (c *PropertyTransferContract) WaivePreemption(
+	ctx contractapi.TransactionContextInterface,
+	transferID, coOwnerAadhaarHash, eSignTxHash string,
+) error {
+
+	proposal, err := c.getProposal(ctx, transferID)
+	if err != nil {
+		return err
+	}
+	if proposal.Status != StatusPreemptionWindow {
+		return fmt.Errorf("transfer %s is not in PREEMPTION_WINDOW state", transferID)
+	}
+	if proposal.Preemption == nil {
+		return fmt.Errorf("no preemption record on transfer %s", transferID)
+	}
+
+	// Verify this hash is a registered co-owner for preemption
+	isCoOwner := false
+	for _, h := range proposal.Preemption.CoOwnerHashes {
+		if h == coOwnerAadhaarHash {
+			isCoOwner = true
+			break
+		}
+	}
+	if !isCoOwner {
+		return fmt.Errorf("aadhaar hash not in preemption co-owner list")
+	}
+
+	// Already waived?
+	for _, w := range proposal.Preemption.Waivers {
+		if w == coOwnerAadhaarHash {
+			return fmt.Errorf("preemption already waived by this co-owner")
+		}
+	}
+
+	proposal.Preemption.Waivers = append(proposal.Preemption.Waivers, coOwnerAadhaarHash)
+
+	// If all co-owners have waived, move to consent collection
+	if len(proposal.Preemption.Waivers) >= len(proposal.Preemption.CoOwnerHashes) {
+		proposal.Preemption.Resolved = true
+		proposal.Status = StatusInitiated
+		event, _ := json.Marshal(map[string]string{
+			"transferId": transferID, "status": "ALL_PREEMPTION_WAIVED",
+		})
+		_ = ctx.GetStub().SetEvent("PreemptionResolved", event)
+	}
+
+	proposal.UpdatedAt = time.Now().UTC().Format(time.RFC3339)
+	return c.saveProposal(ctx, proposal)
+}
+
+// ExercisePreemption — co-owner exercises preemption (buys the share themselves)
+// This converts the transfer into an internal transfer to the co-owner
+func (c *PropertyTransferContract) ExercisePreemption(
+	ctx contractapi.TransactionContextInterface,
+	transferID, coOwnerAadhaarHash, eSignTxHash string,
+) error {
+
+	proposal, err := c.getProposal(ctx, transferID)
+	if err != nil {
+		return err
+	}
+	if proposal.Status != StatusPreemptionWindow {
+		return fmt.Errorf("preemption window has closed")
+	}
+
+	// Convert buyer to the co-owner exercising preemption
+	// Share and price remain the same as the original sale
+	isCoOwner := false
+	for _, h := range proposal.Preemption.CoOwnerHashes {
+		if h == coOwnerAadhaarHash {
+			isCoOwner = true
+			break
+		}
+	}
+	if !isCoOwner {
+		return fmt.Errorf("only a registered co-owner can exercise preemption")
+	}
+
+	// Replace buyer with the preempting co-owner
+	// Share fraction stays the same as the original seller's share
+	sellerShare := proposal.Sellers[0].ShareFraction
+	sellerShareDec := proposal.Sellers[0].ShareDecimal
+	proposal.Buyers = []TransferParty{{
+		AadhaarHash:   coOwnerAadhaarHash,
+		Name:          "Co-owner (preemption)",
+		ShareFraction: sellerShare,
+		ShareDecimal:  sellerShareDec,
+		HasConsented:  true,
+		ConsentedAt:   time.Now().UTC().Format(time.RFC3339),
+		ESignTxHash:   eSignTxHash,
+	}}
+	proposal.Preemption.PreemptionClaimed = coOwnerAadhaarHash
+	proposal.Preemption.Resolved = true
+	proposal.Status = StatusPreemptionExercised
+	proposal.UpdatedAt = time.Now().UTC().Format(time.RFC3339)
+
+	event, _ := json.Marshal(map[string]string{
+		"transferId": transferID, "exercisedBy": coOwnerAadhaarHash,
+	})
+	_ = ctx.GetStub().SetEvent("PreemptionExercised", event)
+	return c.saveProposal(ctx, proposal)
+}
+
+// RecordFraudScore — Step 2: FraudSense oracle submits score
 func (c *PropertyTransferContract) RecordFraudScore(
 	ctx contractapi.TransactionContextInterface,
 	transferID string,
 	fraudScore float64,
 	fraudSignalsJSON string,
 ) error {
+
 	proposal, err := c.getProposal(ctx, transferID)
 	if err != nil {
 		return err
@@ -189,22 +363,14 @@ func (c *PropertyTransferContract) RecordFraudScore(
 	proposal.FraudSignals = signals
 	proposal.UpdatedAt = time.Now().UTC().Format(time.RFC3339)
 
-	// Auto-reject if fraud score critically high
 	if fraudScore >= 0.90 {
 		proposal.Status = StatusRejectedFraud
 		proposal.RejectionReason = fmt.Sprintf(
-			"FraudSense score %.2f exceeds threshold 0.90. Transaction auto-escalated to I-T Department. "+
-				"This attempt has been permanently recorded on-chain.", fraudScore)
-
-		// Release the parcel lock
+			"FraudSense score %.2f ≥ 0.90 threshold. Auto-escalated to I-T Dept. "+
+				"Permanently recorded on-chain.", fraudScore)
 		_ = c.releaseLock(ctx, proposal.DLPIId)
-
 		event, _ := json.Marshal(map[string]interface{}{
-			"transferId":      transferID,
-			"dlpiId":          proposal.DLPIId,
-			"fraudScore":      fraudScore,
-			"rejectionReason": proposal.RejectionReason,
-			"escalatedToIT":   true,
+			"transferId": transferID, "fraudScore": fraudScore, "escalated": true,
 		})
 		_ = ctx.GetStub().SetEvent("TransferRejectedFraud", event)
 	}
@@ -212,55 +378,62 @@ func (c *PropertyTransferContract) RecordFraudScore(
 	return c.saveProposal(ctx, proposal)
 }
 
-// RecordConsent — Step 3: any party records their Aadhaar eSign consent
+// RecordConsent — Step 3: any seller or buyer records their Aadhaar eSign
 func (c *PropertyTransferContract) RecordConsent(
 	ctx contractapi.TransactionContextInterface,
-	transferID, partyType, aadhaarHash, eSignTxHash string,
+	transferID, partyRole, aadhaarHash, eSignTxHash string,
 ) error {
+	// partyRole: "SELLER" | "BUYER" | "OFFICER"
+
 	proposal, err := c.getProposal(ctx, transferID)
 	if err != nil {
 		return err
 	}
-
-	if proposal.Status == StatusRejectedFraud || proposal.Status == StatusCompleted {
+	if isTerminal(proposal.Status) {
 		return fmt.Errorf("transfer %s is in terminal state: %s", transferID, proposal.Status)
+	}
+	if proposal.Status == StatusPreemptionWindow {
+		return fmt.Errorf("cannot collect consent while preemption window is open")
 	}
 
 	now := time.Now().UTC().Format(time.RFC3339)
 	found := false
 
-	for i, consent := range proposal.Consents {
-		if consent.PartyType == partyType {
-			// Verify aadhaar hash matches (seller/buyer/coparcener verification)
-			if partyType != "STAMP_DEPT" && partyType != "SRO" && consent.AadhaarHash != aadhaarHash {
-				return fmt.Errorf("aadhaar hash mismatch for party type %s — consent rejected", partyType)
+	switch partyRole {
+	case "SELLER":
+		for i, s := range proposal.Sellers {
+			if s.AadhaarHash == aadhaarHash {
+				proposal.Sellers[i].HasConsented = true
+				proposal.Sellers[i].ConsentedAt = now
+				proposal.Sellers[i].ESignTxHash = eSignTxHash
+				found = true
+				break
 			}
-			proposal.Consents[i].HasConsented = true
-			proposal.Consents[i].ConsentedAt = now
-			proposal.Consents[i].ESignTxHash = eSignTxHash
-			found = true
-			break
 		}
+	case "BUYER":
+		for i, b := range proposal.Buyers {
+			if b.AadhaarHash == aadhaarHash {
+				proposal.Buyers[i].HasConsented = true
+				proposal.Buyers[i].ConsentedAt = now
+				proposal.Buyers[i].ESignTxHash = eSignTxHash
+				found = true
+				break
+			}
+		}
+	case "OFFICER":
+		// Officer endorsement is stored separately but treated as consent
+		proposal.OfficerHash = aadhaarHash
+		found = true
 	}
 
 	if !found {
-		// May be a coparcener consent — add dynamically
-		proposal.Consents = append(proposal.Consents, PartyConsent{
-			PartyType:    "COPARCENER",
-			AadhaarHash:  aadhaarHash,
-			HasConsented: true,
-			ConsentedAt:  now,
-			ESignTxHash:  eSignTxHash,
-		})
+		return fmt.Errorf("aadhaarHash %s not found as %s in transfer %s", aadhaarHash, partyRole, transferID)
 	}
 
-	// Check if all required parties have consented
-	if c.allRequiredConsentsGiven(proposal) {
+	if c.allConsentsGiven(proposal) {
 		proposal.Status = StatusStampDutyPending
 		event, _ := json.Marshal(map[string]string{
-			"transferId": transferID,
-			"status":     StatusStampDutyPending,
-			"nextStep":   "PAY_STAMP_DUTY",
+			"transferId": transferID, "status": StatusStampDutyPending,
 		})
 		_ = ctx.GetStub().SetEvent("AllConsentsReceived", event)
 	} else {
@@ -271,97 +444,105 @@ func (c *PropertyTransferContract) RecordConsent(
 	return c.saveProposal(ctx, proposal)
 }
 
-// ConfirmStampDutyPayment — Step 4: stamp duty oracle confirms UPI/NEFT payment
+// ConfirmStampDutyPayment — Step 4: stamp duty oracle confirms UPI payment
 func (c *PropertyTransferContract) ConfirmStampDutyPayment(
 	ctx contractapi.TransactionContextInterface,
 	transferID, upiRefNo, saleAgreementCID string,
 ) error {
+
 	proposal, err := c.getProposal(ctx, transferID)
 	if err != nil {
 		return err
 	}
-
 	if proposal.Status != StatusStampDutyPending {
-		return fmt.Errorf("transfer %s is not in STAMP_DUTY_PENDING state (current: %s)",
-			transferID, proposal.Status)
+		return fmt.Errorf("transfer %s not in STAMP_DUTY_PENDING (current: %s)", transferID, proposal.Status)
 	}
 
-	now := time.Now().UTC().Format(time.RFC3339)
 	proposal.StampDutyPaidTx = upiRefNo
 	proposal.SaleAgreementCID = saleAgreementCID
 	proposal.Status = StatusStampDutyPaid
-
-	// Auto-consent stamp department
-	for i, consent := range proposal.Consents {
-		if consent.PartyType == "STAMP_DEPT" {
-			proposal.Consents[i].HasConsented = true
-			proposal.Consents[i].ConsentedAt = now
-			proposal.Consents[i].ESignTxHash = upiRefNo
-			break
-		}
-	}
-
-	proposal.UpdatedAt = now
+	proposal.UpdatedAt = time.Now().UTC().Format(time.RFC3339)
 
 	event, _ := json.Marshal(map[string]interface{}{
-		"transferId":    transferID,
-		"stampDutyPaid": proposal.StampDutyINR,
-		"upiRef":        upiRefNo,
-		"agreementCID":  saleAgreementCID,
+		"transferId": transferID, "stampDutyINR": proposal.StampDutyINR, "upiRef": upiRefNo,
 	})
 	_ = ctx.GetStub().SetEvent("StampDutyConfirmed", event)
 
 	return c.saveProposal(ctx, proposal)
 }
 
-// ExecuteTransfer — Step 5: final execution after all endorsements collected
-// This is the atomic commit — all state changes happen in one transaction
-// Endorsement: AND(SRO.member, StampDept.member)
+// ExecuteTransfer — Step 5: atomic final execution
+// Removes sellers from DLPI.Owners[], adds buyers — all in one Fabric transaction
 func (c *PropertyTransferContract) ExecuteTransfer(
 	ctx contractapi.TransactionContextInterface,
 	transferID, newTitleCID string,
 ) error {
+
 	proposal, err := c.getProposal(ctx, transferID)
 	if err != nil {
 		return err
 	}
 
-	if proposal.Status != StatusStampDutyPaid && proposal.Status != StatusFabricEndorsed {
-		return fmt.Errorf("transfer %s cannot be executed — current status: %s", transferID, proposal.Status)
+	if proposal.Status != StatusStampDutyPaid {
+		return fmt.Errorf("transfer %s not ready for execution (status: %s)", transferID, proposal.Status)
 	}
-
 	if proposal.FraudScore >= 0.75 && proposal.FraudScore < 0.90 {
-		// Score in review range — require manual override from Revenue HQ
-		return fmt.Errorf("FRAUD_REVIEW_PENDING: FraudSense score %.2f requires Revenue HQ manual approval",
-			proposal.FraudScore)
+		return fmt.Errorf("FRAUD_REVIEW_PENDING: score %.2f needs manual Revenue HQ approval", proposal.FraudScore)
 	}
-
-	// Final validation: all required consents
-	if !c.allRequiredConsentsGiven(proposal) {
+	if !c.allConsentsGiven(proposal) {
 		return fmt.Errorf("CONSENT_INCOMPLETE: not all required parties have consented")
 	}
 
 	now := time.Now().UTC()
 	txID := ctx.GetStub().GetTxID()
 
-	// Update DLPI owner via cross-chaincode call
-	updateArgs := [][]byte{
-		[]byte("UpdateOwner"),
-		[]byte(proposal.DLPIId),
-		[]byte(proposal.BuyerName),
-		[]byte(proposal.BuyerAadhaarHash),
-		[]byte("Sale"),
-		[]byte("SRO Officer"),
-		[]byte(proposal.SROOfficerHash),
-		[]byte(proposal.MutationNo),
-		[]byte(proposal.SaleAgreementCID),
-	}
-	updateResponse := ctx.GetStub().InvokeChaincode("dlpi", updateArgs, "")
-	if updateResponse.Status != 200 {
-		return fmt.Errorf("DLPI update failed: %s", updateResponse.Message)
+	// Build seller hashes list for DLPI removal
+	sellerHashes := make([]string, len(proposal.Sellers))
+	for i, s := range proposal.Sellers {
+		sellerHashes[i] = s.AadhaarHash
 	}
 
-	// Mark transfer complete
+	// Build CoOwner structs for new buyers
+	// We pass these as JSON — DLPI chaincode will add OwnerSince + IsVerified
+	type CoOwnerInput struct {
+		AadhaarHash   string  `json:"aadhaarHash"`
+		Name          string  `json:"name"`
+		Share         string  `json:"share"`
+		ShareDecimal  float64 `json:"shareDecimal"`
+		IsTribal      bool    `json:"isTribal"`
+	}
+	newBuyerInputs := make([]CoOwnerInput, len(proposal.Buyers))
+	for i, b := range proposal.Buyers {
+		newBuyerInputs[i] = CoOwnerInput{
+			AadhaarHash:  b.AadhaarHash,
+			Name:         b.Name,
+			Share:        b.ShareFraction,
+			ShareDecimal: b.ShareDecimal,
+		}
+	}
+
+	sellerHashesJSON, _ := json.Marshal(sellerHashes)
+	newBuyersJSON, _ := json.Marshal(newBuyerInputs)
+	description := fmt.Sprintf("%s: %d seller(s) → %d buyer(s)", proposal.TransferType,
+		len(proposal.Sellers), len(proposal.Buyers))
+
+	// Cross-chaincode call: UpdateOwners on DLPI chaincode
+	updateArgs := [][]byte{
+		[]byte("UpdateOwners"),
+		[]byte(proposal.DLPIId),
+		sellerHashesJSON,
+		newBuyersJSON,
+		[]byte("Sale"),
+		[]byte("Officer"),
+		[]byte(proposal.OfficerHash),
+		[]byte(proposal.MutationNo),
+		[]byte(proposal.SaleAgreementCID),
+		[]byte(description),
+	}
+	if resp := ctx.GetStub().InvokeChaincode("dlpi", updateArgs, ""); resp.Status != 200 {
+		return fmt.Errorf("DLPI UpdateOwners failed: %s", resp.Message)
+	}
+
 	proposal.Status = StatusCompleted
 	proposal.NewTitleCID = newTitleCID
 	proposal.CompletedAt = now.Format(time.RFC3339)
@@ -371,34 +552,31 @@ func (c *PropertyTransferContract) ExecuteTransfer(
 		return err
 	}
 
-	// Emit completion event — triggers DigiLocker title delivery, owner notification
-	completionEvent, _ := json.Marshal(map[string]interface{}{
-		"transferId":      transferID,
-		"dlpiId":          proposal.DLPIId,
-		"newOwner":        proposal.BuyerName,
-		"newOwnerHash":    proposal.BuyerAadhaarHash,
-		"mutationNo":      proposal.MutationNo,
-		"newTitleCID":     newTitleCID,
-		"stampDutyPaid":   proposal.StampDutyINR,
-		"txHash":          txID,
-		"completedAt":     proposal.CompletedAt,
-		"processingTimeSec": now.Unix() - mustParseTime(proposal.InitiatedAt).Unix(),
+	event, _ := json.Marshal(map[string]interface{}{
+		"transferId":  transferID,
+		"dlpiId":      proposal.DLPIId,
+		"sellers":     proposal.Sellers,
+		"buyers":      proposal.Buyers,
+		"mutationNo":  proposal.MutationNo,
+		"newTitleCID": newTitleCID,
+		"txHash":      txID,
+		"completedAt": proposal.CompletedAt,
 	})
-	_ = ctx.GetStub().SetEvent("TransferCompleted", completionEvent)
+	_ = ctx.GetStub().SetEvent("TransferCompleted", event)
 
 	return nil
 }
 
-// RejectTransfer — rejects and releases lock (e.g., fraud, timeout, seller withdrawal)
+// RejectTransfer — any party can reject; releases the parcel lock
 func (c *PropertyTransferContract) RejectTransfer(
 	ctx contractapi.TransactionContextInterface,
 	transferID, reason, rejectorHash string,
 ) error {
+
 	proposal, err := c.getProposal(ctx, transferID)
 	if err != nil {
 		return err
 	}
-
 	if proposal.Status == StatusCompleted {
 		return fmt.Errorf("cannot reject a completed transfer")
 	}
@@ -407,68 +585,88 @@ func (c *PropertyTransferContract) RejectTransfer(
 	proposal.RejectionReason = reason
 	proposal.UpdatedAt = time.Now().UTC().Format(time.RFC3339)
 
-	// Release the parcel lock
-	if err := c.releaseLock(ctx, proposal.DLPIId); err != nil {
-		return err
-	}
+	_ = c.releaseLock(ctx, proposal.DLPIId)
 
 	event, _ := json.Marshal(map[string]string{
-		"transferId": transferID,
-		"dlpiId":     proposal.DLPIId,
-		"reason":     reason,
+		"transferId": transferID, "dlpiId": proposal.DLPIId, "reason": reason,
 	})
 	_ = ctx.GetStub().SetEvent("TransferRejected", event)
 
 	return c.saveProposal(ctx, proposal)
 }
 
-// GetTransferProposal — retrieve a transfer by ID
+// GetTransferProposal — retrieve by ID
 func (c *PropertyTransferContract) GetTransferProposal(
-	ctx contractapi.TransactionContextInterface,
-	transferID string,
+	ctx contractapi.TransactionContextInterface, transferID string,
 ) (*TransferProposal, error) {
 	return c.getProposal(ctx, transferID)
 }
 
-// QueryTransfersByDLPI — all transfers for a parcel (CouchDB rich query)
+// QueryTransfersByDLPI — all transfers for a parcel
 func (c *PropertyTransferContract) QueryTransfersByDLPI(
-	ctx contractapi.TransactionContextInterface,
-	dlpiId string,
+	ctx contractapi.TransactionContextInterface, dlpiId string,
 ) ([]*TransferProposal, error) {
 	query := fmt.Sprintf(`{"selector":{"dlpiId":"%s"}}`, dlpiId)
 	return c.executeQuery(ctx, query)
 }
 
-// QueryActiveTransfers — all in-progress transfers (for dashboard)
-func (c *PropertyTransferContract) QueryActiveTransfers(
-	ctx contractapi.TransactionContextInterface,
-) ([]*TransferProposal, error) {
-	query := `{"selector":{"status":{"$nin":["COMPLETED","REJECTED_FRAUD","REJECTED_CONSENT","EXPIRED"]}}}`
-	return c.executeQuery(ctx, query)
-}
-
 // ─── Internal Helpers ─────────────────────────────────────────────────────────
 
-func (c *PropertyTransferContract) allRequiredConsentsGiven(p *TransferProposal) bool {
-	required := map[string]bool{"SELLER": false, "BUYER": false, "SRO": false}
-	for _, consent := range p.Consents {
-		if _, isRequired := required[consent.PartyType]; isRequired {
-			if consent.HasConsented {
-				required[consent.PartyType] = true
-			}
-		}
-	}
-	for _, consented := range required {
-		if !consented {
+// allConsentsGiven — true when every seller, every buyer, and the officer has consented
+func (c *PropertyTransferContract) allConsentsGiven(p *TransferProposal) bool {
+	for _, s := range p.Sellers {
+		if !s.HasConsented {
 			return false
 		}
+	}
+	for _, b := range p.Buyers {
+		if !b.HasConsented {
+			return false
+		}
+	}
+	// Officer hash must be set
+	if p.OfficerHash == "" {
+		return false
 	}
 	return true
 }
 
+// validateBuyerShares — buyers must collectively receive the same total share the sellers are giving up
+func validateBuyerShares(sellers []TransferParty, buyers []TransferParty, transferType string) error {
+	var sellerTotal, buyerTotal float64
+	for _, s := range sellers {
+		sellerTotal += s.ShareDecimal
+	}
+	for _, b := range buyers {
+		if b.ShareDecimal <= 0 {
+			return fmt.Errorf("buyer %s has invalid share decimal: %f", b.AadhaarHash, b.ShareDecimal)
+		}
+		buyerTotal += b.ShareDecimal
+	}
+	if transferType == TransferTypeFull {
+		// For full sale, sellers must be giving up 100%
+		if sellerTotal < 0.999 || sellerTotal > 1.001 {
+			return fmt.Errorf("FULL_SALE: sellers' total share must be 1.0, got %f", sellerTotal)
+		}
+	}
+	// Buyer total must equal seller total (they're absorbing exactly what sellers give up)
+	if buyerTotal < sellerTotal-0.001 || buyerTotal > sellerTotal+0.001 {
+		return fmt.Errorf("buyers' total share (%f) must equal sellers' total share (%f)", buyerTotal, sellerTotal)
+	}
+	return nil
+}
+
+func isTerminal(status string) bool {
+	switch status {
+	case StatusCompleted, StatusRejectedFraud, StatusRejectedConsent,
+		StatusRejectedLocked, StatusPreemptionExercised, StatusExpired:
+		return true
+	}
+	return false
+}
+
 func (c *PropertyTransferContract) releaseLock(ctx contractapi.TransactionContextInterface, dlpiId string) error {
-	args := [][]byte{[]byte("ReleaseTransferLock"), []byte(dlpiId)}
-	resp := ctx.GetStub().InvokeChaincode("dlpi", args, "")
+	resp := ctx.GetStub().InvokeChaincode("dlpi", [][]byte{[]byte("ReleaseTransferLock"), []byte(dlpiId)}, "")
 	if resp.Status != 200 {
 		return fmt.Errorf("lock release failed: %s", resp.Message)
 	}
@@ -519,17 +717,12 @@ func (c *PropertyTransferContract) executeQuery(ctx contractapi.TransactionConte
 	return results, nil
 }
 
-func mustParseTime(s string) time.Time {
-	t, _ := time.Parse(time.RFC3339, s)
-	return t
-}
-
 func main() {
-	chaincode, err := contractapi.NewChaincode(&PropertyTransferContract{})
+	cc, err := contractapi.NewChaincode(&PropertyTransferContract{})
 	if err != nil {
 		panic(fmt.Sprintf("Error creating PropertyTransfer chaincode: %v", err))
 	}
-	if err := chaincode.Start(); err != nil {
+	if err := cc.Start(); err != nil {
 		panic(fmt.Sprintf("Error starting PropertyTransfer chaincode: %v", err))
 	}
 }
