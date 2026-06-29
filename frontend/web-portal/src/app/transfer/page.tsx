@@ -5,7 +5,6 @@ import Sidebar from '@/components/dashboard/Sidebar';
 import TransferWizard from '@/components/forms/TransferWizard';
 import FraudReject from '@/components/modals/FraudReject';
 import { useWebSocket } from '@/hooks/useWebSocket';
-import { getDemoToken } from '@/lib/api';
 import type { Transfer } from '@/types';
 import toast from 'react-hot-toast';
 import {
@@ -13,18 +12,19 @@ import {
   ChevronRight, Zap,
 } from 'lucide-react';
 import clsx from 'clsx';
+import { demoLogin } from '@/lib/auth';
 
 // ─── Demo constants ───────────────────────────────────────────────────────────
 
-const DEMO_DLPI         = 'DLPI-MH-SNN-00142';
-const DEMO_SELLER_NAME  = 'Arun Ramesh Patil (Heir, 1/3 share)';
-const DEMO_SELLER_HASH  = 'sha256:heir1arun3f8e2d1c7b4a09f6e5d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8';
+const DEMO_DLPI         = 'DLPI-UP-DAD-00100';
+const DEMO_SELLER_NAME  = 'Ankur Singh (Legal Heir, 1/3 share)';
+const DEMO_SELLER_HASH  = 'sha256:heir1ankur3f8e2d1c7b4a09f6e5d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8';
 
 const ORIGINAL_TRANSFER = {
-  transferId: 'TXF-DLPI-MH-SNN-00142-b2c3d4e5',
-  initiatedAt: new Date(Date.now() - 12 * 60_000).toISOString(),   // 12 min ago
-  buyerName: 'Suresh Balaji Deshmukh',
-  sroName: 'Sub-Registrar Office, Sinnar',
+  transferId: 'TXF-DLPI-UP-DAD-00100-b2c3d4e5',
+  initiatedAt: new Date(Date.now() - 12 * 60_000).toISOString(),
+  buyerName: 'Rakesh Agarwal',
+  sroName: 'Sub-Registrar Office, Dadri',
 };
 
 type Scene = 4 | 5;
@@ -41,17 +41,17 @@ export default function TransferPage() {
   const { on: onWs, triggerMock } = useWebSocket(DEMO_DLPI);
 
   useEffect(() => {
-    getDemoToken('sro', 'Kavita Marathe, Sub-Registrar').catch(() => {});
+    demoLogin('tehsildar').catch(() => {});
   }, []);
 
   // WS event listeners
   useEffect(() => {
     return onWs('*', (msg) => {
       if (msg.event === 'TransferCompleted') {
-        toast.success('🎉 Title transferred! Deed in DigiLocker.');
+        toast.success('Title transferred! Deed in DigiLocker.');
       }
       if (msg.event === 'TransferRejected') {
-        toast.error('🚫 Transfer rejected — national lock active');
+        toast.error('Transfer rejected — national lock active');
         setShowFraud(true);
       }
     });
@@ -76,11 +76,11 @@ export default function TransferPage() {
       {showFraud && (
         <FraudReject
           dlpiId={DEMO_DLPI}
-          attemptedBuyerName="Mohan Lal Sharma"
+          attemptedBuyerName="Deepak Verma"
           fraudScore={0.94}
           rejectionCode="NATIONAL_LOCK_ACTIVE"
           originalTransfer={ORIGINAL_TRANSFER}
-          responseTimeMs={31}
+          responseTimeMs={28}
           onClose={() => setShowFraud(false)}
         />
       )}
@@ -164,7 +164,7 @@ export default function TransferPage() {
                     <span className="text-sm font-semibold text-gray-200">
                       Second Terminal — Fraud Attempt
                     </span>
-                    <span className="ml-auto text-xs text-gray-500">Sinnar SRO Terminal 2</span>
+                    <span className="ml-auto text-xs text-gray-500">Dadri SRO Terminal 2</span>
                   </div>
                   <div className="text-gray-500 text-xs mb-4">
                     A second operator at a different terminal tries to sell the same parcel to a different buyer.
@@ -172,8 +172,8 @@ export default function TransferPage() {
 
                   <div className="bg-gray-800 rounded-xl p-3 text-xs space-y-2 mb-4">
                     <InfoRow label="Parcel"         value={DEMO_DLPI} mono />
-                    <InfoRow label="Attempted buyer" value="Mohan Lal Sharma" />
-                    <InfoRow label="Declared value"  value="₹ 51,00,000" />
+                    <InfoRow label="Attempted buyer" value="Deepak Verma" />
+                    <InfoRow label="Declared value"  value="₹ 55,00,000" />
                     <InfoRow label="FraudSense score" value="0.94 — EXCEEDS 0.90 threshold" />
                   </div>
 
@@ -245,13 +245,13 @@ function SceneInfo({ scene, completedTransfer }: { scene: Scene; completedTransf
         {scene === 5 && (
           <ol className="space-y-2.5 text-xs text-gray-400">
             {[
-              ['Scene 4 completes',    'Parcel lock acquired at SRO 1'],
-              ['Second terminal',      'Operator at different terminal tries same parcel'],
+              ['Scene 4 completes',    'Parcel lock acquired at Dadri SRO 1'],
+              ['Second terminal',      'Operator at Dadri SRO 2 tries same parcel'],
               ['Lock check',           'Fabric checks national lock — ACTIVE'],
               ['FraudSense',           '0.94 → auto-reject threshold exceeded'],
-              ['Instant rejection',    '<31ms — no on-chain write occurs'],
+              ['Instant rejection',    '<28ms — no on-chain write occurs'],
               ['Audit trail',          'Attempt permanently logged on BhumiChain'],
-              ['Regulator alert',      'Registrar of Assurances notified'],
+              ['Regulator alert',      'IG Registration, UP notified'],
             ].map(([title, desc], i) => (
               <li key={i} className="flex gap-2">
                 <span className="w-4 h-4 rounded-full bg-gray-800 text-gray-500 flex items-center justify-center shrink-0 font-mono text-xs">{i + 1}</span>
@@ -272,7 +272,7 @@ function SceneInfo({ scene, completedTransfer }: { scene: Scene; completedTransf
         </div>
         <div className="space-y-2 text-xs">
           <InfoRow label="Chaincode"    value="property-transfer" mono />
-          <InfoRow label="Channel"      value="state-channel-mh" mono />
+          <InfoRow label="Channel"      value="state-channel-up" mono />
           <InfoRow label="Consensus"    value="Raft (3 orderers)" />
           <InfoRow label="Lock scope"   value="National (all SROs)" />
           {scene === 5 && <InfoRow label="Reject latency" value="< 31ms" />}

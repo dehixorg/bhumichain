@@ -95,6 +95,16 @@ router.post(
   },
 );
 
+// GET /api/transfer — list (officer view)
+router.get('/', authenticate, async (req, res) => {
+  try {
+    const list = await evaluate('property-transfer', 'GetAllTransfers', []);
+    res.json(list || []);
+  } catch (e) {
+    res.status(500).json({ error: 'FABRIC_ERROR', message: e.message });
+  }
+});
+
 // GET /api/transfer/:transferId
 router.get(
   '/:transferId',

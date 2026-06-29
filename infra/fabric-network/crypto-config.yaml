@@ -1,0 +1,15 @@
+OrdererOrgs:
+  - Name: Orderer
+    Domain: bhumichain.in
+    EnableNodeOUs: true
+    Specs:
+      - Hostname: orderer
+
+PeerOrgs:
+  - Name: RevenueDept
+    Domain: revenuedept.bhumichain.in
+    EnableNodeOUs: true
+    Template:
+      Count: 2
+    Users:
+      Count: 1

@@ -40,13 +40,13 @@ interface ComplianceResult {
 // ─── Demo constants ───────────────────────────────────────────────────────────
 
 const DEMO_BUYER = {
-  name:        'Suresh Balaji Deshmukh',
-  aadhaarHash: 'sha256:buyer1suresh9d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b3a2f1e0',
+  name:        'Rakesh Agarwal',
+  aadhaarHash: 'sha256:buyer1rakesh9d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b3a2f1e0',
   declaredINR: 4_800_000,
 };
 
 const MOCK_COMPLIANCE: ComplianceResult = {
-  tribal:    { pass: true, detail: 'ALLOWED_NOT_TRIBAL — Bagayat parcel, non-scheduled area', ms: 143 },
+  tribal:    { pass: true, detail: 'ALLOWED_NOT_TRIBAL — Bhumidhari parcel, non-scheduled area', ms: 118 },
   valuation: { oracleValue: 5_200_000, stampDuty: 208_000 },
   fraud:     { score: 0.12, pass: true },
 };
@@ -70,7 +70,7 @@ export default function TransferWizard({ dlpiId, sellerName, sellerAadhaarHash, 
   const [complianceSteps, setComplianceSteps] = useState<{ label: string; done: boolean }[]>([]);
   const [busy, setBusy]                       = useState(false);
   const [upiVerified, setUpiVerified]         = useState(false);
-  const [titleCID]                            = useState('QmTitleDeedSureshDeshmukh2026XYZ');
+  const [titleCID]                            = useState('QmTitleDeedRakeshAgarwal2026DAD');
 
   // Form state
   const [buyerName, setBuyerName]             = useState('');
@@ -115,7 +115,7 @@ export default function TransferWizard({ dlpiId, sellerName, sellerAadhaarHash, 
     } catch {
       // Offline fallback
       setTransfer({
-        transferId:          'TXF-DLPI-MH-SNN-00142-b2c3d4e5',
+        transferId:          'TXF-DLPI-UP-DAD-00100-b2c3d4e5',
         dlpiId,
         sellerAadhaarHash,
         buyerName:           buyerName || DEMO_BUYER.name,
@@ -144,7 +144,7 @@ export default function TransferWizard({ dlpiId, sellerName, sellerAadhaarHash, 
   const [buyerConsented, setBuyerConsented]   = useState(false);
 
   const handleConsent = useCallback(async (signerId: string) => {
-    const tid = transfer?.transferId || 'TXF-DLPI-MH-SNN-00142-b2c3d4e5';
+    const tid = transfer?.transferId || 'TXF-DLPI-UP-DAD-00100-b2c3d4e5';
     const isSeller = signerId === 'seller';
     try {
       await recordConsent(tid, {
@@ -184,7 +184,7 @@ export default function TransferWizard({ dlpiId, sellerName, sellerAadhaarHash, 
     setBusy(true);
     toast('Processing UPI payment…');
     await delay(2800);
-    const tid = transfer?.transferId || 'TXF-DLPI-MH-SNN-00142-b2c3d4e5';
+    const tid = transfer?.transferId || 'TXF-DLPI-UP-DAD-00100-b2c3d4e5';
     try {
       await confirmStampDuty(tid, {
         upiRefNo:         `UPI-SBI-NSK-${Date.now()}`,
@@ -203,7 +203,7 @@ export default function TransferWizard({ dlpiId, sellerName, sellerAadhaarHash, 
     setBusy(true);
     toast('SRO executing transfer…');
     await delay(1800);
-    const tid = transfer?.transferId || 'TXF-DLPI-MH-SNN-00142-b2c3d4e5';
+    const tid = transfer?.transferId || 'TXF-DLPI-UP-DAD-00100-b2c3d4e5';
     try {
       await executeTransfer(tid, titleCID);
     } catch { /* offline ok */ }
@@ -271,7 +271,7 @@ export default function TransferWizard({ dlpiId, sellerName, sellerAadhaarHash, 
               <input
                 value={buyerName}
                 onChange={(e) => setBuyerName(e.target.value)}
-                placeholder="e.g. Suresh Balaji Deshmukh"
+                placeholder="e.g. Rakesh Agarwal"
                 className="input w-full"
               />
             </div>
@@ -454,7 +454,7 @@ export default function TransferWizard({ dlpiId, sellerName, sellerAadhaarHash, 
             </div>
             <div className="text-xs text-gray-400 mb-1">Scan to pay via UPI</div>
             <div className="text-xl font-bold text-gray-100 font-mono">{formatINR(transfer.stampDutyINR)}</div>
-            <div className="text-xs text-gray-500 mt-1">Maharashtra Stamp Duty — 5%</div>
+            <div className="text-xs text-gray-500 mt-1">UP Stamp Duty — 5%</div>
           </div>
 
           <div className="flex items-center gap-3 text-xs text-gray-500 mb-4">
@@ -495,8 +495,8 @@ export default function TransferWizard({ dlpiId, sellerName, sellerAadhaarHash, 
             <span className="text-sm font-semibold text-gray-200">SRO Execution</span>
           </div>
           <div className="bg-gray-800 rounded-xl p-3 text-xs space-y-1.5">
-            <InfoRow label="SRO"         value="Sub-Registrar Office, Sinnar" />
-            <InfoRow label="Officer"     value="Kavita Sanjay Marathe, Sub-Registrar" />
+            <InfoRow label="SRO"         value="Sub-Registrar Office, Dadri" />
+            <InfoRow label="Officer"     value="Rajiv Shukla, Sub-Registrar (Dadri)" />
             <InfoRow label="New title CID" value={titleCID} mono />
             <InfoRow label="DigiLocker"  value="Delivery pending SRO signature" />
           </div>

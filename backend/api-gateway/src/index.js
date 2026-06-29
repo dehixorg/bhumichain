@@ -9,13 +9,15 @@ const cors = require('cors');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
 
-const dlpiRoutes = require('./routes/dlpi');
-const transferRoutes = require('./routes/transfer');
-const mutationRoutes = require('./routes/mutation');
+const authRoutes        = require('./routes/auth');
+const dlpiRoutes        = require('./routes/dlpi');
+const transferRoutes    = require('./routes/transfer');
+const mutationRoutes    = require('./routes/mutation');
 const uttaradhikarRoutes = require('./routes/uttaradhikar');
-const tribalRoutes = require('./routes/tribal');
+const tribalRoutes      = require('./routes/tribal');
 const encumbranceRoutes = require('./routes/encumbrance');
-const { authenticate, issueDemoToken, ROLES } = require('./middleware/auth');
+const auctionRoutes     = require('./routes/auction');
+const { authenticate, ROLES } = require('./middleware/auth');
 const { init: initWs, triggerMockEvent } = require('./services/websocket');
 const { isMock } = require('./services/fabric');
 
@@ -24,7 +26,7 @@ const server = http.createServer(app);
 
 // ─── Security & Middleware ────────────────────────────────────────────────────
 
-app.use(helmet());
+app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 app.use(cors({ origin: process.env.CORS_ORIGIN || '*' }));
 app.use(express.json({ limit: '2mb' }));
 app.use(morgan('dev'));
@@ -49,21 +51,7 @@ app.get('/health', (_, res) =>
   }),
 );
 
-// ─── Demo auth (mock mode only) ───────────────────────────────────────────────
-// Issues a JWT for the demo without a real IdP.
-// GET /api/auth/demo-token?role=revenue_officer&name=Prakash+Kulkarni
-app.get('/api/auth/demo-token', (req, res) => {
-  if (!isMock()) return res.status(403).json({ error: 'Demo tokens only in mock mode' });
-  const role = req.query.role || ROLES.CITIZEN;
-  const name = req.query.name || 'Demo User';
-  const aadhaarHash = `sha256:demo-${role}-hash-placeholder000000000000000000000000000000000`;
-  try {
-    const token = issueDemoToken(role, name, aadhaarHash);
-    res.json({ token, role, name });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
+// Auth routes handle /api/auth/* — mounted below
 
 // ─── Mock demo event trigger ──────────────────────────────────────────────────
 // POST /api/demo/trigger { key: "scene3_death_detected" }
@@ -79,12 +67,14 @@ app.post('/api/demo/trigger', authenticate, (req, res) => {
 
 // ─── API Routes ───────────────────────────────────────────────────────────────
 
+app.use('/api/auth',        authRoutes);
 app.use('/api/dlpi',        dlpiRoutes);
 app.use('/api/transfer',    transferRoutes);
 app.use('/api/mutation',    mutationRoutes);
 app.use('/api/succession',  uttaradhikarRoutes);
 app.use('/api/tribal',      tribalRoutes);
 app.use('/api/encumbrance', encumbranceRoutes);
+app.use('/api/auction',     auctionRoutes);
 
 // Oracle proxy — forward to oracle-service (avoids CORS on frontend)
 const axios = require('axios');
@@ -103,32 +93,131 @@ app.use('/api/oracle', authenticate, async (req, res) => {
   }
 });
 
-// BhumiGPT proxy — routes to dedicated port 8012
-app.use('/api/ai/bhumi-gpt', authenticate, async (req, res) => {
+// NyayaAI — calls Azure AI (GPT-4.1) when configured, else falls back to local port 8012
+app.post('/api/ai/nyaya/predict', authenticate, async (req, res) => {
+  const azureEndpoint = process.env.AZURE_AI_ENDPOINT;
+  const azureKey      = process.env.AZURE_AI_KEY;
+  const azureModel    = process.env.AZURE_AI_MODEL || 'gpt-5.4';
+
+  if (azureEndpoint && azureKey) {
+    try {
+      const { dlpiId, disputeType, facts } = req.body;
+      const systemPrompt = `You are NyayaAI, an Indian land law legal prediction engine specialising in Uttar Pradesh land disputes.
+You have been trained on 18 crore eCourts cases. Respond ONLY with a JSON object — no markdown, no preamble.
+
+Schema:
+{
+  "winProbability": number (0-1),
+  "settleProbability": number (0-1),
+  "loseProbability": number (0-1),
+  "confidence": number (0-1),
+  "recommendedAction": string,
+  "reasoning": string (2-3 sentences, cite specific acts/sections),
+  "precedents": [
+    {
+      "caseNo": string,
+      "court": string,
+      "year": number,
+      "ruling": string (one sentence),
+      "relevance": number (0-1)
+    }
+  ] (exactly 3 entries)
+}
+
+Rules: winProbability + settleProbability + loseProbability must sum to 1.0. Cite real Indian case law.
+Jurisdiction: Uttar Pradesh Revenue Law, Hindu Succession Act 1956/2005, UP Zamindari Abolition and Land Reforms Act 1950.`;
+
+      const userMessage = `DLPI: ${dlpiId}\nDispute Type: ${disputeType}\nFacts: ${facts}`;
+
+      const r = await axios.post(azureEndpoint, {
+        model: azureModel,
+        input: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user',   content: userMessage },
+        ],
+      }, {
+        headers: {
+          'api-key': azureKey,
+          'Content-Type': 'application/json',
+        },
+        timeout: 30000,
+      });
+
+      // Parse Azure AI Foundry Responses API output
+      const outputItems = r.data.output || [];
+      const textItem = outputItems.find((o) => o.type === 'message');
+      const rawText  = textItem?.content?.find((c) => c.type === 'output_text')?.text || '{}';
+
+      let parsed;
+      try {
+        parsed = JSON.parse(rawText);
+      } catch {
+        // Strip markdown code fences if present
+        const stripped = rawText.replace(/^```json?\n?/, '').replace(/\n?```$/, '');
+        parsed = JSON.parse(stripped);
+      }
+
+      return res.json({ ...parsed, modelVersion: `NyayaAI (${azureModel})`, source: 'azure' });
+    } catch (e) {
+      console.warn('[NyayaAI Azure]', e.message);
+      // Fall through to local service below
+    }
+  }
+
+  // Fallback: local NyayaAI service
   try {
-    const bgurlBase = process.env.BHUMI_GPT_URL || 'http://localhost:8012';
-    const bgurlFull = `${bgurlBase}/bhumi-gpt${req.path}`;
-    const bgRes = await axios({ method: req.method, url: bgurlFull, data: req.body, params: req.query });
-    res.status(bgRes.status).json(bgRes.data);
+    const url = `${process.env.NYAYA_URL || 'http://localhost:8012'}/nyaya/predict`;
+    const r = await axios.post(url, req.body, {
+      headers: { 'x-user-role': req.user.role, 'x-aadhaar-hash': req.user.aadhaarHash },
+    });
+    res.json({ ...r.data, source: 'local' });
   } catch (e) {
-    const status = e.response?.status || 502;
-    res.status(status).json(e.response?.data || { error: 'BHUMI_GPT_UNREACHABLE' });
+    res.status(502).json({ error: 'NYAYA_AI_UNREACHABLE', message: e.message });
   }
 });
 
-// Generic AI service proxy (CoparcenaryMapper, RecordScan, etc.)
-app.use('/api/ai', authenticate, async (req, res) => {
+// NyayaAI other endpoints — proxy to local service
+app.use('/api/ai/nyaya', authenticate, async (req, res) => {
   try {
-    const aiRes = await axios({
-      method: req.method,
-      url: `${process.env.AI_SERVICE_URL || 'http://localhost:8002'}${req.path}`,
-      data: req.body,
-      params: req.query,
-    });
-    res.status(aiRes.status).json(aiRes.data);
+    const url = `${process.env.NYAYA_URL || 'http://localhost:8012'}/nyaya${req.path}`;
+    const r = await axios({ method: req.method, url, data: req.body, params: req.query,
+      headers: { 'x-user-role': req.user.role, 'x-aadhaar-hash': req.user.aadhaarHash } });
+    res.status(r.status).json(r.data);
   } catch (e) {
-    const status = e.response?.status || 502;
-    res.status(status).json(e.response?.data || { error: 'AI_SERVICE_UNREACHABLE' });
+    res.status(e.response?.status || 502).json(e.response?.data || { error: 'NYAYA_AI_UNREACHABLE' });
+  }
+});
+
+// RecordScan proxy — port 8010
+app.use('/api/ai/record-scan', authenticate, async (req, res) => {
+  try {
+    const url = `${process.env.RECORD_SCAN_URL || 'http://localhost:8010'}${req.path}`;
+    const r = await axios({ method: req.method, url, data: req.body, params: req.query });
+    res.status(r.status).json(r.data);
+  } catch (e) {
+    res.status(e.response?.status || 502).json(e.response?.data || { error: 'RECORD_SCAN_UNREACHABLE' });
+  }
+});
+
+// CoparcenaryMapper proxy — port 8011
+app.use('/api/ai/coparcenary', authenticate, async (req, res) => {
+  try {
+    const url = `${process.env.COPARCENARY_URL || 'http://localhost:8011'}${req.path}`;
+    const r = await axios({ method: req.method, url, data: req.body, params: req.query });
+    res.status(r.status).json(r.data);
+  } catch (e) {
+    res.status(e.response?.status || 502).json(e.response?.data || { error: 'COPARCENARY_UNREACHABLE' });
+  }
+});
+
+// BhumiSettle + FraudSense proxy — port 8013
+app.use('/api/ai/settle', authenticate, async (req, res) => {
+  try {
+    const url = `${process.env.SETTLE_URL || 'http://localhost:8013'}${req.path}`;
+    const r = await axios({ method: req.method, url, data: req.body, params: req.query });
+    res.status(r.status).json(r.data);
+  } catch (e) {
+    res.status(e.response?.status || 502).json(e.response?.data || { error: 'SETTLE_UNREACHABLE' });
   }
 });
 

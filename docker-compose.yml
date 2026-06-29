@@ -1,0 +1,175 @@
+version: "3.9"
+
+# BhumiChain — Full local development stack
+# Usage: docker compose up --build
+# All services run in mock mode by default (no real Fabric, Aadhaar, or DynamoDB needed).
+
+services:
+
+  # ── API Gateway ─────────────────────────────────────────────────────────────
+  api-gateway:
+    build: ./backend/api-gateway
+    container_name: bhumichain-api-gateway
+    ports:
+      - "4000:4000"
+    environment:
+      NODE_ENV: development
+      PORT: 4000
+      FABRIC_MODE: mock
+      FABRIC_CHANNEL: land-registry
+      FABRIC_MSP_ID: RevenueDeptMSP
+      AADHAAR_MOCK: "true"
+      AADHAAR_SALT: bhumi-demo-salt-2026
+      JWT_SECRET: bhumi-dev-jwt-secret-2026-change-in-prod
+      JWT_EXPIRY: 8h
+      ORACLE_MODE: mock
+      ORACLE_SERVICE_URL: http://valuation-oracle:8001
+      RECORD_SCAN_URL: http://record-scan:8010
+      COPARCENARY_URL: http://coparcenary-mapper:8011
+      NYAYA_URL: http://nyaya-ai:8012
+      SETTLE_URL: http://bhumi-settle:8013
+      CORS_ORIGIN: http://localhost:3000
+      FRONTEND_URL: http://localhost:3000
+      RATE_LIMIT_WINDOW_MS: "60000"
+      RATE_LIMIT_MAX: "200"
+      # Azure AI — set real values in .env file, not here
+      AZURE_AI_ENDPOINT: ${AZURE_AI_ENDPOINT:-}
+      AZURE_AI_KEY: ${AZURE_AI_KEY:-}
+      AZURE_AI_MODEL: ${AZURE_AI_MODEL:-gpt-5.4}
+      # AWS — set real values in .env file
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+      AWS_REGION: ${AWS_REGION:-ap-south-1}
+      DYNAMODB_TABLE: ${DYNAMODB_TABLE:-testArpit}
+      EMAIL_MOCK: "true"
+      SMS_MOCK: "true"
+      TELEGRAM_MOCK: "true"
+    depends_on:
+      record-scan:
+        condition: service_healthy
+      nyaya-ai:
+        condition: service_healthy
+      coparcenary-mapper:
+        condition: service_healthy
+      bhumi-settle:
+        condition: service_healthy
+      valuation-oracle:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:4000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - bhumichain
+
+  # ── Frontend ─────────────────────────────────────────────────────────────────
+  frontend:
+    build: ./frontend/web-portal
+    container_name: bhumichain-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_API_URL: http://localhost:4000
+      NEXT_PUBLIC_WS_URL: ws://localhost:4000/ws
+      NEXT_PUBLIC_FABRIC_MODE: mock
+      NEXT_PUBLIC_MAP_CENTER_LAT: "28.5706"
+      NEXT_PUBLIC_MAP_CENTER_LNG: "77.5413"
+      NEXT_PUBLIC_MAP_ZOOM: "12"
+    depends_on:
+      api-gateway:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - bhumichain
+
+  # ── Record Scan (AI) — port 8010 ─────────────────────────────────────────────
+  record-scan:
+    build: ./backend/ai-services/record-scan
+    container_name: bhumichain-record-scan
+    ports:
+      - "8010:8010"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8010/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - bhumichain
+
+  # ── Coparcenary Mapper (AI) — port 8011 ──────────────────────────────────────
+  coparcenary-mapper:
+    build: ./backend/ai-services/coparcenary-mapper
+    container_name: bhumichain-coparcenary-mapper
+    ports:
+      - "8011:8011"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8011/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - bhumichain
+
+  # ── NyayaAI (legal prediction) — port 8012 ───────────────────────────────────
+  nyaya-ai:
+    build: ./backend/ai-services/nyaya-ai
+    container_name: bhumichain-nyaya-ai
+    ports:
+      - "8012:8012"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8012/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - bhumichain
+
+  # ── BhumiSettle (ADR) — port 8013 ────────────────────────────────────────────
+  bhumi-settle:
+    build: ./backend/ai-services/bhumi-settle
+    container_name: bhumichain-bhumi-settle
+    ports:
+      - "8013:8013"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8013/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - bhumichain
+
+  # ── Valuation Oracle — port 8001 ──────────────────────────────────────────────
+  valuation-oracle:
+    build: ./backend/ai-services/valuation-oracle
+    container_name: bhumichain-oracle
+    ports:
+      - "8001:8001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - bhumichain
+
+  # ── Mailhog (dev email) — web UI at port 8025 ────────────────────────────────
+  mailhog:
+    image: mailhog/mailhog:v1.0.1
+    container_name: bhumichain-mailhog
+    ports:
+      - "1025:1025"   # SMTP
+      - "8025:8025"   # Web UI
+    networks:
+      - bhumichain
+
+networks:
+  bhumichain:
+    driver: bridge

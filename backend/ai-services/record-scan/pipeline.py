@@ -1,31 +1,126 @@
 """
-RecordScan AI Pipeline
-Steps:
-  1. Receive uploaded image (JPEG/PNG/PDF)
-  2. Azure Document Intelligence OCR  → raw text + bounding boxes
-  3. LayoutLM NER                     → structured Satbara fields
-  4. Cross-validation vs Mahabhulekh  → confidence boost / flag
-  5. IPFS pin                         → CID stored in DLPI
-  6. Return ScanResult to officer UI  → officer reviews, corrects, approves
+RecordScan AI Pipeline — UP Khatauni edition
 
-In mock mode: skips steps 2-4 and returns pre-scripted ScanResult.
+Steps:
+  1. Receive uploaded Khatauni image / PDF
+  2. Azure Document Intelligence OCR  → raw text + bounding boxes
+  3. LayoutLM NER                     → structured Khatauni fields
+  4. Cross-validation vs Bhulekh UP  → confidence boost / flag
+  5. IPFS pin                         → CID stored in DLPI
+  6. DynamoDB persist                 → scan job stored in testArpit table
+  7. Return ScanResult to officer UI  → officer reviews, corrects, approves
+
+In mock mode: skips steps 2–5, returns pre-scripted ScanResult.
 """
 
 import hashlib
+import json
 import os
 import time
 import uuid
+from datetime import datetime, timezone
 from typing import Optional
 
-from satbara_schema import SatbaraExtraction, ScanResult, SatbaraOwner, LandType
+import boto3
+from botocore.exceptions import BotoCoreError, ClientError
+
+from khatauni_schema import KhatauniExtraction, ScanResult, KhatedaOwner, LandType
 from mock_responses import MOCK_RESPONSES, DEMO_CLEAR
 
+# ─── DynamoDB client ──────────────────────────────────────────────────────────
+
+def _get_dynamo_table():
+    try:
+        dynamodb = boto3.resource(
+            'dynamodb',
+            region_name=os.getenv('AWS_REGION', 'ap-south-1'),
+            aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
+            aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY'),
+        )
+        return dynamodb.Table(os.getenv('DYNAMODB_TABLE', 'testArpit'))
+    except Exception as e:
+        print(f"[DynamoDB] Connection error: {e}")
+        return None
+
+
+def _persist_scan(result: ScanResult) -> bool:
+    """Store scan result in DynamoDB testArpit table. PK = SCAN#<scanId>."""
+    table = _get_dynamo_table()
+    if not table:
+        return False
+    try:
+        item = {
+            'pk':            f'SCAN#{result.scanId}',
+            'scanId':        result.scanId,
+            'fileName':      result.fileName,
+            'fileSizeKB':    str(result.fileSizeKB),
+            'ipfsCID':       result.ipfsCID,
+            'suggestedDlpiId': result.suggestedDlpiId,
+            'status':        'COMPLETED',
+            'createdAt':     datetime.now(timezone.utc).isoformat(),
+            # TTL: 24 hours from now (Unix epoch)
+            'ttl':           int(time.time()) + 86400,
+            # Full result as compressed JSON string
+            'resultJson':    json.dumps(result.model_dump(), ensure_ascii=False),
+            # Extracted summary fields for quick querying
+            'tehsil':        result.extraction.tehsil,
+            'khasraNo':      result.extraction.khasraNo,
+            'zila':          result.extraction.zila,
+            'ocrConfidence': str(round(result.extraction.ocrConfidence, 3)),
+            'requiresReview': result.extraction.requiresManualReview,
+        }
+        table.put_item(Item=item)
+        return True
+    except (BotoCoreError, ClientError) as e:
+        print(f"[DynamoDB] put_item error: {e}")
+        return False
+
+
+def retrieve_scan(scan_id: str) -> Optional[ScanResult]:
+    """Fetch scan result from DynamoDB by scanId."""
+    table = _get_dynamo_table()
+    if not table:
+        return None
+    try:
+        resp = table.get_item(Key={'pk': f'SCAN#{scan_id}'})
+        item = resp.get('Item')
+        if not item:
+            return None
+        data = json.loads(item['resultJson'])
+        return ScanResult(**data)
+    except (BotoCoreError, ClientError, json.JSONDecodeError, Exception) as e:
+        print(f"[DynamoDB] get_item error for {scan_id}: {e}")
+        return None
+
+
+def mark_scan_approved(scan_id: str, dlpi_id: str):
+    """Update scan status to APPROVED in DynamoDB."""
+    table = _get_dynamo_table()
+    if not table:
+        return
+    try:
+        table.update_item(
+            Key={'pk': f'SCAN#{scan_id}'},
+            UpdateExpression='SET #s = :s, approvedDlpiId = :d, approvedAt = :a',
+            ExpressionAttributeNames={'#s': 'status'},
+            ExpressionAttributeValues={
+                ':s': 'APPROVED',
+                ':d': dlpi_id,
+                ':a': datetime.now(timezone.utc).isoformat(),
+            },
+        )
+    except (BotoCoreError, ClientError) as e:
+        print(f"[DynamoDB] update_item error for {scan_id}: {e}")
+
+
+# ─── IPFS mock ────────────────────────────────────────────────────────────────
 
 def _mock_ipfs_pin(content: bytes) -> str:
-    """Return deterministic mock IPFS CID based on content hash."""
     digest = hashlib.sha256(content).hexdigest()[:32]
     return f"Qm{digest.upper()}"
 
+
+# ─── Main pipeline entry ──────────────────────────────────────────────────────
 
 async def scan_document(
     filename: str,
@@ -35,57 +130,56 @@ async def scan_document(
 ) -> ScanResult:
     """
     Main pipeline entry point.
-    demo_variant: "demo_clear" | "demo_degraded" | None (auto-select by filename)
+    demo_variant: "demo_clear" | "demo_degraded" | None (auto-detect from filename)
+    Returns ScanResult (persisted to DynamoDB).
     """
     start = time.monotonic()
 
     if mock:
-        # Auto-select variant: if filename contains "smudge" or "degrad" → degraded
         variant = demo_variant
         if not variant:
-            name_lower = filename.lower()
-            if any(k in name_lower for k in ["smudge", "degrad", "damage", "old", "faded"]):
+            fname = filename.lower()
+            if any(k in fname for k in ["smudge", "degrad", "damage", "old", "faded", "torn", "1994", "1980"]):
                 variant = "demo_degraded"
             else:
                 variant = "demo_clear"
 
-        result = MOCK_RESPONSES.get(variant, DEMO_CLEAR)
-        # Update with actual uploaded filename and a fresh scanId
-        result = result.model_copy(update={
-            "scanId": f"SCN-{uuid.uuid4().hex[:8].upper()}",
-            "fileName": filename,
-            "fileSizeKB": round(len(content) / 1024, 1),
-            "ipfsCID": _mock_ipfs_pin(content),
+        template = MOCK_RESPONSES.get(variant, DEMO_CLEAR)
+        result = template.model_copy(update={
+            "scanId":      f"SCN-{uuid.uuid4().hex[:8].upper()}",
+            "fileName":    filename,
+            "fileSizeKB":  round(len(content) / 1024, 1),
+            "ipfsCID":     _mock_ipfs_pin(content),
         })
-        # Simulate processing delay in mock (realistic for demo)
+
         await _simulate_steps(result.processingSteps)
+        stored = _persist_scan(result)
+        result = result.model_copy(update={"storedInDynamoDB": stored})
         return result
 
     # ─── Real pipeline ────────────────────────────────────────────────────────
-    # Step 1: IPFS pin
-    ipfs_cid = await _ipfs_pin_real(content)
 
-    # Step 2: Azure Document Intelligence
+    ipfs_cid  = await _ipfs_pin_real(content)
     ocr_result = await _azure_ocr(content)
-
-    # Step 3: LayoutLM NER
     ner_result = await _layoutlm_ner(ocr_result)
-
-    # Step 4: Mahabhulekh cross-validation
-    validated = await _mahabhulekh_validate(ner_result)
+    validated  = await _bhulekh_validate(ner_result)
 
     elapsed_ms = int((time.monotonic() - start) * 1000)
-    return _build_result(filename, len(content), ipfs_cid, validated, elapsed_ms)
+    result     = _build_result(filename, len(content), ipfs_cid, validated, elapsed_ms)
+    stored     = _persist_scan(result)
+    result     = result.model_copy(update={"storedInDynamoDB": stored})
+    return result
 
+
+# ─── Async simulation ─────────────────────────────────────────────────────────
 
 async def _simulate_steps(steps: list) -> None:
-    """In mock mode, sleep proportional to each step's durationMs so the UI
-    progress bar advances realistically during the demo."""
     import asyncio
     for step in steps:
-        # Scale down 10× so 5s pipeline feels like ~0.5s in demo
         await asyncio.sleep(step.get("durationMs", 500) / 10000)
 
+
+# ─── Real pipeline stubs ──────────────────────────────────────────────────────
 
 async def _ipfs_pin_real(content: bytes) -> str:
     import httpx
@@ -100,10 +194,8 @@ async def _ipfs_pin_real(content: bytes) -> str:
 
 
 async def _azure_ocr(content: bytes) -> dict:
-    """Call Azure Document Intelligence prebuilt-document model."""
-    from azure.ai.documentintelligence import DocumentIntelligenceClient  # type: ignore
-    from azure.core.credentials import AzureKeyCredential              # type: ignore
-
+    from azure.ai.documentintelligence import DocumentIntelligenceClient    # type: ignore
+    from azure.core.credentials import AzureKeyCredential                   # type: ignore
     client = DocumentIntelligenceClient(
         endpoint=os.getenv("AZURE_DOC_INTEL_ENDPOINT", ""),
         credential=AzureKeyCredential(os.getenv("AZURE_DOC_INTEL_KEY", "")),
@@ -115,30 +207,20 @@ async def _azure_ocr(content: bytes) -> dict:
     return poller.result().as_dict()
 
 
-async def _layoutlm_ner(ocr_result: dict) -> SatbaraExtraction:
-    """
-    Run LayoutLM NER over OCR result to extract Satbara fields.
-    Placeholder — real implementation uses azure-ml endpoint or local model.
-    """
-    raise NotImplementedError(
-        "LayoutLM NER not yet deployed. Set RECORD_SCAN_MODE=mock for demo."
-    )
+async def _layoutlm_ner(ocr_result: dict) -> KhatauniExtraction:
+    raise NotImplementedError("LayoutLM NER not yet deployed. Set RECORD_SCAN_MODE=mock.")
 
 
-async def _mahabhulekh_validate(extraction: SatbaraExtraction) -> SatbaraExtraction:
-    """Cross-check extracted fields against Mahabhulekh e-Satbara API."""
-    raise NotImplementedError(
-        "Mahabhulekh API integration pending. Set RECORD_SCAN_MODE=mock for demo."
-    )
+async def _bhulekh_validate(extraction: KhatauniExtraction) -> KhatauniExtraction:
+    raise NotImplementedError("Bhulekh UP API integration pending. Set RECORD_SCAN_MODE=mock.")
 
 
 def _build_result(filename, size_bytes, ipfs_cid, extraction, elapsed_ms) -> ScanResult:
-    scan_id = f"SCN-{uuid.uuid4().hex[:8].upper()}"
-    tehsil_code = {"Sinnar": "SNN", "Igatpuri": "IGT", "Nashik": "NSK"}.get(
-        extraction.tehsilName, "NSK"
-    )
-    survey_clean = extraction.surveyNumber.replace("/", "").zfill(5)
-    dlpi_id = f"DLPI-MH-{tehsil_code}-{survey_clean}"
+    scan_id    = f"SCN-{uuid.uuid4().hex[:8].upper()}"
+    tehsil_map = {"Dadri": "DAD", "Noida": "NDA", "Jewar": "JWR", "Bisrakh": "BSK"}
+    tehsil_code = tehsil_map.get(extraction.tehsil, "DAD")
+    khasra_clean = extraction.khasraNo.replace("/", "").replace(" ", "").zfill(5)
+    dlpi_id     = f"DLPI-UP-{tehsil_code}-{khasra_clean}"
 
     return ScanResult(
         scanId=scan_id,

@@ -1,13 +1,21 @@
 import type { LandType, EncumbranceStatus } from '@/types';
 
-// Fill colour by land type
+// Fill colour by land type (UP primary + Maharashtra legacy)
 export const LAND_TYPE_COLOR: Record<LandType, string> = {
-  Bagayat:    '#22c55e',  // green — irrigated
-  Jirayat:    '#a3e635',  // lime — rain-fed
-  Kharaba:    '#6b7280',  // grey — barren
-  Tribal_FRA: '#f59e0b',  // amber — tribal FRA protected
-  Government: '#3b82f6',  // blue — government
-  Forest:     '#065f46',  // dark green — forest
+  // UP types
+  Bhumidhari:   '#22c55e',  // green — permanent occupancy
+  Sirdar:       '#a3e635',  // lime — hereditary tenancy
+  Asamiyadar:   '#84cc16',  // yellow-green — sub-tenancy
+  Residential:  '#6366f1',  // indigo — residential
+  Commercial:   '#f59e0b',  // amber — commercial
+  Tribal_FRA:   '#d97706',  // deep amber — tribal FRA protected
+  Govt_Reserved:'#3b82f6',  // blue — government
+  // Maharashtra legacy
+  Bagayat:      '#22c55e',
+  Jirayat:      '#a3e635',
+  Kharaba:      '#6b7280',
+  Government:   '#3b82f6',
+  Forest:       '#065f46',
 };
 
 // Stroke (border) override when parcel has special status
@@ -25,7 +33,7 @@ export function getParcelStyle(properties: {
   const fillColor = LAND_TYPE_COLOR[landType] || '#6b7280';
 
   // Demo parcels get special styling
-  const isDemoParcel = dlpiId === 'DLPI-MH-SNN-00142' || dlpiId === 'DLPI-MH-IGT-T0023';
+  const isDemoParcel = dlpiId === 'DLPI-UP-DAD-00100' || dlpiId === 'DLPI-UP-DAD-00006';
 
   let color = '#1f2937';      // default border — dark grey
   let weight = 0.8;
@@ -58,10 +66,18 @@ export function getParcelStyle(properties: {
 }
 
 export const LAND_TYPE_LABELS: Record<LandType, string> = {
-  Bagayat:    'Bagayat (Irrigated)',
-  Jirayat:    'Jirayat (Rain-fed)',
-  Kharaba:    'Kharaba (Barren)',
-  Tribal_FRA: 'Tribal / FRA Protected',
-  Government: 'Government Land',
-  Forest:     'Forest Land',
+  // UP types
+  Bhumidhari:   'Bhumidhari (Permanent Occupancy)',
+  Sirdar:       'Sirdar (Hereditary Tenancy)',
+  Asamiyadar:   'Asamiyadar (Sub-tenancy)',
+  Residential:  'Residential',
+  Commercial:   'Commercial',
+  Tribal_FRA:   'Tribal / FRA Protected',
+  Govt_Reserved:'Government Reserved',
+  // Maharashtra legacy
+  Bagayat:      'Bagayat (Irrigated)',
+  Jirayat:      'Jirayat (Rain-fed)',
+  Kharaba:      'Kharaba (Barren)',
+  Government:   'Government Land',
+  Forest:       'Forest Land',
 };

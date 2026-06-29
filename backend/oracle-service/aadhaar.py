@@ -1,7 +1,10 @@
 """
-Aadhaar Oracle — verifies Aadhaar numbers and returns SHA-256 hashes.
-In mock mode: returns pre-scripted identity data for demo personas.
-In real mode: calls UIDAI sandbox/production API.
+Aadhaar Oracle — verifies Aadhaar numbers and returns identity data.
+Mock mode: returns pre-scripted Noida/UP demo personas.
+Real mode: calls UIDAI API (requires ASA empanelment).
+
+Security: Raw Aadhaar number never stored. Only used transiently to lookup
+persona, then discarded. aadhaarHash (SHA-256) flows downstream.
 """
 
 import hashlib
@@ -9,115 +12,169 @@ import os
 from typing import Optional
 from pydantic import BaseModel
 
+SALT = os.getenv("AADHAAR_SALT", "bhumichain-aadhaar-salt-change-in-prod")
+
+
+def _sha256(aadhaar: str) -> str:
+    return "sha256:" + hashlib.sha256((aadhaar + SALT).encode()).hexdigest()
+
+
+# ─── Demo Personas (Noida — Dadri Tehsil, Gautam Buddha Nagar) ───────────────
+# Aadhaar numbers: 9999-0001-XXXX format (clearly fake for demo)
+# All OTPs are "123456" in mock mode (AADHAAR_MOCK=true)
+
 MOCK_IDENTITIES = {
-    # Ramesh Patil (parcel owner — demo Scene 2, 3)
-    "123456789012": {
-        "name": "Ramesh Dattatray Patil",
-        "dob": "1960-04-15",
+
+    # ── Officers ─────────────────────────────────────────────────────────────
+
+    # Tehsildar
+    "999900010001": {
+        "name": "Amit Saxena",
+        "dob": "1978-03-15",
         "gender": "M",
-        "address": "Sinnar, Nashik, Maharashtra 422103",
+        "address": "Dadri Tehsil Office, Gautam Buddha Nagar, UP 203207",
         "verified": True,
-        "hash": "sha256:a3f8e2d1c7b4a09f6e5d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b3a",
+        "role": "tehsildar",
+        "deptEmail": "amit.saxena@up.gov.in",
+        "jurisdictionCode": "GBN-DAD",
+        "tehsilCode": "DAD",
     },
-    # Suresh Deshmukh (buyer — demo Scene 4)
-    "234567890123": {
-        "name": "Suresh Balaji Deshmukh",
-        "dob": "1978-09-22",
+
+    # Circle Inspector / Kanungo
+    "999900010002": {
+        "name": "Rajesh Verma",
+        "dob": "1983-07-22",
         "gender": "M",
-        "address": "Nashik City, Nashik, Maharashtra 422001",
+        "address": "Revenue Circle Office, Dadri, Gautam Buddha Nagar, UP",
         "verified": True,
-        "hash": "sha256:buyer1suresh9d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b3a2f1e0",
+        "role": "circle_inspector",
+        "deptEmail": "rajesh.verma@up.gov.in",
+        "jurisdictionCode": "GBN-DAD",
+        "circleCode": "DAD-C1",
+        "patwariCodes": ["DAD-P1", "DAD-P2", "DAD-P3"],
     },
-    # Arun Patil (heir 1 — demo Scene 3)
-    "345678901234": {
-        "name": "Arun Ramesh Patil",
-        "dob": "1988-03-15",
+
+    # Patwari / Lekhpal
+    "999900010003": {
+        "name": "Vijay Singh",
+        "dob": "1990-11-05",
         "gender": "M",
-        "address": "Sinnar, Nashik, Maharashtra 422103",
+        "address": "Village Dadri, Gautam Buddha Nagar, UP 203207",
         "verified": True,
-        "hash": "sha256:heir1arun3f8e2d1c7b4a09f6e5d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8",
+        "role": "patwari",
+        "deptEmail": "vijay.singh@up.gov.in",
+        "jurisdictionCode": "GBN-DAD",
+        "patwariCode": "DAD-P1",
+        "villageCodes": ["DAD-001", "DAD-002", "DAD-003"],
     },
-    # Vijay Patil (heir 2 — demo Scene 3)
-    "456789012345": {
-        "name": "Vijay Ramesh Patil",
-        "dob": "1991-07-22",
-        "gender": "M",
-        "address": "Pune, Maharashtra 411001",
-        "verified": True,
-        "hash": "sha256:heir2vijay8e2d1c7b4a09f6e5d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8f7",
-    },
-    # Sunita Patil (heir 3 — daughter with HSA 2005 rights)
-    "567890123456": {
-        "name": "Sunita Ramesh Patil",
-        "dob": "1994-11-08",
+
+    # ── Citizens ─────────────────────────────────────────────────────────────
+
+    # Primary citizen — owns DLPI-UP-DAD-00142
+    "999900010010": {
+        "name": "Priya Kumar",
+        "dob": "1985-06-18",
         "gender": "F",
-        "address": "Mumbai, Maharashtra 400001",
+        "address": "45, Sector 12, Noida, Gautam Buddha Nagar, UP 201301",
         "verified": True,
-        "hash": "sha256:heir3sunita1c7b4a09f6e5d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8f7e6d5",
+        "role": "citizen",
     },
-    # Mangal Bhil (tribal owner — demo Scene 6)
-    "678901234567": {
-        "name": "Mangal Ramji Bhil",
-        "dob": "1972-06-10",
+
+    # Buyer in property transfer demo
+    "999900010011": {
+        "name": "Arun Sharma",
+        "dob": "1979-09-12",
         "gender": "M",
-        "address": "Igatpuri, Nashik, Maharashtra 422403",
+        "address": "78, Sector 27, Noida, Gautam Buddha Nagar, UP 201301",
         "verified": True,
+        "role": "citizen",
+    },
+
+    # Heir 1 in succession demo
+    "999900010012": {
+        "name": "Suresh Yadav",
+        "dob": "1992-02-28",
+        "gender": "M",
+        "address": "12, Village Bisrakh, Gautam Buddha Nagar, UP",
+        "verified": True,
+        "role": "citizen",
+    },
+
+    # Heir 2 — daughter (HSA 2005 equal rights demo)
+    "999900010013": {
+        "name": "Meena Devi",
+        "dob": "1995-04-10",
+        "gender": "F",
+        "address": "Sadarpur Village, Dadri, Gautam Buddha Nagar, UP",
+        "verified": True,
+        "role": "citizen",
+    },
+
+    # ── Tribal (for TribalGuard demo — UP tribal district, not Noida) ─────────
+    # Shown as a system capability; Noida itself has no tribal land
+
+    "999900010020": {
+        "name": "Ramkali Gond",
+        "dob": "1968-08-25",
+        "gender": "F",
+        "address": "Dudhi Block, Sonbhadra, UP 231208",
+        "verified": True,
+        "role": "citizen",
         "isScheduledTribe": True,
-        "community": "Bhil",
-        "hash": "sha256:b4g9f3d2c8e1a7f0e6d5c4b3a2f1e0d9c8b7a6f5e4d3c2b1a0f9e8d7c6b5a",
+        "community": "Gond",
     },
-    # Non-tribal buyer (for Scene 6 rejection demo)
-    "789012345678": {
-        "name": "Rahul Shinde",
-        "dob": "1985-02-14",
+
+    # Non-tribal buyer attempting to buy tribal land (rejection demo)
+    "999900010021": {
+        "name": "Vikram Chaudhary",
+        "dob": "1987-12-03",
         "gender": "M",
-        "address": "Nashik City, Maharashtra 422001",
+        "address": "Civil Lines, Allahabad, UP 211001",
         "verified": True,
+        "role": "citizen",
         "isScheduledTribe": False,
-        "hash": "sha256:nontribal1rahulshinde2d1c0b9a8f7e6d5c4b3a2f1e0d9c8b7a6f5e4d3c2",
-    },
-    # Revenue officer
-    "890123456789": {
-        "name": "Prakash Nana Kulkarni",
-        "dob": "1975-08-30",
-        "gender": "M",
-        "address": "Sinnar Tehsil Office, Nashik",
-        "verified": True,
-        "role": "Circle Officer",
-        "hash": "sha256:officer1prakash0b9a8f7e6d5c4b3a2f1e0d9c8b7a6f5e4d3c2b1a0f9e8d7",
     },
 }
 
 
 class AadhaarVerifyRequest(BaseModel):
     aadhaarNumber: str
-    otp: Optional[str] = None  # Not used in mock
-
-
-def _sha256(value: str) -> str:
-    return "sha256:" + hashlib.sha256(value.encode()).hexdigest()
+    otp: Optional[str] = None
 
 
 def verify_aadhaar(request: AadhaarVerifyRequest, mock: bool) -> dict:
     if mock:
         identity = MOCK_IDENTITIES.get(request.aadhaarNumber)
         if not identity:
-            # Generate deterministic hash for any unknown number
+            # Unknown number — return a generic verified citizen
             return {
                 "verified": True,
-                "name": "Test User",
+                "name": "Unknown User",
+                "role": "citizen",
                 "hash": _sha256(request.aadhaarNumber),
                 "isScheduledTribe": False,
             }
-        return {
+        result = {
             "verified": identity["verified"],
             "name": identity["name"],
             "dob": identity.get("dob"),
             "gender": identity.get("gender"),
-            "hash": identity["hash"],
+            "role": identity.get("role", "citizen"),
+            "hash": _sha256(request.aadhaarNumber),
             "isScheduledTribe": identity.get("isScheduledTribe", False),
             "community": identity.get("community"),
+            # Officer-specific fields
+            "deptEmail": identity.get("deptEmail"),
+            "jurisdictionCode": identity.get("jurisdictionCode"),
+            "tehsilCode": identity.get("tehsilCode"),
+            "circleCode": identity.get("circleCode"),
+            "patwariCode": identity.get("patwariCode"),
+            "villageCodes": identity.get("villageCodes"),
+            "patwariCodes": identity.get("patwariCodes"),
         }
-    else:
-        # Real UIDAI API call — implement when keys available
-        raise NotImplementedError("Real Aadhaar API not yet configured. Set ORACLE_MODE=mock.")
+        # Strip None values
+        return {k: v for k, v in result.items() if v is not None}
+
+    raise NotImplementedError(
+        "Real Aadhaar API not configured. Set ORACLE_MODE=mock or provide UIDAI ASA credentials."
+    )

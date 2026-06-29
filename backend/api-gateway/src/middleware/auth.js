@@ -2,67 +2,68 @@
 
 const jwt = require('jsonwebtoken');
 
-// Roles used in Fabric endorsement policy mirror
 const ROLES = {
-  CITIZEN: 'citizen',
-  REVENUE_OFFICER: 'revenue_officer',
-  CIRCLE_OFFICER: 'circle_officer',
-  SRO: 'sro',
-  COLLECTOR: 'collector',
-  NALSA: 'nalsa',
-  BANK: 'bank',
-  ORACLE: 'oracle',   // internal: oracle service calls
+  CITIZEN:          'citizen',
+  PATWARI:          'patwari',
+  CIRCLE_INSPECTOR: 'circle_inspector',
+  TEHSILDAR:        'tehsildar',
+  KOTWAL:           'kotwal',
+  // Production roles — wired but not demoed
+  SRO:              'sro',
+  COLLECTOR:        'collector',
+  BANK:             'bank',
+  NALSA:            'nalsa',
+  ORACLE:           'oracle',
+  SUPER_ADMIN:      'super_admin',
 };
 
-/**
- * Middleware: verify JWT and attach user to req.user.
- * In mock mode, still validates token but accepts demo tokens signed with
- * the dev secret so demo flow works without a real auth service.
- */
+const OFFICER_ROLES = ['patwari', 'circle_inspector', 'tehsildar', 'kotwal', 'sro', 'collector', 'super_admin'];
+const CAN_CREATE_DLPI    = ['patwari', 'tehsildar', 'collector', 'super_admin'];
+const CAN_APPROVE_MUTATION = ['circle_inspector', 'tehsildar', 'collector', 'super_admin'];
+
 function authenticate(req, res, next) {
   const header = req.headers.authorization;
   if (!header || !header.startsWith('Bearer ')) {
     return res.status(401).json({ error: 'MISSING_TOKEN', message: 'Authorization header required' });
   }
-  const token = header.slice(7);
   try {
-    req.user = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = jwt.verify(header.slice(7), process.env.JWT_SECRET);
     next();
   } catch (e) {
     return res.status(401).json({ error: 'INVALID_TOKEN', message: e.message });
   }
 }
 
-/**
- * Middleware factory: require one of the listed roles.
- */
 function requireRole(...roles) {
   return (req, res, next) => {
     if (!req.user) return res.status(401).json({ error: 'UNAUTHENTICATED' });
     if (!roles.includes(req.user.role)) {
-      return res.status(403).json({
-        error: 'FORBIDDEN',
-        required: roles,
-        current: req.user.role,
-      });
+      return res.status(403).json({ error: 'FORBIDDEN', required: roles, current: req.user.role });
     }
     next();
   };
 }
 
-/**
- * Issue a demo JWT — used by POST /api/auth/demo-token in mock mode only.
- * Allows the demo frontend to get any role token without a real IdP.
- */
-function issueDemoToken(role, name, aadhaarHash) {
+function mintToken(payload) {
+  return jwt.sign(payload, process.env.JWT_SECRET, {
+    expiresIn: process.env.JWT_EXPIRY || '8h',
+  });
+}
+
+function issueDemoToken(role, name, extra = {}) {
   if (process.env.FABRIC_MODE !== 'mock') {
     throw new Error('Demo tokens only available in mock mode');
   }
-  return jwt.sign(
-    { role, name, aadhaarHash, demo: true },
-    process.env.JWT_SECRET,
-    { expiresIn: process.env.JWT_EXPIRY || '8h' },
-  );
+  return mintToken({ role, name, demo: true, ...extra });
 }
 
-module.exports = { authenticate, requireRole, issueDemoToken, ROLES };
+module.exports = {
+  authenticate,
+  requireRole,
+  mintToken,
+  issueDemoToken,
+  ROLES,
+  OFFICER_ROLES,
+  CAN_CREATE_DLPI,
+  CAN_APPROVE_MUTATION,
+};

@@ -33,26 +33,26 @@ const FamilyTree = dynamic(
 
 // ─── Demo constants ───────────────────────────────────────────────────────────
 
-const DEMO_FAMILY_ID = 'FAM-MH-SNN-001';
-const DEMO_DLPI      = 'DLPI-MH-SNN-00142';
+const DEMO_FAMILY_ID = 'FAM-UP-DAD-00100-001';
+const DEMO_DLPI      = 'DLPI-UP-DAD-00100';
 
 const DEMO_DECEASED = {
-  name:        'Ramesh Dattatray Patil',
-  aadhaarHash: 'sha256:a3f8e2d1c7b4a09f6e5d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b3a',
+  name:        'Deepak Narayan Singh',
+  aadhaarHash: 'sha256:owner1deepak3f8e2d1c7b4a09f6e5d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9',
   dod:         '2026-05-20',
   dob:         '1958-03-15',
 };
 
 const DEMO_CRS = {
-  deathCertCID:      'QmDeathCertRamesh2026',
-  crsRegistrationNo: 'CRS-NSK-2026-00541',
+  deathCertCID:      'QmDeathCertDeepaK2026',
+  crsRegistrationNo: 'CRS-GBN-2026-00541',
 };
 
 const MOCK_ALERT = {
-  mutationId:          'MUT-DLPI-MH-SNN-00142-d4e5f6a7',
+  mutationId:          'MUT-DLPI-UP-DAD-00100-d4e5f6a7',
   dlpiId:              DEMO_DLPI,
   mutationType:        'Inheritance',
-  officerName:         'Prakash Nana Kulkarni, Circle Officer',
+  officerName:         'Suresh Kumar Yadav, Circle Inspector',
   alertSentAt:         new Date(Date.now() - 64_000).toISOString(),
   slaMet:              true,
   alertElapsedSeconds: 64,
@@ -61,31 +61,31 @@ const MOCK_ALERT = {
 // Offline fallback heirs — used when API is unreachable
 const OFFLINE_HEIRS: SuccessionHeir[] = [
   {
-    heirId: 'HEIR-001', name: 'Arun Ramesh Patil', aadhaarHash: 'sha256:heir1',
-    relation: 'Son', gender: 'M', dob: '1988-03-15',
+    heirId: 'HEIR-001', name: 'Ankur Singh', aadhaarHash: 'sha256:heir1ankur3f8e2d1c7b4a09f6e5d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8',
+    relation: 'Son', gender: 'Male', dob: '1988-03-15',
     isAlive: true, isAdult: true, isNri: false,
     share: '1/3', shareDecimal: 0.3333, legalNote: undefined,
     hasConsented: false, hasObjected: false,
   },
   {
-    heirId: 'HEIR-002', name: 'Vijay Ramesh Patil', aadhaarHash: 'sha256:heir2',
-    relation: 'Son', gender: 'M', dob: '1991-07-22',
+    heirId: 'HEIR-002', name: 'Nitin Singh', aadhaarHash: 'sha256:heir2nitin8e2d1c7b4a09f6e5d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8f7',
+    relation: 'Son', gender: 'Male', dob: '1991-07-22',
     isAlive: true, isAdult: true, isNri: false,
     share: '1/3', shareDecimal: 0.3333, legalNote: undefined,
     hasConsented: false, hasObjected: false,
   },
   {
-    heirId: 'HEIR-003', name: 'Sunita Ramesh Patil', aadhaarHash: 'sha256:heir3',
-    relation: 'Daughter', gender: 'F', dob: '1994-11-08',
+    heirId: 'HEIR-003', name: 'Neeta Singh', aadhaarHash: 'sha256:heir3neeta1c7b4a09f6e5d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8f7e6d5',
+    relation: 'Daughter', gender: 'Female', dob: '1994-11-08',
     isAlive: true, isAdult: true, isNri: false,
     share: '1/3', shareDecimal: 0.3334,
-    legalNote: 'Equal coparcenary right per Hindu Succession (Amendment) Act 2005 Section 6(3)',
+    legalNote: 'Equal coparcenary rights per Hindu Succession (Amendment) Act 2005 Section 6(3). Daughters have same rights as sons by birth.',
     hasConsented: false, hasObjected: false,
   },
 ];
 
 const AI_STEPS = [
-  'Fetching family registry from Nashik district',
+  'Fetching family registry from Dadri tehsil, Gautam Buddha Nagar',
   'Identifying Class I heirs under HSA 1956',
   'Applying HSA 2005 S.6(3) — daughters equal coparceners',
   'Computing 1/3 shares across 3 heirs (Fraction arithmetic)',
@@ -138,7 +138,7 @@ export default function SuccessionPage() {
       await verifyCRS(DEMO_CRS.crsRegistrationNo);
     } catch { /* mock ok */ }
     setStage('crs_verified');
-    toast.success('CRS death certificate verified — CRS-NSK-2026-00541');
+    toast.success('CRS death certificate verified — CRS-GBN-2026-00541');
   };
 
   // ── Step 2: Run CoparcenaryMapper AI ─────────────────────────────────────
@@ -164,7 +164,7 @@ export default function SuccessionPage() {
         deathCertCID:        DEMO_CRS.deathCertCID,
         crsRegistrationNo:   DEMO_CRS.crsRegistrationNo,
       });
-      const sc = await getSuccessionCase(res.caseId || 'SUC-DLPI-MH-SNN-00142-a1b2c3d4');
+      const sc = await getSuccessionCase(res.caseId || 'SUC-DLPI-UP-DAD-00100-a1b2c3d4');
       setCaseData(sc);
       setHeirs(sc.heirs.map((h) => ({ ...h, hasConsented: false, hasObjected: false })));
     } catch {
@@ -189,7 +189,7 @@ export default function SuccessionPage() {
 
     try {
       await recordHeirConsent(
-        caseData?.caseId || 'SUC-DLPI-MH-SNN-00142-a1b2c3d4',
+        caseData?.caseId || 'SUC-DLPI-UP-DAD-00100-a1b2c3d4',
         {
           heirAadhaarHash: heir.aadhaarHash,
           eSignTxHash:     `esign-${heirId}-${Date.now()}`,
@@ -307,7 +307,7 @@ export default function SuccessionPage() {
                 <Banner
                   icon={<CheckCircle className="w-5 h-5 text-brand-400" />}
                   title="CRS death certificate verified"
-                  subtitle="CRS-NSK-2026-00541 · Civil Registration System, Sinnar"
+                  subtitle="CRS-GBN-2026-00541 · Civil Registration System, Dadri"
                   color="brand"
                 />
                 <div className="card">
@@ -365,7 +365,7 @@ export default function SuccessionPage() {
                       HSA 2005 S.6(3) — Daughters are coparceners by birth
                     </div>
                     <div className="text-purple-500 text-xs mt-0.5">
-                      Sunita Ramesh Patil's share equals her brothers' — enforced at chaincode level.
+                      Neeta Singh's share equals her brothers' — enforced at chaincode level.
                       No revenue officer can override this.
                     </div>
                   </div>
@@ -428,7 +428,7 @@ export default function SuccessionPage() {
                       <div className="text-brand-300 font-bold text-sm">Auto-Mutation Executing</div>
                       <div className="text-brand-500 text-xs mt-0.5">
                         Fabric transaction submitted · New title being written to ledger ·
-                        Arun, Vijay &amp; Sunita each hold 1/3
+                        Ankur, Nitin &amp; Neeta each hold 1/3
                       </div>
                     </div>
                     <CheckCircle className="w-6 h-6 text-brand-400 ml-auto shrink-0" />

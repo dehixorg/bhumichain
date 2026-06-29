@@ -1,8 +1,15 @@
 // ─── Core domain types matching chaincode structs ─────────────────────────────
 
-export type LandType = 'Bagayat' | 'Jirayat' | 'Kharaba' | 'Tribal_FRA' | 'Government' | 'Forest';
+// UP land types (primary) + Maharashtra legacy
+export type LandType =
+  | 'Bhumidhari' | 'Sirdar' | 'Asamiyadar' | 'Residential' | 'Commercial'
+  | 'Tribal_FRA' | 'Govt_Reserved'
+  | 'Bagayat' | 'Jirayat' | 'Kharaba' | 'Government' | 'Forest';
+
 export type EncumbranceStatus = 'CLEAR' | 'MORTGAGED' | 'COURT_INJUNCTION' | 'IT_ATTACHMENT' | 'MULTIPLE';
-export type TehsilCode = 'SNN' | 'IGT' | 'NSK' | 'DIN' | 'NIK';
+
+// UP tehsil codes (primary) + Maharashtra legacy
+export type TehsilCode = 'DAD' | 'NDA' | 'JWR' | 'BSK' | 'SNN' | 'IGT' | 'NSK' | 'DIN' | 'NIK';
 
 export interface ParcelOwner {
   name: string;

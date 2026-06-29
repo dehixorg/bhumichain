@@ -60,6 +60,16 @@ router.post(
   },
 );
 
+// GET /api/mutation — all mutations (officer queue view)
+router.get('/', authenticate, async (req, res) => {
+  try {
+    const list = await evaluate('mutation-manager', 'GetAllMutations', []);
+    res.json(list || []);
+  } catch (e) {
+    res.status(500).json({ error: 'FABRIC_ERROR', message: e.message });
+  }
+});
+
 // GET /api/mutation/:mutationId
 router.get('/:mutationId', authenticate, async (req, res) => {
   try {

@@ -156,6 +156,48 @@ export async function verifyCRS(registrationNo: string) {
   return res.data;
 }
 
+// ─── NyayaAI ─────────────────────────────────────────────────────────────────
+
+export async function predictDispute(payload: {
+  dlpiId: string;
+  disputeType: string;
+  facts: string;
+}) {
+  const res = await api.post('/api/ai/nyaya/predict', payload);
+  return res.data as {
+    winProbability: number;
+    settleProbability: number;
+    loseProbability: number;
+    confidence: number;
+    recommendedAction: string;
+    reasoning?: string;
+    precedents: Array<{
+      caseNo: string;
+      court: string;
+      year: number;
+      ruling: string;
+      relevance: number;
+    }>;
+    modelVersion?: string;
+    source?: string;
+  };
+}
+
+// ─── BhumiAuction ─────────────────────────────────────────────────────────────
+
+export async function getAuctions() {
+  const res = await api.get('/api/auction');
+  return res.data;
+}
+
+export async function placeBid(auctionId: string, payload: {
+  bidAmountINR: number;
+  bidderAadhaarHash: string;
+}) {
+  const res = await api.post(`/api/auction/${auctionId}/bid`, payload);
+  return res.data;
+}
+
 // ─── Demo trigger (mock mode only) ───────────────────────────────────────────
 
 export async function triggerDemoEvent(key: string) {

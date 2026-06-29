@@ -1,0 +1,75 @@
+# BhumiChain — Fabric Gateway Connection Profile
+# Used by api-gateway/src/services/fabric.js in FABRIC_MODE=real
+# Replace <AZURE_VM_IP> with the actual Azure VM public IP after provisioning.
+
+name: bhumichain-network
+version: "1.0"
+client:
+  organization: RevenueDept
+  connection:
+    timeout:
+      peer:
+        endorser: "300"
+
+organizations:
+  RevenueDept:
+    mspid: RevenueDeptMSP
+    peers:
+      - peer0.revenuedept.bhumichain.in
+      - peer1.revenuedept.bhumichain.in
+    certificateAuthorities:
+      - ca.revenuedept.bhumichain.in
+
+orderers:
+  orderer.bhumichain.in:
+    url: grpcs://<AZURE_VM_IP>:7050
+    grpcOptions:
+      ssl-target-name-override: orderer.bhumichain.in
+      grpc-max-send-message-length: -1
+      grpc-max-receive-message-length: -1
+    tlsCACerts:
+      path: crypto-config/ordererOrganizations/bhumichain.in/orderers/orderer.bhumichain.in/msp/tlscacerts/tlsca.bhumichain.in-cert.pem
+
+peers:
+  peer0.revenuedept.bhumichain.in:
+    url: grpcs://<AZURE_VM_IP>:7051
+    grpcOptions:
+      ssl-target-name-override: peer0.revenuedept.bhumichain.in
+      grpc.keepalive_time_ms: 120000
+      grpc.keepalive_timeout_ms: 20000
+    tlsCACerts:
+      path: crypto-config/peerOrganizations/revenuedept.bhumichain.in/peers/peer0.revenuedept.bhumichain.in/tls/ca.crt
+
+  peer1.revenuedept.bhumichain.in:
+    url: grpcs://<AZURE_VM_IP>:9051
+    grpcOptions:
+      ssl-target-name-override: peer1.revenuedept.bhumichain.in
+      grpc.keepalive_time_ms: 120000
+      grpc.keepalive_timeout_ms: 20000
+    tlsCACerts:
+      path: crypto-config/peerOrganizations/revenuedept.bhumichain.in/peers/peer1.revenuedept.bhumichain.in/tls/ca.crt
+
+certificateAuthorities:
+  ca.revenuedept.bhumichain.in:
+    url: https://<AZURE_VM_IP>:7054
+    caName: ca-revenuedept
+    tlsCACerts:
+      path: crypto-config/peerOrganizations/revenuedept.bhumichain.in/ca/ca.revenuedept.bhumichain.in-cert.pem
+    httpOptions:
+      verify: false
+
+channels:
+  land-registry:
+    orderers:
+      - orderer.bhumichain.in
+    peers:
+      peer0.revenuedept.bhumichain.in:
+        endorsingPeer: true
+        chaincodeQuery: true
+        ledgerQuery: true
+        eventSource: true
+      peer1.revenuedept.bhumichain.in:
+        endorsingPeer: true
+        chaincodeQuery: true
+        ledgerQuery: true
+        eventSource: false

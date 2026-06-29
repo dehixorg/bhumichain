@@ -23,6 +23,7 @@ export default function ScanPage() {
           <div className="ml-auto flex items-center gap-2 text-xs text-gray-600">
             <span className="px-2 py-0.5 bg-gray-800 rounded font-mono">Azure Doc Intelligence</span>
             <span className="px-2 py-0.5 bg-gray-800 rounded font-mono">LayoutLM NER</span>
+            <span className="px-2 py-0.5 bg-gray-800 rounded font-mono">DynamoDB</span>
             <span className="px-2 py-0.5 bg-gray-800 rounded font-mono">IPFS</span>
           </div>
         </div>
@@ -59,12 +60,12 @@ export default function ScanPage() {
               </div>
               <ol className="space-y-3 text-xs text-gray-400">
                 {[
-                  ['Upload', 'Drop any Satbara Utara (7/12) image or PDF'],
-                  ['OCR', 'Azure Document Intelligence reads Devanagari + Roman text'],
-                  ['NER', 'LayoutLM extracts owner, survey no., area, land type, encumbrances'],
-                  ['Validate', 'Cross-checks vs Mahabhulekh e-Satbara registry'],
-                  ['Review', 'Officer corrects any flagged fields'],
-                  ['Approve', 'Aadhaar eSign → DLPI created on Fabric ledger'],
+                  ['Upload', 'Drop UP Khatauni (खतौनी) image or PDF — any year'],
+                  ['OCR', 'Azure Document Intelligence reads Devanagari + tabular Khatauni format'],
+                  ['NER', 'LayoutLM extracts khata no., khasra, area, bhumi prakar, khatedar'],
+                  ['Validate', 'Cross-checks vs Bhulekh UP portal (bhulekh.up.gov.in)'],
+                  ['DynamoDB', 'Scan job persisted to AWS DynamoDB (testArpit, ap-south-1)'],
+                  ['Approve', 'Patwari reviews → DLPI created on Hyperledger Fabric ledger'],
                 ].map(([title, desc], i) => (
                   <li key={i} className="flex gap-2">
                     <span className="w-5 h-5 rounded-full bg-gray-800 text-gray-300 text-xs flex items-center justify-center shrink-0 font-mono">
@@ -85,16 +86,15 @@ export default function ScanPage() {
               </div>
               <div className="space-y-2 text-xs text-gray-500">
                 <p>
-                  India has <span className="text-gray-300 font-medium">140 crore+</span> land records,
-                  most on paper. Satbara extracts are often decades old, damaged, or in regional script.
+                  UP has <span className="text-gray-300 font-medium">2.3 crore+</span> Khataunis,
+                  many written in 1970s–90s handwritten registers. Digitisation is ongoing but slow.
                 </p>
                 <p>
                   RecordScan bridges the <span className="text-gray-300 font-medium">paper → blockchain</span> gap
-                  without manual data entry — eliminating transcription-based mutation fraud.
+                  without manual data entry — eliminating transcription-based mutation fraud by Lekhpals.
                 </p>
                 <p className="text-brand-400">
-                  SVAMITVA scheme: 3.29 lakh villages, 3.10 crore property cards.
-                  RecordScan accelerates the digitisation backlog.
+                  SVAMITVA scheme: 3.29 lakh villages targeted. GBN pilot covers 500 Khataunis in Dadri tehsil.
                 </p>
               </div>
             </div>
@@ -106,8 +106,9 @@ export default function ScanPage() {
               <div className="space-y-1.5 text-xs">
                 {[
                   ['RecordScan AI', 'localhost:8010', true],
-                  ['API Gateway', 'localhost:4000', true],
-                  ['IPFS node', 'localhost:5001', false],
+                  ['API Gateway',   'localhost:4000', true],
+                  ['DynamoDB',      'ap-south-1',     true],
+                  ['IPFS node',     'localhost:5001',  false],
                 ].map(([name, url, up]) => (
                   <div key={String(name)} className="flex items-center gap-2">
                     <div className={`w-1.5 h-1.5 rounded-full ${up ? 'bg-brand-400' : 'bg-gray-600'}`} />

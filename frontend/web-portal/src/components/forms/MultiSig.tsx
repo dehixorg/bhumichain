@@ -115,7 +115,9 @@ export default function MultiSig({
                 <div className="flex items-center gap-1.5">
                   <span className="text-sm text-gray-200 font-medium truncate">{signer.name}</span>
                   {signer.legalNote && (
-                    <Shield className="w-3 h-3 text-purple-400 shrink-0" title={signer.legalNote} />
+                    <span title={signer.legalNote} className="shrink-0">
+                      <Shield className="w-3 h-3 text-purple-400" />
+                    </span>
                   )}
                 </div>
                 <div className="flex items-center gap-2 mt-0.5">

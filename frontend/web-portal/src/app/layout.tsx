@@ -1,20 +1,17 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
 import './globals.css';
 import { Toaster } from 'react-hot-toast';
 
-const inter = Inter({ subsets: ['latin'] });
-
 export const metadata: Metadata = {
-  title: 'BhumiChain — India\'s Unified Land Registry on Blockchain',
-  description: 'End-to-end land administration on Hyperledger Fabric. Maharashtra pilot — Nashik district.',
+  title: 'BhumiChain — Land Registry on Blockchain',
+  description: 'Tamper-proof land records on Hyperledger Fabric v2.5. Gautam Buddha Nagar pilot — Noida, Uttar Pradesh.',
   icons: { icon: '/favicon.svg' },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className={`${inter.className} min-h-screen bg-gray-950`}>
+      <body className="min-h-screen bg-gray-950 font-sans">
         {children}
         <Toaster
           position="top-right"

@@ -69,8 +69,7 @@ export default function ParcelMap({ geojson, onParcelSelect }: Props) {
 
     // Dynamic import to prevent SSR crash
     (async () => {
-      const L = (await import('leaflet')).default;
-      await import('leaflet/dist/leaflet.css');
+      const L = await import('leaflet');
 
       // Fix default marker icon path (Next.js bundles break it)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -108,13 +107,13 @@ export default function ParcelMap({ geojson, onParcelSelect }: Props) {
   useEffect(() => {
     if (!mapRef.current) return;
     (async () => {
-      const L = (await import('leaflet')).default;
+      const L = await import('leaflet');
       renderGeoJSON(L, mapRef.current!);
     })();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [highlightedDlpiId, filterType, searchQuery]);
 
-  const renderGeoJSON = useCallback(async (L: typeof import('leaflet').default, map: LeafletMap) => {
+  const renderGeoJSON = useCallback(async (L: typeof import('leaflet'), map: LeafletMap) => {
     if (geoLayerRef.current) {
       geoLayerRef.current.remove();
     }

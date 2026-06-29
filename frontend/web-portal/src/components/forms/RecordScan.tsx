@@ -1,17 +1,15 @@
 'use client';
 
 import React, { useState, useRef, useCallback } from 'react';
-import axios from 'axios';
 import toast from 'react-hot-toast';
 import {
   Upload, FileText, CheckCircle, AlertTriangle, Clock,
-  Cpu, Database, Shield, Zap, Edit3, ChevronRight, X
+  Cpu, Database, Shield, Zap, Edit3, ChevronRight, X,
 } from 'lucide-react';
 import clsx from 'clsx';
-import type { LandType } from '@/types';
+import { getToken, apiFetch } from '@/lib/auth';
 
 const SCAN_URL = process.env.NEXT_PUBLIC_RECORD_SCAN_URL || 'http://localhost:8010';
-const API_URL  = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -24,7 +22,7 @@ interface ProcessingStep {
   durationMs?: number;
 }
 
-interface SatbaraOwner {
+interface KhatedaOwner {
   name: string;
   fatherHusbandName?: string;
   share?: string;
@@ -32,19 +30,22 @@ interface SatbaraOwner {
 }
 
 interface Extraction {
-  districtName: string;
-  tehsilName: string;
-  villageName: string;
-  surveyNumber: string;
-  subdivisionNumber?: string;
-  totalAreaHectares: number;
-  landType: LandType;
+  zila: string;
+  tehsil: string;
+  gram: string;
+  fasalVarsh?: string;
+  khataNo: string;
+  khasraNo: string;
+  areaHectares: number;
+  areaBigha?: number;
+  landType: string;
   irrigationSource?: string;
-  owners: SatbaraOwner[];
-  hasCoparcenary: boolean;
-  currentCultivator?: string;
   cropDetails?: string;
-  surveyDate?: string;
+  khatedars: KhatedaOwner[];
+  hasCoparcenary: boolean;
+  currentPossessor?: string;
+  khatabandiDate?: string;
+  lekhpalSignature?: string;
   ocrConfidence: number;
   nerConfidence: number;
   overallConfidence: number;
@@ -61,27 +62,36 @@ interface ScanResult {
   extraction: Extraction;
   suggestedDlpiId: string;
   processingTimeMs: number;
+  storedInDynamoDB: boolean;
 }
 
 type Stage = 'idle' | 'uploading' | 'processing' | 'review' | 'approving' | 'done';
 
-// ─── Demo quick-launch presets ────────────────────────────────────────────────
+// ─── Demo presets ─────────────────────────────────────────────────────────────
 
 const DEMO_PRESETS = [
   {
-    id: 'demo_clear',
-    label: 'Sinnar 142/2A — Clean scan',
-    sub: 'Ramesh Patil · Bagayat · 2.4 Ha',
+    id:    'demo_clear',
+    label: 'Dadri Gata 740/201 — Clean scan',
+    sub:   'Arun Sharma · Bhumidhari · 2.4 Ha',
     color: 'brand',
-    icon: CheckCircle,
+    icon:  CheckCircle,
   },
   {
-    id: 'demo_degraded',
-    label: 'Sinnar 98 — Ink smudged',
-    sub: 'Damaged record · requires review',
+    id:    'demo_degraded',
+    label: 'Dadri Gata 312 — 1994 torn register',
+    sub:   'Old record · partial damage · review needed',
     color: 'amber',
-    icon: AlertTriangle,
+    icon:  AlertTriangle,
   },
+];
+
+const STEP_LABELS = [
+  { step: 'UPLOAD',        label: 'Document uploaded' },
+  { step: 'AZURE_OCR',     label: 'Azure Document Intelligence OCR' },
+  { step: 'LAYOUT_LM_NER', label: 'LayoutLM NER — Khatauni field extraction' },
+  { step: 'VALIDATION',    label: 'Cross-validation vs Bhulekh UP portal' },
+  { step: 'IPFS',          label: 'Pinning to IPFS' },
 ];
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -91,68 +101,58 @@ interface Props {
 }
 
 export default function RecordScan({ onDlpiCreated }: Props) {
-  const [stage, setStage] = useState<Stage>('idle');
-  const [steps, setSteps] = useState<ProcessingStep[]>([]);
-  const [result, setResult] = useState<ScanResult | null>(null);
-  const [edited, setEdited] = useState<Partial<Extraction>>({});
-  const [dlpiId, setDlpiId] = useState('');
+  const [stage, setStage]     = useState<Stage>('idle');
+  const [steps, setSteps]     = useState<ProcessingStep[]>([]);
+  const [result, setResult]   = useState<ScanResult | null>(null);
+  const [edited, setEdited]   = useState<Partial<Extraction>>({});
+  const [dlpiId, setDlpiId]   = useState('');
   const [dragOver, setDragOver] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  // ── Upload + scan ─────────────────────────────────────────────────────────
+  // ── Scan ─────────────────────────────────────────────────────────────────
 
   const runScan = useCallback(async (file: File, demoVariant?: string) => {
     setStage('uploading');
     setSteps([]);
     setResult(null);
 
+    const form = new FormData();
+    form.append('file', file);
+    if (demoVariant) form.append('demoVariant', demoVariant);
+
+    setStage('processing');
+    setSteps(STEP_LABELS.map(s => ({ ...s, status: 'pending' as const })));
+
+    let stepIdx = 0;
+    const ticker = setInterval(() => {
+      if (stepIdx >= STEP_LABELS.length) { clearInterval(ticker); return; }
+      setSteps(prev => prev.map((s, i) => {
+        if (i < stepIdx)  return { ...s, status: 'done' as const };
+        if (i === stepIdx) return { ...s, status: 'running' as const };
+        return s;
+      }));
+      stepIdx++;
+    }, 950);
+
     try {
-      const form = new FormData();
-      if (file) form.append('file', file);
-      if (demoVariant) form.append('demoVariant', demoVariant);
-
-      setStage('processing');
-
-      // Animate steps locally while waiting for server
-      const STEP_LABELS = [
-        { step: 'UPLOAD',        label: 'Document uploaded' },
-        { step: 'AZURE_OCR',     label: 'Azure Document Intelligence OCR' },
-        { step: 'LAYOUT_LM_NER', label: 'LayoutLM NER — field extraction' },
-        { step: 'VALIDATION',    label: 'Cross-validation vs Mahabhulekh' },
-        { step: 'IPFS',          label: 'Pinning to IPFS' },
-      ];
-
-      setSteps(STEP_LABELS.map((s) => ({ ...s, status: 'pending' })));
-
-      // Animate steps one by one before the response arrives
-      let stepIdx = 0;
-      const ticker = setInterval(() => {
-        if (stepIdx >= STEP_LABELS.length) { clearInterval(ticker); return; }
-        setSteps((prev) =>
-          prev.map((s, i) => {
-            if (i < stepIdx) return { ...s, status: 'done' };
-            if (i === stepIdx) return { ...s, status: 'running' };
-            return s;
-          }),
-        );
-        stepIdx++;
-      }, 900);
-
-      const res = await axios.post<ScanResult>(`${SCAN_URL}/scan/upload`, form, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-        timeout: 30_000,
-      });
+      const res = await fetch(`${SCAN_URL}/scan/upload`, { method: 'POST', body: form });
       clearInterval(ticker);
-
-      const data = res.data;
-      // Merge server step details into our animated steps
-      setSteps(data.processingSteps.length ? data.processingSteps : STEP_LABELS.map((s) => ({ ...s, status: 'done' as const })));
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || `Scan failed: ${res.status}`);
+      }
+      const data: ScanResult = await res.json();
+      setSteps(data.processingSteps.length ? data.processingSteps : STEP_LABELS.map(s => ({ ...s, status: 'done' as const })));
       setResult(data);
       setDlpiId(data.suggestedDlpiId);
       setEdited({});
       setStage('review');
-    } catch (err) {
-      toast.error('RecordScan service unavailable. Is it running on port 8010?');
+      if (data.storedInDynamoDB) {
+        toast.success(`Scan saved to DynamoDB (${data.scanId})`);
+      }
+    } catch (err: unknown) {
+      clearInterval(ticker);
+      toast.error(err instanceof Error ? err.message : 'RecordScan service unavailable. Is it running on port 8010?');
       setStage('idle');
     }
   }, []);
@@ -169,11 +169,10 @@ export default function RecordScan({ onDlpiCreated }: Props) {
     if (f) runScan(f);
   };
 
-  const onDemoPreset = async (variant: string) => {
-    // Create a dummy file so the FormData is valid
+  const onDemoPreset = (variant: string) => {
     const blob = new Blob(['demo'], { type: 'image/jpeg' });
     const file = new File([blob], `${variant}.jpg`, { type: 'image/jpeg' });
-    await runScan(file, variant);
+    runScan(file, variant);
   };
 
   // ── Officer approval ──────────────────────────────────────────────────────
@@ -182,28 +181,33 @@ export default function RecordScan({ onDlpiCreated }: Props) {
     if (!result) return;
     setStage('approving');
 
-    // Get a demo token first
-    let token = '';
-    try {
-      const tkRes = await axios.get(`${API_URL}/api/auth/demo-token?role=revenue_officer&name=Prakash+Kulkarni`);
-      token = tkRes.data.token;
-    } catch { /* token optional in mock */ }
+    // Use the stored JWT (from login) — officer must be logged in
+    const token = getToken() || '';
 
     try {
-      await axios.post(`${SCAN_URL}/scan/approve`, {
-        scanId: result.scanId,
-        dlpiId,
-        officerAadhaarHash: 'sha256:' + 'a'.repeat(64),
-        officerName: 'Prakash Nana Kulkarni',
-        correctedFields: Object.keys(edited).length ? edited : undefined,
-        token,
+      const res = await fetch(`${SCAN_URL}/scan/approve`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({
+          scanId:             result.scanId,
+          dlpiId,
+          officerAadhaarHash: 'sha256:' + '0'.repeat(64),
+          officerName:        'Vijay Singh (Patwari DAD-P1)',
+          correctedFields:    Object.keys(edited).length ? edited : undefined,
+          token,
+        }),
       });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || 'Approval failed');
+      }
 
       setStage('done');
       toast.success(`DLPI ${dlpiId} recorded on BhumiChain!`);
       onDlpiCreated?.(dlpiId);
-    } catch {
-      toast.error('Approval failed. Check gateway connection.');
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Approval failed. Check gateway connection.');
       setStage('review');
     }
   };
@@ -219,16 +223,15 @@ export default function RecordScan({ onDlpiCreated }: Props) {
       <div>
         <h1 className="text-xl font-bold text-gray-100">RecordScan AI</h1>
         <p className="text-gray-400 text-sm mt-1">
-          Upload a Satbara Utara (7/12) extract → Azure OCR + LayoutLM NER → DLPI on blockchain
+          Upload a UP Khatauni (खतौनी) → Azure OCR + LayoutLM NER → DLPI on Hyperledger Fabric
         </p>
       </div>
 
-      {/* ── IDLE: upload zone ───────────────────────────────────────────── */}
+      {/* ── IDLE ────────────────────────────────────────────────────────── */}
       {stage === 'idle' && (
         <>
-          {/* Demo presets */}
           <div className="grid grid-cols-2 gap-3">
-            {DEMO_PRESETS.map((p) => (
+            {DEMO_PRESETS.map(p => (
               <button
                 key={p.id}
                 onClick={() => onDemoPreset(p.id)}
@@ -250,14 +253,13 @@ export default function RecordScan({ onDlpiCreated }: Props) {
 
           <div className="flex items-center gap-3 text-gray-600 text-xs">
             <div className="flex-1 h-px bg-gray-800" />
-            or upload your own
+            या अपना दस्तावेज़ अपलोड करें
             <div className="flex-1 h-px bg-gray-800" />
           </div>
 
-          {/* Drop zone */}
           <div
             onDrop={onDrop}
-            onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+            onDragOver={e => { e.preventDefault(); setDragOver(true); }}
             onDragLeave={() => setDragOver(false)}
             onClick={() => fileRef.current?.click()}
             className={clsx(
@@ -266,70 +268,70 @@ export default function RecordScan({ onDlpiCreated }: Props) {
             )}
           >
             <Upload className="w-8 h-8 text-gray-500 mx-auto mb-3" />
-            <p className="text-gray-300 font-medium text-sm">Drop Satbara scan here</p>
+            <p className="text-gray-300 font-medium text-sm">Drop Khatauni scan here</p>
             <p className="text-gray-600 text-xs mt-1">JPEG, PNG, TIFF, PDF · Max 20 MB</p>
             <input ref={fileRef} type="file" accept="image/*,.pdf" className="hidden" onChange={onFileChange} />
           </div>
         </>
       )}
 
-      {/* ── PROCESSING: animated pipeline ──────────────────────────────── */}
+      {/* ── PROCESSING ──────────────────────────────────────────────────── */}
       {(stage === 'uploading' || stage === 'processing') && (
         <div className="card space-y-4">
           <div className="flex items-center gap-2 mb-2">
             <Cpu className="w-4 h-4 text-brand-400 animate-pulse" />
             <span className="font-semibold text-gray-200 text-sm">AI Pipeline Running...</span>
           </div>
-          {steps.map((s, i) => (
-            <PipelineStep key={i} step={s} />
-          ))}
+          {steps.map((s, i) => <PipelineStep key={i} step={s} />)}
         </div>
       )}
 
-      {/* ── REVIEW: officer corrections ─────────────────────────────────── */}
+      {/* ── REVIEW ──────────────────────────────────────────────────────── */}
       {stage === 'review' && result && ext && (
         <div className="space-y-4 animate-fade-in">
-          {/* Confidence banner */}
-          <ConfidenceBanner extraction={ext} />
+          <ConfidenceBanner extraction={ext} storedInDynamo={result.storedInDynamoDB} />
 
-          {/* Extracted fields */}
           <div className="card">
             <div className="flex items-center gap-2 mb-4">
               <FileText className="w-4 h-4 text-brand-400" />
-              <span className="font-semibold text-gray-200 text-sm">Extracted Satbara Fields</span>
+              <span className="font-semibold text-gray-200 text-sm">Extracted Khatauni Fields</span>
               <span className="ml-auto text-xs text-gray-500">{result.fileName} · {result.fileSizeKB} KB</span>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <Field label="District" value={ext.districtName} flagged={ext.flaggedFields.includes('districtName')} />
-              <Field label="Tehsil" value={ext.tehsilName} flagged={ext.flaggedFields.includes('tehsilName')} />
+              <Field label="जिला (District)"    value={ext.zila} />
+              <Field label="तहसील (Tehsil)"     value={ext.tehsil} />
               <EditableField
-                label="Village"
-                value={edited.villageName ?? ext.villageName}
-                flagged={ext.flaggedFields.some(f => f.includes('village'))}
-                onChange={(v) => setEdited((p) => ({ ...p, villageName: v }))}
+                label="ग्राम (Village)"
+                value={edited.gram ?? ext.gram}
+                flagged={ext.flaggedFields.some(f => f.includes('gram'))}
+                onChange={v => setEdited(p => ({ ...p, gram: v }))}
               />
-              <Field label="Survey No." value={`${ext.surveyNumber}${ext.subdivisionNumber ? '/' + ext.subdivisionNumber : ''}`} />
+              <Field label="खाता संख्या (Khata No.)" value={ext.khataNo} flagged={ext.flaggedFields.some(f => f.includes('khata'))} />
+              <Field label="खसरा / गाटा"        value={ext.khasraNo} />
+              <Field label="फसल वर्ष"           value={ext.fasalVarsh || '—'} />
               <EditableField
-                label="Area (Hectares)"
-                value={String(edited.totalAreaHectares ?? ext.totalAreaHectares)}
-                flagged={ext.flaggedFields.some(f => f.includes('Area') || f.includes('area'))}
-                onChange={(v) => setEdited((p) => ({ ...p, totalAreaHectares: parseFloat(v) || ext.totalAreaHectares }))}
+                label="क्षेत्रफल — Ha"
+                value={String(edited.areaHectares ?? ext.areaHectares)}
+                flagged={ext.flaggedFields.some(f => f.includes('area') || f.includes('area'))}
+                onChange={v => setEdited(p => ({ ...p, areaHectares: parseFloat(v) || ext.areaHectares }))}
               />
-              <Field label="Land Type" value={ext.landType} />
-              <Field label="Irrigation" value={ext.irrigationSource || '—'} />
-              <Field label="Cultivation" value={ext.currentCultivator || '—'} />
-              <Field label="Crops" value={ext.cropDetails || '—'} />
-              <Field label="Survey Date" value={ext.surveyDate || '—'} />
+              <Field label="क्षेत्र — बीघा"     value={ext.areaBigha ? String(ext.areaBigha) : '—'} />
+              <Field label="भूमि प्रकार"        value={ext.landType} />
+              <Field label="सिंचाई"             value={ext.irrigationSource || '—'} />
+              <Field label="फसल"               value={ext.cropDetails || '—'} />
+              <Field label="लेखपाल"            value={ext.lekhpalSignature || '—'} />
             </div>
 
-            {/* Owners */}
+            {/* Khatedars (owners) */}
             <div className="mt-4 pt-4 border-t border-gray-800">
-              <div className="text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wider">Owners</div>
-              {ext.owners.map((o, i) => (
+              <div className="text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wider">
+                खातेदार (Owners)
+              </div>
+              {ext.khatedars.map((o, i) => (
                 <div key={i} className="flex items-center justify-between py-1.5 border-b border-gray-800 last:border-0">
                   <div>
-                    <span className={clsx('text-sm text-gray-200', ext.flaggedFields.some(f => f.includes('owner')) && 'text-amber-300')}>
+                    <span className={clsx('text-sm text-gray-200', ext.flaggedFields.some(f => f.includes('khatedar') || f.includes('owner')) && 'text-amber-300')}>
                       {o.name}
                     </span>
                     {o.fatherHusbandName && (
@@ -344,7 +346,6 @@ export default function RecordScan({ onDlpiCreated }: Props) {
               ))}
             </div>
 
-            {/* IPFS CID */}
             <div className="mt-4 pt-4 border-t border-gray-800 flex items-center gap-2 text-xs text-gray-500">
               <Database className="w-3 h-3" />
               <span>IPFS CID:</span>
@@ -359,38 +360,31 @@ export default function RecordScan({ onDlpiCreated }: Props) {
             </label>
             <input
               value={dlpiId}
-              onChange={(e) => setDlpiId(e.target.value)}
+              onChange={e => setDlpiId(e.target.value)}
               className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-brand-300 font-mono text-sm focus:outline-none focus:border-brand-500"
             />
             <p className="text-gray-600 text-xs mt-1">
-              Auto-generated from survey + tehsil. Circle officer may override.
+              Auto-generated from Gata No. + tehsil code (DAD). Patwari may override before approval.
             </p>
           </div>
 
-          {/* Flagged fields warning */}
           {ext.requiresManualReview && ext.flaggedFields.length > 0 && (
             <div className="flex items-start gap-3 bg-amber-950 border border-amber-700 rounded-xl p-4">
               <AlertTriangle className="w-4 h-4 text-amber-400 mt-0.5 shrink-0" />
               <div>
-                <div className="text-amber-300 font-semibold text-sm mb-1">Manual review required</div>
+                <div className="text-amber-300 font-semibold text-sm mb-1">Officer review required (समीक्षा आवश्यक)</div>
                 <div className="text-amber-400 text-xs space-y-0.5">
-                  {ext.flaggedFields.map((f, i) => (
-                    <div key={i}>• {f}</div>
-                  ))}
+                  {ext.flaggedFields.map((f, i) => <div key={i}>• {f}</div>)}
                 </div>
               </div>
             </div>
           )}
 
-          {/* Action buttons */}
           <div className="flex items-center gap-3">
             <button onClick={() => setStage('idle')} className="btn-ghost flex items-center gap-2">
               <X className="w-4 h-4" /> Discard
             </button>
-            <button
-              onClick={approve}
-              className="btn-primary flex items-center gap-2 ml-auto"
-            >
+            <button onClick={approve} className="btn-primary flex items-center gap-2 ml-auto">
               <Shield className="w-4 h-4" />
               Approve &amp; Record on Blockchain
               <ChevronRight className="w-4 h-4" />
@@ -420,13 +414,8 @@ export default function RecordScan({ onDlpiCreated }: Props) {
             Land parcel is now permanently on BhumiChain · Tamper-proof · Publicly verifiable
           </div>
           <div className="flex items-center justify-center gap-3">
-            <button onClick={() => setStage('idle')} className="btn-ghost text-sm">
-              Scan another
-            </button>
-            <button
-              onClick={() => onDlpiCreated?.(dlpiId)}
-              className="btn-primary text-sm flex items-center gap-2"
-            >
+            <button onClick={() => setStage('idle')} className="btn-ghost text-sm">Scan another</button>
+            <button onClick={() => onDlpiCreated?.(dlpiId)} className="btn-primary text-sm flex items-center gap-2">
               <Zap className="w-4 h-4" /> View on Map
             </button>
           </div>
@@ -451,13 +440,13 @@ function PipelineStep({ step }: { step: ProcessingStep }) {
   return (
     <div className={clsx('flex items-start gap-3 py-2', step.status === 'pending' && 'opacity-40')}>
       <div className={clsx('w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5', {
-        'bg-gray-800': step.status === 'pending',
-        'bg-brand-900 animate-pulse-fast': step.status === 'running',
-        'bg-brand-800': step.status === 'done',
-        'bg-amber-800': step.status === 'partial',
-        'bg-red-800': step.status === 'error',
+        'bg-gray-800':                       step.status === 'pending',
+        'bg-brand-900 animate-pulse-fast':    step.status === 'running',
+        'bg-brand-800':                       step.status === 'done',
+        'bg-amber-800':                       step.status === 'partial',
+        'bg-red-800':                         step.status === 'error',
       })}>
-        {step.status === 'done' || step.status === 'partial'
+        {(step.status === 'done' || step.status === 'partial')
           ? <CheckCircle className={clsx('w-3.5 h-3.5', step.status === 'partial' ? 'text-amber-300' : 'text-brand-300')} />
           : <Icon className="w-3.5 h-3.5 text-gray-400" />
         }
@@ -465,16 +454,14 @@ function PipelineStep({ step }: { step: ProcessingStep }) {
       <div className="flex-1">
         <div className="flex items-center gap-2">
           <span className={clsx('text-sm font-medium', {
-            'text-gray-500': step.status === 'pending',
-            'text-brand-300': step.status === 'running',
-            'text-gray-200': step.status === 'done',
-            'text-amber-300': step.status === 'partial',
+            'text-gray-500':   step.status === 'pending',
+            'text-brand-300':  step.status === 'running',
+            'text-gray-200':   step.status === 'done',
+            'text-amber-300':  step.status === 'partial',
           })}>
             {step.label}
           </span>
-          {step.status === 'running' && (
-            <span className="text-xs text-brand-500 animate-pulse">processing...</span>
-          )}
+          {step.status === 'running' && <span className="text-xs text-brand-500 animate-pulse">processing...</span>}
           {step.confidence !== undefined && step.status !== 'pending' && (
             <span className={clsx('ml-auto text-xs font-mono', step.confidence >= 0.8 ? 'text-brand-400' : 'text-amber-400')}>
               {Math.round(step.confidence * 100)}%
@@ -492,7 +479,7 @@ function PipelineStep({ step }: { step: ProcessingStep }) {
   );
 }
 
-function ConfidenceBanner({ extraction }: { extraction: Extraction }) {
+function ConfidenceBanner({ extraction, storedInDynamo }: { extraction: Extraction; storedInDynamo: boolean }) {
   const conf = extraction.overallConfidence;
   const high = conf >= 0.85;
   const med  = conf >= 0.65;
@@ -501,7 +488,7 @@ function ConfidenceBanner({ extraction }: { extraction: Extraction }) {
     <div className={clsx('flex items-center gap-4 rounded-xl px-4 py-3', {
       'bg-brand-950 border border-brand-800': high,
       'bg-amber-950 border border-amber-700': !high && med,
-      'bg-red-950 border border-red-700': !med,
+      'bg-red-950 border border-red-700':     !med,
     })}>
       <div className="text-center">
         <div className={clsx('text-2xl font-bold', high ? 'text-brand-300' : med ? 'text-amber-300' : 'text-red-300')}>
@@ -511,9 +498,9 @@ function ConfidenceBanner({ extraction }: { extraction: Extraction }) {
       </div>
       <div className="flex-1">
         <div className="text-sm font-semibold text-gray-200 mb-0.5">
-          {high ? 'High confidence — ready for approval'
+          {high ? 'High confidence — ready for patwari approval'
            : med ? 'Medium confidence — review flagged fields'
-           : 'Low confidence — manual verification required'}
+           : 'Low confidence — manual verification required (अधिकारी सत्यापन आवश्यक)'}
         </div>
         <div className="flex items-center gap-4 text-xs text-gray-500">
           <span>OCR: {Math.round(extraction.ocrConfidence * 100)}%</span>
@@ -521,11 +508,14 @@ function ConfidenceBanner({ extraction }: { extraction: Extraction }) {
           {extraction.flaggedFields.length > 0 && (
             <span className="text-amber-400">{extraction.flaggedFields.length} field(s) flagged</span>
           )}
+          {storedInDynamo && (
+            <span className="text-brand-400 flex items-center gap-1">
+              <Database className="w-3 h-3" />DynamoDB
+            </span>
+          )}
         </div>
       </div>
-      {extraction.requiresManualReview && (
-        <Edit3 className="w-4 h-4 text-amber-400 shrink-0" />
-      )}
+      {extraction.requiresManualReview && <Edit3 className="w-4 h-4 text-amber-400 shrink-0" />}
     </div>
   );
 }
@@ -553,7 +543,7 @@ function EditableField({
       <div className="flex items-center gap-1 mb-0.5">
         <span className="text-xs text-gray-500">{label}</span>
         {flagged && <AlertTriangle className="w-3 h-3 text-amber-400" />}
-        <button onClick={() => setEditing((e) => !e)} className="ml-auto">
+        <button onClick={() => setEditing(e => !e)} className="ml-auto">
           <Edit3 className="w-3 h-3 text-gray-600 hover:text-gray-400" />
         </button>
       </div>
@@ -561,14 +551,12 @@ function EditableField({
         <input
           autoFocus
           value={value}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={e => onChange(e.target.value)}
           onBlur={() => setEditing(false)}
           className="w-full bg-gray-800 border border-brand-600 rounded px-2 py-1 text-sm text-gray-200 focus:outline-none"
         />
       ) : (
-        <div className={clsx('text-sm font-medium', flagged ? 'text-amber-300' : 'text-gray-200')}>
-          {value}
-        </div>
+        <div className={clsx('text-sm font-medium', flagged ? 'text-amber-300' : 'text-gray-200')}>{value}</div>
       )}
     </div>
   );

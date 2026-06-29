@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 
-// Root redirects to map (the primary scene-entry point for the demo)
+// Root redirects to login — login page handles role-based redirect after auth
 export default function Home() {
-  redirect('/map');
+  redirect('/login');
 }

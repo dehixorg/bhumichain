@@ -1,187 +1,202 @@
 """
-Pre-scripted RecordScan responses for demo Scene 2.
+Pre-scripted RecordScan responses for demo — Noida/GBN pilot.
 Two variants:
-  - demo_clear:    Clean Satbara scan → high confidence → auto-extracted
-  - demo_degraded: Ink-smudged scan → low confidence → flags for officer review
+  demo_clear    — Clean Khatauni scan, high confidence, auto-extracted
+  demo_degraded — Faded/torn 1990s register, low confidence, needs officer review
 """
 
-from satbara_schema import (
-    SatbaraExtraction, SatbaraOwner, SatbaraEncumbrance, ScanResult, LandType
+from khatauni_schema import (
+    KhatauniExtraction, KhatedaOwner, KhataEncumbrance, ScanResult, LandType,
 )
 
-# ─── Scene 2a: Clean scan (Ramesh Patil's Satbara) ────────────────────────────
+# ─── Scene 2a: Clean scan — Arun Sharma's Khatauni, Dadri tehsil ─────────────
 
 DEMO_CLEAR = ScanResult(
     scanId="SCN-DEMO-CLEAR-001",
-    fileName="satbara_sinnar_142_2a.jpg",
-    fileSizeKB=842.3,
-    ipfsCID="QmSatbaraSNNSurvey142Clean2026",
+    fileName="khatauni_dadri_gata_740_201.jpg",
+    fileSizeKB=918.4,
+    ipfsCID="QmKhatauni740DAD2026Clean",
     processingSteps=[
         {
             "step": "UPLOAD",
             "label": "Document uploaded",
             "status": "done",
-            "durationMs": 312,
+            "durationMs": 287,
         },
         {
             "step": "AZURE_OCR",
             "label": "Azure Document Intelligence OCR",
-            "detail": "Extracted 847 characters from Devanagari + Roman text",
-            "confidence": 0.94,
+            "detail": "Extracted 1,142 characters — Devanagari + tabular format recognised",
+            "confidence": 0.96,
             "status": "done",
-            "durationMs": 1840,
+            "durationMs": 1920,
         },
         {
             "step": "LAYOUT_LM_NER",
-            "label": "LayoutLM NER — field extraction",
-            "detail": "18 entities identified: owner, survey no, area, land type, encumbrances",
-            "confidence": 0.91,
+            "label": "LayoutLM NER — Khatauni field extraction",
+            "detail": "21 entities identified: khata no., khasra, area, bhumi prakar, khatedar, fasalvars",
+            "confidence": 0.93,
             "status": "done",
-            "durationMs": 2210,
+            "durationMs": 2340,
         },
         {
             "step": "VALIDATION",
-            "label": "Cross-validation against Mahabhulekh registry",
-            "detail": "Survey No. 142/2A matches district records",
-            "confidence": 0.98,
+            "label": "Cross-validation vs Bhulekh UP portal",
+            "detail": "Gata 740/201, Dadri matches district records (bhulekh.up.gov.in)",
+            "confidence": 0.99,
             "status": "done",
-            "durationMs": 640,
+            "durationMs": 580,
         },
         {
             "step": "IPFS",
             "label": "Document pinned to IPFS",
-            "detail": "CID: QmSatbaraSNNSurvey142Clean2026",
+            "detail": "CID: QmKhatauni740DAD2026Clean",
             "status": "done",
-            "durationMs": 290,
+            "durationMs": 262,
         },
     ],
-    extraction=SatbaraExtraction(
-        districtName="Nashik",
-        tehsilName="Sinnar",
-        villageName="Sonewadi",
-        surveyNumber="142",
-        subdivisionNumber="2A",
-        localName="Gut No. 142",
-        totalAreaHectares=2.4,
-        landType=LandType.BAGAYAT,
-        irrigationSource="Well",
-        owners=[
-            SatbaraOwner(
-                name="Ramesh Dattatray Patil",
-                fatherHusbandName="Dattatray Vishwanath Patil",
-                share="Full",
-                ownershipType="Individual",
-            )
+    extraction=KhatauniExtraction(
+        zila="Gautam Buddha Nagar",
+        tehsil="Dadri",
+        gram="Gharbara",
+        fasalVarsh="2025-26",
+        khataNo="201",
+        khasraNo="740/201",
+        areaHectares=2.4,
+        areaBigha=9.49,
+        landType=LandType.BHUMIDHARI,
+        irrigationSource="Tubewell",
+        cropDetails="Gehu (Rabi), Dhan (Kharif)",
+        khatedars=[
+            KhatedaOwner(
+                name="Arun Sharma",
+                fatherHusbandName="Ramcharan Sharma",
+                share="1/2",
+                ownershipType="Joint",
+            ),
+            KhatedaOwner(
+                name="Sushma Sharma",
+                fatherHusbandName="Arun Sharma (Pati)",
+                share="1/4",
+                ownershipType="Joint",
+            ),
+            KhatedaOwner(
+                name="Rohan Sharma",
+                fatherHusbandName="Arun Sharma (Pita)",
+                share="1/4",
+                ownershipType="Joint",
+            ),
         ],
-        hasJointOwnership=False,
+        hasJointOwnership=True,
         hasCoparcenary=True,
+        currentPossessor="Arun Sharma",
         encumbrances=[],
-        currentCultivator="Ramesh Dattatray Patil",
-        cropDetails="Onion (Kharif), Wheat (Rabi)",
-        possessionType="Self",
-        surveyDate="2019-11-10",
-        registeredAt="2019-11-14T10:30:00",
-        talathiSignature="Suresh B. Pawar, Talathi, Sonewadi",
-        ocrConfidence=0.94,
-        nerConfidence=0.91,
-        overallConfidence=0.93,
+        khatabandiDate="2025-03-15",
+        lekhpalSignature="Lekhpal Ramesh Yadav, DAD-P1",
+        ocrConfidence=0.96,
+        nerConfidence=0.93,
+        overallConfidence=0.95,
         flaggedFields=[],
         requiresManualReview=False,
     ),
-    suggestedDlpiId="DLPI-MH-SNN-00142",
-    processingTimeMs=5292,
+    suggestedDlpiId="DLPI-UP-DAD-00003",
+    processingTimeMs=5389,
 )
 
-# ─── Scene 2b: Degraded/smudged scan (ink damage simulation) ─────────────────
+# ─── Scene 2b: Degraded — old register, torn corner ──────────────────────────
 
 DEMO_DEGRADED = ScanResult(
     scanId="SCN-DEMO-DEGRADED-001",
-    fileName="satbara_sinnar_098_smudged.jpg",
-    fileSizeKB=631.7,
-    ipfsCID="QmSatbaraSNNSurvey098Degraded2026",
+    fileName="khatauni_dadri_old_1994_gata_312.jpg",
+    fileSizeKB=487.2,
+    ipfsCID="QmKhatauni312DAD1994Degraded",
     processingSteps=[
         {
             "step": "UPLOAD",
             "label": "Document uploaded",
             "status": "done",
-            "durationMs": 298,
+            "durationMs": 301,
         },
         {
             "step": "AZURE_OCR",
             "label": "Azure Document Intelligence OCR",
-            "detail": "Ink damage detected in Zone 3. Partial text recovered (61% coverage).",
-            "confidence": 0.61,
+            "detail": "Paper tear detected on right margin. 63% text recovered. Devanagari ink faded.",
+            "confidence": 0.63,
             "status": "done",
-            "durationMs": 2140,
+            "durationMs": 2380,
         },
         {
             "step": "LAYOUT_LM_NER",
-            "label": "LayoutLM NER — field extraction",
-            "detail": "11 of 18 expected entities extracted. Area and encumbrance fields unclear.",
-            "confidence": 0.58,
+            "label": "LayoutLM NER — Khatauni field extraction",
+            "detail": "13 of 21 expected entities extracted. Area column and encumbrance section partially damaged.",
+            "confidence": 0.55,
             "status": "partial",
-            "durationMs": 2890,
+            "durationMs": 2910,
         },
         {
             "step": "VALIDATION",
-            "label": "Cross-validation against Mahabhulekh registry",
-            "detail": "Survey No. 98 found in district records — owner name partially matches.",
-            "confidence": 0.72,
+            "label": "Cross-validation vs Bhulekh UP portal",
+            "detail": "Gata 312 found — but owner name partially differs from 1994 record. Needs officer verification.",
+            "confidence": 0.68,
             "status": "partial",
-            "durationMs": 720,
+            "durationMs": 690,
         },
         {
             "step": "IPFS",
             "label": "Document pinned to IPFS",
-            "detail": "CID: QmSatbaraSNNSurvey098Degraded2026",
+            "detail": "CID: QmKhatauni312DAD1994Degraded",
             "status": "done",
-            "durationMs": 285,
+            "durationMs": 255,
         },
     ],
-    extraction=SatbaraExtraction(
-        districtName="Nashik",
-        tehsilName="Sinnar",
-        villageName="[UNCLEAR — ink damage]",
-        surveyNumber="98",
-        subdivisionNumber=None,
-        totalAreaHectares=1.2,        # uncertain — area field partially legible
-        landType=LandType.JIRAYAT,
-        owners=[
-            SatbaraOwner(
-                name="Vitthal [PARTIAL] Shinde",
+    extraction=KhatauniExtraction(
+        zila="Gautam Buddha Nagar",
+        tehsil="Dadri",
+        gram="[अस्पष्ट — फटा हुआ]",
+        fasalVarsh="1994-95",
+        khataNo="[अस्पष्ट]",
+        khasraNo="312",
+        areaHectares=1.1,
+        areaBigha=4.35,
+        landType=LandType.SIRDAR,
+        irrigationSource=None,
+        cropDetails=None,
+        khatedars=[
+            KhatedaOwner(
+                name="Ram[अस्पष्ट] Yadav",
                 fatherHusbandName=None,
-                share="Full",
+                share="पूर्ण",
                 ownershipType="Individual",
-            )
+            ),
         ],
         hasJointOwnership=False,
         hasCoparcenary=False,
+        currentPossessor="[अस्पष्ट]",
         encumbrances=[
-            SatbaraEncumbrance(
+            KhataEncumbrance(
                 type="Mortgage",
-                creditorName="[UNCLEAR]",
+                creditorName="[अस्पष्ट — बैंक नाम अपठनीय]",
                 amount=None,
                 date=None,
-                remarks="Partial ink — amount and creditor illegible",
-            )
+                remarks="Ink damage — creditor name and amount illegible",
+            ),
         ],
-        currentCultivator="[UNCLEAR]",
-        cropDetails=None,
-        possessionType="Self",
-        surveyDate="2011-08-22",
-        ocrConfidence=0.61,
-        nerConfidence=0.58,
+        khatabandiDate="1994-12-10",
+        lekhpalSignature=None,
+        ocrConfidence=0.63,
+        nerConfidence=0.55,
         overallConfidence=0.60,
         flaggedFields=[
-            "villageName",
-            "ownerName (partial)",
-            "encumbranceAmount",
-            "totalAreaHectares (low confidence)",
+            "gram (damaged corner)",
+            "khataNo (illegible)",
+            "khatedar name (partial)",
+            "encumbrance amount (ink faded)",
+            "areaHectares (low confidence)",
         ],
         requiresManualReview=True,
     ),
-    suggestedDlpiId="DLPI-MH-SNN-00098",
-    processingTimeMs=6333,
+    suggestedDlpiId="DLPI-UP-DAD-00312",
+    processingTimeMs=6536,
 )
 
 MOCK_RESPONSES = {
