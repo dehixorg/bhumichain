@@ -131,11 +131,20 @@ Profiles:
           - *RevenueDept
 
   LandRegistryChannel:
-    Consortium: BhumiConsortium
     <<: *ChannelDefaults
+    Orderer:
+      <<: *OrdererDefaults
+      Organizations:
+        - *OrdererOrg
+      Capabilities:
+        <<: *OrdererCapabilities
     Application:
       <<: *ApplicationDefaults
       Organizations:
         - *RevenueDept
       Capabilities:
         <<: *ApplicationCapabilities
+    Consortiums:
+      BhumiConsortium:
+        Organizations:
+          - *RevenueDept

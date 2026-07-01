@@ -13,6 +13,7 @@ ORDERER_TLS_CERT="$NETWORK_DIR/crypto-config/ordererOrganizations/bhumichain.in/
 PEER0_TLS_CA="$NETWORK_DIR/crypto-config/peerOrganizations/revenuedept.bhumichain.in/peers/peer0.revenuedept.bhumichain.in/tls/ca.crt"
 PEER1_TLS_CA="$NETWORK_DIR/crypto-config/peerOrganizations/revenuedept.bhumichain.in/peers/peer1.revenuedept.bhumichain.in/tls/ca.crt"
 ADMIN_MSP="$NETWORK_DIR/crypto-config/peerOrganizations/revenuedept.bhumichain.in/users/Admin@revenuedept.bhumichain.in/msp"
+export FABRIC_CFG_PATH=~/fabric-samples/config
 
 # Detect 1-peer vs 2-peer mode from docker-compose.yml
 if grep -q 'peer1.revenuedept.bhumichain.in' "$NETWORK_DIR/docker-compose.yml" 2>/dev/null; then
@@ -67,7 +68,7 @@ fi
 # ── Step 3: Start Docker containers ─────────────────────────────────────────
 echo ""
 echo "Step 3: Starting Docker containers..."
-docker compose up -d
+docker-compose up -d
 echo "  Waiting 8s for peers to be ready..."
 sleep 8
 
@@ -77,7 +78,7 @@ echo "Step 4: Joining orderer to channel via osnadmin..."
 osnadmin channel join \
   --channelID "$CHANNEL" \
   --config-block "channel-artifacts/${CHANNEL}.block" \
-  -o "localhost:${ORDERER_ADMIN_PORT}" \
+  -o "orderer.bhumichain.in:${ORDERER_ADMIN_PORT}" \
   --ca-file "$ORDERER_CA" \
   --client-cert "$ORDERER_TLS_CERT" \
   --client-key "$NETWORK_DIR/crypto-config/ordererOrganizations/bhumichain.in/orderers/orderer.bhumichain.in/tls/server.key"
@@ -90,7 +91,7 @@ echo "Step 5: Joining peers to channel $CHANNEL..."
 # peer0
 CORE_PEER_TLS_ENABLED=true \
 CORE_PEER_LOCALMSPID=RevenueDeptMSP \
-CORE_PEER_ADDRESS=localhost:7051 \
+CORE_PEER_ADDRESS=peer0.revenuedept.bhumichain.in:7051 \
 CORE_PEER_MSPCONFIGPATH="$ADMIN_MSP" \
 CORE_PEER_TLS_ROOTCERT_FILE="$PEER0_TLS_CA" \
 peer channel join -b "channel-artifacts/${CHANNEL}.block"
@@ -100,7 +101,7 @@ echo "  peer0 joined."
 if [ "$TWO_PEER_MODE" = "true" ]; then
   CORE_PEER_TLS_ENABLED=true \
   CORE_PEER_LOCALMSPID=RevenueDeptMSP \
-  CORE_PEER_ADDRESS=localhost:9051 \
+  CORE_PEER_ADDRESS=peer1.revenuedept.bhumichain.in:9051 \
   CORE_PEER_MSPCONFIGPATH="$ADMIN_MSP" \
   CORE_PEER_TLS_ROOTCERT_FILE="$PEER1_TLS_CA" \
   peer channel join -b "channel-artifacts/${CHANNEL}.block"
@@ -121,11 +122,11 @@ fi
 
 CORE_PEER_TLS_ENABLED=true \
 CORE_PEER_LOCALMSPID=RevenueDeptMSP \
-CORE_PEER_ADDRESS=localhost:7051 \
+CORE_PEER_ADDRESS=peer0.revenuedept.bhumichain.in:7051 \
 CORE_PEER_MSPCONFIGPATH="$ADMIN_MSP" \
 CORE_PEER_TLS_ROOTCERT_FILE="$PEER0_TLS_CA" \
 peer channel update \
-  -o localhost:7050 \
+  -o orderer.bhumichain.in:7050 \
   -c "$CHANNEL" \
   -f "channel-artifacts/revenuedept-anchors.tx" \
   --tls --cafile "$ORDERER_CA"

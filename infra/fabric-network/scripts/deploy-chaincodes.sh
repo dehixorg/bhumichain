@@ -46,19 +46,19 @@ deploy_chaincode() {
 
   # Package
   echo "  [1/5] Packaging..."
-  docker exec cli peer lifecycle chaincode package "/tmp/${NAME}.tar.gz" \
+  docker exec fabric-network-cli-1 peer lifecycle chaincode package "/tmp/${NAME}.tar.gz" \
     --path "$CC_SRC_PATH" \
     --lang golang \
     --label "${NAME}_${VERSION}"
 
   # Install on peer0
   echo "  [2/5] Installing on peer0..."
-  docker exec cli peer lifecycle chaincode install "/tmp/${NAME}.tar.gz"
+  docker exec fabric-network-cli-1 peer lifecycle chaincode install "/tmp/${NAME}.tar.gz"
 
   # Install on peer1 only if it is running
   if [ "$PEER1_RUNNING" = "true" ]; then
     echo "  [2/5] Installing on peer1..."
-    docker exec \
+    docker exec fabric-network-cli-1 \
       -e CORE_PEER_ADDRESS=peer1.revenuedept.bhumichain.in:9051 \
       -e CORE_PEER_TLS_ROOTCERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/revenuedept.bhumichain.in/peers/peer1.revenuedept.bhumichain.in/tls/ca.crt \
       cli peer lifecycle chaincode install "/tmp/${NAME}.tar.gz"
@@ -66,7 +66,7 @@ deploy_chaincode() {
 
   # Get package ID
   echo "  [3/5] Getting package ID..."
-  CC_PACKAGE_ID=$(docker exec cli peer lifecycle chaincode queryinstalled \
+  CC_PACKAGE_ID=$(docker exec fabric-network-cli-1 peer lifecycle chaincode queryinstalled \
     --output json | \
     python3 -c "import sys,json; ccs=json.load(sys.stdin)['installed_chaincodes']; \
     print([c['package_id'] for c in ccs if c['label']=='${NAME}_${VERSION}'][0])")
@@ -74,7 +74,7 @@ deploy_chaincode() {
 
   # Approve for org
   echo "  [4/5] Approving for RevenueDeptMSP..."
-  docker exec cli peer lifecycle chaincode approveformyorg \
+  docker exec fabric-network-cli-1 peer lifecycle chaincode approveformyorg \
     --channelID "$CHANNEL" \
     --name "$NAME" \
     --version "$VERSION" \
@@ -94,7 +94,7 @@ deploy_chaincode() {
       --tlsRootCertFiles /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/revenuedept.bhumichain.in/peers/peer1.revenuedept.bhumichain.in/tls/ca.crt"
   fi
 
-  docker exec cli peer lifecycle chaincode commit \
+  docker exec fabric-network-cli-1 peer lifecycle chaincode commit \
     --channelID "$CHANNEL" \
     --name "$NAME" \
     --version "$VERSION" \
