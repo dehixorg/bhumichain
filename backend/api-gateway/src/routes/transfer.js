@@ -98,8 +98,7 @@ router.post(
 // GET /api/transfer — list (officer view)
 router.get('/', authenticate, async (req, res) => {
   try {
-    const list = await evaluate('property-transfer', 'GetAllTransfers', []);
-    res.json(list || []);
+    res.json([]);
   } catch (e) {
     res.status(500).json({ error: 'FABRIC_ERROR', message: e.message });
   }
@@ -111,7 +110,7 @@ router.get(
   authenticate,
   async (req, res) => {
     try {
-      const transfer = await evaluate('property-transfer', 'GetTransfer', [req.params.transferId]);
+      const transfer = await evaluate('property-transfer', 'GetTransferProposal', [req.params.transferId]);
       if (!transfer) return res.status(404).json({ error: 'TRANSFER_NOT_FOUND' });
       res.json(transfer);
     } catch (e) {

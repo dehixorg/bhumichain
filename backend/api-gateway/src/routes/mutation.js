@@ -63,7 +63,7 @@ router.post(
 // GET /api/mutation — all mutations (officer queue view)
 router.get('/', authenticate, async (req, res) => {
   try {
-    const list = await evaluate('mutation-manager', 'GetAllMutations', []);
+    const list = await evaluate('mutation-manager', 'QueryPendingMutations', []);
     res.json(list || []);
   } catch (e) {
     res.status(500).json({ error: 'FABRIC_ERROR', message: e.message });
@@ -84,7 +84,7 @@ router.get('/:mutationId', authenticate, async (req, res) => {
 // GET /api/mutation/dlpi/:dlpiId — all mutations for a parcel
 router.get('/dlpi/:dlpiId', authenticate, async (req, res) => {
   try {
-    const list = await evaluate('mutation-manager', 'GetMutationsByDLPI', [req.params.dlpiId]);
+    const list = await evaluate('mutation-manager', 'QueryMutationsByDLPI', [req.params.dlpiId]);
     res.json(list || []);
   } catch (e) {
     res.status(500).json({ error: 'FABRIC_ERROR', message: e.message });

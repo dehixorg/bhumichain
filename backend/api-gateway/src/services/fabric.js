@@ -1,9 +1,10 @@
 'use strict';
 
-const { connect, hash, signers } = require('@hyperledger/fabric-gateway');
+const { connect, signers } = require('@hyperledger/fabric-gateway');
 const grpc = require('@grpc/grpc-js');
 const fs = require('fs');
 const path = require('path');
+const { createPrivateKey } = require('crypto');
 const { getMockResponse } = require('../mock/responses');
 
 const isMock = () => process.env.FABRIC_MODE === 'mock';
@@ -19,17 +20,20 @@ async function getGateway() {
   const tlsRootCert = fs.readFileSync(process.env.FABRIC_PEER_TLS_ROOT_CERT);
   const certPem = fs.readFileSync(process.env.FABRIC_CERT_PATH).toString();
   const keyDir = process.env.FABRIC_KEY_PATH;
-  const keyPem = fs
-    .readdirSync(keyDir)
-    .filter((f) => f.endsWith('_sk'))
-    .map((f) => fs.readFileSync(path.join(keyDir, f)).toString())[0];
+  const keyFiles = fs.readdirSync(keyDir).filter((f) => f.endsWith('_sk'));
+  if (keyFiles.length === 0) throw new Error(`No private key (_sk) found in ${keyDir}`);
+  const keyPem = fs.readFileSync(path.join(keyDir, keyFiles[0])).toString();
+  const privateKey = createPrivateKey(keyPem);
 
-  _client = new grpc.Client(process.env.FABRIC_PEER_ENDPOINT, grpc.credentials.createSsl(tlsRootCert));
+  _client = new grpc.Client(
+    process.env.FABRIC_PEER_ENDPOINT,
+    grpc.credentials.createSsl(tlsRootCert)
+  );
 
   _gateway = connect({
     client: _client,
     identity: { mspId: process.env.FABRIC_MSP_ID, credentials: Buffer.from(certPem) },
-    signer: signers.newPrivateKeySigner(hash.SHA256, Buffer.from(keyPem)),
+    signer: signers.newPrivateKeySigner(privateKey),
   });
 
   return _gateway;
