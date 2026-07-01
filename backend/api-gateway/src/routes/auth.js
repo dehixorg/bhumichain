@@ -27,7 +27,28 @@ function maskAadhaar(aadhaarNumber) {
   return 'XXXX-XXXX-' + digits.slice(-4);
 }
 
+// Mock identity database for demo mode
+const MOCK_IDENTITIES = {
+  '999900010010': { role: 'citizen',          name: 'Priya Kumar',  phone: '9999000010' },
+  '999900010011': { role: 'citizen',          name: 'Arun Sharma',  phone: '9999000011' },
+  '999900010012': { role: 'citizen',          name: 'Suresh Yadav', phone: '9999000012' },
+  '999900010013': { role: 'citizen',          name: 'Meena Devi',   phone: '9999000013' },
+  '999900010001': { role: 'tehsildar',        name: 'Amit Saxena',  phone: '9999000001', jurisdictionCode: 'GBN-DAD', tehsilCode: 'DAD' },
+  '999900010002': { role: 'circle_inspector', name: 'Rajesh Verma', phone: '9999000002', jurisdictionCode: 'GBN-DAD', circleCode: 'DAD-C1', patwariCodes: ['DAD-P1','DAD-P2','DAD-P3'], tehsilCode: 'DAD' },
+  '999900010003': { role: 'patwari',          name: 'Vijay Singh',  phone: '9999000003', jurisdictionCode: 'GBN-DAD', patwariCode: 'DAD-P1', villageCodes: ['DAD-001','DAD-002','DAD-003'], tehsilCode: 'DAD' },
+};
+
 async function callOracle(aadhaarNumber) {
+  // In mock mode, return a predefined demo identity without hitting oracle service
+  if (process.env.AADHAAR_MOCK === 'true') {
+    const digits = aadhaarNumber.replace(/\D/g, '');
+    const identity = MOCK_IDENTITIES[digits];
+    if (!identity) {
+      // Unknown Aadhaar in mock mode — return a generic citizen
+      return { role: 'citizen', name: 'Demo Citizen', phone: '9999999999' };
+    }
+    return identity;
+  }
   const oracleUrl = process.env.ORACLE_URL || 'http://localhost:8001';
   const { data } = await axios.post(`${oracleUrl}/aadhaar/verify`, { aadhaarNumber });
   return data;
