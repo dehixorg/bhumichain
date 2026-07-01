@@ -265,7 +265,7 @@ export default function MyParcelsPage() {
   useEffect(() => {
     const user = getUser();
     if (!user) { router.replace('/login'); return; }
-    if (user.role !== 'citizen') { router.replace('/dashboard'); return; }
+    if (user.role !== 'citizen') { router.replace('/officer-dashboard'); return; }
     setUserName(user.name);
     fetchParcels();
   }, []);

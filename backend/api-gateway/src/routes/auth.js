@@ -201,7 +201,7 @@ router.post('/officer-login', async (req, res) => {
   return res.json({
     token,
     user: payload,
-    redirectTo: '/dashboard',
+    redirectTo: '/officer-dashboard',
   });
 });
 
