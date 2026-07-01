@@ -87,6 +87,7 @@ function JangananaMap({ anomalies }: { anomalies: typeof ANOMALIES }) {
     if (typeof window === 'undefined' || !containerRef.current || mapRef.current) return;
 
     import('leaflet').then((L) => {
+      if (!containerRef.current || (containerRef.current as any)._leaflet_id) return;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       delete (L.Icon.Default.prototype as any)._getIconUrl;
       L.Icon.Default.mergeOptions({

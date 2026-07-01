@@ -67,6 +67,7 @@ export default function FraudHeatmap() {
 
     // Dynamic import — Leaflet must only run client-side
     import('leaflet').then((L) => {
+      if (!containerRef.current || (containerRef.current as any)._leaflet_id) return;
       // Fix default icon
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       delete (L.Icon.Default.prototype as any)._getIconUrl;
