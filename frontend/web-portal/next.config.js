@@ -8,20 +8,12 @@ const nextConfig = {
     return config;
   },
   env: {
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || '',
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'mock',
     NEXT_PUBLIC_WS_URL: process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:4000/ws',
-    NEXT_PUBLIC_FABRIC_MODE: process.env.NEXT_PUBLIC_FABRIC_MODE || 'real',
+    NEXT_PUBLIC_FABRIC_MODE: process.env.NEXT_PUBLIC_FABRIC_MODE || 'mock',
     NEXT_PUBLIC_MAP_CENTER_LAT: process.env.NEXT_PUBLIC_MAP_CENTER_LAT || '28.5706',
     NEXT_PUBLIC_MAP_CENTER_LNG: process.env.NEXT_PUBLIC_MAP_CENTER_LNG || '77.5413',
     NEXT_PUBLIC_MAP_ZOOM: process.env.NEXT_PUBLIC_MAP_ZOOM || '12',
-  },
-  async rewrites() {
-    return [
-      {
-        source: '/api/:path*',
-        destination: 'http://localhost:4000/api/:path*',
-      },
-    ];
   },
 };
 
