@@ -71,6 +71,11 @@ export default function ParcelMap({ geojson, onParcelSelect }: Props) {
     (async () => {
       const L = await import('leaflet');
 
+      const container = L.DomUtil.get('bhumichain-map');
+      if (container && (container as any)._leaflet_id) {
+        return;
+      }
+
       // Fix default marker icon path (Next.js bundles break it)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       delete (L.Icon.Default.prototype as any)._getIconUrl;
