@@ -1,55 +1,53 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
-  <!-- Background circle -->
-  <circle cx="100" cy="100" r="100" fill="#003A7A"/>
+  <!-- Deep blue background -->
+  <rect width="200" height="200" rx="36" fill="#003580"/>
 
-  <!-- Outer radial rays (sun pattern like Aadhaar) -->
-  <g opacity="0.25" fill="#4DA6FF">
-    <rect x="98" y="10" width="4" height="24" rx="2" transform="rotate(0 100 100)"/>
-    <rect x="98" y="10" width="4" height="24" rx="2" transform="rotate(22.5 100 100)"/>
-    <rect x="98" y="10" width="4" height="24" rx="2" transform="rotate(45 100 100)"/>
-    <rect x="98" y="10" width="4" height="24" rx="2" transform="rotate(67.5 100 100)"/>
-    <rect x="98" y="10" width="4" height="24" rx="2" transform="rotate(90 100 100)"/>
-    <rect x="98" y="10" width="4" height="24" rx="2" transform="rotate(112.5 100 100)"/>
-    <rect x="98" y="10" width="4" height="24" rx="2" transform="rotate(135 100 100)"/>
-    <rect x="98" y="10" width="4" height="24" rx="2" transform="rotate(157.5 100 100)"/>
-    <rect x="98" y="10" width="4" height="24" rx="2" transform="rotate(180 100 100)"/>
-    <rect x="98" y="10" width="4" height="24" rx="2" transform="rotate(202.5 100 100)"/>
-    <rect x="98" y="10" width="4" height="24" rx="2" transform="rotate(225 100 100)"/>
-    <rect x="98" y="10" width="4" height="24" rx="2" transform="rotate(247.5 100 100)"/>
-    <rect x="98" y="10" width="4" height="24" rx="2" transform="rotate(270 100 100)"/>
-    <rect x="98" y="10" width="4" height="24" rx="2" transform="rotate(292.5 100 100)"/>
-    <rect x="98" y="10" width="4" height="24" rx="2" transform="rotate(315 100 100)"/>
-    <rect x="98" y="10" width="4" height="24" rx="2" transform="rotate(337.5 100 100)"/>
+  <!-- Outer glow ring -->
+  <circle cx="100" cy="88" r="58" fill="none" stroke="#1565C0" stroke-width="2"/>
+
+  <!-- Radiating lines (UIDAI sun pattern) -->
+  <g stroke="#4FC3F7" stroke-width="2.5" stroke-linecap="round" opacity="0.5">
+    <line x1="100" y1="14" x2="100" y2="28"/>
+    <line x1="100" y1="148" x2="100" y2="162"/>
+    <line x1="26" y1="88" x2="40" y2="88"/>
+    <line x1="160" y1="88" x2="174" y2="88"/>
+    <line x1="47" y1="35" x2="57" y2="45"/>
+    <line x1="143" y1="131" x2="153" y2="141"/>
+    <line x1="153" y1="35" x2="143" y2="45"/>
+    <line x1="47" y1="141" x2="57" y2="131"/>
+    <line x1="31" y1="58" x2="44" y2="63"/>
+    <line x1="156" y1="113" x2="169" y2="118"/>
+    <line x1="169" y1="58" x2="156" y2="63"/>
+    <line x1="31" y1="118" x2="44" y2="113"/>
+    <line x1="58" y1="16" x2="63" y2="29"/>
+    <line x1="137" y1="147" x2="142" y2="160"/>
+    <line x1="142" y1="16" x2="137" y2="29"/>
+    <line x1="58" y1="160" x2="63" y2="147"/>
   </g>
 
-  <!-- Inner lighter circle -->
-  <circle cx="100" cy="100" r="62" fill="#004FA3"/>
+  <!-- Fingerprint concentric arcs — outer -->
+  <circle cx="100" cy="88" r="50" fill="none" stroke="#29B6F6" stroke-width="3" stroke-dasharray="32 10" stroke-linecap="round"/>
+  <!-- mid -->
+  <circle cx="100" cy="88" r="36" fill="none" stroke="#4FC3F7" stroke-width="3" stroke-dasharray="24 8" stroke-linecap="round"/>
+  <!-- inner -->
+  <circle cx="100" cy="88" r="22" fill="none" stroke="#81D4FA" stroke-width="3" stroke-dasharray="16 6" stroke-linecap="round"/>
 
-  <!-- Fingerprint arcs (concentric, open arcs for fingerprint look) -->
-  <!-- Outer arc -->
-  <path d="M 100 50 A 50 50 0 0 1 150 100" fill="none" stroke="#7EC8FF" stroke-width="3.5" stroke-linecap="round" opacity="0.7"/>
-  <path d="M 50 100 A 50 50 0 0 1 100 50" fill="none" stroke="#7EC8FF" stroke-width="3.5" stroke-linecap="round" opacity="0.7"/>
-  <path d="M 150 100 A 50 50 0 0 1 100 150" fill="none" stroke="#7EC8FF" stroke-width="3.5" stroke-linecap="round" opacity="0.7"/>
-  <path d="M 100 150 A 50 50 0 0 1 50 100" fill="none" stroke="#7EC8FF" stroke-width="3.5" stroke-linecap="round" opacity="0.7"/>
+  <!-- Core dot -->
+  <circle cx="100" cy="88" r="7" fill="#E3F2FD"/>
+  <circle cx="100" cy="88" r="3.5" fill="#0D47A1"/>
 
-  <!-- Mid arc -->
-  <path d="M 100 63 A 37 37 0 0 1 137 100" fill="none" stroke="#A0D8FF" stroke-width="3.5" stroke-linecap="round" opacity="0.75"/>
-  <path d="M 63 100 A 37 37 0 0 1 100 63" fill="none" stroke="#A0D8FF" stroke-width="3.5" stroke-linecap="round" opacity="0.75"/>
-  <path d="M 137 100 A 37 37 0 0 1 100 137" fill="none" stroke="#A0D8FF" stroke-width="3.5" stroke-linecap="round" opacity="0.75"/>
-  <path d="M 100 137 A 37 37 0 0 1 63 100" fill="none" stroke="#A0D8FF" stroke-width="3.5" stroke-linecap="round" opacity="0.75"/>
+  <!-- Bottom text area background -->
+  <rect x="12" y="150" width="176" height="40" rx="8" fill="#002060" opacity="0.8"/>
 
-  <!-- Inner arc -->
-  <path d="M 100 76 A 24 24 0 0 1 124 100" fill="none" stroke="#C5EAFF" stroke-width="3.5" stroke-linecap="round" opacity="0.8"/>
-  <path d="M 76 100 A 24 24 0 0 1 100 76" fill="none" stroke="#C5EAFF" stroke-width="3.5" stroke-linecap="round" opacity="0.8"/>
-  <path d="M 124 100 A 24 24 0 0 1 100 124" fill="none" stroke="#C5EAFF" stroke-width="3.5" stroke-linecap="round" opacity="0.8"/>
-  <path d="M 100 124 A 24 24 0 0 1 76 100" fill="none" stroke="#C5EAFF" stroke-width="3.5" stroke-linecap="round" opacity="0.8"/>
+  <!-- AADHAAR text (English) -->
+  <text x="100" y="168" text-anchor="middle"
+        font-family="Arial Black, Arial, sans-serif"
+        font-size="15" font-weight="900" letter-spacing="5"
+        fill="#FFFFFF">AADHAAR</text>
 
-  <!-- Center dot -->
-  <circle cx="100" cy="100" r="7" fill="#FFFFFF" opacity="0.95"/>
-
-  <!-- Text: आधार (Hindi) -->
-  <text x="100" y="170" text-anchor="middle" font-family="'Noto Sans Devanagari', Arial, sans-serif" font-size="18" font-weight="700" fill="#FFFFFF" letter-spacing="1">आधार</text>
-
-  <!-- Text: AADHAAR (English) -->
-  <text x="100" y="188" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#7EC8FF" letter-spacing="3">AADHAAR</text>
+  <!-- UIDAI subtitle -->
+  <text x="100" y="183" text-anchor="middle"
+        font-family="Arial, sans-serif"
+        font-size="9" font-weight="600" letter-spacing="2"
+        fill="#90CAF9">UIDAI · GOVT OF INDIA</text>
 </svg>
