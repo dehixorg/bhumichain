@@ -380,199 +380,33 @@ export default function LoginPage() {
             </div>
           )}
 
-          {/* ─── CITIZEN DIGILOCKER eSIGN & LOGIN BOX ─────────────────────── */}
+          {/* ─── CITIZEN DIGILOCKER LAUNCH BOX ────────────────────────────── */}
           {tab === 'citizen' ? (
-            <div className="bg-white rounded-2xl shadow-2xl overflow-hidden border border-gray-200 text-gray-800 transition-all">
-              
-              {/* DigiLocker Header Banner */}
-              <div className="bg-gradient-to-r from-blue-700 via-blue-600 to-indigo-700 px-6 py-4 flex items-center justify-between text-white shadow-inner">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-white/15 flex items-center justify-center backdrop-blur-sm border border-white/20">
-                    <Cloud className="w-6 h-6 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-lg tracking-wide flex items-center gap-1.5">
-                      DigiLocker <span className="text-xs font-semibold px-2 py-0.5 bg-white/20 rounded-full uppercase tracking-wider">eSign Gateway</span>
-                    </h3>
-                    <p className="text-xs text-blue-100 font-medium">Document Wallet to Empower Citizens</p>
-                  </div>
-                </div>
-                <div className="text-right hidden sm:block">
-                  <span className="text-[10px] font-bold uppercase tracking-wider bg-green-500 text-white px-2 py-1 rounded-md shadow">UIDAI Auth</span>
-                </div>
+            <div className="card space-y-6 border border-gray-800 bg-gray-900/90 p-7 rounded-2xl shadow-2xl text-center">
+              <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center shadow-lg border border-blue-400/30">
+                <Cloud className="w-9 h-9 text-white" />
               </div>
 
-              {/* Card Content based on Step */}
-              <div className="p-6 sm:p-7 space-y-6">
+              <div className="space-y-2">
+                <h3 className="text-xl font-bold text-white">Citizen eSign & Login</h3>
+                <p className="text-xs text-gray-400 leading-relaxed max-w-sm mx-auto">
+                  Access your tamper-proof UP land records seamlessly using UIDAI Aadhaar verification via the official government DigiLocker gateway.
+                </p>
+              </div>
 
-                {step === 'aadhaar' && (
-                  <>
-                    <div className="space-y-1">
-                      <h4 className="text-xl font-bold text-gray-900">Sign In to your account!</h4>
-                      <p className="text-xs text-gray-500">Access and verify your tamper-proof BhumiChain land records</p>
-                    </div>
+              <button
+                type="button"
+                onClick={() => router.push(`/digilocker-login${aadhaar ? `?aadhaar=${aadhaar}` : ''}`)}
+                className="w-full bg-[#0066cc] hover:bg-blue-600 text-white font-bold py-4 px-6 rounded-xl shadow-xl transition-all flex items-center justify-center gap-3 text-base active:scale-[0.99] border border-blue-500/50"
+              >
+                <Cloud className="w-5 h-5" />
+                <span>Sign In / eSign with DigiLocker</span>
+                <ChevronRight className="w-5 h-5 ml-auto" />
+              </button>
 
-                    {/* Blue Active Tab like DigiLocker */}
-                    <div className="flex items-center gap-2 border-b border-gray-200 pb-3">
-                      <button
-                        type="button"
-                        className="bg-[#0066cc] text-white px-5 py-2 rounded-lg font-semibold text-sm shadow-md hover:bg-blue-700 transition-all flex items-center gap-2"
-                      >
-                        <Smartphone className="w-4 h-4" />
-                        Mobile/Aadhaar
-                      </button>
-                    </div>
-
-                    <div className="space-y-4 pt-1">
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-bold text-gray-700 uppercase tracking-wider">
-                          Aadhaar / Mobile Number*
-                        </label>
-                        <div className="relative">
-                          <AadhaarInput
-                            value={aadhaar}
-                            onChange={setAadhaar}
-                            disabled={loading}
-                            placeholder="XXXX - XXXX - XXXX"
-                          />
-                        </div>
-                        <p className="text-[11px] text-gray-500">Enter your 12-digit Aadhaar number registered with DigiLocker</p>
-                      </div>
-
-                      {/* Send OTP Button (Green/Blue Sign In style) */}
-                      <button
-                        onClick={handleRequestOTP}
-                        disabled={loading}
-                        className="w-full bg-[#2e7d32] hover:bg-[#1b5e20] text-white font-bold py-3.5 px-4 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 text-base active:scale-[0.99]"
-                      >
-                        {loading ? (
-                          <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        ) : (
-                          <>Send OTP to Registered Number <ChevronRight className="w-5 h-5" /></>
-                        )}
-                      </button>
-                    </div>
-                  </>
-                )}
-
-                {step === 'otp' && (
-                  <>
-                    <div className="space-y-1">
-                      <div className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full">
-                        <Shield className="w-3.5 h-3.5" /> Two-Factor Authentication
-                      </div>
-                      <h4 className="text-lg font-bold text-gray-900 mt-2">Enter OTP verification code</h4>
-                      <p className="text-xs text-gray-600 leading-relaxed">
-                        Enter OTP sent to your registered mobile number ending with <strong className="text-gray-900">{maskedPhone || 'XXXXXX1234'}</strong> linked with Aadhaar.
-                      </p>
-                    </div>
-
-                    <div className="bg-blue-50/80 border border-blue-200 rounded-xl p-3.5 text-xs text-blue-900 flex items-center gap-2.5">
-                      <div className="w-2 h-2 rounded-full bg-blue-600 animate-ping shrink-0" />
-                      <span>
-                        DigiLocker Pilot Mode: OTP is always <strong className="font-mono text-blue-700 text-sm font-bold bg-white px-1.5 py-0.5 rounded border border-blue-200">123456</strong>
-                      </span>
-                    </div>
-
-                    <div className="space-y-4">
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-bold text-gray-700 uppercase tracking-wider">
-                          6-Digit Security OTP*
-                        </label>
-                        <OTPInput
-                          value={otp}
-                          onChange={setOtp}
-                          disabled={loading}
-                          error={!!error}
-                        />
-                      </div>
-
-                      <div className="flex gap-3 pt-2">
-                        <button
-                          onClick={() => setStep('aadhaar')}
-                          className="w-1/3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 px-4 rounded-xl transition-all text-sm"
-                        >
-                          Back
-                        </button>
-                        <button
-                          onClick={handleVerifyOTP}
-                          disabled={loading || otp.length < 6}
-                          className="w-2/3 bg-[#0066cc] hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 text-sm"
-                        >
-                          {loading ? (
-                            <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                          ) : (
-                            <>Verify OTP <ChevronRight className="w-4 h-4" /></>
-                          )}
-                        </button>
-                      </div>
-                    </div>
-                  </>
-                )}
-
-                {step === 'consent' && (
-                  <div className="space-y-5 animate-fadeIn">
-                    <div className="border-b border-gray-200 pb-3.5">
-                      <span className="text-[11px] font-bold uppercase tracking-wider text-blue-600 bg-blue-50 px-2.5 py-1 rounded-md border border-blue-200">
-                        Consent Authorization
-                      </span>
-                      <h4 className="text-lg font-bold text-gray-900 mt-2">Allow Aadhaar KYC Sharing</h4>
-                      <p className="text-xs text-gray-600 mt-1">
-                        You are authorizing BhumiChain Portal to access your verified demographic credentials.
-                      </p>
-                    </div>
-
-                    {/* Details Box */}
-                    <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 space-y-3 text-xs">
-                      <div className="flex justify-between items-center pb-2 border-b border-gray-200">
-                        <span className="text-gray-500 font-medium">Requesting Portal:</span>
-                        <span className="font-bold text-gray-900">BhumiChain Land Registry</span>
-                      </div>
-                      <div className="flex justify-between items-center pb-2 border-b border-gray-200">
-                        <span className="text-gray-500 font-medium">Aadhaar Reference:</span>
-                        <span className="font-mono font-bold text-gray-800">{aadhaar ? formatAadhaar(aadhaar) : 'XXXX-XXXX-XXXX'}</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-gray-500 font-medium">Data Shared:</span>
-                        <span className="font-semibold text-blue-700 flex items-center gap-1">
-                          <FileCheck className="w-3.5 h-3.5" /> Name, Address, SHA-256 Hash
-                        </span>
-                      </div>
-                    </div>
-
-                    <p className="text-[11px] text-gray-500 bg-amber-50 border border-amber-200/80 p-3 rounded-xl leading-relaxed">
-                      <strong>DPDPA 2023 Guarantee:</strong> As per DigiLocker standards, your raw Aadhaar number is never stored by BhumiChain. Only your cryptographic hash is recorded on Hyperledger Fabric.
-                    </p>
-
-                    {/* Consent Buttons */}
-                    <div className="flex gap-3 pt-2">
-                      <button
-                        onClick={() => setStep('aadhaar')}
-                        disabled={loading}
-                        className="w-1/3 border border-gray-300 hover:bg-gray-100 text-gray-700 font-semibold py-3 px-3 rounded-xl transition-all text-sm"
-                      >
-                        Deny
-                      </button>
-                      <button
-                        onClick={handleCitizenFinalLogin}
-                        disabled={loading}
-                        className="w-2/3 bg-[#0066cc] hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 text-sm"
-                      >
-                        {loading ? (
-                          <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        ) : (
-                          <>Allow & Login to BhumiChain</>
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {/* Footer Privacy Guarantee */}
-                <div className="pt-3 border-t border-gray-100 flex items-center justify-center gap-2 text-[11px] text-gray-500">
-                  <Lock className="w-3.5 h-3.5 text-green-600 shrink-0" />
-                  <span>Secured by 256-bit encryption · Government of UP Pilot</span>
-                </div>
+              <div className="pt-3 border-t border-gray-800/80 flex items-center justify-center gap-2 text-xs text-gray-500">
+                <Shield className="w-3.5 h-3.5 text-brand-400 shrink-0" />
+                <span>100% Paperless & DPDPA 2023 Compliant</span>
               </div>
             </div>
           ) : (
