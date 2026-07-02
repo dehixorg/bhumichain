@@ -213,9 +213,9 @@ async def _post_to_gateway(payload: dict, token: str):
 if __name__ == "__main__":
     import uvicorn
     port = int(os.getenv("PORT", 8010))
-    print(f"\n RecordScan AI — UP Khatauni Edition")
-    print(f"   REST  → http://localhost:{port}")
-    print(f"   Docs  → http://localhost:{port}/docs")
-    print(f"   Mode  → {'MOCK' if MOCK else 'REAL (Azure Document Intelligence)'}")
-    print(f"   DB    → DynamoDB {os.getenv('DYNAMODB_TABLE', 'testArpit')} ({os.getenv('AWS_REGION', 'ap-south-1')})")
+    print(f"\n RecordScan AI -- UP Khatauni Edition")
+    print(f"   REST  -> http://localhost:{port}")
+    print(f"   Docs  -> http://localhost:{port}/docs")
+    print(f"   Mode  -> {'MOCK' if MOCK else 'REAL (Azure Document Intelligence)'}")
+    print(f"   DB    -> DynamoDB {os.getenv('DYNAMODB_TABLE', 'testArpit')} ({os.getenv('AWS_REGION', 'ap-south-1')})")
     uvicorn.run("main:app", host="0.0.0.0", port=port, reload=True)
