@@ -2,7 +2,7 @@
 
 import React, { useState, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
-import { Eye, EyeOff, Shield, CheckCircle, AlertCircle, ChevronRight, FileCheck } from 'lucide-react';
+import { Eye, EyeOff, CheckCircle, AlertCircle, ChevronRight, FileCheck } from 'lucide-react';
 import { verifyOTP, getRedirectPath } from '@/lib/auth';
 
 function formatAadhaar(value: string) {
