@@ -121,9 +121,8 @@ function DigiLockerForm() {
               <div className="flex items-center gap-3 border-b border-gray-200 pb-3">
                 <button
                   type="button"
-                  className="bg-[#0066cc] text-white px-5 py-2.5 rounded-lg font-bold text-sm flex items-center gap-2 shadow-md"
+                  className="bg-[#0066cc] text-white px-5 py-2.5 rounded-lg font-bold text-sm shadow-md"
                 >
-                  <span className="text-base">📱</span>
                   Mobile/Aadhaar
                 </button>
               </div>
