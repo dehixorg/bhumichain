@@ -387,7 +387,7 @@ export default function LoginPage() {
               {/* Aadhaar icon above */}
               <div className="flex flex-col items-center gap-2 text-center">
                 <img
-                  src="/aadhaar.svg"
+                  src="/Aadhaar.jpg"
                   alt="Aadhaar"
                   className="w-20 h-20 rounded-2xl object-cover shadow-lg border-2 border-blue-400/40"
                 />
