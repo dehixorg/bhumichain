@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Shield, Zap, Lock, ChevronRight, AlertCircle, CheckCircle } from 'lucide-react';
+import { Shield, Zap, Lock, ChevronRight, AlertCircle, CheckCircle, Cloud, FileCheck, Smartphone, EyeOff } from 'lucide-react';
 import clsx from 'clsx';
 import AadhaarInput from '@/components/auth/AadhaarInput';
 import OTPInput from '@/components/auth/OTPInput';
@@ -15,7 +15,7 @@ import {
 } from '@/lib/auth';
 
 type Tab = 'citizen' | 'officer';
-type Step = 'aadhaar' | 'otp';
+type Step = 'aadhaar' | 'otp' | 'consent';
 
 type DemoCredential = {
   persona: string;
@@ -137,7 +137,7 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const res = await requestOTP(aadhaar);
-      setMaskedPhone(res.maskedPhone);
+      setMaskedPhone(res.maskedPhone || 'XXXXXX1234');
       setStep('otp');
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Failed to send OTP');
@@ -148,22 +148,38 @@ export default function LoginPage() {
 
   async function handleVerifyOTP() {
     if (otp.replace(/\D/g, '').length !== 6) {
-      setError('Enter the complete 6-digit OTP');
+      setError('Enter the complete 6-digit OTP (e.g. 123456)');
       return;
     }
     setError('');
+    if (tab === 'citizen') {
+      // For citizen, move to authentic DigiLocker consent screen!
+      setStep('consent');
+      return;
+    }
+
+    // For officer, login immediately
     setLoading(true);
     try {
-      let user;
-      if (tab === 'citizen') {
-        user = await verifyOTP(aadhaar, otp);
-      } else {
-        user = await officerLogin(aadhaar, email, otp);
-      }
+      const user = await officerLogin(aadhaar, email, otp);
       setSuccess(`Welcome, ${user.name}`);
       setTimeout(() => router.push(getRedirectPath(user.role)), 800);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Verification failed');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleCitizenFinalLogin() {
+    setLoading(true);
+    setError('');
+    try {
+      const user = await verifyOTP(aadhaar, otp);
+      setSuccess(`DigiLocker Consent Approved! Welcome, ${user.name}`);
+      setTimeout(() => router.push(getRedirectPath(user.role)), 800);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'DigiLocker login failed');
     } finally {
       setLoading(false);
     }
@@ -270,8 +286,8 @@ export default function LoginPage() {
       </div>
 
       {/* ── Right panel — login form ──────────────────────────────────── */}
-      <div className="flex-1 flex items-center justify-center p-8">
-        <div className="w-full max-w-md space-y-8">
+      <div className="flex-1 flex items-center justify-center p-6 sm:p-8 overflow-y-auto">
+        <div className="w-full max-w-md space-y-6">
 
           {/* Mobile logo */}
           <div className="flex items-center gap-3 lg:hidden">
@@ -293,9 +309,9 @@ export default function LoginPage() {
                 key={t}
                 onClick={() => { setTab(t); reset(); }}
                 className={clsx(
-                  'flex-1 py-2 rounded-lg text-sm font-medium transition-all',
+                  'flex-1 py-2.5 rounded-lg text-sm font-medium transition-all',
                   tab === t
-                    ? 'bg-brand-600 text-white shadow'
+                    ? 'bg-brand-600 text-white shadow-md'
                     : 'text-gray-400 hover:text-gray-200',
                 )}
               >
@@ -304,83 +320,278 @@ export default function LoginPage() {
             ))}
           </div>
 
-          {/* Form */}
-          <div className="card space-y-5">
-
-            {/* Success state */}
-            {success && (
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-green-900 bg-opacity-40 border border-green-700">
-                <CheckCircle className="w-5 h-5 text-green-400 shrink-0" />
-                <span className="text-green-300 text-sm font-medium">{success} — Redirecting...</span>
+          {/* Demo Login Selector (Autofill) */}
+          {isDev && step === 'aadhaar' && (
+            <div className="rounded-xl border border-saffron-500/30 bg-saffron-500/10 p-3 space-y-2.5">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-saffron-300">
+                    Demo Login Autofill
+                  </p>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    Click a person to autofill. DigiLocker OTP is <span className="font-mono text-saffron-300 font-bold">123456</span>.
+                  </p>
+                </div>
               </div>
-            )}
-
-            {/* Error state */}
-            {error && (
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-red-900 bg-opacity-40 border border-red-700">
-                <AlertCircle className="w-5 h-5 text-red-400 shrink-0" />
-                <span className="text-red-300 text-sm">{error}</span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {DEMO_CREDENTIALS
+                  .filter((credential) => credential.tab === tab)
+                  .map((credential) => (
+                    <button
+                      key={credential.persona}
+                      type="button"
+                      onClick={() => fillDemoCredential(credential)}
+                      disabled={loading}
+                      className={clsx(
+                        'text-left rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 transition-colors',
+                        'hover:border-saffron-500 hover:bg-gray-800',
+                        loading && 'opacity-50 cursor-not-allowed',
+                      )}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-sm font-semibold text-gray-100 truncate">{credential.name}</span>
+                        <span className="text-[10px] uppercase tracking-wider text-gray-500 shrink-0">{credential.role}</span>
+                      </div>
+                      <div className="mt-1 font-mono text-xs text-saffron-300">
+                        {formatAadhaar(credential.aadhaar)}
+                      </div>
+                      {credential.email && (
+                        <div className="mt-0.5 text-xs text-gray-500 truncate">{credential.email}</div>
+                      )}
+                    </button>
+                  ))}
               </div>
-            )}
+            </div>
+          )}
 
-            {step === 'aadhaar' ? (
-              <>
-                {isDev && (
-                  <div className="rounded-xl border border-saffron-500/30 bg-saffron-500/10 p-3 space-y-3">
-                    <div className="flex items-center justify-between gap-3">
-                      <div>
-                        <p className="text-xs font-semibold uppercase tracking-wider text-saffron-300">
-                          Demo Login Details
-                        </p>
-                        <p className="text-xs text-gray-400 mt-0.5">
-                          Pick a person to autofill. OTP is <span className="font-mono text-saffron-300">123456</span>.
-                        </p>
+          {/* Success state */}
+          {success && (
+            <div className="flex items-center gap-3 p-3.5 rounded-xl bg-green-900/60 border border-green-600 text-green-200 text-sm font-medium shadow-lg animate-pulse">
+              <CheckCircle className="w-5 h-5 text-green-400 shrink-0" />
+              <span>{success} — Redirecting...</span>
+            </div>
+          )}
+
+          {/* Error state */}
+          {error && (
+            <div className="flex items-center gap-3 p-3.5 rounded-xl bg-red-900/60 border border-red-600 text-red-200 text-sm font-medium shadow-lg">
+              <AlertCircle className="w-5 h-5 text-red-400 shrink-0" />
+              <span>{error}</span>
+            </div>
+          )}
+
+          {/* ─── CITIZEN DIGILOCKER eSIGN & LOGIN BOX ─────────────────────── */}
+          {tab === 'citizen' ? (
+            <div className="bg-white rounded-2xl shadow-2xl overflow-hidden border border-gray-200 text-gray-800 transition-all">
+              
+              {/* DigiLocker Header Banner */}
+              <div className="bg-gradient-to-r from-blue-700 via-blue-600 to-indigo-700 px-6 py-4 flex items-center justify-between text-white shadow-inner">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-white/15 flex items-center justify-center backdrop-blur-sm border border-white/20">
+                    <Cloud className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-lg tracking-wide flex items-center gap-1.5">
+                      DigiLocker <span className="text-xs font-semibold px-2 py-0.5 bg-white/20 rounded-full uppercase tracking-wider">eSign Gateway</span>
+                    </h3>
+                    <p className="text-xs text-blue-100 font-medium">Document Wallet to Empower Citizens</p>
+                  </div>
+                </div>
+                <div className="text-right hidden sm:block">
+                  <span className="text-[10px] font-bold uppercase tracking-wider bg-green-500 text-white px-2 py-1 rounded-md shadow">UIDAI Auth</span>
+                </div>
+              </div>
+
+              {/* Card Content based on Step */}
+              <div className="p-6 sm:p-7 space-y-6">
+
+                {step === 'aadhaar' && (
+                  <>
+                    <div className="space-y-1">
+                      <h4 className="text-xl font-bold text-gray-900">Sign In to your account!</h4>
+                      <p className="text-xs text-gray-500">Access and verify your tamper-proof BhumiChain land records</p>
+                    </div>
+
+                    {/* Blue Active Tab like DigiLocker */}
+                    <div className="flex items-center gap-2 border-b border-gray-200 pb-3">
+                      <button
+                        type="button"
+                        className="bg-[#0066cc] text-white px-5 py-2 rounded-lg font-semibold text-sm shadow-md hover:bg-blue-700 transition-all flex items-center gap-2"
+                      >
+                        <Smartphone className="w-4 h-4" />
+                        Mobile/Aadhaar
+                      </button>
+                    </div>
+
+                    <div className="space-y-4 pt-1">
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-gray-700 uppercase tracking-wider">
+                          Aadhaar / Mobile Number*
+                        </label>
+                        <div className="relative">
+                          <AadhaarInput
+                            value={aadhaar}
+                            onChange={setAadhaar}
+                            disabled={loading}
+                            placeholder="XXXX - XXXX - XXXX"
+                          />
+                        </div>
+                        <p className="text-[11px] text-gray-500">Enter your 12-digit Aadhaar number registered with DigiLocker</p>
+                      </div>
+
+                      {/* Send OTP Button (Green/Blue Sign In style) */}
+                      <button
+                        onClick={handleRequestOTP}
+                        disabled={loading}
+                        className="w-full bg-[#2e7d32] hover:bg-[#1b5e20] text-white font-bold py-3.5 px-4 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 text-base active:scale-[0.99]"
+                      >
+                        {loading ? (
+                          <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                          <>Send OTP to Registered Number <ChevronRight className="w-5 h-5" /></>
+                        )}
+                      </button>
+                    </div>
+                  </>
+                )}
+
+                {step === 'otp' && (
+                  <>
+                    <div className="space-y-1">
+                      <div className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full">
+                        <Shield className="w-3.5 h-3.5" /> Two-Factor Authentication
+                      </div>
+                      <h4 className="text-lg font-bold text-gray-900 mt-2">Enter OTP verification code</h4>
+                      <p className="text-xs text-gray-600 leading-relaxed">
+                        Enter OTP sent to your registered mobile number ending with <strong className="text-gray-900">{maskedPhone || 'XXXXXX1234'}</strong> linked with Aadhaar.
+                      </p>
+                    </div>
+
+                    <div className="bg-blue-50/80 border border-blue-200 rounded-xl p-3.5 text-xs text-blue-900 flex items-center gap-2.5">
+                      <div className="w-2 h-2 rounded-full bg-blue-600 animate-ping shrink-0" />
+                      <span>
+                        DigiLocker Pilot Mode: OTP is always <strong className="font-mono text-blue-700 text-sm font-bold bg-white px-1.5 py-0.5 rounded border border-blue-200">123456</strong>
+                      </span>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-gray-700 uppercase tracking-wider">
+                          6-Digit Security OTP*
+                        </label>
+                        <OTPInput
+                          value={otp}
+                          onChange={setOtp}
+                          disabled={loading}
+                          error={!!error}
+                        />
+                      </div>
+
+                      <div className="flex gap-3 pt-2">
+                        <button
+                          onClick={() => setStep('aadhaar')}
+                          className="w-1/3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 px-4 rounded-xl transition-all text-sm"
+                        >
+                          Back
+                        </button>
+                        <button
+                          onClick={handleVerifyOTP}
+                          disabled={loading || otp.length < 6}
+                          className="w-2/3 bg-[#0066cc] hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 text-sm"
+                        >
+                          {loading ? (
+                            <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          ) : (
+                            <>Verify OTP <ChevronRight className="w-4 h-4" /></>
+                          )}
+                        </button>
                       </div>
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      {DEMO_CREDENTIALS
-                        .filter((credential) => credential.tab === tab)
-                        .map((credential) => (
-                          <button
-                            key={credential.persona}
-                            type="button"
-                            onClick={() => fillDemoCredential(credential)}
-                            disabled={loading}
-                            className={clsx(
-                              'text-left rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 transition-colors',
-                              'hover:border-saffron-500 hover:bg-gray-800',
-                              loading && 'opacity-50 cursor-not-allowed',
-                            )}
-                          >
-                            <div className="flex items-center justify-between gap-2">
-                              <span className="text-sm font-semibold text-gray-100 truncate">{credential.name}</span>
-                              <span className="text-[10px] uppercase tracking-wider text-gray-500 shrink-0">{credential.role}</span>
-                            </div>
-                            <div className="mt-1 font-mono text-xs text-saffron-300">
-                              {formatAadhaar(credential.aadhaar)}
-                            </div>
-                            {credential.email && (
-                              <div className="mt-0.5 text-xs text-gray-500 truncate">{credential.email}</div>
-                            )}
-                          </button>
-                        ))}
+                  </>
+                )}
+
+                {step === 'consent' && (
+                  <div className="space-y-5 animate-fadeIn">
+                    <div className="border-b border-gray-200 pb-3.5">
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-blue-600 bg-blue-50 px-2.5 py-1 rounded-md border border-blue-200">
+                        Consent Authorization
+                      </span>
+                      <h4 className="text-lg font-bold text-gray-900 mt-2">Allow Aadhaar KYC Sharing</h4>
+                      <p className="text-xs text-gray-600 mt-1">
+                        You are authorizing BhumiChain Portal to access your verified demographic credentials.
+                      </p>
+                    </div>
+
+                    {/* Details Box */}
+                    <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 space-y-3 text-xs">
+                      <div className="flex justify-between items-center pb-2 border-b border-gray-200">
+                        <span className="text-gray-500 font-medium">Requesting Portal:</span>
+                        <span className="font-bold text-gray-900">BhumiChain Land Registry</span>
+                      </div>
+                      <div className="flex justify-between items-center pb-2 border-b border-gray-200">
+                        <span className="text-gray-500 font-medium">Aadhaar Reference:</span>
+                        <span className="font-mono font-bold text-gray-800">{aadhaar ? formatAadhaar(aadhaar) : 'XXXX-XXXX-XXXX'}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-500 font-medium">Data Shared:</span>
+                        <span className="font-semibold text-blue-700 flex items-center gap-1">
+                          <FileCheck className="w-3.5 h-3.5" /> Name, Address, SHA-256 Hash
+                        </span>
+                      </div>
+                    </div>
+
+                    <p className="text-[11px] text-gray-500 bg-amber-50 border border-amber-200/80 p-3 rounded-xl leading-relaxed">
+                      <strong>DPDPA 2023 Guarantee:</strong> As per DigiLocker standards, your raw Aadhaar number is never stored by BhumiChain. Only your cryptographic hash is recorded on Hyperledger Fabric.
+                    </p>
+
+                    {/* Consent Buttons */}
+                    <div className="flex gap-3 pt-2">
+                      <button
+                        onClick={() => setStep('aadhaar')}
+                        disabled={loading}
+                        className="w-1/3 border border-gray-300 hover:bg-gray-100 text-gray-700 font-semibold py-3 px-3 rounded-xl transition-all text-sm"
+                      >
+                        Deny
+                      </button>
+                      <button
+                        onClick={handleCitizenFinalLogin}
+                        disabled={loading}
+                        className="w-2/3 bg-[#0066cc] hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 text-sm"
+                      >
+                        {loading ? (
+                          <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                          <>Allow & Login to BhumiChain</>
+                        )}
+                      </button>
                     </div>
                   </div>
                 )}
 
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-300">
-                    Aadhaar Number <span className="text-gray-500">(आधार संख्या)</span>
-                  </label>
-                  <AadhaarInput
-                    value={aadhaar}
-                    onChange={setAadhaar}
-                    disabled={loading}
-                    placeholder="XXXX-XXXX-XXXX"
-                  />
+                {/* Footer Privacy Guarantee */}
+                <div className="pt-3 border-t border-gray-100 flex items-center justify-center gap-2 text-[11px] text-gray-500">
+                  <Lock className="w-3.5 h-3.5 text-green-600 shrink-0" />
+                  <span>Secured by 256-bit encryption · Government of UP Pilot</span>
                 </div>
+              </div>
+            </div>
+          ) : (
+            /* ─── OFFICER LOGIN BOX (Standard Dark Theme) ─────────────────── */
+            <div className="card space-y-5 border border-gray-800 bg-gray-900/90 p-6 rounded-2xl shadow-xl">
+              {step === 'aadhaar' ? (
+                <>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-300">
+                      Officer Aadhaar Number <span className="text-gray-500">(आधार संख्या)</span>
+                    </label>
+                    <AadhaarInput
+                      value={aadhaar}
+                      onChange={setAadhaar}
+                      disabled={loading}
+                      placeholder="XXXX-XXXX-XXXX"
+                    />
+                  </div>
 
-                {tab === 'officer' && (
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-gray-300">
                       Department Email <span className="text-gray-500">(सरकारी ईमेल)</span>
@@ -395,89 +606,68 @@ export default function LoginPage() {
                     />
                     <p className="text-xs text-gray-500">Accepted: @up.gov.in · @gov.in · @nic.in</p>
                   </div>
-                )}
 
-                <button
-                  onClick={handleRequestOTP}
-                  disabled={loading}
-                  className="btn-primary w-full flex items-center justify-center gap-2"
-                >
-                  {loading ? (
-                    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  ) : (
-                    <>Send OTP <ChevronRight className="w-4 h-4" /></>
-                  )}
-                </button>
-              </>
-            ) : (
-              <>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-300">
-                    Enter OTP sent to <span className="text-brand-400">{maskedPhone}</span>
-                  </label>
-                  <OTPInput
-                    value={otp}
-                    onChange={setOtp}
-                    disabled={loading}
-                    error={!!error}
-                  />
-                  {isDev && (
-                    <p className="text-xs text-saffron-400">
-                      Demo mode: OTP is always <strong>123456</strong>
-                    </p>
-                  )}
-                </div>
-
-                <button
-                  onClick={handleVerifyOTP}
-                  disabled={loading || otp.length < 6}
-                  className="btn-primary w-full flex items-center justify-center gap-2"
-                >
-                  {loading ? (
-                    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  ) : (
-                    <><Lock className="w-4 h-4" /> Login Securely</>
-                  )}
-                </button>
-
-                <button
-                  onClick={reset}
-                  className="w-full text-sm text-gray-400 hover:text-gray-200 transition-colors"
-                >
-                  ← Change Aadhaar number
-                </button>
-              </>
-            )}
-
-            {/* Privacy note */}
-            <div className="pt-2 border-t border-gray-800 flex items-start gap-2 text-xs text-gray-500">
-              <Lock className="w-3 h-3 mt-0.5 shrink-0 text-gray-600" />
-              <span>
-                Your Aadhaar number is <strong className="text-gray-400">never stored</strong> anywhere.
-                Only a cryptographic hash (SHA-256) is used on-chain — compliant with DPDPA 2023.
-              </span>
-            </div>
-          </div>
-
-          {/* Mobile demo quick-login */}
-          {isDev && (
-            <div className="lg:hidden space-y-2">
-              <p className="text-xs text-saffron-400 font-semibold uppercase tracking-wider">Demo Quick Login</p>
-              <div className="grid grid-cols-2 gap-2">
-                {DEMO_PERSONAS.map(p => (
                   <button
-                    key={p.persona}
-                    onClick={() => handleDemoLogin(p.persona)}
+                    onClick={handleRequestOTP}
                     disabled={loading}
-                    className={clsx('px-3 py-2 rounded-lg text-white text-xs font-medium transition-colors', p.color)}
+                    className="btn-primary w-full flex items-center justify-center gap-2 py-3"
                   >
-                    <div className="font-semibold">{p.label}</div>
-                    <div className="opacity-70">{p.name}</div>
+                    {loading ? (
+                      <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <>Send Officer OTP <ChevronRight className="w-4 h-4" /></>
+                    )}
                   </button>
-                ))}
+                </>
+              ) : (
+                <>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-300">
+                      Enter OTP sent to <span className="text-brand-400">{maskedPhone}</span>
+                    </label>
+                    <OTPInput
+                      value={otp}
+                      onChange={setOtp}
+                      disabled={loading}
+                      error={!!error}
+                    />
+                    {isDev && (
+                      <p className="text-xs text-saffron-400">
+                        Demo mode: OTP is always <strong>123456</strong>
+                      </p>
+                    </p>
+                  </div>
+
+                  <button
+                    onClick={handleVerifyOTP}
+                    disabled={loading || otp.length < 6}
+                    className="btn-primary w-full flex items-center justify-center gap-2 py-3"
+                  >
+                    {loading ? (
+                      <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <><Lock className="w-4 h-4" /> Officer Login Securely</>
+                    )}
+                  </button>
+
+                  <button
+                    onClick={reset}
+                    className="w-full text-sm text-gray-400 hover:text-gray-200 transition-colors"
+                  >
+                    ← Back to credentials
+                  </button>
+                </>
+              )}
+
+              <div className="pt-2 border-t border-gray-800 flex items-start gap-2 text-xs text-gray-500">
+                <Lock className="w-3 h-3 mt-0.5 shrink-0 text-gray-600" />
+                <span>
+                  Officer access requires 2FA and multi-sig authorization on Hyperledger Fabric.
+                </span>
               </div>
             </div>
           )}
+
         </div>
       </div>
     </div>
