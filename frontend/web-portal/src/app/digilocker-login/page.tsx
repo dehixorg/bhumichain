@@ -3,7 +3,7 @@
 import React, { useState, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { Eye, EyeOff, CheckCircle, AlertCircle, ChevronRight, FileCheck } from 'lucide-react';
-import { verifyOTP, getRedirectPath } from '@/lib/auth';
+import { verifyOTP, demoLogin, getRedirectPath } from '@/lib/auth';
 
 function formatAadhaar(value: string) {
   const clean = value.replace(/\D/g, '').slice(0, 12);
@@ -58,8 +58,8 @@ function DigiLockerForm() {
     setLoading(true);
     setError('');
     try {
-      const raw = aadhaar.replace(/\D/g, '') || '999900010010';
-      const user = await verifyOTP(raw, '123456');
+      // DigiLocker flow: use demo citizen login (no OTP request needed)
+      const user = await demoLogin('citizen');
       router.push(getRedirectPath(user.role));
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Login failed');
