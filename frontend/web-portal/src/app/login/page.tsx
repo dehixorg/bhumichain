@@ -380,36 +380,112 @@ export default function LoginPage() {
             </div>
           )}
 
-          {/* ─── CITIZEN DIGILOCKER LAUNCH BOX ────────────────────────────── */}
+          {/* ─── CITIZEN CARD WITH AADHAAR + OTP + DIGILOCKER ─────────────── */}
           {tab === 'citizen' ? (
-            <div className="card space-y-5 border border-gray-800 bg-gray-900/90 p-7 rounded-2xl shadow-2xl text-center">
-              {/* DigiLocker icon above */}
-              <div className="flex flex-col items-center gap-2">
+            <div className="card space-y-5 border border-gray-800 bg-gray-900/90 p-7 rounded-2xl shadow-2xl">
+
+              {/* DigiLocker icon + title */}
+              <div className="flex flex-col items-center gap-2 text-center">
                 <img
                   src="/digilockericon.jpeg"
                   alt="DigiLocker"
                   className="w-20 h-20 rounded-2xl object-cover shadow-lg border-2 border-blue-400/40"
                 />
-              </div>
-
-              <div className="space-y-2">
                 <h3 className="text-xl font-bold text-white">Citizen eSign & Login</h3>
-                <p className="text-xs text-gray-400 leading-relaxed max-w-sm mx-auto">
-                  Access your tamper-proof UP land records seamlessly using UIDAI Aadhaar verification via the official government DigiLocker gateway.
+                <p className="text-xs text-gray-400 leading-relaxed max-w-sm">
+                  Access your tamper-proof UP land records via UIDAI Aadhaar verification.
                 </p>
               </div>
 
-              <button
-                type="button"
-                onClick={() => router.push('/digilocker-login')}
-                className="w-full bg-[#0066cc] hover:bg-blue-600 text-white font-bold py-4 px-6 rounded-xl shadow-xl transition-all flex items-center justify-center gap-3 text-base active:scale-[0.99] border border-blue-500/50"
-              >
-                <img src="/digilockericon.jpeg" alt="" className="w-6 h-6 rounded-lg object-cover" />
-                <span>Sign In / eSign with DigiLocker</span>
-                <ChevronRight className="w-5 h-5 ml-auto" />
-              </button>
+              {/* Aadhaar input step */}
+              {step === 'aadhaar' && (
+                <>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-300">
+                      Aadhaar Number <span className="text-gray-500">(आधार संख्या)</span>
+                    </label>
+                    <AadhaarInput
+                      value={aadhaar}
+                      onChange={setAadhaar}
+                      disabled={loading}
+                      placeholder="XXXX-XXXX-XXXX"
+                    />
+                  </div>
 
-              <div className="pt-3 border-t border-gray-800/80 flex items-center justify-center gap-2 text-xs text-gray-500">
+                  <button
+                    onClick={handleRequestOTP}
+                    disabled={loading}
+                    className="w-full bg-brand-600 hover:bg-brand-700 text-white font-bold py-3.5 px-4 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 text-base active:scale-[0.99]"
+                  >
+                    {loading ? (
+                      <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <>Send OTP <ChevronRight className="w-4 h-4" /></>
+                    )}
+                  </button>
+
+                  {/* Divider */}
+                  <div className="flex items-center gap-3 text-xs text-gray-600">
+                    <div className="flex-1 h-px bg-gray-800" />
+                    <span>or</span>
+                    <div className="flex-1 h-px bg-gray-800" />
+                  </div>
+
+                  {/* DigiLocker redirect button */}
+                  <button
+                    type="button"
+                    onClick={() => router.push('/digilocker-login')}
+                    className="w-full bg-gray-800 hover:bg-gray-700 border border-gray-700 text-white font-bold py-3.5 px-6 rounded-xl transition-all flex items-center justify-center gap-3 text-sm active:scale-[0.99]"
+                  >
+                    <img src="/digilockericon.jpeg" alt="" className="w-5 h-5 rounded-md object-cover" />
+                    <span>Sign In / eSign with DigiLocker</span>
+                    <ChevronRight className="w-4 h-4 ml-auto" />
+                  </button>
+                </>
+              )}
+
+              {/* OTP input step */}
+              {step === 'otp' && (
+                <>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-300">
+                      Enter OTP sent to <span className="text-brand-400">{maskedPhone}</span>
+                    </label>
+                    <OTPInput
+                      value={otp}
+                      onChange={setOtp}
+                      disabled={loading}
+                      error={!!error}
+                    />
+                    {isDev && (
+                      <p className="text-xs text-saffron-400">
+                        Demo mode: OTP is always <strong>123456</strong>
+                      </p>
+                    )}
+                  </div>
+
+                  <button
+                    onClick={handleVerifyOTP}
+                    disabled={loading || otp.length < 6}
+                    className="w-full bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white font-bold py-3.5 px-4 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 text-base"
+                  >
+                    {loading ? (
+                      <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <><Lock className="w-4 h-4" /> Login Securely</>
+                    )}
+                  </button>
+
+                  <button
+                    onClick={reset}
+                    className="w-full text-sm text-gray-400 hover:text-gray-200 transition-colors"
+                  >
+                    ← Change Aadhaar number
+                  </button>
+                </>
+              )}
+
+              <div className="pt-2 border-t border-gray-800 flex items-center justify-center gap-2 text-xs text-gray-600">
                 <Shield className="w-3.5 h-3.5 text-brand-400 shrink-0" />
                 <span>100% Paperless & DPDPA 2023 Compliant</span>
               </div>
