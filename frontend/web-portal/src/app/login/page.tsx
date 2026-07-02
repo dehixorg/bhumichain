@@ -635,7 +635,7 @@ export default function LoginPage() {
                       <p className="text-xs text-saffron-400">
                         Demo mode: OTP is always <strong>123456</strong>
                       </p>
-                    </p>
+                    )}
                   </div>
 
                   <button
