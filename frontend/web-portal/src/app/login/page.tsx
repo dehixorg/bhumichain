@@ -384,11 +384,11 @@ export default function LoginPage() {
           {tab === 'citizen' ? (
             <div className="card space-y-5 border border-gray-800 bg-gray-900/90 p-7 rounded-2xl shadow-2xl">
 
-              {/* DigiLocker icon + title */}
+              {/* Aadhaar icon above */}
               <div className="flex flex-col items-center gap-2 text-center">
                 <img
-                  src="/digilockericon.jpeg"
-                  alt="DigiLocker"
+                  src="/aadhaar.svg"
+                  alt="Aadhaar"
                   className="w-20 h-20 rounded-2xl object-cover shadow-lg border-2 border-blue-400/40"
                 />
                 <h3 className="text-xl font-bold text-white">Citizen eSign & Login</h3>
