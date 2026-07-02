@@ -93,9 +93,6 @@ function DigiLockerForm() {
           </div>
           <span className="text-3xl font-extrabold text-[#4b38b3] tracking-tight">DigiLocker</span>
         </div>
-        <p className="text-[11px] font-bold text-gray-500 tracking-[0.15em] uppercase mt-1">
-          Document Wallet to Empower Citizens
-        </p>
       </div>
 
       {/* ── Main White Card ───────────────────────────────── */}
