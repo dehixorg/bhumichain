@@ -392,9 +392,6 @@ export default function LoginPage() {
                   className="w-20 h-20 rounded-2xl object-cover shadow-lg border-2 border-blue-400/40"
                 />
                 <h3 className="text-xl font-bold text-white">Citizen eSign & Login</h3>
-                <p className="text-xs text-gray-400 leading-relaxed max-w-sm">
-                  Access your tamper-proof UP land records via UIDAI Aadhaar verification.
-                </p>
               </div>
 
               {/* Aadhaar input step */}

@@ -314,18 +314,6 @@ export default function DigiLockerLoginPage() {
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#f0f2f5' }}>
 
-      {/* ── Top Government Bar ────────────────────────────── */}
-      <div className="w-full bg-white border-b border-gray-200 px-6 py-2.5">
-        <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">
-            Government of Uttar Pradesh · Pilot
-          </span>
-          <div className="flex items-center gap-1.5 text-xs font-bold text-green-700 bg-green-100 px-3 py-1.5 rounded-full border border-green-200">
-            <Shield className="w-3.5 h-3.5" />
-            256-Bit TLS Encryption
-          </div>
-        </div>
-      </div>
 
       {/* ── Center Content ────────────────────────────────── */}
       <div className="flex-1 flex items-center justify-center py-10 px-4">
@@ -336,17 +324,6 @@ export default function DigiLockerLoginPage() {
         </Suspense>
       </div>
 
-      {/* ── Bottom Footer ─────────────────────────────────── */}
-      <div className="w-full bg-white border-t border-gray-200 py-4 px-6">
-        <div className="max-w-4xl mx-auto text-center space-y-1">
-          <p className="text-[11px] text-gray-500">
-            DigiLocker is a flagship initiative of Ministry of Electronics & IT (MeitY) under Digital India programme.
-          </p>
-          <p className="text-[11px] text-gray-400">
-            Compliant with Digital Personal Data Protection Act (DPDPA) 2023 · Aadhaar number never stored.
-          </p>
-        </div>
-      </div>
 
     </div>
   );
