@@ -382,9 +382,14 @@ export default function LoginPage() {
 
           {/* ─── CITIZEN DIGILOCKER LAUNCH BOX ────────────────────────────── */}
           {tab === 'citizen' ? (
-            <div className="card space-y-6 border border-gray-800 bg-gray-900/90 p-7 rounded-2xl shadow-2xl text-center">
-              <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center shadow-lg border border-blue-400/30">
-                <Cloud className="w-9 h-9 text-white" />
+            <div className="card space-y-5 border border-gray-800 bg-gray-900/90 p-7 rounded-2xl shadow-2xl text-center">
+              {/* DigiLocker icon above */}
+              <div className="flex flex-col items-center gap-2">
+                <img
+                  src="/digilockericon.jpeg"
+                  alt="DigiLocker"
+                  className="w-20 h-20 rounded-2xl object-cover shadow-lg border-2 border-blue-400/40"
+                />
               </div>
 
               <div className="space-y-2">
@@ -396,10 +401,10 @@ export default function LoginPage() {
 
               <button
                 type="button"
-                onClick={() => router.push(`/digilocker-login${aadhaar ? `?aadhaar=${aadhaar}` : ''}`)}
+                onClick={() => router.push('/digilocker-login')}
                 className="w-full bg-[#0066cc] hover:bg-blue-600 text-white font-bold py-4 px-6 rounded-xl shadow-xl transition-all flex items-center justify-center gap-3 text-base active:scale-[0.99] border border-blue-500/50"
               >
-                <Cloud className="w-5 h-5" />
+                <img src="/digilockericon.jpeg" alt="" className="w-6 h-6 rounded-lg object-cover" />
                 <span>Sign In / eSign with DigiLocker</span>
                 <ChevronRight className="w-5 h-5 ml-auto" />
               </button>
