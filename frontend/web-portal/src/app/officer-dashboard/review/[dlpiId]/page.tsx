@@ -397,7 +397,7 @@ function ActionPanel({
   const canAct = {
     patwari:          claimStatus === 'CLAIM_SUBMITTED',
     circle_inspector: claimStatus === 'UNDER_REVIEW',
-    tehsildar:        claimStatus === 'CI_APPROVED',
+    tehsildar:        ['CLAIM_SUBMITTED', 'UNDER_REVIEW', 'CI_APPROVED'].includes(claimStatus),
     kotwal:           ['CLAIM_SUBMITTED', 'UNDER_REVIEW', 'CI_APPROVED'].includes(claimStatus),
   }[userRole] ?? false;
 
