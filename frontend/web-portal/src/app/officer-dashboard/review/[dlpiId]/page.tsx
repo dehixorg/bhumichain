@@ -395,7 +395,7 @@ function ActionPanel({
 
   // Determine what this officer can do
   const canAct = {
-    patwari:          claimStatus === 'CLAIM_SUBMITTED',
+    patwari:          ['CLAIM_SUBMITTED', 'UNDER_REVIEW', 'CI_APPROVED'].includes(claimStatus),
     circle_inspector: claimStatus === 'UNDER_REVIEW',
     tehsildar:        ['CLAIM_SUBMITTED', 'UNDER_REVIEW', 'CI_APPROVED'].includes(claimStatus),
     kotwal:           ['CLAIM_SUBMITTED', 'UNDER_REVIEW', 'CI_APPROVED'].includes(claimStatus),
