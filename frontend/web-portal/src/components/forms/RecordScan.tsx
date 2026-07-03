@@ -9,7 +9,8 @@ import {
 import clsx from 'clsx';
 import { getToken, apiFetch } from '@/lib/auth';
 
-const SCAN_URL = process.env.NEXT_PUBLIC_RECORD_SCAN_URL || 'http://localhost:8010';
+// Proxy route: browser → /api/scan/upload (Next.js) → localhost:8010 (VM internal)
+const SCAN_PROXY = '/api/scan/upload';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -135,7 +136,7 @@ export default function RecordScan({ onDlpiCreated }: Props) {
     }, 950);
 
     try {
-      const res = await fetch(`${SCAN_URL}/scan/upload`, { method: 'POST', body: form });
+      const res = await fetch(SCAN_PROXY, { method: 'POST', body: form });
       clearInterval(ticker);
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
