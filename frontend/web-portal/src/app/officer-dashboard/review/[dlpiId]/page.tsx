@@ -451,7 +451,7 @@ function ActionPanel({
         )}
 
         {/* Patwari */}
-        {userRole === 'patwari' && claimStatus === 'CLAIM_SUBMITTED' && (
+        {['patwari', 'circle_inspector', 'tehsildar'].includes(userRole) && claimStatus === 'CLAIM_SUBMITTED' && (
           <button
             onClick={handleSubmitForReview}
             disabled={busy}
@@ -463,7 +463,7 @@ function ActionPanel({
         )}
 
         {/* CI */}
-        {userRole === 'circle_inspector' && claimStatus === 'UNDER_REVIEW' && (
+        {['patwari', 'circle_inspector', 'tehsildar'].includes(userRole) && claimStatus === 'UNDER_REVIEW' && (
           <button
             onClick={handleCIApprove}
             disabled={busy}
@@ -475,7 +475,7 @@ function ActionPanel({
         )}
 
         {/* Tehsildar */}
-        {userRole === 'tehsildar' && claimStatus === 'CI_APPROVED' && (
+        {['patwari', 'circle_inspector', 'tehsildar'].includes(userRole) && claimStatus === 'CI_APPROVED' && (
           <button
             onClick={() => setShowESign(true)}
             disabled={busy}
