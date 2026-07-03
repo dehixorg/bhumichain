@@ -25,27 +25,27 @@ export default function AadhaarInput({ value, onChange, disabled, error, placeho
     if (!value) return '';
     const digits = value.padEnd(12, ' ');
     if (show) {
-      // Show formatted: 9999-0001-0010
       return [digits.slice(0, 4), digits.slice(4, 8), digits.slice(8, 12)]
         .join('-')
         .trimEnd();
     }
     const visible = value.slice(-4);
-    const masked = 'XXXX-XXXX-';
-    return masked + (visible.padEnd(4, '_'));
+    return 'XXXX-XXXX-' + visible.padEnd(4, '_');
   }
 
   return (
     <div className="relative">
       <input
-        type={show ? 'text' : 'text'}
-        value={show ? displayValue() : displayValue()}
+        type="text"
+        value={displayValue()}
         onChange={handleChange}
         disabled={disabled}
         placeholder={placeholder || 'XXXX-XXXX-XXXX'}
         className={clsx(
-          'input w-full pr-10 font-mono text-base tracking-widest',
-          error && 'border-red-500 focus:border-red-400',
+          'w-full pr-10 px-4 py-3 rounded-xl border-2 bg-gray-800 text-white',
+          'font-mono text-base tracking-widest placeholder-gray-500',
+          'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
+          error ? 'border-red-500' : 'border-gray-600',
           disabled && 'opacity-50 cursor-not-allowed',
         )}
       />
