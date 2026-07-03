@@ -187,8 +187,14 @@ function ParcelCard({ parcel }: { parcel: Parcel }) {
         </div>
       </div>
 
-      {/* Badges */}
+      {/* Badges & Tokenization Info */}
       <div className="flex flex-wrap gap-2">
+        {parcel.claimStatus === 'VERIFIED' && (
+          <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-900 bg-opacity-30 border border-blue-500 text-blue-400 text-xs shadow-[0_0_10px_rgba(59,130,246,0.3)]">
+            <Shield className="w-3 h-3" />
+            Tokenized Asset (ERC-721)
+          </span>
+        )}
         {parcel.isTribal && (
           <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-900 bg-opacity-40 border border-amber-700 text-amber-400 text-xs">
             <Shield className="w-3 h-3" />
@@ -197,10 +203,25 @@ function ParcelCard({ parcel }: { parcel: Parcel }) {
         )}
         {parcel.isCoparcenary && (
           <span className="px-2 py-0.5 rounded-full bg-purple-900 bg-opacity-40 border border-purple-700 text-purple-400 text-xs">
-            Coparcenary
+            Coparcenary Token (50% Share)
           </span>
         )}
       </div>
+
+      {parcel.claimStatus === 'VERIFIED' && (
+        <div className="bg-gray-800 rounded-lg px-3 py-2 mt-1 border border-gray-700/50 flex items-center justify-between group cursor-help" title="Mocked Transaction Hash for Demo">
+          <div className="min-w-0 flex-1">
+            <div className="text-gray-500 text-[10px] uppercase tracking-widest font-semibold mb-0.5">Blockchain Tx Hash</div>
+            <div className="text-blue-400/80 font-mono text-[10px] truncate">
+              0x{Array.from(parcel.dlpiId).reduce((acc, char) => acc + char.charCodeAt(0).toString(16), '')}a1b2c3d4e5f6g7h8
+            </div>
+          </div>
+          <div className="flex items-center gap-1 text-[10px] text-green-500 bg-green-500/10 px-1.5 py-0.5 rounded border border-green-500/20">
+            <CheckCircle className="w-3 h-3" />
+            Minted
+          </div>
+        </div>
+      )}
 
       {/* Status hint */}
       <p className="text-xs text-gray-500">{status.hint}</p>
