@@ -2,8 +2,12 @@ const TOKEN_KEY = 'bhumichain_token';
 const API = process.env.NEXT_PUBLIC_API_URL || 'mock';
 import { handleMockApi } from './mockBackend';
 
+// Auth routes ALWAYS use mock backend (no real Aadhaar/OTP integration needed)
+const AUTH_ROUTES = ['/api/auth/'];
+
 async function unifiedFetch(path: string, options: RequestInit = {}): Promise<Response> {
-  if (API === 'mock') {
+  const isAuthRoute = AUTH_ROUTES.some(r => path.startsWith(r));
+  if (API === 'mock' || isAuthRoute) {
     return handleMockApi(path, options);
   }
   return fetch(`${API}${path}`, options);
