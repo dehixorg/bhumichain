@@ -186,7 +186,7 @@ export default function RecordScan({ onDlpiCreated }: Props) {
     const token = getToken() || '';
 
     try {
-      const res = await fetch(`${SCAN_URL}/scan/approve`, {
+      const res = await fetch('/api/scan/approve', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify({
