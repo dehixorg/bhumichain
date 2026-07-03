@@ -39,6 +39,7 @@ const DEMO_EC_RESULT = {
   generatedAt:       new Date().toISOString(),
   generationTimeMs:  18_400,
   issuedBy:          'Sub-Registrar Office, Dadri (UP IGRS)',
+  blockchainTxHash:  '0x7b4a1c5d8e9f2a0d3b6c4e1f7a5d9c8b1a2f3e4d',
 };
 
 type Stage = 'idle' | 'generating' | 'done' | 'error';
@@ -290,6 +291,19 @@ function ECCertificate({ ec }: { ec: typeof DEMO_EC_RESULT }) {
             label="Generated"
             value={format(new Date(ec.generatedAt), 'dd MMM yyyy, HH:mm:ss')}
           />
+        </div>
+
+        {/* Tokenization Proof Banner */}
+        <div className="bg-blue-950/40 border border-blue-900/60 rounded-xl px-4 py-3 flex items-start gap-3">
+          <Shield className="w-5 h-5 text-blue-400 shrink-0 mt-0.5" />
+          <div className="min-w-0 flex-1">
+            <div className="text-blue-300 font-semibold text-sm">Tokenized Asset (ERC-721)</div>
+            <div className="text-gray-400 text-xs mt-1">This property is cryptographically secured on the Hyperledger Fabric ledger.</div>
+            <div className="flex items-center justify-between mt-2 bg-gray-950 rounded px-2.5 py-1.5 border border-gray-800">
+              <span className="text-gray-500 text-[10px] uppercase tracking-wider font-semibold">Mint Tx Hash</span>
+              <span className="text-blue-400/80 font-mono text-[10px] truncate ml-2">{(ec as any).blockchainTxHash}</span>
+            </div>
+          </div>
         </div>
 
         {/* Summary */}
