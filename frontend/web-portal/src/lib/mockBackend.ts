@@ -281,7 +281,9 @@ export async function handleMockApi(path: string, options: RequestInit): Promise
   }
 
   if (path.match(/^\/api\/dlpi\/[^\/]+$/)) {
-    return jsonResponse(DEMO_DLPI);
+    const dlpiId = path.split('/')[3];
+    const parcel = state.myParcels.find(p => p.dlpiId === dlpiId) || DEMO_DLPI;
+    return jsonResponse(parcel);
   }
 
   if (path.match(/^\/api\/dlpi\/[^\/]+\/claim$/)) {
