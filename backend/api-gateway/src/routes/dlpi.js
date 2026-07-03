@@ -27,10 +27,16 @@ const dlpiParam = param('dlpiId').matches(/^DLPI-[A-Z]{2}-[A-Z]{3}-[A-Z0-9]+$/);
 // GET /api/dlpi/my-parcels — citizen's own parcels
 router.get('/my-parcels', authenticate, requireRole(ROLES.CITIZEN), async (req, res) => {
   try {
-    const parcels = await evaluate('dlpi', 'QueryDLPIsByOwner', [req.user.aadhaarHash]);
+    let parcels = await evaluate('dlpi', 'QueryDLPIsByOwner', [req.user.aadhaarHash]);
     
+    // Normalize real-mode fabric response to Array
+    if (parcels && !Array.isArray(parcels)) {
+      parcels = parcels.parcels || parcels.data || Object.values(parcels);
+    }
+    if (!Array.isArray(parcels)) parcels = [];
+
     // Adapt legacy structure
-    const adapted = (parcels || []).map(p => {
+    const adapted = parcels.map(p => {
       if (p.owners && p.owners.length > 0 && !p.owner) {
         p.owner = {
           name: p.owners[0].name,

@@ -51,8 +51,8 @@ function mintToken(payload) {
 }
 
 function issueDemoToken(role, name, extra = {}) {
-  if (process.env.FABRIC_MODE !== 'mock') {
-    throw new Error('Demo tokens only available in mock mode');
+  if (process.env.FABRIC_MODE !== 'mock' && process.env.AADHAAR_MOCK !== 'true') {
+    throw new Error('Demo tokens only available in mock mode (unless AADHAAR_MOCK is true)');
   }
   return mintToken({ role, name, demo: true, ...extra });
 }
