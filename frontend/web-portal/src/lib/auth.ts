@@ -40,11 +40,18 @@ export function clearToken(): void {
 
 // ─── User decoding ────────────────────────────────────────────────────────────
 
+// Converts base64url → standard base64 so atob() works on real JWTs
+function base64urlDecode(base64url: string): string {
+  const base64 = base64url.replace(/-/g, '+').replace(/_/g, '/');
+  const padded = base64.padEnd(base64.length + (4 - (base64.length % 4)) % 4, '=');
+  return atob(padded);
+}
+
 export function getUser(): JWTUser | null {
   const token = getToken();
   if (!token) return null;
   try {
-    const payload = JSON.parse(atob(token.split('.')[1])) as JWTUser;
+    const payload = JSON.parse(base64urlDecode(token.split('.')[1])) as JWTUser;
     if (payload.exp && Date.now() / 1000 > payload.exp) {
       clearToken();
       return null;
