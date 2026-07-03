@@ -598,7 +598,7 @@ export default function ReviewPage() {
 
   const isVerified  = parcel.claimStatus === 'VERIFIED';
   const isRejected  = parcel.claimStatus === 'REJECTED';
-  const isFinalized = isVerified || isRejected || actionDone !== '';
+  const isFinalized = isVerified || isRejected || ['VERIFIED', 'REJECTED'].includes(actionDone);
 
   return (
     <div className="flex h-screen bg-gray-950 overflow-hidden">
