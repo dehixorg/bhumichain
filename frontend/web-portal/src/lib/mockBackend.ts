@@ -304,6 +304,15 @@ export async function handleMockApi(path: string, options: RequestInit): Promise
     return jsonResponse({ dlpiId, claimStatus: 'UNDER_REVIEW' });
   }
 
+  if (path.match(/^\/api\/dlpi\/[^\/]+\/ci-review$/)) {
+    const dlpiId = path.split('/')[3];
+    const parcel = state.myParcels.find(p => p.dlpiId === dlpiId);
+    if (parcel) {
+      parcel.claimStatus = 'CI_APPROVED';
+    }
+    return jsonResponse({ dlpiId, claimStatus: 'CI_APPROVED' });
+  }
+
   if (path.match(/^\/api\/dlpi\/[^\/]+\/tehsildar-approve$/)) {
     const dlpiId = path.split('/')[3];
     state.pendingReview = state.pendingReview.filter(p => p.dlpiId !== dlpiId);
