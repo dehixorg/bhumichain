@@ -106,7 +106,8 @@ router.post(
           ipfsCID: p.ipfsCID || 'QmMockGenesisGeoJSON',
           sourceType: 'DILRMP_MIGRATION',
         };
-        await submit('dlpi', 'CreateDLPI', [JSON.stringify(input)]);
+        // ERC-721 Tokenization: Call MintToken instead of CreateDLPI
+        await submit('dlpi', 'MintToken', [JSON.stringify(input)]);
         seeded++;
       }
       res.status(201).json({ seeded, status: 'SEEDED_UNVERIFIED' });
@@ -288,7 +289,8 @@ router.post(
   async (req, res) => {
     try {
       const { dlpiId, ownerName, ownerAadhaarHash, landType, areaHectares, geojsonCID, surveyDocCID } = req.body;
-      const result = await submit('dlpi', 'CreateDLPI', [
+      // ERC-721 Tokenization: Mint the parcel token on-chain
+      const result = await submit('dlpi', 'MintToken', [
         JSON.stringify({ dlpiId, ownerName, ownerAadhaarHash, landType, areaHectares, geojsonCID, surveyDocCID }),
       ]);
       res.status(201).json(result);

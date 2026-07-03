@@ -180,6 +180,80 @@ type DLPIContract struct {
 	contractapi.Contract
 }
 
+// ─── ERC-721 Token Standard Implementations ───────────────────────────────────
+
+// MintToken is an alias for CreateDLPI to support tokenization semantics
+func (c *DLPIContract) MintToken(ctx contractapi.TransactionContextInterface, inputJSON string) error {
+	return c.CreateDLPI(ctx, inputJSON)
+}
+
+// OwnerOf returns the Aadhaar Hashes of the owners of the DLPI Token
+func (c *DLPIContract) OwnerOf(ctx contractapi.TransactionContextInterface, dlpiId string) ([]string, error) {
+	dlpi, err := c.GetDLPI(ctx, dlpiId)
+	if err != nil {
+		return nil, err
+	}
+	var owners []string
+	for _, o := range dlpi.Owners {
+		owners = append(owners, o.AadhaarHash)
+	}
+	return owners, nil
+}
+
+// BalanceOf returns the number of DLPI Tokens owned by a specific Aadhaar Hash
+func (c *DLPIContract) BalanceOf(ctx contractapi.TransactionContextInterface, ownerAadhaarHash string) (int, error) {
+	queryString := fmt.Sprintf(`{"selector":{"owners":{"$elemMatch":{"aadhaarHash":"%s"}}}}`, ownerAadhaarHash)
+	resultsIterator, err := ctx.GetStub().GetQueryResult(queryString)
+	if err != nil {
+		return 0, err
+	}
+	defer resultsIterator.Close()
+	count := 0
+	for resultsIterator.HasNext() {
+		_, err := resultsIterator.Next()
+		if err != nil {
+			return 0, err
+		}
+		count++
+	}
+	return count, nil
+}
+
+// TransferFrom transfers a tokenized parcel from one owner to another
+func (c *DLPIContract) TransferFrom(ctx contractapi.TransactionContextInterface, fromAadhaarHash, toAadhaarHash, toName, dlpiId string) error {
+	dlpi, err := c.GetDLPI(ctx, dlpiId)
+	if err != nil {
+		return err
+	}
+	if dlpi.EncumbranceStatus != "CLEAR" {
+		return fmt.Errorf("token %s is encumbered and cannot be transferred", dlpiId)
+	}
+	found := false
+	for i, o := range dlpi.Owners {
+		if o.AadhaarHash == fromAadhaarHash {
+			// Update the owner to the new buyer
+			dlpi.Owners[i].AadhaarHash = toAadhaarHash
+			dlpi.Owners[i].Name = toName
+			dlpi.Owners[i].OwnerSince = time.Now().UTC().Format(time.RFC3339)
+			dlpi.Owners[i].IsVerified = true // Auto-verified on chain transfer
+			found = true
+			break
+		}
+	}
+	if !found {
+		return fmt.Errorf("sender %s is not an owner of token %s", fromAadhaarHash, dlpiId)
+	}
+	
+	dlpi.UpdatedAt = time.Now().UTC().Format(time.RFC3339)
+	dlpi.TxHash = ctx.GetStub().GetTxID()
+	
+	dlpiBytes, err := json.Marshal(dlpi)
+	if err != nil {
+		return err
+	}
+	return ctx.GetStub().PutState(dlpiId, dlpiBytes)
+}
+
 // CreateDLPI — genesis: Patwari creates a new DLPI record
 // Endorsement: AND(Revenue-HQ.member)  (Tehsildar final approve via API layer)
 func (c *DLPIContract) CreateDLPI(ctx contractapi.TransactionContextInterface, inputJSON string) error {
