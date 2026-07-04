@@ -245,7 +245,7 @@ router.get(
 router.get(
   '/pending/all',
   authenticate,
-  requireRole(ROLES.PATWARI, ROLES.CI, ROLES.SRO, ROLES.TEHSILDAR),
+  requireRole(ROLES.PATWARI, ROLES.CIRCLE_INSPECTOR, ROLES.SRO, ROLES.TEHSILDAR),
   async (req, res) => {
     try {
       let transfers = await evaluate('property-transfer', 'QueryPendingTransfers', []);
@@ -342,7 +342,7 @@ router.post(
 router.post(
   '/:transferId/approve/ci',
   authenticate,
-  requireRole(ROLES.CI, ROLES.TEHSILDAR),
+  requireRole(ROLES.CIRCLE_INSPECTOR, ROLES.TEHSILDAR),
   async (req, res) => {
     try {
       const result = await submit('property-transfer', 'ApproveByCI', [
