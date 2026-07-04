@@ -43,7 +43,9 @@ router.post(
           String(isTribalBuyer), tribalCertHash, tribalCommunity,
         ]);
       } catch (e) {
-        if (e.message && e.message.includes('Value did not match schema')) {
+        const detailsStr = e.details ? JSON.stringify(e.details) : '';
+        if ((e.message && e.message.includes('Value did not match schema')) || 
+            detailsStr.includes('Value did not match schema')) {
           // Known fabric-contract-api bug: fails on omitted fields for non-tribal parcels
           console.warn('[TribalGuard] Caught schema bug, assuming non-tribal parcel');
           tribalCheck = { decision: 'ALLOWED_NOT_TRIBAL' };
