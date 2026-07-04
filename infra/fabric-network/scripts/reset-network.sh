@@ -7,7 +7,7 @@ read -p "Are you sure? (yes/no): " confirm
 [ "$confirm" != "yes" ] && echo "Aborted." && exit 0
 
 echo "Stopping containers and removing volumes..."
-docker compose down --volumes
+docker-compose down -v
 
 echo "Removing generated artifacts..."
 sudo rm -rf crypto-config/ channel-artifacts/
