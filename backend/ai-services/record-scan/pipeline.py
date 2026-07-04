@@ -285,7 +285,7 @@ async def _gpt4o_ner(ocr_text: str) -> KhatauniExtraction:
         # Fallback: use Anthropic Claude if Azure OpenAI not available
         return await _claude_ner(ocr_text)
 
-    prompt = _EXTRACTION_PROMPT.format(ocr_text=ocr_text[:6000])  # cap at 6k chars
+    prompt = _EXTRACTION_PROMPT.replace("{ocr_text}", ocr_text[:6000])  # cap at 6k chars
 
     async with httpx.AsyncClient(timeout=60) as client:
         resp = await client.post(
@@ -318,7 +318,7 @@ async def _claude_ner(ocr_text: str) -> KhatauniExtraction:
             "or ANTHROPIC_API_KEY in record-scan/.env"
         )
 
-    prompt = _EXTRACTION_PROMPT.format(ocr_text=ocr_text[:6000])
+    prompt = _EXTRACTION_PROMPT.replace("{ocr_text}", ocr_text[:6000])
 
     async with httpx.AsyncClient(timeout=60) as client:
         resp = await client.post(
