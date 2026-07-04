@@ -81,8 +81,8 @@ router.post(
 
       // Step 4: Submit transfer to chaincode
       const preemptionJSON = JSON.stringify(req.body.preemptionRights || []);
-      const sellersJSON = JSON.stringify([{ name: 'Seller', aadhaarHash: sellerAadhaarHash, shareNum: 1, shareDen: 1 }]);
-      const buyersJSON = JSON.stringify([{ name: buyerName, aadhaarHash: buyerAadhaarHash, shareNum: 1, shareDen: 1 }]);
+      const sellersJSON = JSON.stringify([{ name: 'Seller', aadhaarHash: sellerAadhaarHash, shareFraction: '1/1', shareDecimal: 1.0 }]);
+      const buyersJSON = JSON.stringify([{ name: buyerName, aadhaarHash: buyerAadhaarHash, shareFraction: '1/1', shareDecimal: 1.0 }]);
 
       const transferId = await submit('property-transfer', 'InitiateTransfer', [
         dlpiId, 'FULL_SALE',
