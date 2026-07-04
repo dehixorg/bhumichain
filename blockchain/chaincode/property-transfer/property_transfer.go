@@ -98,7 +98,9 @@ const (
 	StatusAwaitingConsent      = "AWAITING_CONSENT"
 	StatusStampDutyPending     = "STAMP_DUTY_PENDING"
 	StatusStampDutyPaid        = "STAMP_DUTY_PAID"
-	StatusCompleted            = "COMPLETED"
+	StatusPatwariApproved      = "PATWARI_APPROVED"
+	StatusSROExecuted          = "SRO_EXECUTED"
+	StatusCompleted            = "COMPLETED" // means Tehsildar Approved
 	StatusRejectedFraud        = "REJECTED_FRAUD"
 	StatusRejectedLocked       = "REJECTED_LOCKED"
 	StatusRejectedConsent      = "REJECTED_CONSENT"
@@ -471,26 +473,74 @@ func (c *PropertyTransferContract) ConfirmStampDutyPayment(
 	return c.saveProposal(ctx, proposal)
 }
 
-// ExecuteTransfer — Step 5: atomic final execution
-// Removes sellers from DLPI.Owners[], adds buyers — all in one Fabric transaction
-func (c *PropertyTransferContract) ExecuteTransfer(
+// ApproveByPatwari — Patwari reviews and approves the transfer
+func (c *PropertyTransferContract) ApproveByPatwari(
 	ctx contractapi.TransactionContextInterface,
-	transferID, newTitleCID string,
+	transferID, patwariHash string,
 ) error {
-
 	proposal, err := c.getProposal(ctx, transferID)
 	if err != nil {
 		return err
 	}
-
 	if proposal.Status != StatusStampDutyPaid {
-		return fmt.Errorf("transfer %s not ready for execution (status: %s)", transferID, proposal.Status)
+		return fmt.Errorf("transfer %s not ready for Patwari approval (status: %s)", transferID, proposal.Status)
+	}
+
+	proposal.Status = StatusPatwariApproved
+	proposal.UpdatedAt = time.Now().UTC().Format(time.RFC3339)
+
+	event, _ := json.Marshal(map[string]interface{}{
+		"transferId": transferID, "patwariHash": patwariHash,
+	})
+	_ = ctx.GetStub().SetEvent("PatwariApproved", event)
+
+	return c.saveProposal(ctx, proposal)
+}
+
+// ApproveBySRO (formerly ExecuteTransfer) — SRO executes the registry deed
+func (c *PropertyTransferContract) ApproveBySRO(
+	ctx contractapi.TransactionContextInterface,
+	transferID, newTitleCID, sroHash string,
+) error {
+	proposal, err := c.getProposal(ctx, transferID)
+	if err != nil {
+		return err
+	}
+	if proposal.Status != StatusPatwariApproved {
+		return fmt.Errorf("transfer %s not ready for SRO execution (status: %s)", transferID, proposal.Status)
 	}
 	if proposal.FraudScore >= 0.75 && proposal.FraudScore < 0.90 {
 		return fmt.Errorf("FRAUD_REVIEW_PENDING: score %.2f needs manual Revenue HQ approval", proposal.FraudScore)
 	}
 	if !c.allConsentsGiven(proposal) {
 		return fmt.Errorf("CONSENT_INCOMPLETE: not all required parties have consented")
+	}
+
+	proposal.Status = StatusSROExecuted
+	proposal.NewTitleCID = newTitleCID
+	proposal.UpdatedAt = time.Now().UTC().Format(time.RFC3339)
+	proposal.OfficerHash = sroHash
+
+	event, _ := json.Marshal(map[string]interface{}{
+		"transferId": transferID, "newTitleCID": newTitleCID, "sroHash": sroHash,
+	})
+	_ = ctx.GetStub().SetEvent("SROExecuted", event)
+
+	return c.saveProposal(ctx, proposal)
+}
+
+// ApproveByTehsildar — Final approval and blockchain mutation
+// Removes sellers from DLPI.Owners[], adds buyers — all in one Fabric transaction
+func (c *PropertyTransferContract) ApproveByTehsildar(
+	ctx contractapi.TransactionContextInterface,
+	transferID, tehsildarHash string,
+) error {
+	proposal, err := c.getProposal(ctx, transferID)
+	if err != nil {
+		return err
+	}
+	if proposal.Status != StatusSROExecuted {
+		return fmt.Errorf("transfer %s not ready for Tehsildar approval (status: %s)", transferID, proposal.Status)
 	}
 
 	now := time.Now().UTC()
@@ -503,7 +553,6 @@ func (c *PropertyTransferContract) ExecuteTransfer(
 	}
 
 	// Build CoOwner structs for new buyers
-	// We pass these as JSON — DLPI chaincode will add OwnerSince + IsVerified
 	type CoOwnerInput struct {
 		AadhaarHash   string  `json:"aadhaarHash"`
 		Name          string  `json:"name"`
@@ -533,8 +582,8 @@ func (c *PropertyTransferContract) ExecuteTransfer(
 		sellerHashesJSON,
 		newBuyersJSON,
 		[]byte("Sale"),
-		[]byte("Officer"),
-		[]byte(proposal.OfficerHash),
+		[]byte("Tehsildar"),
+		[]byte(tehsildarHash),
 		[]byte(proposal.MutationNo),
 		[]byte(proposal.SaleAgreementCID),
 		[]byte(description),
@@ -544,7 +593,6 @@ func (c *PropertyTransferContract) ExecuteTransfer(
 	}
 
 	proposal.Status = StatusCompleted
-	proposal.NewTitleCID = newTitleCID
 	proposal.CompletedAt = now.Format(time.RFC3339)
 	proposal.UpdatedAt = now.Format(time.RFC3339)
 
@@ -558,9 +606,10 @@ func (c *PropertyTransferContract) ExecuteTransfer(
 		"sellers":     proposal.Sellers,
 		"buyers":      proposal.Buyers,
 		"mutationNo":  proposal.MutationNo,
-		"newTitleCID": newTitleCID,
+		"newTitleCID": proposal.NewTitleCID,
 		"txHash":      txID,
 		"completedAt": proposal.CompletedAt,
+		"tehsildarHash": tehsildarHash,
 	})
 	_ = ctx.GetStub().SetEvent("TransferCompleted", event)
 
@@ -607,6 +656,14 @@ func (c *PropertyTransferContract) QueryTransfersByDLPI(
 	ctx contractapi.TransactionContextInterface, dlpiId string,
 ) ([]*TransferProposal, error) {
 	query := fmt.Sprintf(`{"selector":{"dlpiId":"%s"}}`, dlpiId)
+	return c.executeQuery(ctx, query)
+}
+
+// QueryPendingTransfers — all transfers awaiting officer approval
+func (c *PropertyTransferContract) QueryPendingTransfers(
+	ctx contractapi.TransactionContextInterface,
+) ([]*TransferProposal, error) {
+	query := `{"selector":{"status":{"$in":["STAMP_DUTY_PAID","PATWARI_APPROVED","SRO_EXECUTED"]}}}`
 	return c.executeQuery(ctx, query)
 }
 

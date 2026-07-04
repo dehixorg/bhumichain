@@ -73,8 +73,18 @@ export async function confirmStampDuty(transferId: string, payload: {
   return res.data;
 }
 
-export async function executeTransfer(transferId: string, newTitleCID: string) {
-  const res = await api.post(`/api/transfer/${transferId}/execute`, { newTitleCID });
+export async function approveTransferByPatwari(transferId: string) {
+  const res = await api.post(`/api/transfer/${transferId}/approve/patwari`);
+  return res.data;
+}
+
+export async function approveTransferBySRO(transferId: string, newTitleCID: string) {
+  const res = await api.post(`/api/transfer/${transferId}/approve/sro`, { newTitleCID });
+  return res.data;
+}
+
+export async function approveTransferByTehsildar(transferId: string) {
+  const res = await api.post(`/api/transfer/${transferId}/approve/tehsildar`);
   return res.data;
 }
 

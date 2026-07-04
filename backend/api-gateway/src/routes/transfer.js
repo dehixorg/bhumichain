@@ -242,6 +242,22 @@ router.get(
   },
 );
 
+// GET /api/transfer/pending — fetch all pending transfers for officers
+router.get(
+  '/pending/all',
+  authenticate,
+  requireRole(ROLES.PATWARI, ROLES.SRO, ROLES.TEHSILDAR),
+  async (req, res) => {
+    try {
+      const transfers = await evaluate('property-transfer', 'QueryPendingTransfers', []);
+      res.json(transfers || []);
+    } catch (e) {
+      const details = e.details ? ` - Details: ${JSON.stringify(e.details)}` : '';
+      res.status(500).json({ error: 'FABRIC_ERROR', message: e.message + details });
+    }
+  },
+);
+
 // POST /api/transfer/:transferId/consent
 // Demo Scene 4: seller + buyer each call this with their Aadhaar eSign
 router.post(
@@ -301,21 +317,58 @@ router.post(
   },
 );
 
-// POST /api/transfer/:transferId/execute — SRO final execution + DigiLocker delivery
+// POST /api/transfer/:transferId/approve/patwari
 router.post(
-  '/:transferId/execute',
+  '/:transferId/approve/patwari',
+  authenticate,
+  requireRole(ROLES.PATWARI, ROLES.TEHSILDAR),
+  async (req, res) => {
+    try {
+      const result = await submit('property-transfer', 'ApproveByPatwari', [
+        req.params.transferId, req.user.aadhaarHash || 'mock-patwari-hash',
+      ]);
+      broadcast('PatwariApproved', { transferId: req.params.transferId });
+      res.json(result);
+    } catch (e) {
+      const details = e.details ? ` - Details: ${JSON.stringify(e.details)}` : '';
+      res.status(500).json({ error: 'FABRIC_ERROR', message: e.message + details });
+    }
+  },
+);
+
+// POST /api/transfer/:transferId/approve/sro (formerly execute)
+router.post(
+  '/:transferId/approve/sro',
   authenticate,
   requireRole(ROLES.SRO, ROLES.TEHSILDAR),
   body('newTitleCID').notEmpty(),
   validate,
   async (req, res) => {
     try {
-      const result = await submit('property-transfer', 'ExecuteTransfer', [
-        req.params.transferId, req.body.newTitleCID,
+      const result = await submit('property-transfer', 'ApproveBySRO', [
+        req.params.transferId, req.body.newTitleCID, req.user.aadhaarHash || 'mock-sro-hash',
+      ]);
+      broadcast('SROExecuted', { transferId: req.params.transferId, newTitleCID: req.body.newTitleCID });
+      res.json(result);
+    } catch (e) {
+      const details = e.details ? ` - Details: ${JSON.stringify(e.details)}` : '';
+      res.status(500).json({ error: 'FABRIC_ERROR', message: e.message + details });
+    }
+  },
+);
+
+// POST /api/transfer/:transferId/approve/tehsildar
+router.post(
+  '/:transferId/approve/tehsildar',
+  authenticate,
+  requireRole(ROLES.TEHSILDAR),
+  async (req, res) => {
+    try {
+      const result = await submit('property-transfer', 'ApproveByTehsildar', [
+        req.params.transferId, req.user.aadhaarHash || 'mock-tehsildar-hash',
       ]);
       broadcast('TransferCompleted', {
         transferId: req.params.transferId,
-        newTitleCID: req.body.newTitleCID,
         message: '🎉 Title transferred. New deed delivered to DigiLocker.',
       });
       res.json(result);

@@ -9,7 +9,7 @@ import {
   IndianRupee, Clock,
 } from 'lucide-react';
 import {
-  initiateTransfer, recordConsent, confirmStampDuty, executeTransfer,
+  initiateTransfer, recordConsent, confirmStampDuty,
 } from '@/lib/api';
 import type { Transfer, TribalCheckResult } from '@/types';
 import toast from 'react-hot-toast';
@@ -57,8 +57,7 @@ const STEP_LABELS: { id: WizardStep; label: string }[] = [
   { id: 'lock',       label: 'Parcel Lock' },
   { id: 'consent',    label: 'Consent' },
   { id: 'payment',    label: 'Stamp Duty' },
-  { id: 'sro',        label: 'SRO Execute' },
-  { id: 'done',       label: 'Title Delivered' },
+  { id: 'sro',        label: 'Patwari Review' },
 ];
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -184,29 +183,14 @@ export default function TransferWizard({ dlpiId, sellerName, sellerAadhaarHash, 
     setTimeout(() => setStep('sro'), 800);
   };
 
-  // ── Step 6: SRO execution ──────────────────────────────────────────────────
+  // ── Step 6: Patwari Review (End of flow for buyer) ───────────
 
-  const executeSRO = async () => {
-    setBusy(true);
-    toast('SRO executing transfer…');
-    await delay(1800);
-    const tid = transfer?.transferId;
-    if (!tid) return;
-    try {
-      await executeTransfer(tid, titleCID);
-    } catch (e: any) {
-      toast.error(`Execute failed: ${e.response?.data?.message || e.message}`);
-      setBusy(false);
-      return;
-    }
-    setBusy(false);
-    setStep('done');
+  const finishWizard = async () => {
     onComplete?.({
       transfer:  transfer!,
       titleCID,
-      txHash:    '0xfabric-tx-title-transfer-' + Date.now(),
+      txHash:    'pending-officer-approval',
     });
-    toast.success('Title transferred! Deed delivered to DigiLocker.');
   };
 
   const handleViewOnLedger = async () => {
@@ -494,34 +478,27 @@ export default function TransferWizard({ dlpiId, sellerName, sellerAadhaarHash, 
         </div>
       )}
 
-      {/* ── Step 6: SRO execution ───────────────────────────────────────── */}
+      {/* ── Step 6: Patwari Review ───────────────────────────────────────── */}
       {step === 'sro' && (
         <div className="card space-y-4">
           <div className="flex items-center gap-2 mb-1">
-            <FileText className="w-4 h-4 text-brand-400" />
-            <span className="text-sm font-semibold text-gray-200">SRO Execution</span>
+            <Clock className="w-4 h-4 text-amber-400" />
+            <span className="text-sm font-semibold text-gray-200">Pending Patwari Review</span>
           </div>
           <div className="bg-gray-800 rounded-xl p-3 text-xs space-y-1.5">
-            <InfoRow label="SRO"         value="Sub-Registrar Office, Dadri" />
-            <InfoRow label="Officer"     value="Rajiv Shukla, Sub-Registrar (Dadri)" />
-            <InfoRow label="New title CID" value={titleCID} mono />
-            <InfoRow label="DigiLocker"  value="Delivery pending SRO signature" />
+            <InfoRow label="Status" value="Stamp Duty Paid" />
+            <InfoRow label="Next Step" value="Patwari verification in Officer Dashboard" />
+            <InfoRow label="Transfer ID" value={transfer?.transferId || '—'} mono />
           </div>
-          <div className="flex items-center gap-2 bg-blue-950 border border-blue-800 rounded-lg px-3 py-2.5 text-xs text-blue-300">
-            <CheckCircle className="w-4 h-4 shrink-0" />
-            Both parties consented + stamp duty verified — transfer ready for execution
+          <div className="flex items-center gap-2 bg-amber-950/30 border border-amber-900/50 rounded-lg px-3 py-2.5 text-xs text-amber-300">
+            <AlertTriangle className="w-4 h-4 shrink-0" />
+            The transfer has been submitted to the Patwari. Please log in to the Officer Dashboard to continue the workflow.
           </div>
           <button
-            onClick={executeSRO}
-            disabled={busy}
+            onClick={finishWizard}
             className="btn-primary w-full flex items-center justify-center gap-2"
           >
-            {busy
-              ? <span className="w-4 h-4 border border-white border-t-transparent rounded-full animate-spin" />
-              : <Zap className="w-4 h-4" />
-            }
-            Execute Transfer — Issue Title Deed
-            <ChevronRight className="w-4 h-4" />
+            Finish Wizard
           </button>
         </div>
       )}
