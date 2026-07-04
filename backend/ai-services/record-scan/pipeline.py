@@ -301,7 +301,7 @@ async def _gpt4o_ner(ocr_text: str) -> KhatauniExtraction:
                     {"role": "user",   "content": prompt},
                 ],
                 "temperature": 0.1,
-                "max_tokens": 1500,
+                "max_completion_tokens": 1500,
             },
         )
         if resp.status_code != 200:
