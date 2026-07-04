@@ -286,7 +286,7 @@ router.post(
 router.post(
   '/:transferId/stamp-duty',
   authenticate,
-  requireRole(ROLES.SRO, ROLES.TEHSILDAR),
+  requireRole(ROLES.SRO, ROLES.TEHSILDAR, ROLES.CITIZEN),
   body('upiRefNo').notEmpty(),
   body('saleAgreementCID').notEmpty(),
   validate,

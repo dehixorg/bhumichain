@@ -138,7 +138,11 @@ export default function TransferWizard({ dlpiId, sellerName, sellerAadhaarHash, 
         aadhaarHash:  isSeller ? sellerAadhaarHash : (buyerHash || DEMO_BUYER.aadhaarHash),
         eSignTxHash:  `esign-${signerId}-${Date.now()}`,
       });
-    } catch { /* offline ok */ }
+    } catch (e: any) {
+      toast.error(`Consent failed: ${e.message}`);
+      setBusy(false);
+      return;
+    }
 
     if (isSeller) {
       setSellerConsented(true);
@@ -176,7 +180,11 @@ export default function TransferWizard({ dlpiId, sellerName, sellerAadhaarHash, 
         upiRefNo:         `UPI-SBI-NSK-${Date.now()}`,
         saleAgreementCID: 'QmSaleAgreement2026MockCID',
       });
-    } catch { /* offline ok */ }
+    } catch (e: any) {
+      toast.error(`Stamp Duty failed: ${e.message}`);
+      setBusy(false);
+      return;
+    }
     setUpiVerified(true);
     setBusy(false);
     toast.success('Stamp duty payment verified ✓');
