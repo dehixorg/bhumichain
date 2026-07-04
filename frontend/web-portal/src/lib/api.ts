@@ -13,7 +13,11 @@ export function getToken() { return _token; }
 const api = axios.create({ baseURL: BASE });
 
 api.interceptors.request.use((config) => {
-  if (_token) config.headers.Authorization = `Bearer ${_token}`;
+  let token = _token;
+  if (!token && typeof window !== 'undefined') {
+    token = localStorage.getItem('bhumichain_token');
+  }
+  if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
 
