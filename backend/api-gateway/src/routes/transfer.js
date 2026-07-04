@@ -21,7 +21,7 @@ const validate = (req, res, next) => {
 router.post(
   '/initiate',
   authenticate,
-  requireRole(ROLES.SRO, ROLES.REVENUE_OFFICER, ROLES.CITIZEN),
+  requireRole(ROLES.SRO, ROLES.TEHSILDAR, ROLES.CITIZEN),
   body('dlpiId').matches(/^DLPI-[A-Z]{2}-[A-Z]{3}-[A-Z0-9]+$/),
   body('sellerAadhaarHash').matches(/^sha256:[a-f0-9]{64}$/),
   body('buyerName').notEmpty().trim(),
@@ -146,7 +146,7 @@ router.post(
 router.post(
   '/:transferId/stamp-duty',
   authenticate,
-  requireRole(ROLES.SRO, ROLES.REVENUE_OFFICER),
+  requireRole(ROLES.SRO, ROLES.TEHSILDAR),
   body('upiRefNo').notEmpty(),
   body('saleAgreementCID').notEmpty(),
   validate,
@@ -180,7 +180,7 @@ router.post(
 router.post(
   '/:transferId/execute',
   authenticate,
-  requireRole(ROLES.SRO),
+  requireRole(ROLES.SRO, ROLES.TEHSILDAR),
   body('newTitleCID').notEmpty(),
   validate,
   async (req, res) => {
