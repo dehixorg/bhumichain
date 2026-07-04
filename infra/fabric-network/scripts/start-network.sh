@@ -115,6 +115,7 @@ echo "Step 6: Updating anchor peers..."
 
 if [ ! -f "channel-artifacts/revenuedept-anchors.tx" ]; then
   configtxgen \
+    -configPath "$NETWORK_DIR" \
     -profile LandRegistryChannel \
     -outputAnchorPeersUpdate "channel-artifacts/revenuedept-anchors.tx" \
     -channelID "$CHANNEL" \
