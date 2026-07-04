@@ -10,7 +10,7 @@ echo "Stopping containers and removing volumes..."
 docker compose down -v
 
 echo "Removing generated artifacts..."
-rm -rf crypto-config/ channel-artifacts/
+sudo rm -rf crypto-config/ channel-artifacts/
 
 echo "Removing chaincode docker images..."
 docker images -q "dev-peer*" | xargs -r docker rmi -f
