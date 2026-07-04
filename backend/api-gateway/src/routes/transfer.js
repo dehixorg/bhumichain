@@ -99,20 +99,24 @@ router.post(
         if ((e.message && e.message.includes('LOCK_FAILED') && e.message.includes('not found')) || 
             (detailsStr.includes('LOCK_FAILED') && detailsStr.includes('not found'))) {
           console.warn('[Demo] DLPI not found. Auto-seeding DLPI-UP-DAD-00100 to fix fresh blockchain state...');
-          const seedPayload = [{
+          const seedPayload = {
             dlpiId: 'DLPI-UP-DAD-00100',
             surveyNumber: '100', khasraNo: '100',
             tehsil: 'Dadri', tehsilCode: 'DAD',
             district: 'Gautam Buddha Nagar', state: 'Uttar Pradesh',
-            landType: 'Agricultural', landTypeDescription: 'Irrigated double-crop',
+            landType: 'Residential', landTypeDescription: 'Irrigated double-crop',
             areaHectares: 2.5, isTribal: false, scheduleVArea: false,
             initialOwners: [{
               aadhaarHash: sellerAadhaarHash, name: 'Amit Saxena',
-              share: '1/1', shareDecimal: 1.0, acquiredAt: new Date().toISOString()
+              share: '1/1', shareDecimal: 1.0, ownerSince: new Date().toISOString(),
+              isVerified: true
             }],
-            recordedBy: req.user.aadhaarHash || 'demo-officer'
-          }];
-          await submit('dlpi', 'BulkSeedDLPIs', [JSON.stringify(seedPayload)]);
+            ownershipType: 'SOLE',
+            latitude: 28.5355, longitude: 77.3910,
+            circleRateINR: 5000000, ipfsCID: 'QmYwAPJzv5CZ1zoZ5G4vV3H927918v5H927918v5H92791',
+            sourceType: 'MANUAL'
+          };
+          await submit('dlpi', 'CreateDLPI', [JSON.stringify(seedPayload)]);
           
           console.log('[Demo] Seeding complete. Retrying InitiateTransfer...');
           transferId = await submit('property-transfer', 'InitiateTransfer', [
