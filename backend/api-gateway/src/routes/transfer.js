@@ -23,9 +23,9 @@ router.post(
   authenticate,
   requireRole(ROLES.SRO, ROLES.TEHSILDAR, ROLES.CITIZEN),
   body('dlpiId').matches(/^DLPI-[A-Z]{2}-[A-Z]{3}-[A-Z0-9]+$/),
-  body('sellerAadhaarHash').matches(/^sha256:[a-f0-9]{64}$/),
+  body('sellerAadhaarHash').matches(/^sha256:[a-z0-9]+$/),
   body('buyerName').notEmpty().trim(),
-  body('buyerAadhaarHash').matches(/^sha256:[a-f0-9]{64}$/),
+  body('buyerAadhaarHash').matches(/^sha256:[a-z0-9]+$/),
   body('declaredValueINR').isInt({ min: 1 }),
   validate,
   async (req, res) => {
@@ -125,7 +125,7 @@ router.post(
   '/:transferId/consent',
   authenticate,
   body('partyType').isIn(['SELLER', 'BUYER']),
-  body('aadhaarHash').matches(/^sha256:[a-f0-9]{64}$/),
+  body('aadhaarHash').matches(/^sha256:[a-z0-9]+$/),
   body('eSignTxHash').notEmpty(),
   validate,
   async (req, res) => {
