@@ -304,7 +304,8 @@ async def _gpt4o_ner(ocr_text: str) -> KhatauniExtraction:
                 "max_tokens": 1500,
             },
         )
-        resp.raise_for_status()
+        if resp.status_code != 200:
+            raise RuntimeError(f"Azure OpenAI Error {resp.status_code}: {resp.text}")
         raw = resp.json()["choices"][0]["message"]["content"].strip()
 
     return _parse_ner_response(raw, "azure_openai")
