@@ -19,12 +19,9 @@ async function forceSeed() {
     const targetSellerHash = t.sellers[0].aadhaarHash;
     console.log("Found seller hash from transfer:", targetSellerHash);
 
-    // 2. Fetch the current DLPI from chaincode
-    let dlpiBytes = await evaluate('dlpi', 'GetDLPI', ['DLPI-UP-DAD-00100']);
-    const dlpi = JSON.parse(dlpiBytes.toString());
-
-    const currentOwners = dlpi.owners || [];
-    const currentHashes = currentOwners.map(o => o.aadhaarHash);
+    // 2. Fetch the current owners using OwnerOf (bypasses GetDLPI schema bug)
+    let ownersBytes = await evaluate('dlpi', 'OwnerOf', ['DLPI-UP-DAD-00100']);
+    const currentHashes = JSON.parse(ownersBytes.toString());
     console.log("Current DLPI owners on blockchain:", currentHashes);
 
     if (currentHashes.includes(targetSellerHash) && currentHashes.length === 1) {
