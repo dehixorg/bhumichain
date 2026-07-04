@@ -49,7 +49,7 @@ export default function ReviewTransferPage() {
         toast('Patwari approving...');
         await approveTransferByPatwari(transferId);
         toast.success('Patwari Approved');
-      } else if (user?.role === 'ci') {
+      } else if (user?.role === 'circle_inspector') {
         toast('CI approving...');
         await approveTransferByCI(transferId);
         toast.success('CI Approved');
@@ -81,7 +81,7 @@ export default function ReviewTransferPage() {
   if (user?.role === 'patwari' && transfer.status === 'STAMP_DUTY_PAID') {
     canApprove = scanCID !== null; // Patwari MUST scan deed first
     actionLabel = 'Approve (Patwari)';
-  } else if (user?.role === 'ci' && transfer.status === 'PATWARI_APPROVED') {
+  } else if (user?.role === 'circle_inspector' && transfer.status === 'PATWARI_APPROVED') {
     canApprove = true;
     actionLabel = 'Approve (CI)';
   } else if (user?.role === 'sro' && transfer.status === 'CI_APPROVED') {
@@ -184,6 +184,15 @@ export default function ReviewTransferPage() {
              <div>
                <div className="text-sm font-bold">Document verified and pinned to IPFS</div>
                <div className="text-xs font-mono text-gray-500 mt-1">{scanCID}</div>
+             </div>
+           </div>
+         )}
+         {canApprove && (
+           <div className="fixed bottom-0 left-0 w-full bg-gray-900 border-t border-gray-800 p-4 z-20">
+             <div className="max-w-4xl mx-auto flex justify-end">
+               <button onClick={handleApprove} disabled={busy} className="btn-primary w-full sm:w-auto">
+                 {busy ? 'Processing...' : actionLabel}
+               </button>
              </div>
            </div>
          )}
