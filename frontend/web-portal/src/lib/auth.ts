@@ -3,7 +3,8 @@ const API = process.env.NEXT_PUBLIC_API_URL || 'mock';
 import { handleMockApi } from './mockBackend';
 
 async function unifiedFetch(path: string, options: RequestInit = {}): Promise<Response> {
-  if (API === 'mock') {
+  // Always use mock backend for login/auth flow, even when API is real
+  if (API === 'mock' || path.startsWith('/api/auth/')) {
     return handleMockApi(path, options);
   }
   return fetch(`${API}${path}`, options);

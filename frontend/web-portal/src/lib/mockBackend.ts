@@ -254,14 +254,14 @@ export async function handleMockApi(path: string, options: RequestInit): Promise
     const user = isOfficer ? DEMO_PERSONAS['patwari'] : DEMO_PERSONAS['citizen'];
     // Fake JWT payload for frontend to parse
     const payload = { ...user, exp: Math.floor(Date.now() / 1000) + 3600 };
-    const fakeToken = `header.${btoa(JSON.stringify(payload))}.signature`;
+    const fakeToken = `mock.${btoa(JSON.stringify(payload))}.mock`;
     return jsonResponse({ token: fakeToken, user });
   }
 
   if (path === '/api/auth/demo-token') {
     const persona = DEMO_PERSONAS[body.persona] || DEMO_PERSONAS['citizen'];
     const payload = { ...persona, demo: true, exp: Math.floor(Date.now() / 1000) + 3600 };
-    const fakeToken = `header.${btoa(JSON.stringify(payload))}.signature`;
+    const fakeToken = `mock.${btoa(JSON.stringify(payload))}.mock`;
     return jsonResponse({ token: fakeToken, user: persona });
   }
 

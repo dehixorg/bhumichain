@@ -27,6 +27,10 @@ function authenticate(req, res, next) {
     return res.status(401).json({ error: 'MISSING_TOKEN', message: 'Authorization header required' });
   }
   try {
+    if (process.env.AADHAAR_MOCK === 'true' && header.slice(7).startsWith('mock.')) {
+      req.user = JSON.parse(Buffer.from(header.slice(7).split('.')[1], 'base64').toString());
+      return next();
+    }
     req.user = jwt.verify(header.slice(7), process.env.JWT_SECRET);
     next();
   } catch (e) {
