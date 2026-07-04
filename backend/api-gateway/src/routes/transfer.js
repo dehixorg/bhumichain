@@ -95,7 +95,9 @@ router.post(
           String(oracleValueINR),
         ]);
       } catch (e) {
-        if (e.message && e.message.includes('LOCK_FAILED') && e.message.includes('not found')) {
+        const detailsStr = e.details ? JSON.stringify(e.details) : '';
+        if ((e.message && e.message.includes('LOCK_FAILED') && e.message.includes('not found')) || 
+            (detailsStr.includes('LOCK_FAILED') && detailsStr.includes('not found'))) {
           console.warn('[Demo] DLPI not found. Auto-seeding DLPI-UP-DAD-00100 to fix fresh blockchain state...');
           const seedPayload = [{
             dlpiId: 'DLPI-UP-DAD-00100',
