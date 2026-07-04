@@ -112,25 +112,12 @@ export default function TransferWizard({ dlpiId, sellerName, sellerAadhaarHash, 
         declaredValueINR: Number(declaredVal) || DEMO_BUYER.declaredINR,
       });
       setTransfer(res);
-    } catch {
-      // Offline fallback
-      setTransfer({
-        transferId:          'TXF-DLPI-UP-DAD-00100-b2c3d4e5',
-        dlpiId,
-        sellerAadhaarHash,
-        buyerName:           buyerName || DEMO_BUYER.name,
-        buyerAadhaarHash:    buyerHash || DEMO_BUYER.aadhaarHash,
-        declaredValueINR:    Number(declaredVal) || DEMO_BUYER.declaredINR,
-        oracleValueINR:      5_200_000,
-        stampDutyINR:        208_000,
-        status:              'AWAITING_CONSENT',
-        fraudScore:          0.12,
-        nationalLockAcquired: true,
-        lockExpiry:          new Date(Date.now() + 86_400_000).toISOString(),
-        consentSeller:       false,
-        consentBuyer:        false,
-        initiatedAt:         new Date().toISOString(),
-      });
+    } catch (e: any) {
+      const msg = e.response?.data?.message || e.message || 'Unknown error';
+      toast.error(`Initiate failed: ${msg}`);
+      alert(`Backend Error on Initiate:\n${msg}`);
+      setBusy(false);
+      return;
     }
 
     setCompliance(MOCK_COMPLIANCE);
@@ -203,10 +190,15 @@ export default function TransferWizard({ dlpiId, sellerName, sellerAadhaarHash, 
     setBusy(true);
     toast('SRO executing transfer…');
     await delay(1800);
-    const tid = transfer?.transferId || 'TXF-DLPI-UP-DAD-00100-b2c3d4e5';
+    const tid = transfer?.transferId;
+    if (!tid) return;
     try {
       await executeTransfer(tid, titleCID);
-    } catch { /* offline ok */ }
+    } catch (e: any) {
+      toast.error(`Execute failed: ${e.response?.data?.message || e.message}`);
+      setBusy(false);
+      return;
+    }
     setBusy(false);
     setStep('done');
     onComplete?.({
