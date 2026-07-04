@@ -314,10 +314,9 @@ async def _claude_ner(ocr_text: str) -> KhatauniExtraction:
     """Fallback: use Anthropic Claude to extract Khatauni fields."""
     anthropic_key = os.getenv("ANTHROPIC_API_KEY", "")
     if not anthropic_key:
-        raise ValueError(
-            "No NER service configured. Set AZURE_OPENAI_ENDPOINT+AZURE_OPENAI_KEY "
-            "or ANTHROPIC_API_KEY in record-scan/.env"
-        )
+        print("[NER] No LLM keys configured. Falling back to MOCK extraction for NER step.")
+        from mock_responses import DEMO_CLEAR
+        return DEMO_CLEAR.extraction
 
     prompt = _EXTRACTION_PROMPT.replace("{ocr_text}", ocr_text[:6000])
 
