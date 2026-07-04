@@ -109,30 +109,30 @@ if [ "$TWO_PEER_MODE" = "true" ]; then
   echo "  peer1 joined."
 fi
 
-# ── Step 6: Update anchor peers ──────────────────────────────────────────────
-echo ""
-echo "Step 6: Updating anchor peers..."
-
-if [ ! -f "channel-artifacts/revenuedept-anchors.tx" ]; then
-  configtxgen \
-    -configPath "$NETWORK_DIR" \
-    -profile LandRegistryChannel \
-    -outputAnchorPeersUpdate "channel-artifacts/revenuedept-anchors.tx" \
-    -channelID "$CHANNEL" \
-    -asOrg RevenueDeptMSP
-fi
-
-CORE_PEER_TLS_ENABLED=true \
-CORE_PEER_LOCALMSPID=RevenueDeptMSP \
-CORE_PEER_ADDRESS=peer0.revenuedept.bhumichain.in:7051 \
-CORE_PEER_MSPCONFIGPATH="$ADMIN_MSP" \
-CORE_PEER_TLS_ROOTCERT_FILE="$PEER0_TLS_CA" \
-peer channel update \
-  -o orderer.bhumichain.in:7050 \
-  -c "$CHANNEL" \
-  -f "channel-artifacts/revenuedept-anchors.tx" \
-  --tls --cafile "$ORDERER_CA"
-echo "  Anchor peers updated."
+# ── Step 6: Update anchor peers ───────────────────────────────────────────────
+# echo ""
+# echo "Step 6: Updating anchor peers..."
+# 
+# if [ ! -f "channel-artifacts/revenuedept-anchors.tx" ]; then
+#   configtxgen \
+#     -configPath "$NETWORK_DIR" \
+#     -profile LandRegistryChannel \
+#     -outputAnchorPeersUpdate "channel-artifacts/revenuedept-anchors.tx" \
+#     -channelID "$CHANNEL" \
+#     -asOrg RevenueDeptMSP
+# fi
+# 
+# CORE_PEER_TLS_ENABLED=true \
+# CORE_PEER_LOCALMSPID=RevenueDeptMSP \
+# CORE_PEER_ADDRESS=peer0.revenuedept.bhumichain.in:7051 \
+# CORE_PEER_MSPCONFIGPATH="$ADMIN_MSP" \
+# CORE_PEER_TLS_ROOTCERT_FILE="$PEER0_TLS_CA" \
+# peer channel update \
+#   -o orderer.bhumichain.in:7050 \
+#   -c "$CHANNEL" \
+#   -f "channel-artifacts/revenuedept-anchors.tx" \
+#   --tls --cafile "$ORDERER_CA" || true
+# echo "  Anchor peers updated."
 
 echo ""
 echo "========================================"
