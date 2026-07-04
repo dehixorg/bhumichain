@@ -366,11 +366,11 @@ export default function TransferWizard({ dlpiId, sellerName, sellerAadhaarHash, 
             {/* Valuation */}
             <div className="bg-gray-800 rounded-lg px-3 py-2.5 text-xs space-y-1.5">
               <div className="text-gray-300 font-semibold">Stamp Duty Calculation</div>
-              <InfoRow label="Declared value"    value={formatINR(transfer.declaredValueINR)} />
-              <InfoRow label="Oracle value"      value={formatINR(transfer.oracleValueINR)} />
-              <InfoRow label="Stamp duty base"   value={formatINR(transfer.declaredValueINR)} />
+              <InfoRow label="Declared value"    value={formatINR(transfer.declaredValueINR ?? Number(declaredVal) ?? DEMO_BUYER.declaredINR)} />
+              <InfoRow label="Oracle value"      value={formatINR(transfer.oracleValueINR ?? compliance.valuation.oracleValue)} />
+              <InfoRow label="Stamp duty base"   value={formatINR(transfer.declaredValueINR ?? Number(declaredVal) ?? DEMO_BUYER.declaredINR)} />
               <div className="border-t border-gray-700 pt-1.5">
-                <InfoRow label="Stamp duty (5%)" value={formatINR(transfer.stampDutyINR)} />
+                <InfoRow label="Stamp duty (5%)" value={formatINR(transfer.stampDutyINR ?? compliance.valuation.stampDuty)} />
               </div>
             </div>
 
@@ -460,7 +460,7 @@ export default function TransferWizard({ dlpiId, sellerName, sellerAadhaarHash, 
               </div>
             </div>
             <div className="text-xs text-gray-400 mb-1">Scan to pay via UPI</div>
-            <div className="text-xl font-bold text-gray-100 font-mono">{formatINR(transfer.stampDutyINR)}</div>
+            <div className="text-xl font-bold text-gray-100 font-mono">{formatINR(transfer.stampDutyINR ?? compliance?.valuation.stampDuty ?? 0)}</div>
             <div className="text-xs text-gray-500 mt-1">UP Stamp Duty — 5%</div>
           </div>
 
