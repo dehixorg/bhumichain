@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { ArrowLeft, CheckCircle, Clock, AlertTriangle, FileText, Zap, ChevronRight } from 'lucide-react';
 import { getUser, apiFetch, type JWTUser } from '@/lib/auth';
-import { approveTransferByPatwari, approveTransferBySRO, approveTransferByTehsildar } from '@/lib/api';
+import { approveTransferByPatwari, approveTransferByCI, approveTransferBySRO, approveTransferByTehsildar } from '@/lib/api';
 import RecordScan from '@/components/forms/RecordScan';
 import toast from 'react-hot-toast';
 
@@ -45,6 +45,10 @@ export default function ReviewTransferPage() {
         toast('Patwari approving...');
         await approveTransferByPatwari(transferId);
         toast.success('Patwari Approved');
+      } else if (user?.role === 'ci') {
+        toast('CI approving...');
+        await approveTransferByCI(transferId);
+        toast.success('CI Approved');
       } else if (user?.role === 'sro') {
         toast('SRO executing...');
         await approveTransferBySRO(transferId, 'QmTitleDeedNew' + Date.now());
@@ -73,7 +77,10 @@ export default function ReviewTransferPage() {
   if (user?.role === 'patwari' && transfer.status === 'STAMP_DUTY_PAID') {
     canApprove = scanCID !== null; // Patwari MUST scan deed first
     actionLabel = 'Approve (Patwari)';
-  } else if (user?.role === 'sro' && transfer.status === 'PATWARI_APPROVED') {
+  } else if (user?.role === 'ci' && transfer.status === 'PATWARI_APPROVED') {
+    canApprove = true;
+    actionLabel = 'Approve (CI)';
+  } else if (user?.role === 'sro' && transfer.status === 'CI_APPROVED') {
     canApprove = true;
     actionLabel = 'Execute Deed (SRO)';
   } else if (user?.role === 'tehsildar' && transfer.status === 'SRO_EXECUTED') {
