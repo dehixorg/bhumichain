@@ -223,11 +223,29 @@ router.get(
   },
 );
 
+// GET /api/transfer/:transferId/history
+router.get(
+  '/:transferId/history',
+  authenticate,
+  async (req, res) => {
+    try {
+      let history = await evaluate('property-transfer', 'GetTransferHistory', [req.params.transferId]);
+      if (typeof history === 'string') {
+        try { history = JSON.parse(history); } catch (e) {}
+      }
+      res.json(history || []);
+    } catch (e) {
+      const details = e.details ? ` - Details: ${JSON.stringify(e.details)}` : '';
+      res.status(500).json({ error: 'FABRIC_ERROR', message: e.message + details });
+    }
+  },
+);
+
 // GET /api/transfer/pending — fetch all pending transfers for officers
 router.get(
   '/pending/all',
   authenticate,
-  requireRole(ROLES.PATWARI, ROLES.CI, ROLES.SRO, ROLES.TEHSILDAR),
+  requireRole(ROLES.PATWARI, ROLES.SRO, ROLES.TEHSILDAR),
   async (req, res) => {
     try {
       let transfers = await evaluate('property-transfer', 'QueryPendingTransfers', []);
@@ -320,24 +338,6 @@ router.post(
   },
 );
 
-// POST /api/transfer/:transferId/approve/ci
-router.post(
-  '/:transferId/approve/ci',
-  authenticate,
-  requireRole(ROLES.CI, ROLES.TEHSILDAR),
-  async (req, res) => {
-    try {
-      const result = await submit('property-transfer', 'ApproveByCI', [
-        req.params.transferId, req.user.aadhaarHash || 'mock-ci-hash',
-      ]);
-      broadcast('CIApproved', { transferId: req.params.transferId });
-      res.json(result);
-    } catch (e) {
-      const details = e.details ? ` - Details: ${JSON.stringify(e.details)}` : '';
-      res.status(500).json({ error: 'FABRIC_ERROR', message: e.message + details });
-    }
-  },
-);
 
 // POST /api/transfer/:transferId/approve/sro (formerly execute)
 router.post(

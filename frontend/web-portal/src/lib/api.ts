@@ -78,9 +78,10 @@ export async function approveTransferByPatwari(transferId: string) {
   return res.data;
 }
 
-export async function approveTransferByCI(transferId: string) {
-  const res = await api.post(`/api/transfer/${transferId}/approve/ci`);
-  return res.data;
+export async function getTransferHistory(transferId: string) {
+  const res = await apiFetch(`/api/transfer/${transferId}/history`);
+  if (!res.ok) return [];
+  return res.json();
 }
 
 export async function approveTransferBySRO(transferId: string, newTitleCID: string) {

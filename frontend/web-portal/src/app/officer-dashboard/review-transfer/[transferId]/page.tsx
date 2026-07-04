@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { ArrowLeft, CheckCircle, Clock, AlertTriangle, FileText, Zap, ChevronRight } from 'lucide-react';
 import { getUser, apiFetch, type JWTUser } from '@/lib/auth';
-import { approveTransferByPatwari, approveTransferByCI, approveTransferBySRO, approveTransferByTehsildar } from '@/lib/api';
+import { approveTransferByPatwari, approveTransferBySRO, approveTransferByTehsildar, getTransferHistory } from '@/lib/api';
 import RecordScan from '@/components/forms/RecordScan';
 import toast from 'react-hot-toast';
 
@@ -17,6 +17,7 @@ export default function ReviewTransferPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [scanCID, setScanCID] = useState<string | null>(null);
+  const [history, setHistory] = useState<any[]>([]);
 
   useEffect(() => {
     const u = getUser();
@@ -31,6 +32,9 @@ export default function ReviewTransferPage() {
       if (!res.ok) throw new Error('Failed to fetch transfer details');
       const data = await res.json();
       setTransfer(data);
+      
+      const hist = await getTransferHistory(transferId);
+      setHistory(hist);
     } catch (e: any) {
       setError(e.message);
     } finally {
@@ -45,10 +49,6 @@ export default function ReviewTransferPage() {
         toast('Patwari approving...');
         await approveTransferByPatwari(transferId);
         toast.success('Patwari Approved');
-      } else if (user?.role === 'ci') {
-        toast('CI approving...');
-        await approveTransferByCI(transferId);
-        toast.success('CI Approved');
       } else if (user?.role === 'sro') {
         toast('SRO executing...');
         await approveTransferBySRO(transferId, 'QmTitleDeedNew' + Date.now());
@@ -77,10 +77,7 @@ export default function ReviewTransferPage() {
   if (user?.role === 'patwari' && transfer.status === 'STAMP_DUTY_PAID') {
     canApprove = scanCID !== null; // Patwari MUST scan deed first
     actionLabel = 'Approve (Patwari)';
-  } else if (user?.role === 'ci' && transfer.status === 'PATWARI_APPROVED') {
-    canApprove = true;
-    actionLabel = 'Approve (CI)';
-  } else if (user?.role === 'sro' && transfer.status === 'CI_APPROVED') {
+  } else if (user?.role === 'sro' && transfer.status === 'PATWARI_APPROVED') {
     canApprove = true;
     actionLabel = 'Execute Deed (SRO)';
   } else if (user?.role === 'tehsildar' && transfer.status === 'SRO_EXECUTED') {
@@ -137,7 +134,27 @@ export default function ReviewTransferPage() {
                <div>{transfer.buyers?.map((b: any) => b.name).join(', ')}</div>
              </div>
            </div>
-        </div>
+         </div>
+
+         {history.length > 0 && (
+           <div className="card space-y-4">
+             <h2 className="text-sm font-bold text-gray-200 border-b border-gray-800 pb-2">Transaction Timeline (Blockchain)</h2>
+             <div className="space-y-4 pl-2">
+               {history.map((record, idx) => (
+                 <div key={idx} className="relative flex gap-4 text-sm">
+                   <div className="absolute top-2 left-1.5 w-0.5 h-full bg-gray-800 -z-10" />
+                   <div className="w-3 h-3 mt-1.5 rounded-full bg-brand-500 shrink-0 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+                   <div>
+                     <div className="font-bold text-gray-200">{record.status}</div>
+                     <div className="text-xs text-gray-500 font-mono mt-0.5">
+                       {new Date(record.timestamp).toLocaleString()} • {record.officerHash ? record.officerHash.slice(0, 16) + '...' : 'System'}
+                     </div>
+                   </div>
+                 </div>
+               ))}
+             </div>
+           </div>
+         )}
 
         {/* RecordScan AI Requirement for Patwari */}
         {user?.role === 'patwari' && transfer.status === 'STAMP_DUTY_PAID' && !scanCID && (
