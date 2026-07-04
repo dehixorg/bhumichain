@@ -79,9 +79,12 @@ export async function approveTransferByPatwari(transferId: string) {
 }
 
 export async function getTransferHistory(transferId: string) {
-  const res = await apiFetch(`/api/transfer/${transferId}/history`);
-  if (!res.ok) return [];
-  return res.json();
+  try {
+    const res = await api.get(`/api/transfer/${transferId}/history`);
+    return res.data;
+  } catch (e) {
+    return [];
+  }
 }
 
 export async function approveTransferBySRO(transferId: string, newTitleCID: string) {
