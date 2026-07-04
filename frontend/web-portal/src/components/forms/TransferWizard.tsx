@@ -217,6 +217,18 @@ export default function TransferWizard({ dlpiId, sellerName, sellerAadhaarHash, 
     toast.success('Title transferred! Deed delivered to DigiLocker.');
   };
 
+  const handleViewOnLedger = async () => {
+    if (!transfer?.transferId) return;
+    try {
+      toast('Querying Hyperledger Fabric peer...');
+      const { default: api } = await import('@/lib/api');
+      const res = await api.get(`/api/transfer/${transfer.transferId}`);
+      alert("RAW LEDGER DATA:\n\n" + JSON.stringify(res.data, null, 2));
+    } catch (e) {
+      toast.error('Failed to fetch from ledger');
+    }
+  };
+
   // ─── Render ───────────────────────────────────────────────────────────────
 
   const stepIdx = STEP_LABELS.findIndex((s) => s.id === step);
@@ -543,7 +555,7 @@ export default function TransferWizard({ dlpiId, sellerName, sellerAadhaarHash, 
               <FileText className="w-3.5 h-3.5" />
               Download Title Deed
             </button>
-            <button className="btn-ghost flex-1 text-sm py-2 flex items-center justify-center gap-1.5">
+            <button onClick={handleViewOnLedger} className="btn-ghost flex-1 text-sm py-2 flex items-center justify-center gap-1.5">
               <ArrowRight className="w-3.5 h-3.5" />
               View on Ledger
             </button>
