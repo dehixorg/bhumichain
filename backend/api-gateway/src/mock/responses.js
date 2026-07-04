@@ -106,7 +106,7 @@ const DEMO_MY_PARCELS = [
     areaHectares:      2.4,
     encumbranceStatus: 'CLEAR',
     claimStatus:       'SEEDED_UNVERIFIED',
-    owner:             { name: 'Arun Sharma' },
+    owner:             { name: 'Rakesh Agarwal' },
     location:          { latitude: 28.6010, longitude: 77.4850 },
     valuation:         { circleRateINR: 2_880_000 },
     txHash:            '0xdemo_arun_tx',
@@ -456,7 +456,7 @@ const DEMO_MUTATION = {
     },
     {
       channel:    'TELEGRAM',
-      recipient:  'Neighbour: Arun Sharma (DLPI-UP-DAD-00003)',
+      recipient:  'Neighbour: Rakesh Agarwal (DLPI-UP-DAD-00003)',
       chatId:     '@bhumichain_alerts',
       message:    '📢 Public Notice: Land mutation on adjacent parcel DLPI-UP-DAD-00100 in Gharbara, Dadri. View: bhumi.up.gov.in/mutation/MUT-DLPI-UP-DAD-00100-d4e5f6a7',
       sentAt:     '2026-06-10T09:31:06Z',

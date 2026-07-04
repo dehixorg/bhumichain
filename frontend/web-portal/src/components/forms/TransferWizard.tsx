@@ -41,7 +41,7 @@ interface ComplianceResult {
 
 const DEMO_BUYER = {
   name:        'Rakesh Agarwal',
-  aadhaarHash: 'sha256:buyer1rakesh9d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b3a2f1e0',
+  aadhaarHash: 'sha256:10427ae0c95ed6f2f509b61953567d1e9a6d729836efd4a7f66a220ef5a09716',
   declaredINR: 4_800_000,
 };
 

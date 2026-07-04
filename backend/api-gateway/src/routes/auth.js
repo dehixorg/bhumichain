@@ -30,7 +30,7 @@ function maskAadhaar(aadhaarNumber) {
 // Mock identity database for demo mode
 const MOCK_IDENTITIES = {
   '999900010010': { role: 'citizen',          name: 'Priya Kumar',  phone: '9999000010' },
-  '999900010011': { role: 'citizen',          name: 'Arun Sharma',  phone: '9999000011' },
+  '999900010011': { role: 'citizen',          name: 'Rakesh Agarwal',  phone: '9999000011' },
   '999900010012': { role: 'citizen',          name: 'Suresh Yadav', phone: '9999000012' },
   '999900010013': { role: 'citizen',          name: 'Meena Devi',   phone: '9999000013' },
   '999900010001': { role: 'tehsildar',        name: 'Amit Saxena',  phone: '9999000001', jurisdictionCode: 'GBN-DAD', tehsilCode: 'DAD' },
@@ -286,7 +286,7 @@ router.post('/demo-token', (req, res) => {
       aadhaarHash: computeAadhaarHash('999900010010'),
     },
     citizen_buyer: {
-      role: 'citizen', name: 'Arun Sharma',
+      role: 'citizen', name: 'Rakesh Agarwal',
       aadhaarHash: computeAadhaarHash('999900010011'),
     },
     citizen_heir1: {

@@ -18,7 +18,7 @@ import { demoLogin } from '@/lib/auth';
 
 const DEMO_DLPI         = 'DLPI-UP-DAD-00100';
 const DEMO_SELLER_NAME  = 'Priya';
-const DEMO_SELLER_HASH  = 'sha256:priya9f8e7d6c5b4a3f2e1d0c9b8a7f6e5d4c3b2a1f0e9d8c7b6a5f4e3d2c1b0a';
+const DEMO_SELLER_HASH  = 'sha256:56a083a15c0f4e3069fac285c6df67471c162a11ada941243c56d579fde7050f';
 
 const ORIGINAL_TRANSFER = {
   transferId: 'TXF-DLPI-UP-DAD-00100-b2c3d4e5',
