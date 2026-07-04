@@ -224,8 +224,11 @@ export default function TransferWizard({ dlpiId, sellerName, sellerAadhaarHash, 
       const { default: api } = await import('@/lib/api');
       const res = await api.get(`/api/transfer/${transfer.transferId}`);
       alert("RAW LEDGER DATA:\n\n" + JSON.stringify(res.data, null, 2));
-    } catch (e) {
-      toast.error('Failed to fetch from ledger');
+    } catch (e: any) {
+      const msg = e.response?.data?.message || e.message || 'Unknown error';
+      const details = e.response?.data ? JSON.stringify(e.response.data, null, 2) : '';
+      toast.error(`Failed: ${msg}`);
+      alert(`API Gateway Error:\n${msg}\n\nDetails:\n${details}`);
     }
   };
 
