@@ -52,7 +52,7 @@ async def global_exception_handler(request: Request, exc: Exception):
     print(f"Global Error: {exc}")
     return JSONResponse(
         status_code=500,
-        content={"error": "INTERNAL_SERVER_ERROR", "message": str(exc)},
+        content={"error": "INTERNAL_SERVER_ERROR", "detail": str(exc)},
     )
 
 
