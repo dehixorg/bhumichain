@@ -87,7 +87,7 @@ export default function ReviewTransferPage() {
   } else if (user?.role === 'sro' && transfer.status === 'CI_APPROVED') {
     canApprove = true;
     actionLabel = 'Execute Deed (SRO)';
-  } else if (user?.role === 'tehsildar' && transfer.status === 'SRO_EXECUTED') {
+  } else if (user?.role === 'tehsildar' && transfer.status === 'CI_APPROVED') {
     canApprove = true;
     actionLabel = 'Finalize & Mutate (Tehsildar)';
   }

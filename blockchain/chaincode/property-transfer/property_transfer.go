@@ -565,7 +565,7 @@ func (c *PropertyTransferContract) ApproveByTehsildar(
 	if err != nil {
 		return err
 	}
-	if proposal.Status != StatusSROExecuted {
+	if proposal.Status != StatusCIApproved {
 		return fmt.Errorf("transfer %s not ready for Tehsildar approval (status: %s)", transferID, proposal.Status)
 	}
 
