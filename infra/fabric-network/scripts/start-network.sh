@@ -13,7 +13,7 @@ ORDERER_TLS_CERT="$NETWORK_DIR/crypto-config/ordererOrganizations/bhumichain.in/
 PEER0_TLS_CA="$NETWORK_DIR/crypto-config/peerOrganizations/revenuedept.bhumichain.in/peers/peer0.revenuedept.bhumichain.in/tls/ca.crt"
 PEER1_TLS_CA="$NETWORK_DIR/crypto-config/peerOrganizations/revenuedept.bhumichain.in/peers/peer1.revenuedept.bhumichain.in/tls/ca.crt"
 ADMIN_MSP="$NETWORK_DIR/crypto-config/peerOrganizations/revenuedept.bhumichain.in/users/Admin@revenuedept.bhumichain.in/msp"
-export FABRIC_CFG_PATH="$NETWORK_DIR"
+export FABRIC_CFG_PATH=~/fabric-samples/config
 
 # Detect 1-peer vs 2-peer mode from docker-compose.yml
 if grep -q 'peer1.revenuedept.bhumichain.in' "$NETWORK_DIR/docker-compose.yml" 2>/dev/null; then
@@ -57,6 +57,7 @@ mkdir -p channel-artifacts
 if [ ! -f "channel-artifacts/${CHANNEL}.block" ]; then
   # Fabric 2.5: no system channel — create channel genesis directly
   configtxgen \
+    -configPath "$NETWORK_DIR" \
     -profile LandRegistryChannel \
     -outputBlock "channel-artifacts/${CHANNEL}.block" \
     -channelID "$CHANNEL"
