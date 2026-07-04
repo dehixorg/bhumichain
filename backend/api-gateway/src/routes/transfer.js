@@ -127,6 +127,24 @@ router.post(
             String(declaredValueINR),
             String(oracleValueINR),
           ]);
+        } else if ((e.message && e.message.includes('already locked')) || 
+                   detailsStr.includes('already locked')) {
+          console.warn('[Demo] Parcel already locked. Auto-releasing lock to allow retry...');
+          try {
+            await submit('dlpi', 'ReleaseTransferLock', [dlpiId]);
+            console.log('[Demo] Lock released. Retrying InitiateTransfer...');
+            transferId = await submit('property-transfer', 'InitiateTransfer', [
+              dlpiId, 'FULL_SALE',
+              sellersJSON, buyersJSON,
+              req.user.aadhaarHash || 'demo-officer',
+              preemptionJSON,
+              String(declaredValueINR),
+              String(oracleValueINR),
+            ]);
+          } catch (unlockErr) {
+            console.error('Failed to auto-release lock:', unlockErr);
+            throw e; // throw original lock error if unlock fails
+          }
         } else {
           throw e;
         }
