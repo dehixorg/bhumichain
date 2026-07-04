@@ -29,14 +29,14 @@ docker exec fabric-network-cli-1 peer lifecycle chaincode package "/tmp/${NAME}.
   --label "${NAME}_${VERSION}"
 
 echo "  [2/5] Installing on peer0..."
-docker exec fabric-network-cli-1 peer lifecycle chaincode install "/tmp/${NAME}.tar.gz"
+docker exec fabric-network-cli-1 peer lifecycle chaincode install "/tmp/${NAME}.tar.gz" || true
 
 if [ "$PEER1_RUNNING" = "true" ]; then
   echo "  [2/5] Installing on peer1..."
   docker exec \
     -e CORE_PEER_ADDRESS=peer1.revenuedept.bhumichain.in:9051 \
     -e CORE_PEER_TLS_ROOTCERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/revenuedept.bhumichain.in/peers/peer1.revenuedept.bhumichain.in/tls/ca.crt \
-    fabric-network-cli-1 peer lifecycle chaincode install "/tmp/${NAME}.tar.gz"
+    fabric-network-cli-1 peer lifecycle chaincode install "/tmp/${NAME}.tar.gz" || true
 fi
 
 echo "  [3/5] Getting package ID..."
