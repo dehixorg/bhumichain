@@ -99,6 +99,7 @@ const (
 	StatusStampDutyPending     = "STAMP_DUTY_PENDING"
 	StatusStampDutyPaid        = "STAMP_DUTY_PAID"
 	StatusPatwariApproved      = "PATWARI_APPROVED"
+	StatusCIApproved           = "CI_APPROVED"
 	StatusSROExecuted          = "SRO_EXECUTED"
 	StatusCompleted            = "COMPLETED" // means Tehsildar Approved
 	StatusRejectedFraud        = "REJECTED_FRAUD"
@@ -497,6 +498,30 @@ func (c *PropertyTransferContract) ApproveByPatwari(
 	return c.saveProposal(ctx, proposal)
 }
 
+// ApproveByCI — CI reviews and approves the transfer
+func (c *PropertyTransferContract) ApproveByCI(
+	ctx contractapi.TransactionContextInterface,
+	transferID, ciHash string,
+) error {
+	proposal, err := c.getProposal(ctx, transferID)
+	if err != nil {
+		return err
+	}
+	if proposal.Status != StatusPatwariApproved {
+		return fmt.Errorf("transfer %s not ready for CI approval (status: %s)", transferID, proposal.Status)
+	}
+
+	proposal.Status = StatusCIApproved
+	proposal.UpdatedAt = time.Now().UTC().Format(time.RFC3339)
+
+	event, _ := json.Marshal(map[string]interface{}{
+		"transferId": transferID, "ciHash": ciHash,
+	})
+	_ = ctx.GetStub().SetEvent("CIApproved", event)
+
+	return c.saveProposal(ctx, proposal)
+}
+
 
 // ApproveBySRO — Step 6: SRO execution (registration)
 func (c *PropertyTransferContract) ApproveBySRO(
@@ -507,7 +532,7 @@ func (c *PropertyTransferContract) ApproveBySRO(
 	if err != nil {
 		return err
 	}
-	if proposal.Status != StatusPatwariApproved {
+	if proposal.Status != StatusCIApproved {
 		return fmt.Errorf("transfer %s not ready for SRO execution (status: %s)", transferID, proposal.Status)
 	}
 	if proposal.FraudScore >= 0.75 && proposal.FraudScore < 0.90 {
@@ -672,7 +697,7 @@ func (c *PropertyTransferContract) QueryTransfersByDLPI(
 func (c *PropertyTransferContract) QueryPendingTransfers(
 	ctx contractapi.TransactionContextInterface,
 ) (string, error) {
-	query := `{"selector":{"status":{"$in":["STAMP_DUTY_PAID","PATWARI_APPROVED","SRO_EXECUTED"]}}}`
+	query := `{"selector":{"status":{"$in":["STAMP_DUTY_PAID","PATWARI_APPROVED","CI_APPROVED","SRO_EXECUTED"]}}}`
 	return c.executeQuery(ctx, query)
 }
 

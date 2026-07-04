@@ -78,6 +78,11 @@ export async function approveTransferByPatwari(transferId: string) {
   return res.data;
 }
 
+export async function approveTransferByCI(transferId: string) {
+  const res = await api.post(`/api/transfer/${transferId}/approve/ci`);
+  return res.data;
+}
+
 export async function getTransferHistory(transferId: string) {
   try {
     const res = await api.get(`/api/transfer/${transferId}/history`);
