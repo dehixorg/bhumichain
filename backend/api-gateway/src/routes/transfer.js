@@ -67,20 +67,25 @@ router.post(
 
       // Step 4: Submit transfer to chaincode
       const preemptionJSON = JSON.stringify(req.body.preemptionRights || []);
-      const result = await submit('property-transfer', 'InitiateTransfer', [
-        dlpiId, sellerAadhaarHash, buyerName, buyerAadhaarHash,
+      const sellersJSON = JSON.stringify([{ name: 'Seller', aadhaarHash: sellerAadhaarHash, shareNum: 1, shareDen: 1 }]);
+      const buyersJSON = JSON.stringify([{ name: buyerName, aadhaarHash: buyerAadhaarHash, shareNum: 1, shareDen: 1 }]);
+
+      const transferId = await submit('property-transfer', 'InitiateTransfer', [
+        dlpiId, 'FULL_SALE',
+        sellersJSON, buyersJSON,
+        req.user.aadhaarHash || 'demo-officer',
+        preemptionJSON,
         String(declaredValueINR), String(oracleValueINR),
-        req.user.aadhaarHash || '', preemptionJSON,
       ]);
 
       // Record fraud score on-chain asynchronously
-      if (result.transferId) {
+      if (transferId) {
         submit('property-transfer', 'RecordFraudScore', [
-          result.transferId, String(fraudScore), JSON.stringify([]),
+          transferId, String(fraudScore), JSON.stringify([]),
         ]).catch(() => {});
 
         broadcast('TransferInitiated', {
-          transferId: result.transferId,
+          transferId: transferId,
           dlpiId,
           oracleValueINR,
           fraudScore,
@@ -88,9 +93,10 @@ router.post(
         }, dlpiId);
       }
 
-      res.status(201).json({ ...result, oracleValueINR, fraudScore });
-    } catch (e) {
-      res.status(500).json({ error: 'FABRIC_ERROR', message: e.message });
+      res.status(201).json({ transferId, oracleValueINR, fraudScore });
+    } catch (e: any) {
+      const details = e.details ? ` - Details: ${JSON.stringify(e.details)}` : '';
+      res.status(500).json({ error: 'FABRIC_ERROR', message: e.message + details });
     }
   },
 );
@@ -136,8 +142,9 @@ router.post(
       ]);
       broadcast('ConsentRecorded', { transferId: req.params.transferId, partyType });
       res.json(result);
-    } catch (e) {
-      res.status(500).json({ error: 'FABRIC_ERROR', message: e.message });
+    } catch (e: any) {
+      const details = e.details ? ` - Details: ${JSON.stringify(e.details)}` : '';
+      res.status(500).json({ error: 'FABRIC_ERROR', message: e.message + details });
     }
   },
 );
@@ -170,8 +177,9 @@ router.post(
       ]);
       broadcast('StampDutyPaid', { transferId: req.params.transferId, upiRefNo });
       res.json(result);
-    } catch (e) {
-      res.status(500).json({ error: 'FABRIC_ERROR', message: e.message });
+    } catch (e: any) {
+      const details = e.details ? ` - Details: ${JSON.stringify(e.details)}` : '';
+      res.status(500).json({ error: 'FABRIC_ERROR', message: e.message + details });
     }
   },
 );
@@ -194,8 +202,9 @@ router.post(
         message: '🎉 Title transferred. New deed delivered to DigiLocker.',
       });
       res.json(result);
-    } catch (e) {
-      res.status(500).json({ error: 'FABRIC_ERROR', message: e.message });
+    } catch (e: any) {
+      const details = e.details ? ` - Details: ${JSON.stringify(e.details)}` : '';
+      res.status(500).json({ error: 'FABRIC_ERROR', message: e.message + details });
     }
   },
 );

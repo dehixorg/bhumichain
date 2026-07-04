@@ -60,8 +60,12 @@ async function submit(chaincode, fn, args = [], channel = null) {
   const contract = network.getContract(chaincode);
 
   const resultBytes = await contract.submitTransaction(fn, ...args.map(String));
-  if (!resultBytes || resultBytes.length === 0) return { success: true };
-  return JSON.parse(Buffer.from(resultBytes).toString());
+  const str = Buffer.from(resultBytes).toString();
+  try {
+    return JSON.parse(str);
+  } catch (e) {
+    return str; // Return raw string if not JSON (like a plain TX ID)
+  }
 }
 
 /**
@@ -81,8 +85,12 @@ async function evaluate(chaincode, fn, args = [], channel = null) {
   const contract = network.getContract(chaincode);
 
   const resultBytes = await contract.evaluateTransaction(fn, ...args.map(String));
-  if (!resultBytes || resultBytes.length === 0) return null;
-  return JSON.parse(Buffer.from(resultBytes).toString());
+  const str = Buffer.from(resultBytes).toString();
+  try {
+    return JSON.parse(str);
+  } catch (e) {
+    return str;
+  }
 }
 
 /**
