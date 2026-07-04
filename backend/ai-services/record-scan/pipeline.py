@@ -278,8 +278,9 @@ Respond with valid JSON only.
 async def _gpt4o_ner(ocr_text: str) -> KhatauniExtraction:
     """Use Azure OpenAI GPT-4o to extract structured Khatauni fields from OCR text."""
     openai_endpoint = os.getenv("AZURE_OPENAI_ENDPOINT", "")
-    openai_key      = os.getenv("AZURE_OPENAI_KEY", "")
+    openai_key      = os.getenv("AZURE_OPENAI_API_KEY") or os.getenv("AZURE_OPENAI_KEY", "")
     openai_model    = os.getenv("AZURE_OPENAI_DEPLOYMENT", "gpt-4o")
+    api_version     = os.getenv("AZURE_OPENAI_API_VERSION", "2024-02-01")
 
     if not openai_endpoint or not openai_key:
         # Fallback: use Anthropic Claude if Azure OpenAI not available
@@ -289,7 +290,7 @@ async def _gpt4o_ner(ocr_text: str) -> KhatauniExtraction:
 
     async with httpx.AsyncClient(timeout=60) as client:
         resp = await client.post(
-            f"{openai_endpoint.rstrip('/')}/openai/deployments/{openai_model}/chat/completions?api-version=2024-02-01",
+            f"{openai_endpoint.rstrip('/')}/openai/deployments/{openai_model}/chat/completions?api-version={api_version}",
             headers={
                 "api-key": openai_key,
                 "Content-Type": "application/json",
