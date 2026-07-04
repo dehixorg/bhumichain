@@ -17,7 +17,7 @@ from typing import Optional
 from dotenv import load_dotenv
 
 env_path = os.path.join(os.path.dirname(__file__), ".env")
-load_dotenv(env_path)
+load_dotenv(env_path, override=True)
 
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, BackgroundTasks, Request
 from fastapi.responses import JSONResponse
