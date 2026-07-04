@@ -54,6 +54,15 @@ router.post(
         }
       }
 
+      // Step 1.5: Always release any existing lock on the parcel in demo mode
+      // to ensure retries/refreshes don't get blocked by the blockchain's 24h safety lock.
+      try {
+        console.log('[Demo] Clearing any existing parcel lock...');
+        await submit('dlpi', 'ReleaseTransferLock', [dlpiId]);
+      } catch (lockErr) {
+        console.warn('[Demo] Note: Lock release skipped or failed (likely not locked yet):', lockErr.message);
+      }
+
       if (tribalCheck.decision === 'HARD_REJECTED') {
         broadcast('TribalTransferHardRejected', tribalCheck, dlpiId);
         return res.status(403).json({ error: 'TRIBAL_GUARD_BLOCK', ...tribalCheck });
@@ -127,24 +136,6 @@ router.post(
             String(declaredValueINR),
             String(oracleValueINR),
           ]);
-        } else if ((e.message && e.message.includes('already locked')) || 
-                   detailsStr.includes('already locked')) {
-          console.warn('[Demo] Parcel already locked. Auto-releasing lock to allow retry...');
-          try {
-            await submit('dlpi', 'ReleaseTransferLock', [dlpiId]);
-            console.log('[Demo] Lock released. Retrying InitiateTransfer...');
-            transferId = await submit('property-transfer', 'InitiateTransfer', [
-              dlpiId, 'FULL_SALE',
-              sellersJSON, buyersJSON,
-              req.user.aadhaarHash || 'demo-officer',
-              preemptionJSON,
-              String(declaredValueINR),
-              String(oracleValueINR),
-            ]);
-          } catch (unlockErr) {
-            console.error('Failed to auto-release lock:', unlockErr);
-            throw e; // throw original lock error if unlock fails
-          }
         } else {
           throw e;
         }
