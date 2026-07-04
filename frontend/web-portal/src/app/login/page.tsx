@@ -106,7 +106,7 @@ export default function LoginPage() {
   const [error, setError]       = useState('');
   const [loading, setLoading]   = useState(false);
   const [success, setSuccess]   = useState('');
-  const isDev = process.env.NEXT_PUBLIC_FABRIC_MODE === 'mock';
+  const isDev = true; // Always show demo login for the showcase, even in real mode
 
   function reset() {
     setStep('aadhaar');
