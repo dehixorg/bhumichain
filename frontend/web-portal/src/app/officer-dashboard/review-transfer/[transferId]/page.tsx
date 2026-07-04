@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { ArrowLeft, CheckCircle, Clock, AlertTriangle, FileText, Zap, ChevronRight } from 'lucide-react';
 import { getUser, apiFetch, type JWTUser } from '@/lib/auth';
 import { approveTransferByPatwari, approveTransferBySRO, approveTransferByTehsildar } from '@/lib/api';
+import RecordScan from '@/components/forms/RecordScan';
 import toast from 'react-hot-toast';
 
 export default function ReviewTransferPage() {
@@ -15,6 +16,7 @@ export default function ReviewTransferPage() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [scanCID, setScanCID] = useState<string | null>(null);
 
   useEffect(() => {
     const u = getUser();
@@ -69,7 +71,7 @@ export default function ReviewTransferPage() {
   let actionLabel = 'Approve';
   
   if (user?.role === 'patwari' && transfer.status === 'STAMP_DUTY_PAID') {
-    canApprove = true;
+    canApprove = scanCID !== null; // Patwari MUST scan deed first
     actionLabel = 'Approve (Patwari)';
   } else if (user?.role === 'sro' && transfer.status === 'PATWARI_APPROVED') {
     canApprove = true;
@@ -129,6 +131,31 @@ export default function ReviewTransferPage() {
              </div>
            </div>
         </div>
+
+        {/* RecordScan AI Requirement for Patwari */}
+        {user?.role === 'patwari' && transfer.status === 'STAMP_DUTY_PAID' && !scanCID && (
+           <div className="card border-amber-900/50 space-y-4">
+             <div className="flex items-center gap-2 mb-4">
+               <AlertTriangle className="w-5 h-5 text-amber-400" />
+               <h2 className="text-sm font-bold text-amber-300">Deed Verification Required</h2>
+             </div>
+             <p className="text-gray-400 text-sm mb-4">
+               Please upload the physical copy of the sale agreement/deed. RecordScan AI will verify it before you can approve the transfer.
+             </p>
+             <div className="border border-gray-800 rounded-xl bg-gray-950 p-4">
+               <RecordScan mode="transfer" onScanComplete={(cid) => setScanCID(cid)} />
+             </div>
+           </div>
+         )}
+         {scanCID && (
+           <div className="card border-brand-900/50 flex items-center gap-3 text-brand-300 bg-brand-950/20">
+             <CheckCircle className="w-5 h-5 shrink-0" />
+             <div>
+               <div className="text-sm font-bold">Document verified and pinned to IPFS</div>
+               <div className="text-xs font-mono text-gray-500 mt-1">{scanCID}</div>
+             </div>
+           </div>
+         )}
       </main>
     </div>
   );

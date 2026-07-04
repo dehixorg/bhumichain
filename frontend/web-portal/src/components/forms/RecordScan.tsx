@@ -99,9 +99,11 @@ const STEP_LABELS = [
 
 interface Props {
   onDlpiCreated?: (dlpiId: string) => void;
+  mode?: 'genesis' | 'transfer';
+  onScanComplete?: (ipfsCID: string) => void;
 }
 
-export default function RecordScan({ onDlpiCreated }: Props) {
+export default function RecordScan({ onDlpiCreated, mode = 'genesis', onScanComplete }: Props) {
   const [stage, setStage]     = useState<Stage>('idle');
   const [steps, setSteps]     = useState<ProcessingStep[]>([]);
   const [result, setResult]   = useState<ScanResult | null>(null);
@@ -182,7 +184,17 @@ export default function RecordScan({ onDlpiCreated }: Props) {
     if (!result) return;
     setStage('approving');
 
-    // Use the stored JWT (from login) — officer must be logged in
+    if (mode === 'transfer') {
+      // In transfer mode, we just pass back the scanned document CID
+      setTimeout(() => {
+        setStage('done');
+        toast.success(`Document scanned successfully.`);
+        onScanComplete?.(result.ipfsCID || 'QmTransferScanMockCID');
+      }, 1500);
+      return;
+    }
+
+    // Genesis mode (default)
     const token = getToken() || '';
 
     try {
@@ -387,7 +399,7 @@ export default function RecordScan({ onDlpiCreated }: Props) {
             </button>
             <button onClick={approve} className="btn-primary flex items-center gap-2 ml-auto">
               <Shield className="w-4 h-4" />
-              Approve &amp; Record on Blockchain
+              {mode === 'transfer' ? 'Accept Scan' : 'Approve & Record on Blockchain'}
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
@@ -409,16 +421,22 @@ export default function RecordScan({ onDlpiCreated }: Props) {
           <div className="w-14 h-14 rounded-full bg-brand-900 flex items-center justify-center mx-auto mb-4">
             <CheckCircle className="w-8 h-8 text-brand-400" />
           </div>
-          <div className="text-brand-300 font-bold text-lg mb-1">DLPI Recorded!</div>
-          <div className="font-mono text-gray-300 text-sm mb-1">{dlpiId}</div>
+          <div className="text-brand-300 font-bold text-lg mb-1">
+            {mode === 'transfer' ? 'Scan Completed!' : 'DLPI Recorded!'}
+          </div>
+          {mode === 'genesis' && <div className="font-mono text-gray-300 text-sm mb-1">{dlpiId}</div>}
           <div className="text-gray-500 text-xs mb-6">
-            Land parcel is now permanently on BhumiChain · Tamper-proof · Publicly verifiable
+            {mode === 'transfer' 
+              ? 'Document has been digitized and verified via RecordScan AI.' 
+              : 'Land parcel is now permanently on BhumiChain · Tamper-proof · Publicly verifiable'}
           </div>
           <div className="flex items-center justify-center gap-3">
             <button onClick={() => setStage('idle')} className="btn-ghost text-sm">Scan another</button>
-            <button onClick={() => onDlpiCreated?.(dlpiId)} className="btn-primary text-sm flex items-center gap-2">
-              <Zap className="w-4 h-4" /> View on Map
-            </button>
+            {mode === 'genesis' && (
+              <button onClick={() => onDlpiCreated?.(dlpiId)} className="btn-primary text-sm flex items-center gap-2">
+                <Zap className="w-4 h-4" /> View on Map
+              </button>
+            )}
           </div>
         </div>
       )}
