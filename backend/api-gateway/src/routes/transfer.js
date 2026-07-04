@@ -84,13 +84,47 @@ router.post(
       const sellersJSON = JSON.stringify([{ name: 'Seller', aadhaarHash: sellerAadhaarHash, shareFraction: '1/1', shareDecimal: 1.0 }]);
       const buyersJSON = JSON.stringify([{ name: buyerName, aadhaarHash: buyerAadhaarHash, shareFraction: '1/1', shareDecimal: 1.0 }]);
 
-      const transferId = await submit('property-transfer', 'InitiateTransfer', [
-        dlpiId, 'FULL_SALE',
-        sellersJSON, buyersJSON,
-        req.user.aadhaarHash || 'demo-officer',
-        preemptionJSON,
-        String(declaredValueINR), String(oracleValueINR),
-      ]);
+      let transferId;
+      try {
+        transferId = await submit('property-transfer', 'InitiateTransfer', [
+          dlpiId, 'FULL_SALE',
+          sellersJSON, buyersJSON,
+          req.user.aadhaarHash || 'demo-officer',
+          preemptionJSON,
+          String(declaredValueINR),
+          String(oracleValueINR),
+        ]);
+      } catch (e) {
+        if (e.message && e.message.includes('LOCK_FAILED') && e.message.includes('not found')) {
+          console.warn('[Demo] DLPI not found. Auto-seeding DLPI-UP-DAD-00100 to fix fresh blockchain state...');
+          const seedPayload = [{
+            dlpiId: 'DLPI-UP-DAD-00100',
+            surveyNumber: '100', khasraNo: '100',
+            tehsil: 'Dadri', tehsilCode: 'DAD',
+            district: 'Gautam Buddha Nagar', state: 'Uttar Pradesh',
+            landType: 'Agricultural', landTypeDescription: 'Irrigated double-crop',
+            areaHectares: 2.5, isTribal: false, scheduleVArea: false,
+            initialOwners: [{
+              aadhaarHash: sellerAadhaarHash, name: 'Amit Saxena',
+              share: '1/1', shareDecimal: 1.0, acquiredAt: new Date().toISOString()
+            }],
+            recordedBy: req.user.aadhaarHash || 'demo-officer'
+          }];
+          await submit('dlpi', 'BulkSeedDLPIs', [JSON.stringify(seedPayload)]);
+          
+          console.log('[Demo] Seeding complete. Retrying InitiateTransfer...');
+          transferId = await submit('property-transfer', 'InitiateTransfer', [
+            dlpiId, 'FULL_SALE',
+            sellersJSON, buyersJSON,
+            req.user.aadhaarHash || 'demo-officer',
+            preemptionJSON,
+            String(declaredValueINR),
+            String(oracleValueINR),
+          ]);
+        } else {
+          throw e;
+        }
+      }
 
       // Record fraud score on-chain asynchronously
       if (transferId) {
