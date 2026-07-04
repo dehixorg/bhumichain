@@ -63,6 +63,35 @@ router.post(
         console.warn('[Demo] Note: Lock release skipped or failed (likely not locked yet):', lockErr.message);
       }
 
+      // Step 1.6: Reset demo parcel state if the owner has changed (already sold in a previous demo run)
+      // so the demo is infinitely repeatable.
+      try {
+        const currentDLPI = await evaluate('dlpi', 'GetDLPI', [dlpiId]);
+        if (currentDLPI && currentDLPI.owners) {
+          const hasSeller = currentDLPI.owners.some(o => o.aadhaarHash === sellerAadhaarHash);
+          if (!hasSeller) {
+            console.log('[Demo] Resetting parcel owner back to demo seller...');
+            const currentOwnerHashes = currentDLPI.owners.map(o => o.aadhaarHash);
+            const resetBuyerPayload = [{
+              aadhaarHash: sellerAadhaarHash,
+              name: 'Ankur Singh (Legal Heir, 1/3 share)',
+              share: '1/1',
+              shareDecimal: 1.0,
+              isVerified: true
+            }];
+            await submit('dlpi', 'UpdateOwners', [
+              dlpiId,
+              JSON.stringify(currentOwnerHashes),
+              JSON.stringify(resetBuyerPayload),
+              'DemoReset', 'System', 'demo-system', 'RESET-001', 'QmReset', 'Reset demo parcel'
+            ]);
+            console.log('[Demo] Parcel owner reset complete!');
+          }
+        }
+      } catch (err) {
+        console.warn('[Demo] Note: Could not verify/reset parcel owners:', err.message);
+      }
+
       if (tribalCheck.decision === 'HARD_REJECTED') {
         broadcast('TribalTransferHardRejected', tribalCheck, dlpiId);
         return res.status(403).json({ error: 'TRIBAL_GUARD_BLOCK', ...tribalCheck });
