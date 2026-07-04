@@ -144,7 +144,3 @@ Profiles:
         - *RevenueDept
       Capabilities:
         <<: *ApplicationCapabilities
-    Consortiums:
-      BhumiConsortium:
-        Organizations:
-          - *RevenueDept
