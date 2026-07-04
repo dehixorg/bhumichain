@@ -168,7 +168,7 @@ async def _azure_ocr(content: bytes) -> str:
 
     # Submit analysis job
     async with httpx.AsyncClient(timeout=60) as client:
-        submit_url = f"{endpoint.rstrip('/')}/documentintelligence/documentModels/{model}:analyze?api-version=2024-02-29-preview"
+        submit_url = f"{endpoint.rstrip('/')}/documentintelligence/documentModels/{model}:analyze?api-version=2024-02-29"
         submit_resp = await client.post(
             submit_url,
             headers={
