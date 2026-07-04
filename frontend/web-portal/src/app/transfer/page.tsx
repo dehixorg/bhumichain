@@ -284,11 +284,11 @@ function SceneInfo({ scene, completedTransfer }: { scene: Scene; completedTransf
         <div className="card border-brand-800">
           <div className="flex items-center gap-2 mb-2">
             <CheckCircle className="w-4 h-4 text-brand-400" />
-            <span className="text-sm font-semibold text-brand-300">Transfer Complete</span>
+            <span className="text-sm font-semibold text-brand-300">Transfer Submitted</span>
           </div>
           <div className="text-xs space-y-1.5">
             <InfoRow label="TX ID" value={completedTransfer.transferId.slice(0, 28) + '…'} mono />
-            <InfoRow label="New owner" value={completedTransfer.buyerName} />
+            <InfoRow label="Status" value="Pending Patwari Review" />
           </div>
         </div>
       )}
