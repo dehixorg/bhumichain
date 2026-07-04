@@ -5,6 +5,7 @@ async function forceSeed() {
   console.log("Forcing DLPI reset for demo...");
   
   try {
+    // 1. Get the transfer proposal
     let transfers = await evaluate('property-transfer', 'QueryPendingTransfers', []);
     if (typeof transfers === 'string') transfers = JSON.parse(transfers);
     
@@ -15,30 +16,53 @@ async function forceSeed() {
       return;
     }
     
-    const sellerHash = t.sellers[0].aadhaarHash;
-    console.log("Found seller hash from transfer:", sellerHash);
+    const targetSellerHash = t.sellers[0].aadhaarHash;
+    console.log("Found seller hash from transfer:", targetSellerHash);
 
-    const seedPayload = {
-      dlpiId: 'DLPI-UP-DAD-00100',
-      surveyNumber: '100', khasraNo: '100',
-      tehsil: 'Dadri', tehsilCode: 'DAD',
-      district: 'Gautam Buddha Nagar', state: 'Uttar Pradesh',
-      landType: 'Residential', landTypeDescription: 'Irrigated double-crop',
-      areaHectares: 2.5, isTribal: false, scheduleVArea: false,
-      initialOwners: [{
-        aadhaarHash: sellerHash, name: 'Seller',
-        share: '1/1', shareDecimal: 1.0, ownerSince: new Date().toISOString(),
-        isVerified: true
-      }],
-      ownershipType: 'SOLE',
-      latitude: 28.5355, longitude: 77.3910,
-      circleRateINR: 5000000, ipfsCID: 'QmYwAPJzv5CZ1zoZ5G4vV3H927918v5H927918v5H92791',
-      sourceType: 'MANUAL'
-    };
+    // 2. Fetch the current DLPI from chaincode
+    let dlpiBytes = await evaluate('dlpi', 'GetDLPI', ['DLPI-UP-DAD-00100']);
+    const dlpi = JSON.parse(dlpiBytes.toString());
+
+    const currentOwners = dlpi.owners || [];
+    const currentHashes = currentOwners.map(o => o.aadhaarHash);
+    console.log("Current DLPI owners on blockchain:", currentHashes);
+
+    if (currentHashes.includes(targetSellerHash) && currentHashes.length === 1) {
+       console.log("DLPI is already perfectly synced!");
+       // just clear the lock
+       await submit('dlpi', 'ReleaseTransferLock', ['DLPI-UP-DAD-00100']);
+       process.exit(0);
+       return;
+    }
+
+    // 3. Force swap the owner using UpdateOwners
+    const sellerHashesJSON = JSON.stringify(currentHashes);
     
-    await submit('dlpi', 'CreateDLPI', [JSON.stringify(seedPayload)]);
+    // The new buyer is our target seller!
+    const newOwner = [{
+      aadhaarHash: targetSellerHash, 
+      name: 'Seller',
+      share: '1/1', 
+      shareDecimal: 1.0, 
+      ownerSince: new Date().toISOString(),
+      isVerified: true
+    }];
+    const newBuyersJSON = JSON.stringify(newOwner);
+
+    console.log("Swapping stale owners for the correct transfer seller...");
     
-    // Also clear the lock just in case
+    await submit('dlpi', 'UpdateOwners', [
+      'DLPI-UP-DAD-00100',
+      sellerHashesJSON,
+      newBuyersJSON,
+      'Sale',
+      'System_Reset',
+      'system',
+      'SYS-RESET',
+      '',
+      'Fix stale mock data'
+    ]);
+    
     await submit('dlpi', 'ReleaseTransferLock', ['DLPI-UP-DAD-00100']);
     
     console.log("DLPI successfully forcefully re-seeded to match the transfer!");
