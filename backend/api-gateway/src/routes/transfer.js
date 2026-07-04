@@ -132,7 +132,6 @@ router.post(
         }
       }
 
-      // Record fraud score on-chain asynchronously
       if (transferId) {
         submit('property-transfer', 'RecordFraudScore', [
           transferId, String(fraudScore), JSON.stringify([]),
@@ -147,7 +146,11 @@ router.post(
         }, dlpiId);
       }
 
-      res.status(201).json({ transferId, oracleValueINR, fraudScore });
+      const transferDetails = await evaluate('property-transfer', 'GetTransferProposal', [transferId]);
+      if (transferDetails && typeof transferDetails === 'object') {
+        transferDetails.fraudScore = fraudScore;
+      }
+      res.status(201).json(transferDetails);
     } catch (e) {
       const details = e.details ? ` - Details: ${JSON.stringify(e.details)}` : '';
       res.status(500).json({ error: 'FABRIC_ERROR', message: e.message + details });
