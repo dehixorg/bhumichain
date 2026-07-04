@@ -94,7 +94,7 @@ router.post(
       }
 
       res.status(201).json({ transferId, oracleValueINR, fraudScore });
-    } catch (e: any) {
+    } catch (e) {
       const details = e.details ? ` - Details: ${JSON.stringify(e.details)}` : '';
       res.status(500).json({ error: 'FABRIC_ERROR', message: e.message + details });
     }
@@ -142,7 +142,7 @@ router.post(
       ]);
       broadcast('ConsentRecorded', { transferId: req.params.transferId, partyType });
       res.json(result);
-    } catch (e: any) {
+    } catch (e) {
       const details = e.details ? ` - Details: ${JSON.stringify(e.details)}` : '';
       res.status(500).json({ error: 'FABRIC_ERROR', message: e.message + details });
     }
@@ -177,7 +177,7 @@ router.post(
       ]);
       broadcast('StampDutyPaid', { transferId: req.params.transferId, upiRefNo });
       res.json(result);
-    } catch (e: any) {
+    } catch (e) {
       const details = e.details ? ` - Details: ${JSON.stringify(e.details)}` : '';
       res.status(500).json({ error: 'FABRIC_ERROR', message: e.message + details });
     }
@@ -202,7 +202,7 @@ router.post(
         message: '🎉 Title transferred. New deed delivered to DigiLocker.',
       });
       res.json(result);
-    } catch (e: any) {
+    } catch (e) {
       const details = e.details ? ` - Details: ${JSON.stringify(e.details)}` : '';
       res.status(500).json({ error: 'FABRIC_ERROR', message: e.message + details });
     }
