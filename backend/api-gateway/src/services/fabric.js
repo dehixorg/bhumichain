@@ -27,7 +27,8 @@ async function getGateway() {
 
   _client = new grpc.Client(
     process.env.FABRIC_PEER_ENDPOINT,
-    grpc.credentials.createSsl(tlsRootCert)
+    grpc.credentials.createSsl(tlsRootCert),
+    { 'grpc.ssl_target_name_override': 'peer0.revenuedept.bhumichain.in' }
   );
 
   _gateway = connect({
