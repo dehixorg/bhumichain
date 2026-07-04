@@ -16,7 +16,8 @@ import httpx
 from typing import Optional
 from dotenv import load_dotenv
 
-load_dotenv()
+env_path = os.path.join(os.path.dirname(__file__), ".env")
+load_dotenv(env_path)
 
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, BackgroundTasks, Request
 from fastapi.responses import JSONResponse
@@ -90,11 +91,13 @@ async def upload_scan(
     if len(content) > 20 * 1024 * 1024:
         raise HTTPException(status_code=413, detail="File too large. Max 20 MB.")
 
+    force_mock = MOCK or (demoVariant is not None)
+
     result = await scan_document(
         filename=file.filename or "upload.jpg",
         content=content,
         demo_variant=demoVariant,
-        mock=MOCK,
+        mock=force_mock,
     )
 
     _scan_cache[result.scanId] = result
