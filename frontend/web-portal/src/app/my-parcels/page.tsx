@@ -76,6 +76,13 @@ const STATUS_CONFIG: Record<string, {
     icon:  AlertTriangle,
     hint:  'Record migrated from government database. Claim to verify ownership.',
   },
+  SCAN_PENDING_SRO: {
+    label: 'Unverified',
+    color: 'text-yellow-400',
+    bg:    'bg-yellow-900 bg-opacity-30 border-yellow-700',
+    icon:  AlertTriangle,
+    hint:  'Record scanned from AI. Claim to verify ownership.',
+  },
   DISPUTED: {
     label: 'Disputed',
     color: 'text-red-400',
@@ -118,7 +125,7 @@ function matchFilter(parcel: Parcel, filter: Filter): boolean {
   if (filter === 'all')      return true;
   if (filter === 'OWNER_VERIFIED') return parcel.claimStatus === 'OWNER_VERIFIED';
   if (filter === 'disputed') return parcel.claimStatus === 'DISPUTED';
-  return ['SEEDED_UNVERIFIED', 'CLAIM_SUBMITTED', 'UNDER_REVIEW', 'CI_APPROVED'].includes(parcel.claimStatus);
+  return ['SEEDED_UNVERIFIED', 'CLAIM_SUBMITTED', 'UNDER_REVIEW', 'CI_APPROVED', 'SCAN_PENDING_SRO'].includes(parcel.claimStatus);
 }
 
 // ── Parcel Card ───────────────────────────────────────────────────────────────
@@ -129,7 +136,8 @@ function ParcelCard({ parcel }: { parcel: Parcel }) {
 
   const cta = (() => {
     switch (parcel.claimStatus) {
-      case 'SEEDED_UNVERIFIED': return { label: 'Claim Now',       href: `/claim/${parcel.dlpiId}`, primary: true };
+      case 'SEEDED_UNVERIFIED': 
+      case 'SCAN_PENDING_SRO':  return { label: 'Claim Now',       href: `/claim/${parcel.dlpiId}`, primary: true };
       case 'CLAIM_SUBMITTED':   return { label: 'Submit for Review', href: `/claim/${parcel.dlpiId}`, primary: true };
       case 'UNDER_REVIEW':      return { label: 'Track Review',    href: `/claim/${parcel.dlpiId}`, primary: false };
       case 'CI_APPROVED':       return { label: 'Track Review',    href: `/claim/${parcel.dlpiId}`, primary: false };
