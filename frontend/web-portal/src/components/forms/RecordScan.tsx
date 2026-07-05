@@ -197,7 +197,7 @@ export default function RecordScan({ onDlpiCreated, mode = 'genesis', onScanComp
     // Genesis mode (default)
     const token = getToken() || '';
     
-    let finalOwnerHash = 'sha256:56a083a15c0f4e3069fac285c6df67471c162a11ada941243c56d579fde7050f';
+    let finalOwnerHash = 'sha256:ea4b4befa6136e0d37e28328bd54425bf7e04cc996e387063cc17fc148bd94e1'; // Match Priya Kumar's computed hash
     try {
       const inputEl = document.getElementById('ownerAadhaarInput') as HTMLInputElement;
       if (inputEl && inputEl.value) {
