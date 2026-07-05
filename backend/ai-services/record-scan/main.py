@@ -170,45 +170,46 @@ def list_scans(status: str):
 @app.post("/scan/approve-sro-by-dlpi/{dlpiId}")
 def approve_scan_sro_by_dlpi(dlpiId: str):
     """SRO (Kanungo) approves scan off-chain, promoting status to SCAN_PENDING_TEHSILDAR."""
-    scan = None
+    found_scans = []
     if MOCK:
         for s in _scan_cache.values():
             if s.suggestedDlpiId == dlpiId:
-                scan = s
-                break
+                found_scans.append(s)
     else:
-        table = _get_dynamo_table()
+        import pipeline
+        table = pipeline._get_dynamo_table()
         if table:
             try:
                 from boto3.dynamodb.conditions import Attr
-                import pipeline
                 resp = table.scan(FilterExpression=Attr('suggestedDlpiId').eq(dlpiId))
-                items = resp.get('Items', [])
-                if items:
-                    scan = ScanResult(**json.loads(items[0]['resultJson']))
-                    scan.status = items[0].get('status', 'COMPLETED')
+                for item in resp.get('Items', []):
+                    scan = ScanResult(**json.loads(item['resultJson']))
+                    scan.status = item.get('status', 'COMPLETED')
+                    found_scans.append(scan)
             except Exception as e:
                 print(f"[DynamoDB] SRO search error: {e}")
 
         # Fallback to local DB
-        if not scan:
-            db = _load_local_db()
+        if not found_scans:
+            db = pipeline._load_local_db()
             for s_id, item in db.items():
                 if item.get('suggestedDlpiId') == dlpiId:
                     scan = ScanResult(**json.loads(item['resultJson']))
                     scan.status = item.get('status', 'COMPLETED')
-                    break
+                    found_scans.append(scan)
                 
-    if not scan:
+    if not found_scans:
         raise HTTPException(status_code=404, detail=f"No pending scan found for DLPI {dlpiId}")
         
     try:
-        update_scan_status(scan.scanId, "SCAN_PENDING_TEHSILDAR")
+        from pipeline import update_scan_status
+        for scan in found_scans:
+            update_scan_status(scan.scanId, "SCAN_PENDING_TEHSILDAR")
+            if scan.scanId in _scan_cache:
+                _scan_cache[scan.scanId].status = "SCAN_PENDING_TEHSILDAR"
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to update scan status: {str(e)}")
 
-    if scan.scanId in _scan_cache:
-        _scan_cache[scan.scanId].status = "SCAN_PENDING_TEHSILDAR"
     return {"success": True}
 
 
@@ -221,12 +222,11 @@ class TehsildarApproveRequest(BaseModel):
 @app.post("/scan/approve-tehsildar-by-dlpi/{dlpiId}")
 async def approve_scan_tehsildar_by_dlpi(dlpiId: str, req: TehsildarApproveRequest, background: BackgroundTasks):
     """Tehsildar approves scan, finally writing it to the blockchain (CreateDLPI)."""
-    scan = None
+    found_scans = []
     if MOCK:
         for s in _scan_cache.values():
             if s.suggestedDlpiId == dlpiId:
-                scan = s
-                break
+                found_scans.append(s)
     else:
         import pipeline
         table = pipeline._get_dynamo_table()
@@ -234,28 +234,34 @@ async def approve_scan_tehsildar_by_dlpi(dlpiId: str, req: TehsildarApproveReque
             try:
                 from boto3.dynamodb.conditions import Attr
                 resp = table.scan(FilterExpression=Attr('suggestedDlpiId').eq(dlpiId))
-                items = resp.get('Items', [])
-                if items:
-                    scan = retrieve_scan(items[0]['scanId'])
+                for item in resp.get('Items', []):
+                    scan = pipeline.retrieve_scan(item['scanId'])
+                    if scan:
+                        found_scans.append(scan)
             except Exception as e:
                 print(f"[DynamoDB] Tehsildar search error: {e}")
 
         # Fallback to local DB
-        if not scan:
-            db = _load_local_db()
+        if not found_scans:
+            db = pipeline._load_local_db()
             for s_id, item in db.items():
                 if item.get('suggestedDlpiId') == dlpiId:
-                    scan = retrieve_scan(s_id)
-                    break
+                    scan = pipeline.retrieve_scan(s_id)
+                    if scan:
+                        found_scans.append(scan)
                 
-    if not scan:
+    if not found_scans:
         raise HTTPException(status_code=404, detail=f"No pending scan found for DLPI {dlpiId}")
 
-    # Transition to APPROVED
-    update_scan_status(scan.scanId, "APPROVED")
-    if scan.scanId in _scan_cache:
-        _scan_cache[scan.scanId].status = "APPROVED"
+    # Transition ALL found scans to APPROVED
+    from pipeline import update_scan_status
+    for scan in found_scans:
+        update_scan_status(scan.scanId, "APPROVED")
+        if scan.scanId in _scan_cache:
+            _scan_cache[scan.scanId].status = "APPROVED"
 
+    # For blockchain minting, we only need one of the scans to generate the payload
+    scan = found_scans[0]
     ext = scan.extraction
     tehsil_map = {"Dadri": "DAD", "Noida": "NDA", "Jewar": "JWR", "Bisrakh": "BSK"}
     tehsil_code = tehsil_map.get(ext.tehsil, "DAD")
