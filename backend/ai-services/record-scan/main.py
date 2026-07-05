@@ -25,7 +25,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from khatauni_schema import ScanResult, KhatauniExtraction
-from pipeline import scan_document, retrieve_scan, mark_scan_approved, update_scan_status, query_scans_by_status, save_patwari_approval, _load_local_db
+from pipeline import scan_document, retrieve_scan, mark_scan_approved, update_scan_status, query_scans_by_status, save_patwari_approval, _load_local_db, _get_dynamo_table
 
 MOCK        = os.getenv("RECORD_SCAN_MODE", "mock") == "mock"
 API_GATEWAY = os.getenv("API_GATEWAY_URL", "http://localhost:4000")
@@ -176,7 +176,7 @@ def approve_scan_sro_by_dlpi(dlpiId: str):
                 scan = s
                 break
     else:
-        table = pipeline._get_dynamo_table() if 'pipeline' in globals() else _get_dynamo_table()
+        table = _get_dynamo_table()
         if table:
             try:
                 from boto3.dynamodb.conditions import Attr
