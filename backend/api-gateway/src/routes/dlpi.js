@@ -390,11 +390,35 @@ router.post(
   validate,
   async (req, res) => {
     try {
-      const { dlpiId, ownerName, ownerAadhaarHash, landType, areaHectares, geojsonCID, surveyDocCID } = req.body;
+      const { 
+        dlpiId, ownerName, ownerAadhaarHash, landType, areaHectares, 
+        surveyDocCID, geojsonCID, khasraNo 
+      } = req.body;
+      
+      const input = {
+        dlpiId,
+        surveyNumber: khasraNo || '0',
+        khasraNo: khasraNo || '0',
+        landType: landType === 'Bhumidhari' ? 'Jirayat' : landType,
+        areaHectares,
+        isTribal: false,
+        scheduleVArea: false,
+        latitude: 28.5355, // Default for Dadri
+        longitude: 77.3910,
+        initialOwners: [
+          {
+            name: ownerName,
+            aadhaarHash: ownerAadhaarHash,
+            shareFraction: "1/1",
+            isVerified: false,
+          }
+        ],
+        ipfsCID: surveyDocCID || geojsonCID,
+        sourceType: 'RECORD_SCAN_AI',
+      };
+
       // ERC-721 Tokenization: Mint the parcel token on-chain
-      const result = await submit('dlpi', 'MintToken', [
-        JSON.stringify({ dlpiId, ownerName, ownerAadhaarHash, landType, areaHectares, geojsonCID, surveyDocCID }),
-      ]);
+      const result = await submit('dlpi', 'MintToken', [JSON.stringify(input)]);
       res.status(201).json(result);
     } catch (e) {
       res.status(500).json({ error: 'FABRIC_ERROR', message: e.message });
