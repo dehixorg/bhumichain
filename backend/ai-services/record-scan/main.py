@@ -132,16 +132,20 @@ async def approve_scan(req: ApproveRequest, background: BackgroundTasks):
         result.extraction = ext
 
     # Update state off-chain (SRO queue)
-    background.add_task(save_patwari_approval, req.scanId, req.dlpiId, req.ownerAadhaarHash, req.officerName, req.officerAadhaarHash)
-    
-    # Cache sync
-    if req.scanId in _scan_cache:
-        s = _scan_cache[req.scanId]
-        s.status = "SCAN_PENDING_SRO"
-        s.suggestedDlpiId = req.dlpiId
-        s.ownerAadhaarHash = req.ownerAadhaarHash
-        s.patwariName = req.officerName
-        s.patwariHash = req.officerAadhaarHash
+    if MOCK:
+        # Cache sync
+        if req.scanId in _scan_cache:
+            s = _scan_cache[req.scanId]
+            s.status = "SCAN_PENDING_SRO"
+            s.suggestedDlpiId = req.dlpiId
+            s.ownerAadhaarHash = req.ownerAadhaarHash
+            s.patwariName = req.officerName
+            s.patwariHash = req.officerAadhaarHash
+    else:
+        try:
+            save_patwari_approval(req.scanId, req.dlpiId, req.ownerAadhaarHash, req.officerName, req.officerAadhaarHash)
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Failed to save Patwari approval: {str(e)}")
 
     return {
         "approved":              True,
@@ -156,7 +160,10 @@ def list_scans(status: str):
     """Query scans by status (for SRO/Tehsildar review queues)."""
     if MOCK:
         return [s for s in _scan_cache.values() if s.status == status]
-    return query_scans_by_status(status)
+    try:
+        return query_scans_by_status(status)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to query scans from DynamoDB: {str(e)}")
 
 
 @app.post("/scan/approve-sro-by-dlpi/{dlpiId}")

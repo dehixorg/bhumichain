@@ -123,7 +123,7 @@ def update_scan_status(scan_id: str, status: str):
     """Update only status in DynamoDB (used for off-chain review flow)."""
     table = _get_dynamo_table()
     if not table:
-        return
+        raise RuntimeError("DynamoDB connection failed. Please check your AWS credentials.")
     try:
         # We also need to update the nested resultJson
         resp = table.get_item(Key={'pk': f'SCAN#{scan_id}'})
@@ -136,15 +136,18 @@ def update_scan_status(scan_id: str, status: str):
                 'status': status,
                 'resultJson': json.dumps(data, ensure_ascii=False)
             })
+        else:
+            raise ValueError(f"Scan {scan_id} not found in DynamoDB.")
     except Exception as e:
         print(f"[DynamoDB] update_scan_status error: {e}")
+        raise e
 
 
 def query_scans_by_status(status: str) -> list[ScanResult]:
     """Query all scans with a specific status."""
     table = _get_dynamo_table()
     if not table:
-        return []
+        raise RuntimeError("DynamoDB connection failed. Please check your AWS credentials.")
     try:
         from boto3.dynamodb.conditions import Attr
         resp = table.scan(FilterExpression=Attr('status').eq(status))
@@ -160,14 +163,14 @@ def query_scans_by_status(status: str) -> list[ScanResult]:
         return results
     except Exception as e:
         print(f"[DynamoDB] query_scans_by_status error: {e}")
-        return []
+        raise e
 
 
 def save_patwari_approval(scan_id: str, dlpi_id: str, owner_hash: str, officer_name: str, officer_hash: str):
     """Save Patwari approval metadata in DynamoDB and update status to SCAN_PENDING_SRO."""
     table = _get_dynamo_table()
     if not table:
-        return
+        raise RuntimeError("DynamoDB connection failed. Please check your AWS credentials.")
     try:
         # We also need to update the nested resultJson
         resp = table.get_item(Key={'pk': f'SCAN#{scan_id}'})
@@ -188,8 +191,11 @@ def save_patwari_approval(scan_id: str, dlpi_id: str, owner_hash: str, officer_n
                 'patwariHash': officer_hash,
                 'resultJson': json.dumps(data, ensure_ascii=False)
             })
+        else:
+            raise ValueError(f"Scan {scan_id} not found in DynamoDB.")
     except Exception as e:
         print(f"[DynamoDB] save_patwari_approval error for {scan_id}: {e}")
+        raise e
 
 
 # ─── IPFS helpers ─────────────────────────────────────────────────────────────
