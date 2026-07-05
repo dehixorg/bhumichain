@@ -97,7 +97,18 @@ router.get(
             gram: ext.village || 'Dadri',
           };
         });
-        return res.json(adapted);
+
+        // Deduplicate by dlpiId so the UI doesn't show multiple rows for the same property
+        const uniqueAdapted = [];
+        const seenDlpiIds = new Set();
+        for (const scan of adapted) {
+          if (!seenDlpiIds.has(scan.dlpiId)) {
+            seenDlpiIds.add(scan.dlpiId);
+            uniqueAdapted.push(scan);
+          }
+        }
+
+        return res.json(uniqueAdapted);
       }
       res.json([]);
     } catch (e) {
