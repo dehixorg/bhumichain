@@ -267,22 +267,35 @@ async def approve_scan_tehsildar_by_dlpi(dlpiId: str, req: TehsildarApproveReque
     tehsil_code = tehsil_map.get(ext.tehsil, "DAD")
 
     # Post to gateway to commit to blockchain
+    land_type_val = ext.landType.value
     dlpi_payload = {
-        "dlpiId":            dlpiId,
-        "ownerName":         ext.khatedars[0].name if ext.khatedars else "Unknown",
-        "ownerAadhaarHash":  scan.ownerAadhaarHash or ("sha256:" + "0" * 64),
-        "landType":          ext.landType.value,
-        "areaHectares":      ext.areaHectares,
-        "geojsonCID":        f"Qm{uuid.uuid4().hex[:32].upper()}",
-        "surveyDocCID":      scan.ipfsCID,
-        "khataNo":           ext.khataNo,
-        "khasraNo":          ext.khasraNo,
-        "tehsil":            ext.tehsil,
-        "tehsilCode":        tehsil_code,
-        "district":          ext.zila,
-        "approvedByOfficer": req.officerName,
-        "approvedByHash":    req.officerAadhaarHash,
-        "scanId":            scan.scanId,
+        "dlpiId":              dlpiId,
+        "surveyNumber":        ext.khasraNo or "0",
+        "khasraNo":            ext.khasraNo or "0",
+        "tehsil":              ext.tehsil or "Dadri",
+        "tehsilCode":          tehsil_code,
+        "district":            ext.zila or "Gautam Buddha Nagar",
+        "state":               "Uttar Pradesh",
+        "landType":            "Jirayat" if land_type_val == "Bhumidhari" else land_type_val,
+        "landTypeDescription": land_type_val,
+        "areaHectares":        float(ext.areaHectares),
+        "isTribal":            False,
+        "scheduleVArea":       False,
+        "initialOwners": [
+            {
+                "name":         ext.khatedars[0].name if ext.khatedars else "Unknown",
+                "aadhaarHash":  scan.ownerAadhaarHash or ("sha256:" + "0" * 64),
+                "share":        "1/1",
+                "shareDecimal": 1.0
+            }
+        ],
+        "ownershipType":       "SOLE",
+        "latitude":            28.5355,
+        "longitude":           77.3910,
+        "boundaryPolygon":     None,
+        "circleRateINR":       5000000,
+        "ipfsCID":             scan.ipfsCID,
+        "sourceType":          "RECORD_SCAN_AI"
     }
 
     background.add_task(_post_to_gateway, dlpi_payload, req.token)
