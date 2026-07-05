@@ -33,7 +33,27 @@ from mock_responses import MOCK_RESPONSES, DEMO_CLEAR
 
 # ─── DynamoDB client ──────────────────────────────────────────────────────────
 
+DB_FILE = os.path.join(os.path.dirname(__file__), "scans_db.json")
+
+def _load_local_db() -> dict:
+    if not os.path.exists(DB_FILE):
+        return {}
+    try:
+        with open(DB_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return {}
+
+def _save_local_db(db: dict):
+    try:
+        with open(DB_FILE, "w", encoding="utf-8") as f:
+            json.dump(db, f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        print(f"Failed to write local DB: {e}")
+
 def _get_dynamo_table():
+    if not os.getenv("AWS_ACCESS_KEY_ID") or not os.getenv("AWS_SECRET_ACCESS_KEY"):
+        return None
     try:
         dynamodb = boto3.resource(
             'dynamodb',
@@ -48,154 +68,216 @@ def _get_dynamo_table():
 
 
 def _persist_scan(result: ScanResult) -> bool:
-    """Store scan result in DynamoDB. PK = SCAN#<scanId>."""
+    """Store scan result in database (DynamoDB or local JSON fallback)."""
     table = _get_dynamo_table()
-    if not table:
-        print("[DynamoDB] No table — using in-memory fallback only")
-        return False
-    try:
-        item = {
-            'pk':              f'SCAN#{result.scanId}',
-            'scanId':          result.scanId,
-            'fileName':        result.fileName,
-            'fileSizeKB':      str(result.fileSizeKB),
-            'ipfsCID':         result.ipfsCID,
-            'suggestedDlpiId': result.suggestedDlpiId,
-            'status':          result.status,
-            'createdAt':       datetime.now(timezone.utc).isoformat(),
-            'ttl':             int(time.time()) + 86400,
-            'resultJson':      json.dumps(result.model_dump(), ensure_ascii=False),
-            'tehsil':          result.extraction.tehsil,
-            'khasraNo':        result.extraction.khasraNo,
-            'zila':            result.extraction.zila,
-            'ocrConfidence':   str(round(result.extraction.ocrConfidence, 3)),
-            'requiresReview':  result.extraction.requiresManualReview,
-        }
-        table.put_item(Item=item)
-        return True
-    except (BotoCoreError, ClientError) as e:
-        print(f"[DynamoDB] put_item error: {e}")
-        return False
+    if table:
+        try:
+            item = {
+                'pk':              f'SCAN#{result.scanId}',
+                'scanId':          result.scanId,
+                'fileName':        result.fileName,
+                'fileSizeKB':      str(result.fileSizeKB),
+                'ipfsCID':         result.ipfsCID,
+                'suggestedDlpiId': result.suggestedDlpiId,
+                'status':          result.status,
+                'createdAt':       datetime.now(timezone.utc).isoformat(),
+                'ttl':             int(time.time()) + 86400,
+                'resultJson':      json.dumps(result.model_dump(), ensure_ascii=False),
+                'tehsil':          result.extraction.tehsil,
+                'khasraNo':        result.extraction.khasraNo,
+                'zila':            result.extraction.zila,
+                'ocrConfidence':   str(round(result.extraction.ocrConfidence, 3)),
+                'requiresReview':  result.extraction.requiresManualReview,
+            }
+            table.put_item(Item=item)
+            return True
+        except Exception as e:
+            print(f"[DynamoDB] put_item failed: {e}")
+            
+    # Local fallback
+    db = _load_local_db()
+    db[result.scanId] = {
+        'scanId': result.scanId,
+        'status': result.status,
+        'suggestedDlpiId': result.suggestedDlpiId,
+        'resultJson': json.dumps(result.model_dump(), ensure_ascii=False),
+        'createdAt': datetime.now(timezone.utc).isoformat(),
+    }
+    _save_local_db(db)
+    return True
 
 
 def retrieve_scan(scan_id: str) -> Optional[ScanResult]:
-    """Fetch scan result from DynamoDB by scanId."""
+    """Fetch scan result from database (DynamoDB or local JSON fallback)."""
     table = _get_dynamo_table()
-    if not table:
-        return None
-    try:
-        resp = table.get_item(Key={'pk': f'SCAN#{scan_id}'})
-        item = resp.get('Item')
-        if not item:
-            return None
+    if table:
+        try:
+            resp = table.get_item(Key={'pk': f'SCAN#{scan_id}'})
+            item = resp.get('Item')
+            if item:
+                data = json.loads(item['resultJson'])
+                data['status'] = item.get('status', 'COMPLETED')
+                data['ownerAadhaarHash'] = item.get('ownerAadhaarHash')
+                data['patwariName'] = item.get('patwariName')
+                data['patwariHash'] = item.get('patwariHash')
+                return ScanResult(**data)
+        except Exception as e:
+            print(f"[DynamoDB] get_item failed: {e}")
+            
+    # Local fallback
+    db = _load_local_db()
+    item = db.get(scan_id)
+    if item:
         data = json.loads(item['resultJson'])
         data['status'] = item.get('status', 'COMPLETED')
         data['ownerAadhaarHash'] = item.get('ownerAadhaarHash')
         data['patwariName'] = item.get('patwariName')
         data['patwariHash'] = item.get('patwariHash')
         return ScanResult(**data)
-    except (BotoCoreError, ClientError, json.JSONDecodeError, Exception) as e:
-        print(f"[DynamoDB] get_item error for {scan_id}: {e}")
-        return None
+    return None
 
 
 def mark_scan_approved(scan_id: str, dlpi_id: str):
-    """Update scan status to APPROVED in DynamoDB."""
+    """Update scan status to APPROVED in database."""
     table = _get_dynamo_table()
-    if not table:
-        return
-    try:
-        table.update_item(
-            Key={'pk': f'SCAN#{scan_id}'},
-            UpdateExpression='SET #s = :s, approvedDlpiId = :d, approvedAt = :a',
-            ExpressionAttributeNames={'#s': 'status'},
-            ExpressionAttributeValues={
-                ':s': 'APPROVED',
-                ':d': dlpi_id,
-                ':a': datetime.now(timezone.utc).isoformat(),
-            },
-        )
-    except (BotoCoreError, ClientError) as e:
-        print(f"[DynamoDB] update_item error for {scan_id}: {e}")
+    if table:
+        try:
+            table.update_item(
+                Key={'pk': f'SCAN#{scan_id}'},
+                UpdateExpression='SET #s = :s, approvedDlpiId = :d, approvedAt = :a',
+                ExpressionAttributeNames={'#s': 'status'},
+                ExpressionAttributeValues={
+                    ':s': 'APPROVED',
+                    ':d': dlpi_id,
+                    ':a': datetime.now(timezone.utc).isoformat(),
+                },
+            )
+            return
+        except Exception as e:
+            print(f"[DynamoDB] mark_scan_approved failed: {e}")
+            
+    # Local fallback
+    db = _load_local_db()
+    item = db.get(scan_id)
+    if item:
+        data = json.loads(item['resultJson'])
+        data['status'] = 'APPROVED'
+        item['status'] = 'APPROVED'
+        item['approvedDlpiId'] = dlpi_id
+        item['approvedAt'] = datetime.now(timezone.utc).isoformat()
+        item['resultJson'] = json.dumps(data, ensure_ascii=False)
+        _save_local_db(db)
 
 
 def update_scan_status(scan_id: str, status: str):
-    """Update only status in DynamoDB (used for off-chain review flow)."""
     table = _get_dynamo_table()
-    if not table:
-        raise RuntimeError("DynamoDB connection failed. Please check your AWS credentials.")
-    try:
-        # We also need to update the nested resultJson
-        resp = table.get_item(Key={'pk': f'SCAN#{scan_id}'})
-        item = resp.get('Item')
-        if item:
-            data = json.loads(item['resultJson'])
-            data['status'] = status
-            table.put_item(Item={
-                **item,
-                'status': status,
-                'resultJson': json.dumps(data, ensure_ascii=False)
-            })
-        else:
-            raise ValueError(f"Scan {scan_id} not found in DynamoDB.")
-    except Exception as e:
-        print(f"[DynamoDB] update_scan_status error: {e}")
-        raise e
+    if table:
+        try:
+            resp = table.get_item(Key={'pk': f'SCAN#{scan_id}'})
+            item = resp.get('Item')
+            if item:
+                data = json.loads(item['resultJson'])
+                data['status'] = status
+                table.put_item(Item={
+                    **item,
+                    'status': status,
+                    'resultJson': json.dumps(data, ensure_ascii=False)
+                })
+                return
+        except Exception as e:
+            print(f"[DynamoDB] update_scan_status failed: {e}")
+            
+    # Local fallback
+    db = _load_local_db()
+    item = db.get(scan_id)
+    if item:
+        data = json.loads(item['resultJson'])
+        data['status'] = status
+        item['status'] = status
+        item['resultJson'] = json.dumps(data, ensure_ascii=False)
+        _save_local_db(db)
+    else:
+        raise ValueError(f"Scan {scan_id} not found in database.")
 
 
 def query_scans_by_status(status: str) -> list[ScanResult]:
-    """Query all scans with a specific status."""
     table = _get_dynamo_table()
-    if not table:
-        raise RuntimeError("DynamoDB connection failed. Please check your AWS credentials.")
-    try:
-        from boto3.dynamodb.conditions import Attr
-        resp = table.scan(FilterExpression=Attr('status').eq(status))
-        items = resp.get('Items', [])
-        results = []
-        for item in items:
+    if table:
+        try:
+            from boto3.dynamodb.conditions import Attr
+            resp = table.scan(FilterExpression=Attr('status').eq(status))
+            items = resp.get('Items', [])
+            results = []
+            for item in items:
+                data = json.loads(item['resultJson'])
+                data['status'] = item['status']
+                data['ownerAadhaarHash'] = item.get('ownerAadhaarHash')
+                data['patwariName'] = item.get('patwariName')
+                data['patwariHash'] = item.get('patwariHash')
+                results.append(ScanResult(**data))
+            return results
+        except Exception as e:
+            print(f"[DynamoDB] query_scans_by_status failed: {e}")
+            
+    # Local fallback
+    db = _load_local_db()
+    results = []
+    for item in db.values():
+        if item.get('status') == status:
             data = json.loads(item['resultJson'])
             data['status'] = item['status']
             data['ownerAadhaarHash'] = item.get('ownerAadhaarHash')
             data['patwariName'] = item.get('patwariName')
             data['patwariHash'] = item.get('patwariHash')
             results.append(ScanResult(**data))
-        return results
-    except Exception as e:
-        print(f"[DynamoDB] query_scans_by_status error: {e}")
-        raise e
+    return results
 
 
 def save_patwari_approval(scan_id: str, dlpi_id: str, owner_hash: str, officer_name: str, officer_hash: str):
-    """Save Patwari approval metadata in DynamoDB and update status to SCAN_PENDING_SRO."""
     table = _get_dynamo_table()
-    if not table:
-        raise RuntimeError("DynamoDB connection failed. Please check your AWS credentials.")
-    try:
-        # We also need to update the nested resultJson
-        resp = table.get_item(Key={'pk': f'SCAN#{scan_id}'})
-        item = resp.get('Item')
-        if item:
-            data = json.loads(item['resultJson'])
-            data['status'] = 'SCAN_PENDING_SRO'
-            data['suggestedDlpiId'] = dlpi_id
-            data['ownerAadhaarHash'] = owner_hash
-            data['patwariName'] = officer_name
-            data['patwariHash'] = officer_hash
-            table.put_item(Item={
-                **item,
-                'status': 'SCAN_PENDING_SRO',
-                'suggestedDlpiId': dlpi_id,
-                'ownerAadhaarHash': owner_hash,
-                'patwariName': officer_name,
-                'patwariHash': officer_hash,
-                'resultJson': json.dumps(data, ensure_ascii=False)
-            })
-        else:
-            raise ValueError(f"Scan {scan_id} not found in DynamoDB.")
-    except Exception as e:
-        print(f"[DynamoDB] save_patwari_approval error for {scan_id}: {e}")
-        raise e
+    if table:
+        try:
+            resp = table.get_item(Key={'pk': f'SCAN#{scan_id}'})
+            item = resp.get('Item')
+            if item:
+                data = json.loads(item['resultJson'])
+                data['status'] = 'SCAN_PENDING_SRO'
+                data['suggestedDlpiId'] = dlpi_id
+                data['ownerAadhaarHash'] = owner_hash
+                data['patwariName'] = officer_name
+                data['patwariHash'] = officer_hash
+                table.put_item(Item={
+                    **item,
+                    'status': 'SCAN_PENDING_SRO',
+                    'suggestedDlpiId': dlpi_id,
+                    'ownerAadhaarHash': owner_hash,
+                    'patwariName': officer_name,
+                    'patwariHash': officer_hash,
+                    'resultJson': json.dumps(data, ensure_ascii=False)
+                })
+                return
+        except Exception as e:
+            print(f"[DynamoDB] save_patwari_approval failed: {e}")
+            
+    # Local fallback
+    db = _load_local_db()
+    item = db.get(scan_id)
+    if item:
+        data = json.loads(item['resultJson'])
+        data['status'] = 'SCAN_PENDING_SRO'
+        data['suggestedDlpiId'] = dlpi_id
+        data['ownerAadhaarHash'] = owner_hash
+        data['patwariName'] = officer_name
+        data['patwariHash'] = officer_hash
+        item['status'] = 'SCAN_PENDING_SRO'
+        item['suggestedDlpiId'] = dlpi_id
+        item['ownerAadhaarHash'] = owner_hash
+        item['patwariName'] = officer_name
+        item['patwariHash'] = officer_hash
+        item['resultJson'] = json.dumps(data, ensure_ascii=False)
+        _save_local_db(db)
+    else:
+        raise ValueError(f"Scan {scan_id} not found in database.")
 
 
 # ─── IPFS helpers ─────────────────────────────────────────────────────────────
