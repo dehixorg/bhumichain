@@ -172,36 +172,36 @@ export const DEMO_DLPI = {
 const DEMO_PERSONAS: Record<string, any> = {
   tehsildar: {
     role: 'tehsildar', name: 'Amit Saxena',
-    aadhaarHash: 'sha256:tehsildar999900010001',
+    aadhaarHash: 'sha256:284ebde82199f70870146561b518cfa858ce7cfe3d79fbdf0b892d8b5cabdd1a',
     jurisdictionCode: 'GBN-DAD', tehsilCode: 'DAD',
   },
   circle_inspector: {
     role: 'circle_inspector', name: 'Rajesh Verma',
-    aadhaarHash: 'sha256:circle999900010002',
+    aadhaarHash: 'sha256:80b596ad52160c7433cd57cf486061f6b11b4dd3039bb03f238cc57fe98d00fd',
     jurisdictionCode: 'GBN-DAD', circleCode: 'DAD-C1',
     patwariCodes: ['DAD-P1', 'DAD-P2', 'DAD-P3'], tehsilCode: 'DAD',
   },
   patwari: {
     role: 'patwari', name: 'Vijay Singh',
-    aadhaarHash: 'sha256:patwari999900010003',
+    aadhaarHash: 'sha256:f191234b3a9e9531ac1c7861251caae6dd45a2530dde636dbc08f85794852aa3',
     jurisdictionCode: 'GBN-DAD', patwariCode: 'DAD-P1',
     villageCodes: ['DAD-001', 'DAD-002', 'DAD-003'], tehsilCode: 'DAD',
   },
   citizen: {
     role: 'citizen', name: 'Priya Kumar',
-    aadhaarHash: 'sha256:citizen999900010010',
+    aadhaarHash: 'sha256:ea4b4befa7b81d22612b818df40a69ed179458423773a63aee7848177c0ecb72',
   },
   citizen_buyer: {
     role: 'citizen', name: 'Rakesh Agarwal',
-    aadhaarHash: 'sha256:citizenbuyer999900010011',
+    aadhaarHash: 'sha256:80a40e75b67cd96e0a9bdabf508cad6ad1a6a5f16df335e7131826751516a965',
   },
   citizen_heir1: {
     role: 'citizen', name: 'Suresh Yadav',
-    aadhaarHash: 'sha256:citizenheir1999900010012',
+    aadhaarHash: 'sha256:28f82c24da919557c7594514ace2139293aeae047d60595d228db223aee4f1c8',
   },
   citizen_heir2: {
     role: 'citizen', name: 'Meena Devi',
-    aadhaarHash: 'sha256:citizenheir2999900010013',
+    aadhaarHash: 'sha256:ddeab87b8ae28f8e00294d8b72473d9f22f89ee24cc72ae1e894b618d9013732',
   },
 };
 
