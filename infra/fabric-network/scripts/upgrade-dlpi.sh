@@ -14,8 +14,8 @@ if docker ps --format '{{.Names}}' | grep -q 'peer1.revenuedept.bhumichain.in'; 
 fi
 
 NAME="dlpi"
-VERSION="2.0"
-SEQUENCE=2
+VERSION=${1:-"3.0"}
+SEQUENCE=${2:-3}
 CC_SRC_PATH="$CHAINCODE_BASE/$NAME"
 
 echo "========================================"

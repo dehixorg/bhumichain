@@ -271,6 +271,20 @@ func (c *DLPIContract) CreateDLPI(ctx contractapi.TransactionContextInterface, i
 
 	existing, _ := ctx.GetStub().GetState(input.DLPIId)
 	if existing != nil {
+		if input.SourceType == "RECORD_SCAN_AI" {
+			var dlpi DLPI
+			if err := json.Unmarshal(existing, &dlpi); err != nil {
+				return fmt.Errorf("failed to unmarshal existing DLPI: %w", err)
+			}
+			dlpi.IPFSCID = input.IPFSCID
+			dlpi.ClaimStatus = "SCAN_PENDING_SRO"
+			dlpi.UpdatedAt = time.Now().UTC().Format(time.RFC3339)
+			dlpiBytes, err := json.Marshal(dlpi)
+			if err != nil {
+				return err
+			}
+			return ctx.GetStub().PutState(input.DLPIId, dlpiBytes)
+		}
 		return fmt.Errorf("DLPI %s already exists — duplicate genesis rejected", input.DLPIId)
 	}
 
