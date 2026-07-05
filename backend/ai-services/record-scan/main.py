@@ -25,7 +25,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from khatauni_schema import ScanResult, KhatauniExtraction
-from pipeline import scan_document, retrieve_scan, mark_scan_approved
+from pipeline import scan_document, retrieve_scan, mark_scan_approved, update_scan_status, query_scans_by_status, save_patwari_approval
 
 MOCK        = os.getenv("RECORD_SCAN_MODE", "mock") == "mock"
 API_GATEWAY = os.getenv("API_GATEWAY_URL", "http://localhost:4000")
@@ -119,11 +119,9 @@ class ApproveRequest(BaseModel):
 @app.post("/scan/approve")
 async def approve_scan(req: ApproveRequest, background: BackgroundTasks):
     """
-    Officer reviews and approves extracted data.
-    Sends CreateDLPI transaction to API Gateway → Hyperledger Fabric.
-    Marks scan as APPROVED in DynamoDB.
+    Patwari reviews and submits scan for Kanungo (SRO) review.
+    Saves metadata to DynamoDB and transitions status to SCAN_PENDING_SRO off-chain.
     """
-    # Try DynamoDB first, fall back to in-memory cache
     result = retrieve_scan(req.scanId) or _scan_cache.get(req.scanId)
     if not result:
         raise HTTPException(status_code=404, detail=f"Scan {req.scanId} not found")
@@ -131,18 +129,111 @@ async def approve_scan(req: ApproveRequest, background: BackgroundTasks):
     ext = result.extraction
     if req.correctedFields:
         ext = ext.model_copy(update=req.correctedFields)
+        result.extraction = ext
 
-    tehsil_map  = {"Dadri": "DAD", "Noida": "NDA", "Jewar": "JWR", "Bisrakh": "BSK"}
+    # Update state off-chain (SRO queue)
+    background.add_task(save_patwari_approval, req.scanId, req.dlpiId, req.ownerAadhaarHash, req.officerName, req.officerAadhaarHash)
+    
+    # Cache sync
+    if req.scanId in _scan_cache:
+        s = _scan_cache[req.scanId]
+        s.status = "SCAN_PENDING_SRO"
+        s.suggestedDlpiId = req.dlpiId
+        s.ownerAadhaarHash = req.ownerAadhaarHash
+        s.patwariName = req.officerName
+        s.patwariHash = req.officerAadhaarHash
+
+    return {
+        "approved":              True,
+        "dlpiId":                req.dlpiId,
+        "submittedToBlockchain": False,
+        "message":               f"Scan submitted for SRO (Kanungo) approval.",
+    }
+
+
+@app.get("/scan", response_model=list[ScanResult])
+def list_scans(status: str):
+    """Query scans by status (for SRO/Tehsildar review queues)."""
+    if MOCK:
+        return [s for s in _scan_cache.values() if s.status == status]
+    return query_scans_by_status(status)
+
+
+@app.post("/scan/approve-sro-by-dlpi/{dlpiId}")
+def approve_scan_sro_by_dlpi(dlpiId: str):
+    """SRO (Kanungo) approves scan off-chain, promoting status to SCAN_PENDING_TEHSILDAR."""
+    scan = None
+    if MOCK:
+        for s in _scan_cache.values():
+            if s.suggestedDlpiId == dlpiId:
+                scan = s
+                break
+    else:
+        table = pipeline._get_dynamo_table() if 'pipeline' in globals() else _get_dynamo_table()
+        if table:
+            from boto3.dynamodb.conditions import Attr
+            import pipeline
+            resp = table.scan(FilterExpression=Attr('suggestedDlpiId').eq(dlpiId))
+            items = resp.get('Items', [])
+            if items:
+                scan = ScanResult(**json.loads(items[0]['resultJson']))
+                scan.status = items[0].get('status', 'COMPLETED')
+                
+    if not scan:
+        raise HTTPException(status_code=404, detail=f"No pending scan found for DLPI {dlpiId}")
+        
+    update_scan_status(scan.scanId, "SCAN_PENDING_TEHSILDAR")
+    if scan.scanId in _scan_cache:
+        _scan_cache[scan.scanId].status = "SCAN_PENDING_TEHSILDAR"
+    return {"success": True}
+
+
+class TehsildarApproveRequest(BaseModel):
+    officerAadhaarHash: str
+    officerName:        str
+    token:              str
+
+
+@app.post("/scan/approve-tehsildar-by-dlpi/{dlpiId}")
+async def approve_scan_tehsildar_by_dlpi(dlpiId: str, req: TehsildarApproveRequest, background: BackgroundTasks):
+    """Tehsildar approves scan, finally writing it to the blockchain (CreateDLPI)."""
+    scan = None
+    if MOCK:
+        for s in _scan_cache.values():
+            if s.suggestedDlpiId == dlpiId:
+                scan = s
+                break
+    else:
+        import pipeline
+        table = pipeline._get_dynamo_table()
+        if table:
+            from boto3.dynamodb.conditions import Attr
+            resp = table.scan(FilterExpression=Attr('suggestedDlpiId').eq(dlpiId))
+            items = resp.get('Items', [])
+            if items:
+                scan = retrieve_scan(items[0]['scanId'])
+                
+    if not scan:
+        raise HTTPException(status_code=404, detail=f"No pending scan found for DLPI {dlpiId}")
+
+    # Transition to APPROVED
+    update_scan_status(scan.scanId, "APPROVED")
+    if scan.scanId in _scan_cache:
+        _scan_cache[scan.scanId].status = "APPROVED"
+
+    ext = scan.extraction
+    tehsil_map = {"Dadri": "DAD", "Noida": "NDA", "Jewar": "JWR", "Bisrakh": "BSK"}
     tehsil_code = tehsil_map.get(ext.tehsil, "DAD")
 
+    # Post to gateway to commit to blockchain
     dlpi_payload = {
-        "dlpiId":            req.dlpiId,
+        "dlpiId":            dlpiId,
         "ownerName":         ext.khatedars[0].name if ext.khatedars else "Unknown",
-        "ownerAadhaarHash":  req.ownerAadhaarHash,
+        "ownerAadhaarHash":  scan.ownerAadhaarHash or ("sha256:" + "0" * 64),
         "landType":          ext.landType.value,
         "areaHectares":      ext.areaHectares,
         "geojsonCID":        f"Qm{uuid.uuid4().hex[:32].upper()}",
-        "surveyDocCID":      result.ipfsCID,
+        "surveyDocCID":      scan.ipfsCID,
         "khataNo":           ext.khataNo,
         "khasraNo":          ext.khasraNo,
         "tehsil":            ext.tehsil,
@@ -150,19 +241,13 @@ async def approve_scan(req: ApproveRequest, background: BackgroundTasks):
         "district":          ext.zila,
         "approvedByOfficer": req.officerName,
         "approvedByHash":    req.officerAadhaarHash,
-        "scanId":            result.scanId,
-        "ocrConfidence":     ext.ocrConfidence,
+        "scanId":            scan.scanId,
     }
 
     background.add_task(_post_to_gateway, dlpi_payload, req.token)
-    background.add_task(mark_scan_approved, req.scanId, req.dlpiId)
+    background.add_task(mark_scan_approved, scan.scanId, dlpiId)
 
-    return {
-        "approved":              True,
-        "dlpiId":                req.dlpiId,
-        "submittedToBlockchain": True,
-        "message":               f"DLPI {req.dlpiId} submitted to Hyperledger Fabric. TX will confirm in ~2 seconds.",
-    }
+    return {"success": True, "message": "DLPI scan successfully committed to blockchain."}
 
 
 # ─── GET /scan/{scanId} ───────────────────────────────────────────────────────

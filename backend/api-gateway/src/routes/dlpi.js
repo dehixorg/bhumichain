@@ -2,6 +2,8 @@
 
 const { Router }                 = require('express');
 const { body, param, validationResult } = require('express-validator');
+const axios                      = require('axios');
+const RECORD_SCAN_URL            = process.env.RECORD_SCAN_URL || 'http://localhost:8010';
 const { submit, evaluate }       = require('../services/fabric');
 const {
   authenticate,
@@ -67,26 +69,39 @@ router.get(
       }
 
       if (status) {
-        let parcels = await evaluate('dlpi', 'QueryPendingScans', [status]);
-        if (parcels && !Array.isArray(parcels)) {
-          parcels = parcels.parcels || parcels.data || Object.values(parcels);
-        }
-        if (!Array.isArray(parcels)) parcels = [];
+        // Query the off-chain RecordScan service database instead of Fabric
+        const response = await axios.get(`${RECORD_SCAN_URL}/scan?status=${status}`);
+        const scans = response.data || [];
         
-        // Adapt legacy structure
-        const adapted = parcels.map(p => {
-          if (p.owners && p.owners.length > 0 && !p.owner) {
-            p.owner = {
-              name: p.owners[0].name,
-              aadhaarHash: p.owners[0].aadhaarHash,
-            };
-          }
-          return p;
+        // Transform the off-chain scans to the same format expected by the frontend
+        const adapted = scans.map(s => {
+          const ext = s.extraction;
+          return {
+            dlpiId: s.suggestedDlpiId || `DLPI-UP-DAD-${ext.khasraNo || '00000'}`,
+            surveyNumber: ext.khasraNo || '0',
+            khasraNo: ext.khasraNo || '0',
+            landType: ext.landType === 'Bhumidhari' ? 'Jirayat' : ext.landType,
+            areaHectares: ext.areaHectares,
+            claimStatus: s.status, // SCAN_PENDING_SRO or SCAN_PENDING_TEHSILDAR
+            ownerName: ext.khatedars && ext.khatedars.length > 0 ? ext.khatedars[0].name : 'Unknown',
+            owners: (ext.khatedars || []).map(k => ({
+              name: k.name,
+              aadhaarHash: k.aadhaarHash || 'sha256:' + '0'.repeat(64),
+              share: k.share || '1/1',
+              shareDecimal: 1.0,
+            })),
+            ipfsCID: s.ipfsCID,
+            scanId: s.scanId,
+            submittedAt: s.createdAt || new Date().toISOString(),
+            tehsil: ext.tehsil || 'Dadri',
+            gram: ext.village || 'Dadri',
+          };
         });
         return res.json(adapted);
       }
       res.json([]);
     } catch (e) {
+      console.error("[pending-review] error:", e.message);
       res.status(500).json({ error: 'FABRIC_ERROR', message: e.message });
     }
   },
@@ -268,9 +283,11 @@ router.post(
   validate,
   async (req, res) => {
     try {
-      const result = await submit('dlpi', 'ApproveScanSRO', [req.params.dlpiId]);
-      res.json(result || { success: true });
+      // Approve off-chain in RecordScan python service
+      const result = await axios.post(`${RECORD_SCAN_URL}/scan/approve-sro-by-dlpi/${req.params.dlpiId}`);
+      res.json(result.data || { success: true });
     } catch (e) {
+      console.error("[scan-approve-sro] error:", e.message);
       res.status(500).json({ error: 'FABRIC_ERROR', message: e.message });
     }
   },
@@ -285,9 +302,19 @@ router.post(
   validate,
   async (req, res) => {
     try {
-      const result = await submit('dlpi', 'ApproveScanTehsildar', [req.params.dlpiId]);
-      res.json(result || { success: true });
+      // Approve off-chain which finally triggers CreateDLPI on the blockchain
+      const payload = {
+        officerAadhaarHash: req.user.aadhaarHash || ('sha256:' + '0'.repeat(64)),
+        officerName: req.user.name || 'Tehsildar',
+        token: req.headers.authorization ? req.headers.authorization.split(' ')[1] : '',
+      };
+      const result = await axios.post(
+        `${RECORD_SCAN_URL}/scan/approve-tehsildar-by-dlpi/${req.params.dlpiId}`,
+        payload
+      );
+      res.json(result.data || { success: true });
     } catch (e) {
+      console.error("[scan-approve-tehsildar] error:", e.message);
       res.status(500).json({ error: 'FABRIC_ERROR', message: e.message });
     }
   },

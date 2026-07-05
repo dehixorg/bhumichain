@@ -61,7 +61,7 @@ def _persist_scan(result: ScanResult) -> bool:
             'fileSizeKB':      str(result.fileSizeKB),
             'ipfsCID':         result.ipfsCID,
             'suggestedDlpiId': result.suggestedDlpiId,
-            'status':          'COMPLETED',
+            'status':          result.status,
             'createdAt':       datetime.now(timezone.utc).isoformat(),
             'ttl':             int(time.time()) + 86400,
             'resultJson':      json.dumps(result.model_dump(), ensure_ascii=False),
@@ -89,6 +89,10 @@ def retrieve_scan(scan_id: str) -> Optional[ScanResult]:
         if not item:
             return None
         data = json.loads(item['resultJson'])
+        data['status'] = item.get('status', 'COMPLETED')
+        data['ownerAadhaarHash'] = item.get('ownerAadhaarHash')
+        data['patwariName'] = item.get('patwariName')
+        data['patwariHash'] = item.get('patwariHash')
         return ScanResult(**data)
     except (BotoCoreError, ClientError, json.JSONDecodeError, Exception) as e:
         print(f"[DynamoDB] get_item error for {scan_id}: {e}")
@@ -113,6 +117,79 @@ def mark_scan_approved(scan_id: str, dlpi_id: str):
         )
     except (BotoCoreError, ClientError) as e:
         print(f"[DynamoDB] update_item error for {scan_id}: {e}")
+
+
+def update_scan_status(scan_id: str, status: str):
+    """Update only status in DynamoDB (used for off-chain review flow)."""
+    table = _get_dynamo_table()
+    if not table:
+        return
+    try:
+        # We also need to update the nested resultJson
+        resp = table.get_item(Key={'pk': f'SCAN#{scan_id}'})
+        item = resp.get('Item')
+        if item:
+            data = json.loads(item['resultJson'])
+            data['status'] = status
+            table.put_item(Item={
+                **item,
+                'status': status,
+                'resultJson': json.dumps(data, ensure_ascii=False)
+            })
+    except Exception as e:
+        print(f"[DynamoDB] update_scan_status error: {e}")
+
+
+def query_scans_by_status(status: str) -> list[ScanResult]:
+    """Query all scans with a specific status."""
+    table = _get_dynamo_table()
+    if not table:
+        return []
+    try:
+        from boto3.dynamodb.conditions import Attr
+        resp = table.scan(FilterExpression=Attr('status').eq(status))
+        items = resp.get('Items', [])
+        results = []
+        for item in items:
+            data = json.loads(item['resultJson'])
+            data['status'] = item['status']
+            data['ownerAadhaarHash'] = item.get('ownerAadhaarHash')
+            data['patwariName'] = item.get('patwariName')
+            data['patwariHash'] = item.get('patwariHash')
+            results.append(ScanResult(**data))
+        return results
+    except Exception as e:
+        print(f"[DynamoDB] query_scans_by_status error: {e}")
+        return []
+
+
+def save_patwari_approval(scan_id: str, dlpi_id: str, owner_hash: str, officer_name: str, officer_hash: str):
+    """Save Patwari approval metadata in DynamoDB and update status to SCAN_PENDING_SRO."""
+    table = _get_dynamo_table()
+    if not table:
+        return
+    try:
+        # We also need to update the nested resultJson
+        resp = table.get_item(Key={'pk': f'SCAN#{scan_id}'})
+        item = resp.get('Item')
+        if item:
+            data = json.loads(item['resultJson'])
+            data['status'] = 'SCAN_PENDING_SRO'
+            data['suggestedDlpiId'] = dlpi_id
+            data['ownerAadhaarHash'] = owner_hash
+            data['patwariName'] = officer_name
+            data['patwariHash'] = officer_hash
+            table.put_item(Item={
+                **item,
+                'status': 'SCAN_PENDING_SRO',
+                'suggestedDlpiId': dlpi_id,
+                'ownerAadhaarHash': owner_hash,
+                'patwariName': officer_name,
+                'patwariHash': officer_hash,
+                'resultJson': json.dumps(data, ensure_ascii=False)
+            })
+    except Exception as e:
+        print(f"[DynamoDB] save_patwari_approval error for {scan_id}: {e}")
 
 
 # ─── IPFS helpers ─────────────────────────────────────────────────────────────
