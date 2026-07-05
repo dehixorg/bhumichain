@@ -25,7 +25,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from khatauni_schema import ScanResult, KhatauniExtraction
-from pipeline import scan_document, retrieve_scan, mark_scan_approved, update_scan_status, query_scans_by_status, save_patwari_approval
+from pipeline import scan_document, retrieve_scan, mark_scan_approved, update_scan_status, query_scans_by_status, save_patwari_approval, _load_local_db
 
 MOCK        = os.getenv("RECORD_SCAN_MODE", "mock") == "mock"
 API_GATEWAY = os.getenv("API_GATEWAY_URL", "http://localhost:4000")
@@ -178,18 +178,34 @@ def approve_scan_sro_by_dlpi(dlpiId: str):
     else:
         table = pipeline._get_dynamo_table() if 'pipeline' in globals() else _get_dynamo_table()
         if table:
-            from boto3.dynamodb.conditions import Attr
-            import pipeline
-            resp = table.scan(FilterExpression=Attr('suggestedDlpiId').eq(dlpiId))
-            items = resp.get('Items', [])
-            if items:
-                scan = ScanResult(**json.loads(items[0]['resultJson']))
-                scan.status = items[0].get('status', 'COMPLETED')
+            try:
+                from boto3.dynamodb.conditions import Attr
+                import pipeline
+                resp = table.scan(FilterExpression=Attr('suggestedDlpiId').eq(dlpiId))
+                items = resp.get('Items', [])
+                if items:
+                    scan = ScanResult(**json.loads(items[0]['resultJson']))
+                    scan.status = items[0].get('status', 'COMPLETED')
+            except Exception as e:
+                print(f"[DynamoDB] SRO search error: {e}")
+
+        # Fallback to local DB
+        if not scan:
+            db = _load_local_db()
+            for s_id, item in db.items():
+                if item.get('suggestedDlpiId') == dlpiId:
+                    scan = ScanResult(**json.loads(item['resultJson']))
+                    scan.status = item.get('status', 'COMPLETED')
+                    break
                 
     if not scan:
         raise HTTPException(status_code=404, detail=f"No pending scan found for DLPI {dlpiId}")
         
-    update_scan_status(scan.scanId, "SCAN_PENDING_TEHSILDAR")
+    try:
+        update_scan_status(scan.scanId, "SCAN_PENDING_TEHSILDAR")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to update scan status: {str(e)}")
+
     if scan.scanId in _scan_cache:
         _scan_cache[scan.scanId].status = "SCAN_PENDING_TEHSILDAR"
     return {"success": True}
@@ -214,11 +230,22 @@ async def approve_scan_tehsildar_by_dlpi(dlpiId: str, req: TehsildarApproveReque
         import pipeline
         table = pipeline._get_dynamo_table()
         if table:
-            from boto3.dynamodb.conditions import Attr
-            resp = table.scan(FilterExpression=Attr('suggestedDlpiId').eq(dlpiId))
-            items = resp.get('Items', [])
-            if items:
-                scan = retrieve_scan(items[0]['scanId'])
+            try:
+                from boto3.dynamodb.conditions import Attr
+                resp = table.scan(FilterExpression=Attr('suggestedDlpiId').eq(dlpiId))
+                items = resp.get('Items', [])
+                if items:
+                    scan = retrieve_scan(items[0]['scanId'])
+            except Exception as e:
+                print(f"[DynamoDB] Tehsildar search error: {e}")
+
+        # Fallback to local DB
+        if not scan:
+            db = _load_local_db()
+            for s_id, item in db.items():
+                if item.get('suggestedDlpiId') == dlpiId:
+                    scan = retrieve_scan(s_id)
+                    break
                 
     if not scan:
         raise HTTPException(status_code=404, detail=f"No pending scan found for DLPI {dlpiId}")
