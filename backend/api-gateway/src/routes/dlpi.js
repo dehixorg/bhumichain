@@ -287,8 +287,11 @@ router.post(
       const result = await axios.post(`${RECORD_SCAN_URL}/scan/approve-sro-by-dlpi/${req.params.dlpiId}`);
       res.json(result.data || { success: true });
     } catch (e) {
-      console.error("[scan-approve-sro] error:", e.message);
-      res.status(500).json({ error: 'FABRIC_ERROR', message: e.message });
+      const errMsg = e.response && e.response.data && (e.response.data.detail || e.response.data.message)
+        ? (e.response.data.detail || e.response.data.message)
+        : e.message;
+      console.error("[scan-approve-sro] error:", errMsg);
+      res.status(500).json({ error: 'FABRIC_ERROR', message: errMsg });
     }
   },
 );
@@ -314,8 +317,11 @@ router.post(
       );
       res.json(result.data || { success: true });
     } catch (e) {
-      console.error("[scan-approve-tehsildar] error:", e.message);
-      res.status(500).json({ error: 'FABRIC_ERROR', message: e.message });
+      const errMsg = e.response && e.response.data && (e.response.data.detail || e.response.data.message)
+        ? (e.response.data.detail || e.response.data.message)
+        : e.message;
+      console.error("[scan-approve-tehsildar] error:", errMsg);
+      res.status(500).json({ error: 'FABRIC_ERROR', message: errMsg });
     }
   },
 );
