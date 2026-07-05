@@ -309,7 +309,7 @@ export default function MyParcelsPage() {
   const filtered  = parcels.filter(p => matchFilter(p, filter));
   const counts    = {
     all:      parcels.length,
-    verified: parcels.filter(p => p.claimStatus === 'OWNER_VERIFIED').length,
+    OWNER_VERIFIED: parcels.filter(p => p.claimStatus === 'OWNER_VERIFIED').length,
     pending:  parcels.filter(p => ['SEEDED_UNVERIFIED', 'CLAIM_SUBMITTED', 'UNDER_REVIEW', 'CI_APPROVED'].includes(p.claimStatus)).length,
     disputed: parcels.filter(p => p.claimStatus === 'DISPUTED').length,
   };
