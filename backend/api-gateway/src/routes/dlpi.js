@@ -59,9 +59,53 @@ router.get(
   requireRole(...CAN_APPROVE_MUTATION, ROLES.PATWARI),
   async (req, res) => {
     try {
-      // In real mode claims auto-verify instantly upon citizen claim, so no manual queue exists
+      let status = '';
+      if (req.user.role === ROLES.CIRCLE_INSPECTOR) {
+        status = 'SCAN_PENDING_SRO';
+      } else if (req.user.role === ROLES.TEHSILDAR) {
+        status = 'SCAN_PENDING_TEHSILDAR';
+      }
+
+      if (status) {
+        let parcels = await evaluate('dlpi', 'QueryPendingScans', [status]);
+        if (parcels && !Array.isArray(parcels)) {
+          parcels = parcels.parcels || parcels.data || Object.values(parcels);
+        }
+        if (!Array.isArray(parcels)) parcels = [];
+        
+        // Adapt legacy structure
+        const adapted = parcels.map(p => {
+          if (p.owners && p.owners.length > 0 && !p.owner) {
+            p.owner = {
+              name: p.owners[0].name,
+              aadhaarHash: p.owners[0].aadhaarHash,
+            };
+          }
+          return p;
+        });
+        return res.json(adapted);
+      }
       res.json([]);
     } catch (e) {
+      res.status(500).json({ error: 'FABRIC_ERROR', message: e.message });
+    }
+  },
+);
+
+// POST /api/dlpi — Create a new DLPI record (e.g. from RecordScan Patwari)
+router.post(
+  '/',
+  authenticate,
+  requireRole(ROLES.PATWARI, ROLES.CIRCLE_INSPECTOR, ROLES.TEHSILDAR, ROLES.COLLECTOR, ROLES.SUPER_ADMIN),
+  body('dlpiId').matches(/^DLPI-[A-Z]{2}-[A-Z]{3}-[A-Z0-9]+$/),
+  validate,
+  async (req, res) => {
+    try {
+      // In a real app we'd map all fields carefully. For now, pass JSON string.
+      const result = await submit('dlpi', 'CreateDLPI', [JSON.stringify(req.body)]);
+      res.status(201).json(result || { success: true });
+    } catch (e) {
+      console.error(e);
       res.status(500).json({ error: 'FABRIC_ERROR', message: e.message });
     }
   },
@@ -191,6 +235,58 @@ router.post(
     try {
       // Since real chaincode auto-verifies instantly, this is a no-op that returns success
       res.json({ success: true, claimStatus: 'OWNER_VERIFIED' });
+    } catch (e) {
+      res.status(500).json({ error: 'FABRIC_ERROR', message: e.message });
+    }
+  },
+);
+
+// POST /api/dlpi/:dlpiId/tehsildar-approve — final approval with eSign
+router.post(
+  '/:dlpiId/tehsildar-approve',
+  authenticate,
+  requireRole(ROLES.TEHSILDAR),
+  dlpiParam,
+  body('eSignTxHash').notEmpty(),
+  validate,
+  async (req, res) => {
+    try {
+      // Real chaincode instantly verifies upon claim, so no manual review step
+      res.json({ success: true, claimStatus: 'OWNER_VERIFIED' });
+    } catch (e) {
+      res.status(500).json({ error: 'FABRIC_ERROR', message: e.message });
+    }
+  },
+);
+
+// POST /api/dlpi/:dlpiId/scan-approve-sro — SRO approves pending scan
+router.post(
+  '/:dlpiId/scan-approve-sro',
+  authenticate,
+  requireRole(ROLES.CIRCLE_INSPECTOR),
+  dlpiParam,
+  validate,
+  async (req, res) => {
+    try {
+      const result = await submit('dlpi', 'ApproveScanSRO', [req.params.dlpiId]);
+      res.json(result || { success: true });
+    } catch (e) {
+      res.status(500).json({ error: 'FABRIC_ERROR', message: e.message });
+    }
+  },
+);
+
+// POST /api/dlpi/:dlpiId/scan-approve-tehsildar — Tehsildar finalizes pending scan
+router.post(
+  '/:dlpiId/scan-approve-tehsildar',
+  authenticate,
+  requireRole(ROLES.TEHSILDAR),
+  dlpiParam,
+  validate,
+  async (req, res) => {
+    try {
+      const result = await submit('dlpi', 'ApproveScanTehsildar', [req.params.dlpiId]);
+      res.json(result || { success: true });
     } catch (e) {
       res.status(500).json({ error: 'FABRIC_ERROR', message: e.message });
     }

@@ -642,6 +642,8 @@ const DEMO_WS_EVENTS = {
   },
 };
 
+let MOCK_SCANS = [];
+
 module.exports = {
   DEMO_DLPI,
   DEMO_TRIBAL_DLPI,
@@ -781,6 +783,29 @@ module.exports = {
         return DEMO_TRIBAL_REJECTION;
       case 'encumbrance::GenerateEC':
         return DEMO_EC;
+
+      case 'dlpi::CreateDLPI':
+        const input = JSON.parse(args[0]);
+        input.claimStatus = input.sourceType === 'RECORD_SCAN_AI' ? 'SCAN_PENDING_SRO' : 'SEEDED_UNVERIFIED';
+        // Add fake submittedAt for sorting in queue
+        input.submittedAt = new Date().toISOString();
+        // Give it ownerName derived from initialOwners
+        input.ownerName = input.initialOwners && input.initialOwners.length > 0 ? input.initialOwners[0].name : 'Unknown';
+        MOCK_SCANS.push(input);
+        return { success: true, txId: `mock-tx-${Date.now()}` };
+
+      case 'dlpi::QueryPendingScans':
+        return MOCK_SCANS.filter(s => s.claimStatus === args[0]);
+
+      case 'dlpi::ApproveScanSRO':
+        const scanSro = MOCK_SCANS.find(s => s.dlpiId === args[0]);
+        if (scanSro) scanSro.claimStatus = 'SCAN_PENDING_TEHSILDAR';
+        return { success: true };
+
+      case 'dlpi::ApproveScanTehsildar':
+        const scanTehsil = MOCK_SCANS.find(s => s.dlpiId === args[0]);
+        if (scanTehsil) scanTehsil.claimStatus = 'SEEDED_UNVERIFIED';
+        return { success: true };
 
       default:
         return { success: true, txId: `mock-tx-${Date.now()}` };

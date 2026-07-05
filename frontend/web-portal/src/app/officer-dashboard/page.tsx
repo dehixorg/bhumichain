@@ -42,23 +42,27 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; 
   CI_APPROVED:     { label: 'CI Approved',     color: 'text-purple-400',  bg: 'bg-purple-900/30 border-purple-700', icon: CheckCircle },
   VERIFIED:        { label: 'Verified',        color: 'text-green-400',   bg: 'bg-green-900/30 border-green-700',  icon: CheckCircle },
   DISPUTED:        { label: 'Disputed',        color: 'text-red-400',     bg: 'bg-red-900/30 border-red-700',      icon: AlertTriangle },
+  SCAN_PENDING_SRO: { label: 'Pending SRO',    color: 'text-amber-400',   bg: 'bg-amber-900/30 border-amber-700',  icon: Clock },
+  SCAN_PENDING_TEHSILDAR: { label: 'Pending Tehsildar', color: 'text-orange-400', bg: 'bg-orange-900/30 border-orange-700', icon: Clock },
 };
 
 // Role → which statuses this officer should act on
+// Role → which statuses this officer should act on
 const ROLE_ACTION_STATUSES: Record<string, string[]> = {
   patwari:          ['CLAIM_SUBMITTED'],
-  circle_inspector: ['UNDER_REVIEW'],
-  tehsildar:        ['CI_APPROVED'],
+  circle_inspector: ['UNDER_REVIEW', 'SCAN_PENDING_SRO'],
+  tehsildar:        ['CI_APPROVED', 'SCAN_PENDING_TEHSILDAR'],
   kotwal:           ['CLAIM_SUBMITTED', 'UNDER_REVIEW', 'CI_APPROVED'],
 };
 
-type TabKey = 'all' | 'claim_submitted' | 'under_review' | 'ci_approved';
+type TabKey = 'all' | 'claim_submitted' | 'under_review' | 'ci_approved' | 'pending_scans';
 
 const TABS: { key: TabKey; label: string; statuses: string[] }[] = [
-  { key: 'all',            label: 'All',           statuses: ['CLAIM_SUBMITTED', 'UNDER_REVIEW', 'CI_APPROVED', 'DISPUTED'] },
+  { key: 'all',            label: 'All',           statuses: ['CLAIM_SUBMITTED', 'UNDER_REVIEW', 'CI_APPROVED', 'DISPUTED', 'SCAN_PENDING_SRO', 'SCAN_PENDING_TEHSILDAR'] },
   { key: 'claim_submitted',label: 'Claim Submitted', statuses: ['CLAIM_SUBMITTED'] },
   { key: 'under_review',   label: 'Under Review',  statuses: ['UNDER_REVIEW'] },
   { key: 'ci_approved',    label: 'CI Approved',   statuses: ['CI_APPROVED'] },
+  { key: 'pending_scans',  label: 'Pending Scans', statuses: ['SCAN_PENDING_SRO', 'SCAN_PENDING_TEHSILDAR'] },
 ];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -82,11 +86,24 @@ function actionLabel(role: string): string {
 
 // ── Queue Row ─────────────────────────────────────────────────────────────────
 
-function QueueRow({ item, userRole }: { item: QueueItem; userRole: string }) {
+function QueueRow({ item, userRole, fetchQueue }: { item: QueueItem; userRole: string; fetchQueue: () => void }) {
+  const [busy, setBusy] = useState(false);
   const status  = STATUS_CONFIG[item.claimStatus] ?? STATUS_CONFIG['CLAIM_SUBMITTED'];
   const Icon    = status.icon;
-  const days    = daysPending(item.submittedAt);
+  const days    = daysPending(item.submittedAt || new Date().toISOString());
   const myTurn  = (ROLE_ACTION_STATUSES[userRole] ?? []).includes(item.claimStatus);
+
+  async function handleScanApprove(endpoint: string) {
+    setBusy(true);
+    try {
+      const res = await apiFetch(`/api/dlpi/${item.dlpiId}${endpoint}`, { method: 'POST' });
+      if (res.ok) fetchQueue();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setBusy(false);
+    }
+  }
 
   return (
     <tr className="border-b border-gray-800 hover:bg-gray-900/50 transition-colors group">
@@ -154,18 +171,30 @@ function QueueRow({ item, userRole }: { item: QueueItem; userRole: string }) {
 
       {/* Action */}
       <td className="px-4 py-3">
-        <Link
-          href={`/officer-dashboard/review/${item.dlpiId}`}
-          className={clsx(
-            'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors',
-            myTurn
-              ? 'bg-brand-600 hover:bg-brand-700 text-white'
-              : 'bg-gray-800 hover:bg-gray-700 text-gray-300',
-          )}
-        >
-          {myTurn ? actionLabel(userRole) : 'View'}
-          <ChevronRight className="w-3 h-3" />
-        </Link>
+        {item.claimStatus === 'SCAN_PENDING_SRO' && userRole === 'circle_inspector' ? (
+          <button onClick={() => handleScanApprove('/scan-approve-sro')} disabled={busy} className="bg-brand-600 hover:bg-brand-700 px-3 py-1.5 text-xs font-semibold text-white rounded-lg flex items-center gap-1.5 transition-colors disabled:opacity-50">
+             {busy ? <RefreshCw className="w-3 h-3 animate-spin" /> : <CheckCircle className="w-3 h-3" />}
+             Approve Scan
+          </button>
+        ) : item.claimStatus === 'SCAN_PENDING_TEHSILDAR' && userRole === 'tehsildar' ? (
+          <button onClick={() => handleScanApprove('/scan-approve-tehsildar')} disabled={busy} className="bg-brand-600 hover:bg-brand-700 px-3 py-1.5 text-xs font-semibold text-white rounded-lg flex items-center gap-1.5 transition-colors disabled:opacity-50">
+             {busy ? <RefreshCw className="w-3 h-3 animate-spin" /> : <CheckCircle className="w-3 h-3" />}
+             Final Approve
+          </button>
+        ) : (
+          <Link
+            href={`/officer-dashboard/review/${item.dlpiId}`}
+            className={clsx(
+              'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors',
+              myTurn
+                ? 'bg-brand-600 hover:bg-brand-700 text-white'
+                : 'bg-gray-800 hover:bg-gray-700 text-gray-300',
+            )}
+          >
+            {myTurn ? actionLabel(userRole) : 'View'}
+            <ChevronRight className="w-3 h-3" />
+          </Link>
+        )}
       </td>
     </tr>
   );
@@ -250,6 +279,7 @@ export default function OfficerDashboardPage() {
     claim_submitted: queue.filter(q => q.claimStatus === 'CLAIM_SUBMITTED').length,
     under_review:    queue.filter(q => q.claimStatus === 'UNDER_REVIEW').length,
     ci_approved:     queue.filter(q => q.claimStatus === 'CI_APPROVED').length,
+    pending_scans:   queue.filter(q => ['SCAN_PENDING_SRO', 'SCAN_PENDING_TEHSILDAR'].includes(q.claimStatus)).length,
   };
 
   return (
@@ -367,7 +397,7 @@ export default function OfficerDashboardPage() {
                     </tr>
                   ) : (
                     filtered.map(item => (
-                      <QueueRow key={item.dlpiId} item={item} userRole={user?.role ?? 'patwari'} />
+                      <QueueRow key={item.dlpiId} item={item} userRole={user?.role ?? 'patwari'} fetchQueue={fetchQueue} />
                     ))
                   )}
                 </tbody>

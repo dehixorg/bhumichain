@@ -318,7 +318,12 @@ func (c *DLPIContract) CreateDLPI(ctx contractapi.TransactionContextInterface, i
 		ScheduleVArea:       input.ScheduleVArea,
 		Owners:              input.InitialOwners,
 		OwnershipType:       ownershipType,
-		ClaimStatus:         "SEEDED_UNVERIFIED",
+		ClaimStatus:         func() string {
+			if input.SourceType == "RECORD_SCAN_AI" {
+				return "SCAN_PENDING_SRO"
+			}
+			return "SEEDED_UNVERIFIED"
+		}(),
 		EncumbranceStatus:   "CLEAR",
 		TransferLock:        &TransferLock{IsLocked: false},
 		SuccessionStatus:    "ACTIVE",
@@ -348,6 +353,60 @@ func (c *DLPIContract) CreateDLPI(ctx contractapi.TransactionContextInterface, i
 	}
 	_ = ctx.GetStub().SetEvent("DLPICreated", dlpiBytes)
 	return nil
+}
+
+// ApproveScanSRO - Kanungo approves the Patwari's scan extraction
+func (c *DLPIContract) ApproveScanSRO(ctx contractapi.TransactionContextInterface, dlpiId string) error {
+	dlpi, err := c.GetDLPI(ctx, dlpiId)
+	if err != nil {
+		return err
+	}
+	if dlpi.ClaimStatus != "SCAN_PENDING_SRO" {
+		return fmt.Errorf("DLPI is not pending SRO approval (current status: %s)", dlpi.ClaimStatus)
+	}
+	dlpi.ClaimStatus = "SCAN_PENDING_TEHSILDAR"
+	dlpi.UpdatedAt = time.Now().UTC().Format(time.RFC3339)
+	dlpiBytes, _ := json.Marshal(dlpi)
+	return ctx.GetStub().PutState(dlpiId, dlpiBytes)
+}
+
+// ApproveScanTehsildar - Tehsildar approves and finalizes the scan seeding
+func (c *DLPIContract) ApproveScanTehsildar(ctx contractapi.TransactionContextInterface, dlpiId string) error {
+	dlpi, err := c.GetDLPI(ctx, dlpiId)
+	if err != nil {
+		return err
+	}
+	if dlpi.ClaimStatus != "SCAN_PENDING_TEHSILDAR" {
+		return fmt.Errorf("DLPI is not pending Tehsildar approval (current status: %s)", dlpi.ClaimStatus)
+	}
+	dlpi.ClaimStatus = "SEEDED_UNVERIFIED"
+	dlpi.UpdatedAt = time.Now().UTC().Format(time.RFC3339)
+	dlpiBytes, _ := json.Marshal(dlpi)
+	return ctx.GetStub().PutState(dlpiId, dlpiBytes)
+}
+
+// QueryPendingScans - find all parcels in a specific pending scan status (CouchDB)
+func (c *DLPIContract) QueryPendingScans(ctx contractapi.TransactionContextInterface, status string) ([]*DLPI, error) {
+	query := fmt.Sprintf(`{"selector":{"claimStatus":"%s"}}`, status)
+	iter, err := ctx.GetStub().GetQueryResult(query)
+	if err != nil {
+		return nil, err
+	}
+	defer iter.Close()
+
+	var results []*DLPI
+	for iter.HasNext() {
+		res, err := iter.Next()
+		if err != nil {
+			return nil, err
+		}
+		var d DLPI
+		if err := json.Unmarshal(res.Value, &d); err != nil {
+			continue
+		}
+		results = append(results, &d)
+	}
+	return results, nil
 }
 
 // ClaimDLPI — owner verifies and claims a seeded record via Aadhaar eSign
