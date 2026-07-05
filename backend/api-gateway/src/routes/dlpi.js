@@ -409,7 +409,9 @@ router.post(
           {
             name: ownerName,
             aadhaarHash: ownerAadhaarHash,
-            shareFraction: "1/1",
+            share: "1/1",
+            shareDecimal: 1.0,
+            ownerSince: new Date().toISOString().slice(0, 10),
             isVerified: false,
           }
         ],
