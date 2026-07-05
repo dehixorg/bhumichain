@@ -400,7 +400,7 @@ export default function RecordScan({ onDlpiCreated, mode = 'genesis', onScanComp
             </button>
             <button onClick={approve} className="btn-primary flex items-center gap-2 ml-auto">
               <Shield className="w-4 h-4" />
-              {mode === 'transfer' ? 'Accept Scan' : 'Approve & Record on Blockchain'}
+              {mode === 'transfer' ? 'Accept Scan' : 'Submit for Kanungo Approval'}
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
@@ -411,8 +411,8 @@ export default function RecordScan({ onDlpiCreated, mode = 'genesis', onScanComp
       {stage === 'approving' && (
         <div className="card text-center py-12">
           <div className="w-10 h-10 border-2 border-brand-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <div className="text-gray-200 font-semibold">Submitting to Hyperledger Fabric...</div>
-          <div className="text-gray-500 text-sm mt-1">Endorsing transaction · Writing to ledger</div>
+          <div className="text-gray-200 font-semibold">Submitting to Kanungo Queue...</div>
+          <div className="text-gray-500 text-sm mt-1">Pending SRO Verification</div>
         </div>
       )}
 
@@ -423,19 +423,19 @@ export default function RecordScan({ onDlpiCreated, mode = 'genesis', onScanComp
             <CheckCircle className="w-8 h-8 text-brand-400" />
           </div>
           <div className="text-brand-300 font-bold text-lg mb-1">
-            {mode === 'transfer' ? 'Scan Completed!' : 'DLPI Recorded!'}
+            {mode === 'transfer' ? 'Scan Completed!' : 'Sent for Approval!'}
           </div>
           {mode === 'genesis' && <div className="font-mono text-gray-300 text-sm mb-1">{dlpiId}</div>}
           <div className="text-gray-500 text-xs mb-6">
             {mode === 'transfer' 
               ? 'Document has been digitized and verified via RecordScan AI.' 
-              : 'Land parcel is now permanently on BhumiChain · Tamper-proof · Publicly verifiable'}
+              : 'Scan submitted to Kanungo/Circle Inspector for review before being recorded on blockchain.'}
           </div>
           <div className="flex items-center justify-center gap-3">
             <button onClick={() => setStage('idle')} className="btn-ghost text-sm">Scan another</button>
             {mode === 'genesis' && (
               <button onClick={() => onDlpiCreated?.(dlpiId)} className="btn-primary text-sm flex items-center gap-2">
-                <Zap className="w-4 h-4" /> View on Map
+                <Zap className="w-4 h-4" /> Go to Kanungo Queue
               </button>
             )}
           </div>
