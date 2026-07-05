@@ -10,6 +10,7 @@ import {
 import clsx from 'clsx';
 import Sidebar from '@/components/dashboard/Sidebar';
 import { getUser, apiFetch, type JWTUser } from '@/lib/auth';
+import toast from 'react-hot-toast';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -97,8 +98,15 @@ function QueueRow({ item, userRole, fetchQueue }: { item: QueueItem; userRole: s
     setBusy(true);
     try {
       const res = await apiFetch(`/api/dlpi/${item.dlpiId}${endpoint}`, { method: 'POST' });
-      if (res.ok) fetchQueue();
-    } catch (e) {
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        toast.success(data.message || 'Scan approved successfully!');
+        fetchQueue();
+      } else {
+        toast.error(data.message || data.error || 'Approval failed');
+      }
+    } catch (e: any) {
+      toast.error(e.message || 'An error occurred during approval');
       console.error(e);
     } finally {
       setBusy(false);
