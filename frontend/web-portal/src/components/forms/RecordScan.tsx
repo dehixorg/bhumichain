@@ -196,6 +196,21 @@ export default function RecordScan({ onDlpiCreated, mode = 'genesis', onScanComp
 
     // Genesis mode (default)
     const token = getToken() || '';
+    
+    let finalOwnerHash = 'sha256:56a083a15c0f4e3069fac285c6df67471c162a11ada941243c56d579fde7050f';
+    try {
+      const inputEl = document.getElementById('ownerAadhaarInput') as HTMLInputElement;
+      if (inputEl && inputEl.value) {
+        const aadhaar = inputEl.value.trim();
+        const salt = 'bhumichain-aadhaar-salt-change-in-prod';
+        const msgBuffer = new TextEncoder().encode(aadhaar + salt);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        finalOwnerHash = 'sha256:' + hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+      }
+    } catch (e) {
+      console.error('Failed to hash aadhaar', e);
+    }
 
     try {
       const res = await fetch('/api/scan/approve', {
@@ -205,7 +220,7 @@ export default function RecordScan({ onDlpiCreated, mode = 'genesis', onScanComp
           scanId:             result.scanId,
           dlpiId,
           officerAadhaarHash: 'sha256:' + '0'.repeat(64),
-          ownerAadhaarHash:   'sha256:56a083a15c0f4e3069fac285c6df67471c162a11ada941243c56d579fde7050f',
+          ownerAadhaarHash:   finalOwnerHash,
           officerName:        'Vijay Singh (Patwari DAD-P1)',
           correctedFields:    Object.keys(edited).length ? edited : undefined,
           token,
@@ -367,19 +382,36 @@ export default function RecordScan({ onDlpiCreated, mode = 'genesis', onScanComp
             </div>
           </div>
 
-          {/* DLPI ID confirmation */}
-          <div className="card">
-            <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
-              DLPI ID (confirm or edit)
-            </label>
-            <input
-              value={dlpiId}
-              onChange={e => setDlpiId(e.target.value)}
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-brand-300 font-mono text-sm focus:outline-none focus:border-brand-500"
-            />
-            <p className="text-gray-600 text-xs mt-1">
-              Auto-generated from Gata No. + tehsil code (DAD). Patwari may override before approval.
-            </p>
+          {/* DLPI ID and Owner Aadhaar confirmation */}
+          <div className="card space-y-4">
+            <div>
+              <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
+                DLPI ID (confirm or edit)
+              </label>
+              <input
+                value={dlpiId}
+                onChange={e => setDlpiId(e.target.value)}
+                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-brand-300 font-mono text-sm focus:outline-none focus:border-brand-500"
+              />
+              <p className="text-gray-600 text-xs mt-1">
+                Auto-generated from Gata No. + tehsil code (DAD).
+              </p>
+            </div>
+            
+            <div>
+              <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
+                Owner Aadhaar Number
+              </label>
+              <input
+                id="ownerAadhaarInput"
+                defaultValue="999900010010"
+                placeholder="Enter 12-digit Aadhaar (e.g. 999900010010 for Priya Kumar)"
+                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-gray-200 text-sm focus:outline-none focus:border-brand-500"
+              />
+              <p className="text-gray-600 text-xs mt-1">
+                Required to link this property to the citizen's Digilocker / My Parcels.
+              </p>
+            </div>
           </div>
 
           {ext.requiresManualReview && ext.flaggedFields.length > 0 && (
