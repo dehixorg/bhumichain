@@ -205,6 +205,7 @@ export default function RecordScan({ onDlpiCreated, mode = 'genesis', onScanComp
           scanId:             result.scanId,
           dlpiId,
           officerAadhaarHash: 'sha256:' + '0'.repeat(64),
+          ownerAadhaarHash:   'sha256:56a083a15c0f4e3069fac285c6df67471c162a11ada941243c56d579fde7050f',
           officerName:        'Vijay Singh (Patwari DAD-P1)',
           correctedFields:    Object.keys(edited).length ? edited : undefined,
           token,

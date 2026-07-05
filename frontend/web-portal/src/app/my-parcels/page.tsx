@@ -41,8 +41,8 @@ const STATUS_CONFIG: Record<string, {
   icon: React.ElementType;
   hint: string;
 }> = {
-  VERIFIED: {
-    label: 'Verified',
+  OWNER_VERIFIED: {
+    label: 'OWNER_VERIFIED',
     color: 'text-green-400',
     bg:    'bg-green-900 bg-opacity-40 border-green-700',
     icon:  CheckCircle,
@@ -105,18 +105,18 @@ function formatValue(n: number): string {
   return `₹${n.toLocaleString('en-IN')}`;
 }
 
-type Filter = 'all' | 'verified' | 'pending' | 'disputed';
+type Filter = 'all' | 'OWNER_VERIFIED' | 'pending' | 'disputed';
 
 const FILTERS: { key: Filter; label: string }[] = [
   { key: 'all',      label: 'All' },
-  { key: 'verified', label: 'Verified' },
+  { key: 'OWNER_VERIFIED', label: 'OWNER_VERIFIED' },
   { key: 'pending',  label: 'Pending' },
   { key: 'disputed', label: 'Disputed' },
 ];
 
 function matchFilter(parcel: Parcel, filter: Filter): boolean {
   if (filter === 'all')      return true;
-  if (filter === 'verified') return parcel.claimStatus === 'VERIFIED';
+  if (filter === 'OWNER_VERIFIED') return parcel.claimStatus === 'OWNER_VERIFIED';
   if (filter === 'disputed') return parcel.claimStatus === 'DISPUTED';
   return ['SEEDED_UNVERIFIED', 'CLAIM_SUBMITTED', 'UNDER_REVIEW', 'CI_APPROVED'].includes(parcel.claimStatus);
 }
@@ -133,7 +133,7 @@ function ParcelCard({ parcel }: { parcel: Parcel }) {
       case 'CLAIM_SUBMITTED':   return { label: 'Submit for Review', href: `/claim/${parcel.dlpiId}`, primary: true };
       case 'UNDER_REVIEW':      return { label: 'Track Review',    href: `/claim/${parcel.dlpiId}`, primary: false };
       case 'CI_APPROVED':       return { label: 'Track Review',    href: `/claim/${parcel.dlpiId}`, primary: false };
-      case 'VERIFIED':          return { label: 'Get EC',          href: `/ec/${parcel.dlpiId}`,    primary: true };
+      case 'OWNER_VERIFIED':          return { label: 'Get EC',          href: `/ec/${parcel.dlpiId}`,    primary: true };
       case 'DISPUTED':          return { label: 'View Dispute',    href: `/claim/${parcel.dlpiId}`, primary: false };
       default:                  return { label: 'View Details',    href: `/claim/${parcel.dlpiId}`, primary: false };
     }
@@ -189,7 +189,7 @@ function ParcelCard({ parcel }: { parcel: Parcel }) {
 
       {/* Badges & Tokenization Info */}
       <div className="flex flex-wrap gap-2">
-        {parcel.claimStatus === 'VERIFIED' && (
+        {parcel.claimStatus === 'OWNER_VERIFIED' && (
           <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-900 bg-opacity-30 border border-blue-500 text-blue-400 text-xs shadow-[0_0_10px_rgba(59,130,246,0.3)]">
             <Shield className="w-3 h-3" />
             Tokenized Asset (ERC-721)
@@ -208,7 +208,7 @@ function ParcelCard({ parcel }: { parcel: Parcel }) {
         )}
       </div>
 
-      {parcel.claimStatus === 'VERIFIED' && (
+      {parcel.claimStatus === 'OWNER_VERIFIED' && (
         <div className="bg-gray-800 rounded-lg px-3 py-2 mt-1 border border-gray-700/50 flex items-center justify-between group cursor-help" title="Mocked Transaction Hash for Demo">
           <div className="min-w-0 flex-1">
             <div className="text-gray-500 text-[10px] uppercase tracking-widest font-semibold mb-0.5">Blockchain Tx Hash</div>
@@ -309,7 +309,7 @@ export default function MyParcelsPage() {
   const filtered  = parcels.filter(p => matchFilter(p, filter));
   const counts    = {
     all:      parcels.length,
-    verified: parcels.filter(p => p.claimStatus === 'VERIFIED').length,
+    verified: parcels.filter(p => p.claimStatus === 'OWNER_VERIFIED').length,
     pending:  parcels.filter(p => ['SEEDED_UNVERIFIED', 'CLAIM_SUBMITTED', 'UNDER_REVIEW', 'CI_APPROVED'].includes(p.claimStatus)).length,
     disputed: parcels.filter(p => p.claimStatus === 'DISPUTED').length,
   };

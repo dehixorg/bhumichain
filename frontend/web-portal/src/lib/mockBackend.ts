@@ -50,7 +50,7 @@ export const DEMO_MY_PARCELS = [
     areaHectares:      2.4,
     encumbranceStatus: 'CLEAR',
     claimStatus:       'SEEDED_UNVERIFIED',
-    owner:             { name: 'Arun Sharma' },
+    owner:             { name: 'Rakesh Agarwal' },
     location:          { latitude: 28.6010, longitude: 77.4850 },
     valuation:         { circleRateINR: 2880000 },
     txHash:            '0xdemo_arun_tx',
@@ -192,7 +192,7 @@ const DEMO_PERSONAS: Record<string, any> = {
     aadhaarHash: 'sha256:citizen999900010010',
   },
   citizen_buyer: {
-    role: 'citizen', name: 'Arun Sharma',
+    role: 'citizen', name: 'Rakesh Agarwal',
     aadhaarHash: 'sha256:citizenbuyer999900010011',
   },
   citizen_heir1: {

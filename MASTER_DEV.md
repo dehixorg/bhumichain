@@ -180,7 +180,7 @@ Owner clicks "Dispute Record" → fills dispute form → submits to tehsil
 Parcel stays: SEEDED_UNVERIFIED (not blocked, still usable, but flagged)
 → Any transaction on unclaimed parcel requires officer approval
 ```
-
+`
 #### Entry Point 2: RecordScan AI (For paper records not in DILRMP)
 ```
 Paper Satbara (7/12) extract scanned at CSC kiosk or tehsil office

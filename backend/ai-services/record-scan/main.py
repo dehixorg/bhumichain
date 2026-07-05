@@ -110,6 +110,7 @@ class ApproveRequest(BaseModel):
     scanId:             str
     dlpiId:             str
     officerAadhaarHash: str
+    ownerAadhaarHash:   str
     officerName:        str
     correctedFields:    Optional[dict] = None
     token:              str
@@ -137,7 +138,7 @@ async def approve_scan(req: ApproveRequest, background: BackgroundTasks):
     dlpi_payload = {
         "dlpiId":            req.dlpiId,
         "ownerName":         ext.khatedars[0].name if ext.khatedars else "Unknown",
-        "ownerAadhaarHash":  f"sha256:{req.officerAadhaarHash.replace('sha256:', '')}",
+        "ownerAadhaarHash":  req.ownerAadhaarHash,
         "landType":          ext.landType.value,
         "areaHectares":      ext.areaHectares,
         "geojsonCID":        f"Qm{uuid.uuid4().hex[:32].upper()}",
