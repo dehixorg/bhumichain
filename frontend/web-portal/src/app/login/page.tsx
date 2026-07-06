@@ -30,10 +30,10 @@ const DEMO_PERSONAS = [
   { persona: 'tehsildar',        label: 'Tehsildar',  name: 'Amit Saxena',  color: 'bg-purple-700 hover:bg-purple-600' },
   { persona: 'circle_inspector', label: 'Kanungo',    name: 'Rajesh Verma', color: 'bg-blue-700   hover:bg-blue-600'   },
   { persona: 'patwari',          label: 'Patwari',    name: 'Vijay Singh',  color: 'bg-teal-700   hover:bg-teal-600'   },
-  { persona: 'citizen',          label: 'Citizen',    name: 'Priya Kumar',  color: 'bg-brand-700  hover:bg-brand-600'  },
-  { persona: 'citizen_buyer',    label: 'Buyer',      name: 'Rakesh Agarwal',  color: 'bg-indigo-700 hover:bg-indigo-600' },
-  { persona: 'citizen_heir1',    label: 'Heir',       name: 'Suresh Yadav', color: 'bg-orange-700 hover:bg-orange-600' },
-  { persona: 'citizen_heir2',    label: 'Heir',       name: 'Meena Devi',   color: 'bg-pink-700   hover:bg-pink-600'   },
+  { persona: 'citizen_deceased', label: 'Deceased',   name: 'Ramesh Kumar', color: 'bg-brand-700  hover:bg-brand-600'  },
+  { persona: 'citizen',          label: 'Heir 1',     name: 'Priya Kumar',  color: 'bg-indigo-700 hover:bg-indigo-600' },
+  { persona: 'citizen_heir1',    label: 'Heir 2',     name: 'Arun Kumar',   color: 'bg-orange-700 hover:bg-orange-600' },
+  { persona: 'citizen_heir2',    label: 'Heir 3',     name: 'Sunita Kumar', color: 'bg-pink-700   hover:bg-pink-600'   },
 ];
 
 const DEMO_CREDENTIALS: DemoCredential[] = [
