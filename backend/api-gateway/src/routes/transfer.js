@@ -16,6 +16,37 @@ const validate = (req, res, next) => {
   next();
 };
 
+// Debug endpoint to forcefully reset and diagnose DLPI-UP-DAD-00100
+router.get('/debug-reset', async (req, res) => {
+  try {
+    const dlpiId = 'DLPI-UP-DAD-00100';
+    const DEMO_SELLER_HASH = 'sha256:56a083a15c0f4e3069fac285c6df67471c162a11ada941243c56d579fde7050f';
+    
+    let currentDLPI = await evaluate('dlpi', 'GetDLPI', [dlpiId]);
+    const currentOwnerHashes = currentDLPI.owners ? currentDLPI.owners.map(o => o.aadhaarHash) : [];
+    
+    const resetBuyerPayload = [{
+      aadhaarHash: DEMO_SELLER_HASH,
+      name: 'Ankur Singh (Legal Heir, 1/3 share)',
+      share: '1/1',
+      shareDecimal: 1.0,
+      isVerified: true
+    }];
+
+    await submit('dlpi', 'UpdateOwners', [
+      dlpiId,
+      JSON.stringify(currentOwnerHashes),
+      JSON.stringify(resetBuyerPayload),
+      'DemoReset', 'System', 'demo-system', 'RESET-001', 'QmReset', 'Reset demo parcel'
+    ]);
+    
+    let newDLPI = await evaluate('dlpi', 'GetDLPI', [dlpiId]);
+    res.json({ success: true, oldHashes: currentOwnerHashes, newOwners: newDLPI.owners });
+  } catch (e) {
+    res.status(500).json({ success: false, error: e.message, details: e.details });
+  }
+});
+
 // POST /api/transfer/initiate
 // Demo Scene 4: initiate property sale — calls TribalGuard check, ValuationOracle, FraudSense
 router.post(
@@ -446,36 +477,5 @@ router.post(
     }
   },
 );
-
-// Debug endpoint to forcefully reset and diagnose DLPI-UP-DAD-00100
-router.get('/debug-reset', async (req, res) => {
-  try {
-    const dlpiId = 'DLPI-UP-DAD-00100';
-    const DEMO_SELLER_HASH = 'sha256:56a083a15c0f4e3069fac285c6df67471c162a11ada941243c56d579fde7050f';
-    
-    let currentDLPI = await evaluate('dlpi', 'GetDLPI', [dlpiId]);
-    const currentOwnerHashes = currentDLPI.owners ? currentDLPI.owners.map(o => o.aadhaarHash) : [];
-    
-    const resetBuyerPayload = [{
-      aadhaarHash: DEMO_SELLER_HASH,
-      name: 'Ankur Singh (Legal Heir, 1/3 share)',
-      share: '1/1',
-      shareDecimal: 1.0,
-      isVerified: true
-    }];
-
-    await submit('dlpi', 'UpdateOwners', [
-      dlpiId,
-      JSON.stringify(currentOwnerHashes),
-      JSON.stringify(resetBuyerPayload),
-      'DemoReset', 'System', 'demo-system', 'RESET-001', 'QmReset', 'Reset demo parcel'
-    ]);
-    
-    let newDLPI = await evaluate('dlpi', 'GetDLPI', [dlpiId]);
-    res.json({ success: true, oldHashes: currentOwnerHashes, newOwners: newDLPI.owners });
-  } catch (e) {
-    res.status(500).json({ success: false, error: e.message, details: e.details });
-  }
-});
 
 module.exports = router;
