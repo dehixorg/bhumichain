@@ -495,4 +495,64 @@ router.post(
   },
 );
 
+// POST /api/dlpi/:dlpiId/inheritance-plan
+router.post(
+  '/:dlpiId/inheritance-plan',
+  authenticate,
+  requireRole(ROLES.CITIZEN),
+  dlpiParam,
+  body('heirs').isArray(),
+  validate,
+  async (req, res) => {
+    try {
+      const { heirs } = req.body;
+      const plan = {
+        dlpiId: req.params.dlpiId,
+        creatorAadhaarHash: req.user.aadhaarHash,
+        heirs: heirs,
+      };
+      const result = await submit('dlpi', 'SubmitInheritancePlan', [req.params.dlpiId, JSON.stringify(plan)]);
+      res.json(result);
+    } catch (e) {
+      res.status(500).json({ error: 'FABRIC_ERROR', message: e.message });
+    }
+  }
+);
+
+// POST /api/dlpi/:dlpiId/initiate-succession
+router.post(
+  '/:dlpiId/initiate-succession',
+  authenticate,
+  requireRole(ROLES.ORACLE, ROLES.PATWARI, ROLES.CIRCLE_INSPECTOR, ROLES.TEHSILDAR),
+  dlpiParam,
+  body('deceasedHash').notEmpty(),
+  validate,
+  async (req, res) => {
+    try {
+      const { deceasedHash } = req.body;
+      const result = await submit('dlpi', 'InitiateSuccession', [req.params.dlpiId, deceasedHash]);
+      res.json(result);
+    } catch (e) {
+      res.status(500).json({ error: 'FABRIC_ERROR', message: e.message });
+    }
+  }
+);
+
+// POST /api/dlpi/:dlpiId/consent-succession
+router.post(
+  '/:dlpiId/consent-succession',
+  authenticate,
+  requireRole(ROLES.CITIZEN),
+  dlpiParam,
+  validate,
+  async (req, res) => {
+    try {
+      const result = await submit('dlpi', 'ConsentSuccession', [req.params.dlpiId, req.user.aadhaarHash]);
+      res.json(result);
+    } catch (e) {
+      res.status(500).json({ error: 'FABRIC_ERROR', message: e.message });
+    }
+  }
+);
+
 module.exports = router;

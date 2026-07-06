@@ -37,22 +37,22 @@ const DEMO_FAMILY_ID = 'FAM-UP-DAD-00100-001';
 const DEMO_DLPI      = 'DLPI-UP-DAD-00100';
 
 const DEMO_DECEASED = {
-  name:        'Deepak Narayan Singh',
-  aadhaarHash: 'sha256:owner1deepak3f8e2d1c7b4a09f6e5d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9',
+  name:        'Ramesh Kumar',
+  aadhaarHash: 'sha256:owner1ramesh3f8e2d1c7b4a09f6e5d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9',
   dod:         '2026-05-20',
   dob:         '1958-03-15',
 };
 
 const DEMO_CRS = {
-  deathCertCID:      'QmDeathCertDeepaK2026',
-  crsRegistrationNo: 'CRS-GBN-2026-00541',
+  deathCertCID:      'QmDeathCertRameshK2026',
+  crsRegistrationNo: 'CRS-GBN-2026-00891',
 };
 
 const MOCK_ALERT = {
   mutationId:          'MUT-DLPI-UP-DAD-00100-d4e5f6a7',
   dlpiId:              DEMO_DLPI,
   mutationType:        'Inheritance',
-  officerName:         'Suresh Kumar Yadav, Circle Inspector',
+  officerName:         'Amit Saxena, Tehsildar',
   alertSentAt:         new Date(Date.now() - 64_000).toISOString(),
   slaMet:              true,
   alertElapsedSeconds: 64,
@@ -61,21 +61,22 @@ const MOCK_ALERT = {
 // Offline fallback heirs — used when API is unreachable
 const OFFLINE_HEIRS: SuccessionHeir[] = [
   {
-    heirId: 'HEIR-001', name: 'Ankur Singh', aadhaarHash: 'sha256:heir1ankur3f8e2d1c7b4a09f6e5d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8',
+    heirId: 'HEIR-001', name: 'Arun Kumar', aadhaarHash: 'sha256:1a8df9e...',
     relation: 'Son', gender: 'Male', dob: '1988-03-15',
     isAlive: true, isAdult: true, isNri: false,
     share: '1/3', shareDecimal: 0.3333, legalNote: undefined,
     hasConsented: false, hasObjected: false,
   },
   {
-    heirId: 'HEIR-002', name: 'Nitin Singh', aadhaarHash: 'sha256:heir2nitin8e2d1c7b4a09f6e5d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8f7',
-    relation: 'Son', gender: 'Male', dob: '1991-07-22',
+    heirId: 'HEIR-002', name: 'Sunita Kumar', aadhaarHash: 'sha256:9c8d...',
+    relation: 'Daughter', gender: 'Female', dob: '1991-07-22',
     isAlive: true, isAdult: true, isNri: false,
-    share: '1/3', shareDecimal: 0.3333, legalNote: undefined,
+    share: '1/3', shareDecimal: 0.3333,
+    legalNote: 'Equal coparcenary rights per Hindu Succession (Amendment) Act 2005 Section 6(3). Daughters have same rights as sons by birth.',
     hasConsented: false, hasObjected: false,
   },
   {
-    heirId: 'HEIR-003', name: 'Neeta Singh', aadhaarHash: 'sha256:heir3neeta1c7b4a09f6e5d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8f7e6d5',
+    heirId: 'HEIR-003', name: 'Priya Kumar', aadhaarHash: 'sha256:7f42...',
     relation: 'Daughter', gender: 'Female', dob: '1994-11-08',
     isAlive: true, isAdult: true, isNri: false,
     share: '1/3', shareDecimal: 0.3334,
@@ -189,11 +190,11 @@ export default function SuccessionPage() {
 
     try {
       await recordHeirConsent(
-        caseData?.caseId || 'SUC-DLPI-UP-DAD-00100-a1b2c3d4',
+        DEMO_DLPI,
         {
           heirAadhaarHash: heir.aadhaarHash,
-          eSignTxHash:     `esign-${heirId}-${Date.now()}`,
-        },
+          eSignTxHash: '0x' + Array.from({length: 40}, () => Math.floor(Math.random()*16).toString(16)).join(''),
+        }
       );
     } catch { /* offline ok */ }
 

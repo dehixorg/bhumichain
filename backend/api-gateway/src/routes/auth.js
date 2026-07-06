@@ -29,10 +29,13 @@ function maskAadhaar(aadhaarNumber) {
 
 // Mock identity database for demo mode
 const MOCK_IDENTITIES = {
+  '999900010009': { role: 'citizen',          name: 'Ramesh Kumar', phone: '9999000009' },
   '999900010010': { role: 'citizen',          name: 'Priya Kumar',  phone: '9999000010' },
   '999900010011': { role: 'citizen',          name: 'Rakesh Agarwal',  phone: '9999000011' },
   '999900010012': { role: 'citizen',          name: 'Suresh Yadav', phone: '9999000012' },
   '999900010013': { role: 'citizen',          name: 'Meena Devi',   phone: '9999000013' },
+  '999900010014': { role: 'citizen',          name: 'Arun Kumar',   phone: '9999000014' },
+  '999900010015': { role: 'citizen',          name: 'Sunita Kumar', phone: '9999000015' },
   '999900010001': { role: 'tehsildar',        name: 'Amit Saxena',  phone: '9999000001', jurisdictionCode: 'GBN-DAD', tehsilCode: 'DAD' },
   '999900010002': { role: 'circle_inspector', name: 'Rajesh Verma', phone: '9999000002', jurisdictionCode: 'GBN-DAD', circleCode: 'DAD-C1', patwariCodes: ['DAD-P1','DAD-P2','DAD-P3'], tehsilCode: 'DAD' },
   '999900010003': { role: 'patwari',          name: 'Vijay Singh',  phone: '9999000003', jurisdictionCode: 'GBN-DAD', patwariCode: 'DAD-P1', villageCodes: ['DAD-001','DAD-002','DAD-003'], tehsilCode: 'DAD' },
@@ -281,6 +284,10 @@ router.post('/demo-token', (req, res) => {
       jurisdictionCode: 'GBN-DAD', patwariCode: 'DAD-P1',
       villageCodes: ['DAD-001', 'DAD-002', 'DAD-003'], tehsilCode: 'DAD',
     },
+    citizen_deceased: {
+      role: 'citizen', name: 'Ramesh Kumar',
+      aadhaarHash: computeAadhaarHash('999900010009'),
+    },
     citizen: {
       role: 'citizen', name: 'Priya Kumar',
       aadhaarHash: computeAadhaarHash('999900010010'),
@@ -290,12 +297,12 @@ router.post('/demo-token', (req, res) => {
       aadhaarHash: computeAadhaarHash('999900010011'),
     },
     citizen_heir1: {
-      role: 'citizen', name: 'Suresh Yadav',
-      aadhaarHash: computeAadhaarHash('999900010012'),
+      role: 'citizen', name: 'Arun Kumar',
+      aadhaarHash: computeAadhaarHash('999900010014'),
     },
     citizen_heir2: {
-      role: 'citizen', name: 'Meena Devi',
-      aadhaarHash: computeAadhaarHash('999900010013'),
+      role: 'citizen', name: 'Sunita Kumar',
+      aadhaarHash: computeAadhaarHash('999900010015'),
     },
   };
 

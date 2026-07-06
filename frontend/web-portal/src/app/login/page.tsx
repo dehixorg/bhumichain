@@ -37,34 +37,34 @@ const DEMO_PERSONAS = [
 ];
 
 const DEMO_CREDENTIALS: DemoCredential[] = [
-  {
-    persona: 'citizen',
-    tab: 'citizen',
-    role: 'Citizen',
-    name: 'Priya Kumar',
-    aadhaar: '999900010010',
-  },
-  {
-    persona: 'citizen_buyer',
-    tab: 'citizen',
-    role: 'Buyer',
-    name: 'Rakesh Agarwal',
-    aadhaar: '999900010011',
-  },
-  {
-    persona: 'citizen_heir1',
-    tab: 'citizen',
-    role: 'Heir',
-    name: 'Suresh Yadav',
-    aadhaar: '999900010012',
-  },
-  {
-    persona: 'citizen_heir2',
-    tab: 'citizen',
-    role: 'Heir',
-    name: 'Meena Devi',
-    aadhaar: '999900010013',
-  },
+    {
+      persona: 'citizen_deceased',
+      tab: 'citizen',
+      role: 'Citizen',
+      name: 'Ramesh Kumar',
+      aadhaar: '999900010009',
+    },
+    {
+      persona: 'citizen',
+      tab: 'citizen',
+      role: 'Heir 1',
+      name: 'Priya Kumar',
+      aadhaar: '999900010010',
+    },
+    {
+      persona: 'citizen_heir1',
+      tab: 'citizen',
+      role: 'Heir 2',
+      name: 'Arun Kumar',
+      aadhaar: '999900010014',
+    },
+    {
+      persona: 'citizen_heir2',
+      tab: 'citizen',
+      role: 'Heir 3',
+      name: 'Sunita Kumar',
+      aadhaar: '999900010015',
+    },
   {
     persona: 'tehsildar',
     tab: 'officer',

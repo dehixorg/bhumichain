@@ -123,15 +123,17 @@ export async function initiateSuccession(payload: {
   deathCertCID: string;
   crsRegistrationNo: string;
 }) {
-  const res = await api.post('/api/succession/initiate', payload);
+  const res = await api.post(`/api/dlpi/${payload.dlpiId}/initiate-succession`, {
+    deceasedHash: payload.deceasedAadhaarHash
+  });
   return res.data;
 }
 
-export async function recordHeirConsent(caseId: string, payload: {
+export async function recordHeirConsent(dlpiId: string, payload: {
   heirAadhaarHash: string;
   eSignTxHash: string;
 }) {
-  const res = await api.post(`/api/succession/${caseId}/consent`, payload);
+  const res = await api.post(`/api/dlpi/${dlpiId}/consent-succession`, payload);
   return res.data;
 }
 

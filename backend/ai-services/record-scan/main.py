@@ -295,7 +295,7 @@ async def approve_scan_tehsildar_by_dlpi(dlpiId: str, req: TehsildarApproveReque
         "boundaryPolygon":     None,
         "circleRateINR":       5000000,
         "ipfsCID":             scan.ipfsCID,
-        "sourceType":          "DILRMP_MIGRATION" # Faking it so Go chaincode sets SEEDED_UNVERIFIED
+        "sourceType":          "RECORD_SCAN_AI"
     }
 
     try:
