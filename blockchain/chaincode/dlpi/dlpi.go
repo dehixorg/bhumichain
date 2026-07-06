@@ -624,10 +624,17 @@ func (c *DLPIContract) UpdateOwners(ctx contractapi.TransactionContextInterface,
 
 	// Keep all owners NOT in the remove set
 	remaining := []CoOwner{}
+	var removedCount int
 	for _, o := range dlpi.Owners {
 		if !removeSet[o.AadhaarHash] {
 			remaining = append(remaining, o)
+		} else {
+			removedCount++
 		}
+	}
+
+	if removedCount == 0 && len(sellerHashes) > 0 {
+		return fmt.Errorf("TRANSFER_REJECTED: Seller not found among current owners. Property may have already been transferred.")
 	}
 
 	// Add new buyers (already verified at transfer time)

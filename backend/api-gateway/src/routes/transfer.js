@@ -252,7 +252,19 @@ router.get(
       if (typeof transfers === 'string') {
         try { transfers = JSON.parse(transfers); } catch (e) {}
       }
-      res.json(transfers || []);
+      
+      let transferList = Array.isArray(transfers) ? transfers : [];
+
+      // Demo UX Fix: Group by dlpiId and only return the most recently initiated transfer
+      // This prevents the UI from showing duplicate rows if the user clicked Initiate multiple times
+      const latestTransfers = new Map();
+      for (const t of transferList) {
+        if (!latestTransfers.has(t.dlpiId) || new Date(t.initiatedAt) > new Date(latestTransfers.get(t.dlpiId).initiatedAt)) {
+          latestTransfers.set(t.dlpiId, t);
+        }
+      }
+      
+      res.json(Array.from(latestTransfers.values()));
     } catch (e) {
       const details = e.details ? ` - Details: ${JSON.stringify(e.details)}` : '';
       res.status(500).json({ error: 'FABRIC_ERROR', message: e.message + details });
@@ -394,6 +406,20 @@ router.post(
       });
       res.json(result);
     } catch (e) {
+      if (e.message && (e.message.includes('owner shares sum to 2.0') || e.message.includes('Seller not found'))) {
+        try {
+          // Auto-reject on blockchain so it stops haunting the UI
+          await submit('property-transfer', 'RejectTransfer', [
+            req.params.transferId, 'Auto-rejected: Property was already transferred in a previous duplicate transaction.', 'SYSTEM'
+          ]);
+        } catch (rejectErr) {
+          console.warn('[Demo] Auto-reject failed:', rejectErr.message);
+        }
+        return res.status(400).json({ 
+          error: 'STALE_TRANSFER', 
+          message: '❌ This transfer is permanently invalid because the property has ALREADY been transferred to the buyer in one of your previous duplicate transactions. It has now been automatically rejected. Please go back to the dashboard.'
+        });
+      }
       const details = e.details ? ` - Details: ${JSON.stringify(e.details)}` : '';
       res.status(500).json({ error: 'FABRIC_ERROR', message: e.message + details });
     }

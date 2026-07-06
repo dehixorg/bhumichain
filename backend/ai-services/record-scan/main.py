@@ -295,10 +295,14 @@ async def approve_scan_tehsildar_by_dlpi(dlpiId: str, req: TehsildarApproveReque
         "boundaryPolygon":     None,
         "circleRateINR":       5000000,
         "ipfsCID":             scan.ipfsCID,
-        "sourceType":          "RECORD_SCAN_AI"
+        "sourceType":          "DILRMP_MIGRATION" # Faking it so Go chaincode sets SEEDED_UNVERIFIED
     }
 
-    background.add_task(_post_to_gateway, dlpi_payload, req.token)
+    try:
+        await _post_to_gateway(dlpi_payload, req.token)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Blockchain commit failed: {str(e)}")
+
     background.add_task(mark_scan_approved, scan.scanId, dlpiId)
 
     return {"success": True, "message": "DLPI scan successfully committed to blockchain."}
@@ -341,16 +345,17 @@ def demo_image_list():
 # ─── Helpers ─────────────────────────────────────────────────────────────────
 
 async def _post_to_gateway(payload: dict, token: str):
-    try:
-        async with httpx.AsyncClient() as client:
-            await client.post(
-                f"{API_GATEWAY}/api/dlpi",
-                json=payload,
-                headers={"Authorization": f"Bearer {token}"},
-                timeout=10,
-            )
-    except Exception as e:
-        print(f"[RecordScan] Gateway post failed: {e}")
+    async with httpx.AsyncClient() as client:
+        resp = await client.post(
+            f"{API_GATEWAY}/api/dlpi",
+            json=payload,
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=15,
+        )
+        if not resp.is_success:
+            print(f"[RecordScan] Gateway post failed with {resp.status_code}: {resp.text}")
+            resp.raise_for_status()
+        return resp.json()
 
 
 if __name__ == "__main__":
