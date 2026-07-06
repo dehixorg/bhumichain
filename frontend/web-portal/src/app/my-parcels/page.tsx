@@ -24,6 +24,7 @@ interface Parcel {
   areaHectares:      number;
   encumbranceStatus: string;
   claimStatus:       string;
+  successionStatus?: string;
   disputeNote?:      string;
   isTribal?:         boolean;
   isCoparcenary?:    boolean;
@@ -135,6 +136,9 @@ function ParcelCard({ parcel }: { parcel: Parcel }) {
   const StatusIcon = status.icon;
 
   const cta = (() => {
+    if (parcel.successionStatus === 'SUCCESSION_PENDING') {
+      return { label: 'Review Inheritance', href: `/succession`, primary: true };
+    }
     switch (parcel.claimStatus) {
       case 'SEEDED_UNVERIFIED': 
       case 'SCAN_PENDING_SRO':  return { label: 'Claim Now',       href: `/claim/${parcel.dlpiId}`, primary: true };
@@ -161,13 +165,21 @@ function ParcelCard({ parcel }: { parcel: Parcel }) {
             {parcel.tehsil}, {parcel.district}
           </div>
         </div>
-        <span className={clsx(
-          'shrink-0 flex items-center gap-1.5 px-2 py-1 rounded-full border text-xs font-semibold',
-          status.bg, status.color,
-        )}>
-          <StatusIcon className="w-3 h-3" />
-          {status.label}
-        </span>
+        <div className="flex flex-col items-end gap-1">
+          <span className={clsx(
+            'shrink-0 flex items-center gap-1.5 px-2 py-1 rounded-full border text-xs font-semibold',
+            status.bg, status.color,
+          )}>
+            <StatusIcon className="w-3 h-3" />
+            {status.label}
+          </span>
+          {parcel.successionStatus === 'SUCCESSION_PENDING' && (
+            <span className="shrink-0 flex items-center gap-1.5 px-2 py-1 rounded-full border text-xs font-semibold bg-purple-900 bg-opacity-40 border-purple-700 text-purple-400">
+              <Clock className="w-3 h-3" />
+              Pending Inheritance
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Details grid */}

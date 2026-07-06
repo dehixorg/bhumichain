@@ -918,9 +918,10 @@ func (c *DLPIContract) AddJangananaFlag(ctx contractapi.TransactionContextInterf
 func (c *DLPIContract) QueryDLPIsByOwner(ctx contractapi.TransactionContextInterface,
 	ownerAadhaarHash string) ([]*DLPI, error) {
 
-	// CouchDB query: parcels where owners array contains this hash
+	// CouchDB query: parcels where owners array contains this hash OR pendingSuccession heirs contains this hash
 	query := fmt.Sprintf(
-		`{"selector":{"owners":{"$elemMatch":{"aadhaarHash":"%s"}}}}`,
+		`{"selector":{"$or":[{"owners":{"$elemMatch":{"aadhaarHash":"%s"}}},{"pendingSuccession":{"heirs":{"$elemMatch":{"aadhaarHash":"%s"}}}}]}}`,
+		ownerAadhaarHash,
 		ownerAadhaarHash,
 	)
 	iter, err := ctx.GetStub().GetQueryResult(query)
