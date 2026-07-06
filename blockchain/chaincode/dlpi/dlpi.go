@@ -19,15 +19,15 @@ type CoOwner struct {
 	ShareDecimal float64 `json:"shareDecimal"` // 0.333... for computation
 	OwnerSince   string  `json:"ownerSince"`
 	IsVerified   bool    `json:"isVerified"`  // has the owner claimed & eSigned?
-	VerifiedAt   string  `json:"verifiedAt,omitempty"`
+	VerifiedAt   string  `json:"verifiedAt,omitempty" metadata:",optional"`
 	IsTribal     bool    `json:"isTribal"`
-	TribeId      string  `json:"tribeId,omitempty"`
+	TribeId      string  `json:"tribeId,omitempty" metadata:",optional"`
 }
 
 type DLPI struct {
 	DLPIId              string        `json:"dlpiId"`
 	SurveyNumber        string        `json:"surveyNumber"`
-	KhasraNo            string        `json:"khasraNo,omitempty"` // UP-specific
+	KhasraNo            string        `json:"khasraNo,omitempty" metadata:",optional"` // UP-specific
 	Tehsil              string        `json:"tehsil"`
 	TehsilCode          string        `json:"tehsilCode"`
 	District            string        `json:"district"`
@@ -52,10 +52,10 @@ type DLPI struct {
 
 	// Succession
 	SuccessionStatus  string       `json:"successionStatus"` // ACTIVE | SUCCESSION_PENDING | SUCCESSION_COMPLETE
-	CoparcenaryMeta   *CoparcenaryMeta `json:"coparcenaryMeta,omitempty"` // law metadata only
+	CoparcenaryMeta   *CoparcenaryMeta `json:"coparcenaryMeta,omitempty" metadata:",optional"` // law metadata only
 
 	// Tribal
-	TribalProtection *TribalProt `json:"tribalProtection,omitempty"`
+	TribalProtection *TribalProt `json:"tribalProtection,omitempty" metadata:",optional"`
 
 	// Spatial
 	Location  Location  `json:"location"`
@@ -65,7 +65,7 @@ type DLPI struct {
 	MutationHistory    []MutationEntry `json:"mutationHistory"`
 	IPFSCID            string          `json:"ipfsCID"`
 	SourceType         string          `json:"sourceType"` // DILRMP_MIGRATION | RECORD_SCAN | SVAMITVA | MANUAL
-	JangananaAnomalies []JangananaFlag `json:"jangananaAnomalies,omitempty"`
+	JangananaAnomalies []JangananaFlag `json:"jangananaAnomalies,omitempty" metadata:",optional"`
 	CreatedAt          string          `json:"createdAt"`
 	UpdatedAt          string          `json:"updatedAt"`
 	TxHash             string          `json:"txHash"`
@@ -118,7 +118,7 @@ type Location struct {
 
 type Valuation struct {
 	CircleRateINR     int64  `json:"circleRateINR"`
-	OracleEstimateINR int64  `json:"oracleEstimateINR,omitempty"`
+	OracleEstimateINR int64  `json:"oracleEstimateINR,omitempty" metadata:",optional"`
 	LastAssessedDate  string `json:"lastAssessedDate"`
 }
 
