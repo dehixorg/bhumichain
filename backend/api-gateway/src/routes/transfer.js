@@ -406,7 +406,9 @@ router.post(
       });
       res.json(result);
     } catch (e) {
-      if (e.message && (e.message.includes('owner shares sum to 2.0') || e.message.includes('Seller not found'))) {
+      const detailsStr = e.details ? JSON.stringify(e.details) : '';
+      if ((e.message && (e.message.includes('owner shares sum to 2.0') || e.message.includes('Seller not found'))) ||
+          (detailsStr.includes('owner shares sum to 2.0') || detailsStr.includes('Seller not found'))) {
         try {
           // Auto-reject on blockchain so it stops haunting the UI
           await submit('property-transfer', 'RejectTransfer', [
@@ -420,8 +422,7 @@ router.post(
           message: '❌ This transfer is permanently invalid because the property has ALREADY been transferred to the buyer in one of your previous duplicate transactions. It has now been automatically rejected. Please go back to the dashboard.'
         });
       }
-      const details = e.details ? ` - Details: ${JSON.stringify(e.details)}` : '';
-      res.status(500).json({ error: 'FABRIC_ERROR', message: e.message + details });
+      res.status(500).json({ error: 'FABRIC_ERROR', message: e.message + (detailsStr ? ` - Details: ${detailsStr}` : '') });
     }
   },
 );
