@@ -38,13 +38,13 @@ interface QueueItem {
 // ── Status config ─────────────────────────────────────────────────────────────
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; icon: React.ElementType }> = {
-  CLAIM_SUBMITTED: { label: 'Claim Submitted', color: 'text-saffron-400', bg: 'bg-orange-900/30 border-orange-700', icon: Clock },
-  UNDER_REVIEW:    { label: 'Under Review',    color: 'text-blue-400',    bg: 'bg-blue-900/30 border-blue-700',    icon: Clock },
-  CI_APPROVED:     { label: 'CI Approved',     color: 'text-purple-400',  bg: 'bg-purple-900/30 border-purple-700', icon: CheckCircle },
-  VERIFIED:        { label: 'Verified',        color: 'text-green-400',   bg: 'bg-green-900/30 border-green-700',  icon: CheckCircle },
-  DISPUTED:        { label: 'Disputed',        color: 'text-red-400',     bg: 'bg-red-900/30 border-red-700',      icon: AlertTriangle },
-  SCAN_PENDING_SRO: { label: 'Pending SRO',    color: 'text-amber-400',   bg: 'bg-amber-900/30 border-amber-700',  icon: Clock },
-  SCAN_PENDING_TEHSILDAR: { label: 'Pending Tehsildar', color: 'text-orange-400', bg: 'bg-orange-900/30 border-orange-700', icon: Clock },
+  CLAIM_SUBMITTED: { label: 'Claim Submitted', color: 'text-orange-700', bg: 'bg-orange-50 border-orange-200', icon: Clock },
+  UNDER_REVIEW:    { label: 'Under Review',    color: 'text-blue-700',   bg: 'bg-blue-50 border-blue-200',     icon: Clock },
+  CI_APPROVED:     { label: 'CI Approved',     color: 'text-purple-700', bg: 'bg-purple-50 border-purple-200', icon: CheckCircle },
+  VERIFIED:        { label: 'Verified',        color: 'text-green-700',  bg: 'bg-green-50 border-green-200',   icon: CheckCircle },
+  DISPUTED:        { label: 'Disputed',        color: 'text-red-700',    bg: 'bg-red-50 border-red-200',       icon: AlertTriangle },
+  SCAN_PENDING_SRO: { label: 'Pending SRO',    color: 'text-amber-700',  bg: 'bg-amber-50 border-amber-200',   icon: Clock },
+  SCAN_PENDING_TEHSILDAR: { label: 'Pending Tehsildar', color: 'text-orange-700', bg: 'bg-orange-50 border-orange-200', icon: Clock },
 };
 
 // Role → which statuses this officer should act on
@@ -114,17 +114,17 @@ function QueueRow({ item, userRole, fetchQueue }: { item: QueueItem; userRole: s
   }
 
   return (
-    <tr className="border-b border-gray-800 hover:bg-gray-900/50 transition-colors group">
+    <tr className="border-b border-gray-100 hover:bg-gray-50 transition-colors group">
       {/* DLPI + owner */}
       <td className="px-4 py-3">
-        <div className="font-mono text-brand-400 text-xs font-semibold">{item.dlpiId}</div>
-        <div className="text-gray-200 text-sm font-medium mt-0.5">{item.ownerName}</div>
+        <div className="font-mono text-[#0F4C81] text-xs font-semibold">{item.dlpiId}</div>
+        <div className="text-gray-900 text-sm font-medium mt-0.5">{item.ownerName}</div>
         <div className="text-gray-500 text-xs">{item.gram}, {item.tehsil}</div>
       </td>
 
       {/* Khasra + type */}
       <td className="px-4 py-3 text-sm">
-        <div className="text-gray-200 font-mono">{item.khasraNo}</div>
+        <div className="text-gray-900 font-mono">{item.khasraNo}</div>
         <div className="text-gray-500 text-xs">{item.landType} · {formatArea(item.areaHectares)}</div>
       </td>
 
@@ -141,11 +141,11 @@ function QueueRow({ item, userRole, fetchQueue }: { item: QueueItem; userRole: s
 
       {/* Age */}
       <td className="px-4 py-3 text-sm">
-        <span className={clsx('font-medium', days >= 7 ? 'text-red-400' : 'text-gray-300')}>
+        <span className={clsx('font-medium', days >= 7 ? 'text-red-600' : 'text-gray-700')}>
           {days}d
         </span>
         {item.priority === 'URGENT' && (
-          <span className="ml-2 px-1.5 py-0.5 bg-red-900/40 border border-red-700 text-red-400 text-xs rounded-full font-semibold">
+          <span className="ml-2 px-1.5 py-0.5 bg-red-50 border border-red-200 text-red-600 text-xs rounded-full font-semibold">
             URGENT
           </span>
         )}
@@ -155,22 +155,22 @@ function QueueRow({ item, userRole, fetchQueue }: { item: QueueItem; userRole: s
       <td className="px-4 py-3">
         <div className="flex flex-wrap gap-1">
           {item.isTribal && (
-            <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-amber-900/40 border border-amber-700 text-amber-400 text-xs">
+            <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-xs">
               <Shield className="w-3 h-3" />ST
             </span>
           )}
           {item.isCoparcenary && (
-            <span className="px-1.5 py-0.5 rounded-full bg-purple-900/40 border border-purple-700 text-purple-400 text-xs">
+            <span className="px-1.5 py-0.5 rounded-full bg-purple-50 border border-purple-200 text-purple-700 text-xs">
               Joint
             </span>
           )}
           {item.encumbranceStatus !== 'CLEAR' && (
-            <span className="px-1.5 py-0.5 rounded-full bg-yellow-900/40 border border-yellow-700 text-yellow-400 text-xs">
+            <span className="px-1.5 py-0.5 rounded-full bg-yellow-50 border border-yellow-200 text-yellow-700 text-xs">
               {item.encumbranceStatus}
             </span>
           )}
           {item.scanId && (
-            <span className="px-1.5 py-0.5 rounded-full bg-gray-800 border border-gray-700 text-gray-400 text-xs">
+            <span className="px-1.5 py-0.5 rounded-full bg-gray-100 border border-gray-200 text-gray-500 text-xs">
               Scan
             </span>
           )}
@@ -180,12 +180,12 @@ function QueueRow({ item, userRole, fetchQueue }: { item: QueueItem; userRole: s
       {/* Action */}
       <td className="px-4 py-3">
         {item.claimStatus === 'SCAN_PENDING_SRO' && userRole === 'circle_inspector' ? (
-          <button onClick={() => handleScanApprove('/scan-approve-sro')} disabled={busy} className="bg-brand-600 hover:bg-brand-700 px-3 py-1.5 text-xs font-semibold text-white rounded-lg flex items-center gap-1.5 transition-colors disabled:opacity-50">
+          <button onClick={() => handleScanApprove('/scan-approve-sro')} disabled={busy} className="bg-[#0F4C81] hover:bg-[#0c3d67] px-3 py-1.5 text-xs font-semibold text-white rounded-lg flex items-center gap-1.5 transition-colors disabled:opacity-50">
              {busy ? <RefreshCw className="w-3 h-3 animate-spin" /> : <CheckCircle className="w-3 h-3" />}
              Approve Scan
           </button>
         ) : item.claimStatus === 'SCAN_PENDING_TEHSILDAR' && userRole === 'tehsildar' ? (
-          <button onClick={() => handleScanApprove('/scan-approve-tehsildar')} disabled={busy} className="bg-brand-600 hover:bg-brand-700 px-3 py-1.5 text-xs font-semibold text-white rounded-lg flex items-center gap-1.5 transition-colors disabled:opacity-50">
+          <button onClick={() => handleScanApprove('/scan-approve-tehsildar')} disabled={busy} className="bg-[#0F4C81] hover:bg-[#0c3d67] px-3 py-1.5 text-xs font-semibold text-white rounded-lg flex items-center gap-1.5 transition-colors disabled:opacity-50">
              {busy ? <RefreshCw className="w-3 h-3 animate-spin" /> : <CheckCircle className="w-3 h-3" />}
              Final Approve
           </button>
@@ -195,8 +195,8 @@ function QueueRow({ item, userRole, fetchQueue }: { item: QueueItem; userRole: s
             className={clsx(
               'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors',
               myTurn
-                ? 'bg-brand-600 hover:bg-brand-700 text-white'
-                : 'bg-gray-800 hover:bg-gray-700 text-gray-300',
+                ? 'bg-[#0F4C81] hover:bg-[#0c3d67] text-white'
+                : 'bg-gray-100 hover:bg-gray-200 text-gray-700',
             )}
           >
             {myTurn ? actionLabel(userRole) : 'View'}
@@ -212,10 +212,10 @@ function QueueRow({ item, userRole, fetchQueue }: { item: QueueItem; userRole: s
 
 function SkeletonRow() {
   return (
-    <tr className="border-b border-gray-800 animate-pulse">
+    <tr className="border-b border-gray-100 animate-pulse">
       {[160, 120, 100, 60, 80, 80].map((w, i) => (
         <td key={i} className="px-4 py-4">
-          <div className="h-3 bg-gray-800 rounded" style={{ width: w }} />
+          <div className="h-3 bg-gray-100 rounded" style={{ width: w }} />
         </td>
       ))}
     </tr>
@@ -226,10 +226,10 @@ function SkeletonRow() {
 
 function StatCard({ label, value, sub, color }: { label: string; value: string | number; sub?: string; color?: string }) {
   return (
-    <div className="card">
-      <div className="text-xs text-gray-500 font-medium uppercase tracking-wider">{label}</div>
-      <div className={clsx('text-3xl font-bold mt-1', color ?? 'text-gray-100')}>{value}</div>
-      {sub && <div className="text-xs text-gray-600 mt-0.5">{sub}</div>}
+    <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+      <div className="text-xs text-gray-500 font-semibold uppercase tracking-wider">{label}</div>
+      <div className={clsx('text-3xl font-bold mt-1', color ?? 'text-gray-900')}>{value}</div>
+      {sub && <div className="text-xs text-gray-400 mt-0.5">{sub}</div>}
     </div>
   );
 }
@@ -291,7 +291,7 @@ export default function OfficerDashboardPage() {
   };
 
   return (
-    <div className="flex h-screen bg-gray-950 overflow-hidden">
+    <div className="flex h-screen bg-[#F8FAFC] overflow-hidden">
       <Sidebar />
 
       <main className="flex-1 overflow-y-auto">
@@ -301,14 +301,14 @@ export default function OfficerDashboardPage() {
           <div className="flex items-start justify-between">
             <div>
               <div className="flex items-center gap-3">
-                <h1 className="text-2xl font-bold text-gray-100">Officer Queue</h1>
+                <h1 className="text-2xl font-bold text-gray-900">Officer Queue</h1>
                 {user && (
-                  <span className="px-2 py-0.5 bg-brand-900/40 border border-brand-700 text-brand-400 text-xs font-semibold rounded-full">
+                  <span className="px-2.5 py-1 bg-[#0F4C81]/10 border border-[#0F4C81]/20 text-[#0F4C81] text-xs font-bold rounded-full">
                     {roleLabel(user.role)}
                   </span>
                 )}
               </div>
-              <p className="text-gray-400 text-sm mt-1">
+              <p className="text-gray-500 text-sm mt-1">
                 {user?.name && <span>{user.name} · </span>}
                 Dadri Tehsil, Gautam Buddha Nagar · BhumiChain
               </p>
@@ -316,7 +316,7 @@ export default function OfficerDashboardPage() {
             <div className="flex items-center gap-2">
               <Link
                 href="/scan"
-                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium bg-gray-800 hover:bg-gray-700 text-gray-300 transition-colors"
+                className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium bg-white border border-gray-200 hover:border-gray-300 text-gray-700 transition-colors shadow-sm"
               >
                 <FileText className="w-4 h-4" />
                 New Scan
@@ -324,7 +324,7 @@ export default function OfficerDashboardPage() {
               <button
                 onClick={fetchQueue}
                 disabled={loading}
-                className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-400 hover:text-gray-200 hover:bg-gray-800 transition-colors disabled:opacity-50"
+                className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors disabled:opacity-50 border border-transparent hover:border-gray-200"
               >
                 <RefreshCw className={clsx('w-4 h-4', loading && 'animate-spin')} />
                 Refresh
@@ -335,23 +335,23 @@ export default function OfficerDashboardPage() {
           {/* Stats */}
           <div className="grid grid-cols-4 gap-4">
             <StatCard label="Total in Queue"    value={queue.length}  sub="Dadri tehsil" />
-            <StatCard label="Needs Your Action" value={myTurnCount}   sub="awaiting review" color={myTurnCount > 0 ? 'text-brand-400' : 'text-gray-100'} />
-            <StatCard label="Urgent"            value={urgentCount}   sub=">7 days pending" color={urgentCount > 0 ? 'text-red-400' : 'text-gray-100'} />
-            <StatCard label="CI Approved"       value={counts.ci_approved} sub="awaiting tehsildar" color={counts.ci_approved > 0 ? 'text-purple-400' : 'text-gray-100'} />
+            <StatCard label="Needs Your Action" value={myTurnCount}   sub="awaiting review" color={myTurnCount > 0 ? 'text-[#0F4C81]' : 'text-gray-900'} />
+            <StatCard label="Urgent"            value={urgentCount}   sub=">7 days pending" color={urgentCount > 0 ? 'text-red-600' : 'text-gray-900'} />
+            <StatCard label="CI Approved"       value={counts.ci_approved} sub="awaiting tehsildar" color={counts.ci_approved > 0 ? 'text-purple-600' : 'text-gray-900'} />
           </div>
 
           {/* Error */}
           {error && (
-            <div className="flex items-center gap-3 p-4 rounded-xl bg-red-900/30 border border-red-700 text-red-300 text-sm">
+            <div className="flex items-center gap-3 p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm">
               <AlertTriangle className="w-4 h-4 shrink-0" />
               {error}
             </div>
           )}
 
           {/* Tabs + Table */}
-          <div className="card !p-0 overflow-hidden">
+          <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
             {/* Tabs */}
-            <div className="flex items-center gap-0 border-b border-gray-800 px-4">
+            <div className="flex items-center gap-0 border-b border-gray-200 px-4 bg-gray-50/50">
               {TABS.map(t => (
                 <button
                   key={t.key}
@@ -359,15 +359,15 @@ export default function OfficerDashboardPage() {
                   className={clsx(
                     'px-4 py-3 text-sm font-medium border-b-2 transition-colors -mb-px',
                     tab === t.key
-                      ? 'border-brand-500 text-brand-400'
-                      : 'border-transparent text-gray-500 hover:text-gray-300',
+                      ? 'border-[#0F4C81] text-[#0F4C81]'
+                      : 'border-transparent text-gray-500 hover:text-gray-700',
                   )}
                 >
                   {t.label}
                   {counts[t.key] > 0 && (
                     <span className={clsx(
-                      'ml-1.5 px-1.5 py-0.5 rounded-full text-xs',
-                      tab === t.key ? 'bg-brand-900/60 text-brand-300' : 'bg-gray-800 text-gray-500',
+                      'ml-1.5 px-1.5 py-0.5 rounded-full text-xs font-semibold',
+                      tab === t.key ? 'bg-[#0F4C81]/10 text-[#0F4C81]' : 'bg-gray-100 text-gray-500',
                     )}>
                       {counts[t.key]}
                     </span>
@@ -375,7 +375,7 @@ export default function OfficerDashboardPage() {
                 </button>
               ))}
               <div className="ml-auto pr-1 py-2">
-                <Filter className="w-4 h-4 text-gray-600" />
+                <Filter className="w-4 h-4 text-gray-400" />
               </div>
             </div>
 
@@ -383,13 +383,13 @@ export default function OfficerDashboardPage() {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-gray-800 bg-gray-900/50">
-                    <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">DLPI / Owner</th>
-                    <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Khasra / Land</th>
-                    <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
-                    <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Age</th>
-                    <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Flags</th>
-                    <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Action</th>
+                  <tr className="border-b border-gray-100 bg-gray-50">
+                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">DLPI / Owner</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Khasra / Land</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Age</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Flags</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Action</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -398,9 +398,9 @@ export default function OfficerDashboardPage() {
                   ) : filtered.length === 0 ? (
                     <tr>
                       <td colSpan={6} className="py-16 text-center">
-                        <Users className="w-10 h-10 text-gray-700 mx-auto mb-3" />
-                        <p className="text-gray-400 font-medium">No items in this category</p>
-                        <p className="text-gray-600 text-sm mt-1">Check other tabs or refresh the queue.</p>
+                        <Users className="w-10 h-10 text-gray-600 mx-auto mb-3" />
+                        <p className="text-gray-500 font-medium">No items in this category</p>
+                        <p className="text-gray-400 text-sm mt-1">Check other tabs or refresh the queue.</p>
                       </td>
                     </tr>
                   ) : (
@@ -413,10 +413,10 @@ export default function OfficerDashboardPage() {
             </div>
 
             {!loading && filtered.length > 0 && (
-              <div className="px-4 py-3 border-t border-gray-800 text-xs text-gray-600 flex items-center justify-between">
+              <div className="px-4 py-3 border-t border-gray-100 text-xs text-gray-500 flex items-center justify-between">
                 <span>Showing {filtered.length} of {queue.length} items · Dadri tehsil</span>
                 <span className="flex items-center gap-1">
-                  <Zap className="w-3 h-3 text-brand-500" />
+                  <Zap className="w-3 h-3 text-[#0F4C81]" />
                   BhumiChain · Hyperledger Fabric v2.5
                 </span>
               </div>
@@ -425,31 +425,31 @@ export default function OfficerDashboardPage() {
 
           {/* Pending Transfers Queue */}
           {transfersQueue.length > 0 && (
-            <div className="card !p-0 overflow-hidden mt-6 border-brand-900/50">
-              <div className="flex items-center gap-2 border-b border-gray-800 px-4 py-3 bg-brand-950/20">
-                <FileText className="w-4 h-4 text-brand-400" />
-                <h2 className="text-sm font-bold text-gray-200">Pending Property Transfers (Sales)</h2>
+            <div className="bg-white border border-gray-200 rounded-xl overflow-hidden mt-6 shadow-sm">
+              <div className="flex items-center gap-2 border-b border-gray-100 px-4 py-3 bg-[#0F4C81]/5">
+                <FileText className="w-4 h-4 text-[#0F4C81]" />
+                <h2 className="text-sm font-bold text-gray-900">Pending Property Transfers (Sales)</h2>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="border-b border-gray-800 bg-gray-900/50">
-                      <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Transfer ID</th>
-                      <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Parcel DLPI</th>
-                      <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
-                      <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Action</th>
+                    <tr className="border-b border-gray-100 bg-gray-50">
+                      <th className="px-4 py-2.5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Transfer ID</th>
+                      <th className="px-4 py-2.5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Parcel DLPI</th>
+                      <th className="px-4 py-2.5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
+                      <th className="px-4 py-2.5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Action</th>
                     </tr>
                   </thead>
                   <tbody>
                     {transfersQueue.map(item => (
-                      <tr key={item.transferId} className="border-b border-gray-800 hover:bg-gray-900/50 transition-colors">
-                        <td className="px-4 py-3 font-mono text-brand-400 text-xs font-semibold">{item.transferId}</td>
-                        <td className="px-4 py-3 text-gray-200 font-mono text-sm">{item.dlpiId}</td>
-                        <td className="px-4 py-3 text-xs text-amber-400">{item.status}</td>
+                      <tr key={item.transferId} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                        <td className="px-4 py-3 font-mono text-[#0F4C81] text-xs font-semibold">{item.transferId}</td>
+                        <td className="px-4 py-3 text-gray-900 font-mono text-sm">{item.dlpiId}</td>
+                        <td className="px-4 py-3 text-xs text-amber-700 font-semibold">{item.status}</td>
                         <td className="px-4 py-3">
                            <Link
                              href={`/officer-dashboard/review-transfer/${item.transferId}`}
-                             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors bg-brand-600 hover:bg-brand-700 text-white"
+                             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors bg-[#0F4C81] hover:bg-[#0c3d67] text-white"
                            >
                              Review
                              <ChevronRight className="w-3 h-3" />

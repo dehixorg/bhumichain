@@ -72,7 +72,7 @@ export default function ReviewTransferPage() {
     }
   };
 
-  if (loading) return <div className="flex items-center justify-center h-screen bg-gray-950 text-brand-400">Loading...</div>;
+  if (loading) return <div className="flex items-center justify-center h-screen bg-[#F8FAFC] text-[#0F4C81]">Loading...</div>;
   if (error || !transfer) return <div className="p-8 text-red-400">{error || 'Not found'}</div>;
 
   let canApprove = false;
@@ -93,18 +93,18 @@ export default function ReviewTransferPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 text-gray-200">
-      <header className="border-b border-gray-800 bg-gray-900/50 sticky top-0 z-10 backdrop-blur">
+    <div className="min-h-screen bg-[#F8FAFC] text-gray-700">
+      <header className="border-b border-gray-200 bg-white/50 sticky top-0 z-10 backdrop-blur">
         <div className="max-w-4xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button onClick={() => router.back()} className="p-2 hover:bg-gray-800 rounded-full transition-colors">
               <ArrowLeft className="w-5 h-5 text-gray-400" />
             </button>
             <div>
-              <h1 className="text-lg font-bold text-gray-100 flex items-center gap-2">
+              <h1 className="text-lg font-bold text-gray-900 flex items-center gap-2">
                 Review Transfer
               </h1>
-              <div className="text-xs text-brand-400 font-mono mt-0.5">{transferId}</div>
+              <div className="text-xs text-[#0F4C81] font-mono mt-0.5">{transferId}</div>
             </div>
           </div>
           {canApprove && (
@@ -122,11 +122,11 @@ export default function ReviewTransferPage() {
 
       <main className="max-w-4xl mx-auto px-6 py-8 space-y-6">
         <div className="card space-y-4">
-           <h2 className="text-sm font-bold text-gray-200 border-b border-gray-800 pb-2">Transfer Details</h2>
+           <h2 className="text-sm font-bold text-gray-700 border-b border-gray-200 pb-2">Transfer Details</h2>
            <div className="grid grid-cols-2 gap-4 text-sm">
              <div>
                <div className="text-gray-500 text-xs mb-1">Parcel DLPI</div>
-               <div className="font-mono text-brand-400">{transfer.dlpiId}</div>
+               <div className="font-mono text-[#0F4C81]">{transfer.dlpiId}</div>
              </div>
              <div>
                <div className="text-gray-500 text-xs mb-1">Status</div>
@@ -145,14 +145,14 @@ export default function ReviewTransferPage() {
 
          {history.length > 0 && (
            <div className="card space-y-4">
-             <h2 className="text-sm font-bold text-gray-200 border-b border-gray-800 pb-2">Transaction Timeline (Blockchain)</h2>
+             <h2 className="text-sm font-bold text-gray-700 border-b border-gray-200 pb-2">Transaction Timeline (Blockchain)</h2>
              <div className="space-y-4 pl-2">
                {history.map((record, idx) => (
                  <div key={idx} className="relative flex gap-4 text-sm">
                    <div className="absolute top-2 left-1.5 w-0.5 h-full bg-gray-800 -z-10" />
                    <div className="w-3 h-3 mt-1.5 rounded-full bg-brand-500 shrink-0 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
                    <div>
-                     <div className="font-bold text-gray-200">{record.status}</div>
+                     <div className="font-bold text-gray-700">{record.status}</div>
                      <div className="text-xs text-gray-500 font-mono mt-0.5">
                        {new Date(record.timestamp).toLocaleString()} • {record.officerHash ? record.officerHash.slice(0, 16) + '...' : 'System'}
                      </div>
@@ -173,7 +173,7 @@ export default function ReviewTransferPage() {
              <p className="text-gray-400 text-sm mb-4">
                Please upload the physical copy of the sale agreement/deed. RecordScan AI will verify it before you can approve the transfer.
              </p>
-             <div className="border border-gray-800 rounded-xl bg-gray-950 p-4">
+             <div className="border border-gray-200 rounded-xl bg-[#F8FAFC] p-4">
                <RecordScan mode="transfer" onScanComplete={(cid) => setScanCID(cid)} />
              </div>
            </div>
@@ -188,7 +188,7 @@ export default function ReviewTransferPage() {
            </div>
          )}
          {canApprove && (
-           <div className="fixed bottom-0 left-0 w-full bg-gray-900 border-t border-gray-800 p-4 z-20">
+           <div className="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 p-4 z-20">
              <div className="max-w-4xl mx-auto flex justify-end">
                <button onClick={handleApprove} disabled={busy} className="btn-primary w-full sm:w-auto">
                  {busy ? 'Processing...' : actionLabel}

@@ -230,7 +230,7 @@ export default function TransferWizard({ dlpiId, sellerName, sellerAadhaarHash, 
               <div className="flex flex-col items-center">
                 <div className={clsx(
                   'w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-colors',
-                  i < stepIdx  && 'bg-brand-600 text-white',
+                  i < stepIdx  && 'bg-[#0F4C81] text-white',
                   i === stepIdx && 'bg-amber-500 text-white animate-pulse',
                   i > stepIdx  && 'bg-gray-700 text-gray-500',
                 )}>
@@ -238,11 +238,11 @@ export default function TransferWizard({ dlpiId, sellerName, sellerAadhaarHash, 
                 </div>
                 <span className={clsx(
                   'text-xs mt-1 hidden md:block',
-                  i === stepIdx ? 'text-amber-400' : i < stepIdx ? 'text-brand-400' : 'text-gray-600',
+                  i === stepIdx ? 'text-amber-400' : i < stepIdx ? 'text-[#0F4C81]' : 'text-gray-600',
                 )}>{label}</span>
               </div>
               {i < STEP_LABELS.length - 1 && (
-                <div className={clsx('flex-1 h-px mx-1', i < stepIdx ? 'bg-brand-700' : 'bg-gray-800')} />
+                <div className={clsx('flex-1 h-px mx-1', i < stepIdx ? 'bg-[#0a3566]' : 'bg-[#F8FAFC]')} />
               )}
             </React.Fragment>
           ))}
@@ -253,13 +253,13 @@ export default function TransferWizard({ dlpiId, sellerName, sellerAadhaarHash, 
       {step === 'form' && (
         <div className="card space-y-4">
           <div className="flex items-center justify-between mb-1">
-            <div className="text-sm font-semibold text-gray-200">Buyer Details</div>
-            <button onClick={prefillDemo} className="text-xs text-brand-400 hover:text-brand-300 border border-brand-800 hover:border-brand-700 rounded-lg px-2.5 py-1 transition-colors">
+            <div className="text-sm font-semibold text-gray-700">Buyer Details</div>
+            <button onClick={prefillDemo} className="text-xs text-[#0F4C81] hover:text-[#0F4C81] border border-blue-200 hover:border-blue-300 rounded-lg px-2.5 py-1 transition-colors">
               Demo pre-fill
             </button>
           </div>
 
-          <div className="bg-gray-800 rounded-xl p-3 text-xs text-gray-400 space-y-1.5 mb-1">
+          <div className="bg-[#F8FAFC] rounded-xl p-3 text-xs text-gray-400 space-y-1.5 mb-1">
             <InfoRow label="Seller" value={sellerName} />
             <InfoRow label="Parcel" value={dlpiId} mono />
           </div>
@@ -319,18 +319,18 @@ export default function TransferWizard({ dlpiId, sellerName, sellerAadhaarHash, 
       {step === 'compliance' && (
         <div className="card">
           <div className="flex items-center gap-2 mb-4">
-            <Shield className="w-4 h-4 text-brand-400 animate-pulse" />
-            <span className="text-sm font-semibold text-gray-200">Running Compliance Checks</span>
+            <Shield className="w-4 h-4 text-[#0F4C81] animate-pulse" />
+            <span className="text-sm font-semibold text-gray-700">Running Compliance Checks</span>
           </div>
           <div className="space-y-2.5">
             {complianceSteps.map((s, i) => (
               <div key={i} className={clsx(
                 'flex items-center gap-3 text-sm transition-colors',
-                s.done ? 'text-gray-300' : 'text-gray-600',
+                s.done ? 'text-gray-600' : 'text-gray-600',
               )}>
                 {s.done
-                  ? <CheckCircle className="w-4 h-4 text-brand-400 shrink-0" />
-                  : <div className="w-4 h-4 border border-gray-600 rounded-full shrink-0 animate-pulse" />
+                  ? <CheckCircle className="w-4 h-4 text-[#0F4C81] shrink-0" />
+                  : <div className="w-4 h-4 border border-gray-300 rounded-full shrink-0 animate-pulse" />
                 }
                 {s.label}
               </div>
@@ -344,24 +344,24 @@ export default function TransferWizard({ dlpiId, sellerName, sellerAadhaarHash, 
         <div className="space-y-4">
           {/* Compliance summary */}
           <div className="card space-y-3">
-            <div className="text-sm font-semibold text-gray-200 mb-1">Compliance Results</div>
+            <div className="text-sm font-semibold text-gray-700 mb-1">Compliance Results</div>
 
             {/* TribalGuard */}
-            <div className="flex items-center gap-3 bg-brand-950 border border-brand-800 rounded-lg px-3 py-2.5">
-              <CheckCircle className="w-4 h-4 text-brand-400 shrink-0" />
+            <div className="flex items-center gap-3 bg-[#EFF6FF] border border-blue-200 rounded-lg px-3 py-2.5">
+              <CheckCircle className="w-4 h-4 text-[#0F4C81] shrink-0" />
               <div className="flex-1 text-xs">
-                <div className="text-brand-300 font-semibold">TribalGuard — ALLOWED</div>
-                <div className="text-brand-500 mt-0.5">{compliance.tribal.detail} · {compliance.tribal.ms}ms</div>
+                <div className="text-[#0F4C81] font-semibold">TribalGuard — ALLOWED</div>
+                <div className="text-[#0F4C81] mt-0.5">{compliance.tribal.detail} · {compliance.tribal.ms}ms</div>
               </div>
             </div>
 
             {/* Valuation */}
-            <div className="bg-gray-800 rounded-lg px-3 py-2.5 text-xs space-y-1.5">
-              <div className="text-gray-300 font-semibold">Stamp Duty Calculation</div>
+            <div className="bg-[#F8FAFC] rounded-lg px-3 py-2.5 text-xs space-y-1.5">
+              <div className="text-gray-600 font-semibold">Stamp Duty Calculation</div>
               <InfoRow label="Declared value"    value={formatINR(transfer.declaredValueINR ?? Number(declaredVal) ?? DEMO_BUYER.declaredINR)} />
               <InfoRow label="Oracle value"      value={formatINR(transfer.oracleValueINR ?? compliance.valuation.oracleValue)} />
               <InfoRow label="Stamp duty base"   value={formatINR(transfer.declaredValueINR ?? Number(declaredVal) ?? DEMO_BUYER.declaredINR)} />
-              <div className="border-t border-gray-700 pt-1.5">
+              <div className="border-t border-gray-200 pt-1.5">
                 <InfoRow label="Stamp duty (5%)" value={formatINR(transfer.stampDutyINR ?? compliance.valuation.stampDuty)} />
               </div>
             </div>
@@ -370,20 +370,20 @@ export default function TransferWizard({ dlpiId, sellerName, sellerAadhaarHash, 
             <div className={clsx(
               'flex items-center gap-3 rounded-lg px-3 py-2.5',
               compliance.fraud.pass
-                ? 'bg-brand-950 border border-brand-800'
+                ? 'bg-[#EFF6FF] border border-blue-200'
                 : 'bg-red-950 border border-red-800',
             )}>
               <div className={clsx(
                 'text-xs font-mono font-bold px-2 py-1 rounded',
-                compliance.fraud.pass ? 'bg-brand-900 text-brand-300' : 'bg-red-900 text-red-300',
+                compliance.fraud.pass ? 'bg-[#DBEAFE] text-[#0F4C81]' : 'bg-red-900 text-red-300',
               )}>
                 {compliance.fraud.score.toFixed(2)}
               </div>
               <div className="text-xs">
-                <div className={compliance.fraud.pass ? 'text-brand-300 font-semibold' : 'text-red-300 font-semibold'}>
+                <div className={compliance.fraud.pass ? 'text-[#0F4C81] font-semibold' : 'text-red-300 font-semibold'}>
                   FraudSense — {compliance.fraud.pass ? 'CLEAN' : 'FLAGGED'}
                 </div>
-                <div className={compliance.fraud.pass ? 'text-brand-500' : 'text-red-500'}>
+                <div className={compliance.fraud.pass ? 'text-[#0F4C81]' : 'text-red-500'}>
                   Score below 0.75 threshold — transaction cleared
                 </div>
               </div>
@@ -397,13 +397,13 @@ export default function TransferWizard({ dlpiId, sellerName, sellerAadhaarHash, 
                 <Lock className="w-4 h-4 text-amber-300" />
               </div>
               <div>
-                <div className="text-sm font-semibold text-gray-200">National Parcel Lock Acquired</div>
+                <div className="text-sm font-semibold text-gray-700">National Parcel Lock Acquired</div>
                 <div className="text-xs text-gray-500 mt-0.5">
                   24-hour cross-SRO dual-sale prevention — no other SRO can initiate transfer of {dlpiId}
                 </div>
               </div>
             </div>
-            <div className="bg-gray-800 rounded-lg px-3 py-2.5 text-xs space-y-1.5">
+            <div className="bg-[#F8FAFC] rounded-lg px-3 py-2.5 text-xs space-y-1.5">
               <InfoRow label="Lock status"  value="ACTIVE" />
               <InfoRow label="Lock expiry"  value={transfer.lockExpiry ? new Date(transfer.lockExpiry).toLocaleString('en-IN') : '24 hours'} />
               <InfoRow label="Transfer ID"  value={transfer.transferId} mono />
@@ -435,36 +435,36 @@ export default function TransferWizard({ dlpiId, sellerName, sellerAadhaarHash, 
       {step === 'payment' && transfer && (
         <div className="card">
           <div className="flex items-center gap-2 mb-4">
-            <CreditCard className="w-4 h-4 text-brand-400" />
-            <span className="text-sm font-semibold text-gray-200">Stamp Duty Payment</span>
+            <CreditCard className="w-4 h-4 text-[#0F4C81]" />
+            <span className="text-sm font-semibold text-gray-700">Stamp Duty Payment</span>
           </div>
 
           {/* Mock UPI QR */}
-          <div className="flex flex-col items-center py-5 border border-dashed border-gray-700 rounded-xl mb-4">
+          <div className="flex flex-col items-center py-5 border border-dashed border-gray-200 rounded-xl mb-4">
             <div className="w-24 h-24 bg-white rounded-lg flex items-center justify-center mb-3">
               <div className="grid grid-cols-5 gap-0.5 p-1">
                 {Array.from({ length: 25 }).map((_, i) => (
                   <div key={i} className={clsx(
                     'w-3.5 h-3.5 rounded-[2px]',
-                    (i % 7 === 0 || i % 11 === 3 || i === 12) ? 'bg-gray-900' : 'bg-white border border-gray-200',
+                    (i % 7 === 0 || i % 11 === 3 || i === 12) ? 'bg-white' : 'bg-white border border-gray-200',
                   )} />
                 ))}
               </div>
             </div>
             <div className="text-xs text-gray-400 mb-1">Scan to pay via UPI</div>
-            <div className="text-xl font-bold text-gray-100 font-mono">{formatINR(transfer.stampDutyINR ?? compliance?.valuation.stampDuty ?? 0)}</div>
+            <div className="text-xl font-bold text-gray-900 font-mono">{formatINR(transfer.stampDutyINR ?? compliance?.valuation.stampDuty ?? 0)}</div>
             <div className="text-xs text-gray-500 mt-1">UP Stamp Duty — 5%</div>
           </div>
 
           <div className="flex items-center gap-3 text-xs text-gray-500 mb-4">
-            <div className="flex-1 h-px bg-gray-800" />
+            <div className="flex-1 h-px bg-[#F8FAFC]" />
             <span>or</span>
-            <div className="flex-1 h-px bg-gray-800" />
+            <div className="flex-1 h-px bg-[#F8FAFC]" />
           </div>
 
           {upiVerified
             ? (
-              <div className="flex items-center gap-2 bg-brand-950 border border-brand-700 rounded-lg px-3 py-2.5 text-sm text-brand-300">
+              <div className="flex items-center gap-2 bg-[#EFF6FF] border border-blue-300 rounded-lg px-3 py-2.5 text-sm text-[#0F4C81]">
                 <CheckCircle className="w-4 h-4 shrink-0" />
                 UPI payment verified — proceeding to SRO execution
               </div>
@@ -491,9 +491,9 @@ export default function TransferWizard({ dlpiId, sellerName, sellerAadhaarHash, 
         <div className="card space-y-4">
           <div className="flex items-center gap-2 mb-1">
             <Clock className="w-4 h-4 text-amber-400" />
-            <span className="text-sm font-semibold text-gray-200">Pending Patwari Review</span>
+            <span className="text-sm font-semibold text-gray-700">Pending Patwari Review</span>
           </div>
-          <div className="bg-gray-800 rounded-xl p-3 text-xs space-y-1.5">
+          <div className="bg-[#F8FAFC] rounded-xl p-3 text-xs space-y-1.5">
             <InfoRow label="Status" value="Stamp Duty Paid" />
             <InfoRow label="Next Step" value="Patwari verification in Officer Dashboard" />
             <InfoRow label="Transfer ID" value={transfer?.transferId || '—'} mono />
@@ -514,16 +514,16 @@ export default function TransferWizard({ dlpiId, sellerName, sellerAadhaarHash, 
       {/* ── Step 7: Done ────────────────────────────────────────────────── */}
       {step === 'done' && (
         <div className="card text-center space-y-4">
-          <div className="w-16 h-16 rounded-full bg-brand-800 border-2 border-brand-500 flex items-center justify-center mx-auto">
-            <CheckCircle className="w-8 h-8 text-brand-300" />
+          <div className="w-16 h-16 rounded-full bg-[#BFDBFE] border-2 border-[#0F4C81]/60 flex items-center justify-center mx-auto">
+            <CheckCircle className="w-8 h-8 text-[#0F4C81]" />
           </div>
           <div>
-            <div className="text-lg font-bold text-gray-100">Transfer Complete</div>
+            <div className="text-lg font-bold text-gray-900">Transfer Complete</div>
             <div className="text-gray-500 text-sm mt-1">
               Title deed issued and delivered to {buyerName || DEMO_BUYER.name}'s DigiLocker
             </div>
           </div>
-          <div className="bg-gray-800 rounded-xl p-3 text-xs space-y-2 text-left">
+          <div className="bg-[#F8FAFC] rounded-xl p-3 text-xs space-y-2 text-left">
             <InfoRow label="New owner"     value={buyerName || DEMO_BUYER.name} />
             <InfoRow label="Parcel"        value={dlpiId} mono />
             <InfoRow label="Title CID"     value={titleCID} mono />
@@ -552,7 +552,7 @@ function InfoRow({ label, value, mono }: { label: string; value: string; mono?: 
   return (
     <div className="flex items-start justify-between gap-3">
       <span className="text-gray-500 shrink-0">{label}</span>
-      <span className={clsx('text-gray-200 text-right break-all', mono && 'font-mono')}>{value}</span>
+      <span className={clsx('text-gray-700 text-right break-all', mono && 'font-mono')}>{value}</span>
     </div>
   );
 }

@@ -34,7 +34,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; 
   CONSENT_GIVEN:   { label: 'Consent Given',   color: 'text-blue-400',   bg: 'bg-blue-900/30 border-blue-700',      icon: CheckCircle },
   OBJECTION_FILED: { label: 'Objection Filed', color: 'text-red-400',    bg: 'bg-red-900/30 border-red-700',        icon: XCircle },
   EXECUTED:        { label: 'Executed',        color: 'text-green-400',  bg: 'bg-green-900/30 border-green-700',    icon: CheckCircle },
-  REJECTED:        { label: 'Rejected',        color: 'text-gray-400',   bg: 'bg-gray-800 border-gray-700',         icon: XCircle },
+  REJECTED:        { label: 'Rejected',        color: 'text-gray-400',   bg: 'bg-[#F8FAFC] border-gray-200',         icon: XCircle },
 };
 
 const MUTATION_TYPE_COLOR: Record<string, string> = {
@@ -61,19 +61,19 @@ function MutationRow({ m, isCitizen }: { m: Mutation; isCitizen: boolean }) {
   const typeKey = m.mutationType.replace('Virasat (', '').replace('Bikri (', '').replace(')', '');
 
   return (
-    <tr className="border-b border-gray-800 hover:bg-gray-900/50 transition-colors">
+    <tr className="border-b border-gray-200 hover:bg-white/50 transition-colors">
       <td className="px-4 py-3">
-        <div className="font-mono text-brand-400 text-xs font-semibold">{m.mutationId}</div>
+        <div className="font-mono text-[#0F4C81] text-xs font-semibold">{m.mutationId}</div>
         <div className="text-gray-500 text-xs mt-0.5 font-mono">{m.dlpiId}</div>
       </td>
       <td className="px-4 py-3">
-        <div className={clsx('text-sm font-semibold', MUTATION_TYPE_COLOR[typeKey] ?? 'text-gray-300')}>
+        <div className={clsx('text-sm font-semibold', MUTATION_TYPE_COLOR[typeKey] ?? 'text-gray-600')}>
           {m.mutationType}
         </div>
         <div className="text-gray-500 text-xs">by {m.officerName}</div>
       </td>
       <td className="px-4 py-3 text-sm">
-        <div className="text-gray-200">{m.currentOwnerName}</div>
+        <div className="text-gray-700">{m.currentOwnerName}</div>
         <div className="flex items-center gap-1 text-gray-500 text-xs">
           <ArrowLeftRight className="w-3 h-3" />
           {m.newOwnerName}
@@ -90,7 +90,7 @@ function MutationRow({ m, isCitizen }: { m: Mutation; isCitizen: boolean }) {
       </td>
       <td className="px-4 py-3 text-xs">
         {left !== null ? (
-          <span className={clsx('font-semibold', left <= 5 ? 'text-red-400' : left <= 15 ? 'text-yellow-400' : 'text-gray-300')}>
+          <span className={clsx('font-semibold', left <= 5 ? 'text-red-400' : left <= 15 ? 'text-yellow-400' : 'text-gray-600')}>
             {left === 0 ? 'Expired' : `${left}d left`}
           </span>
         ) : (
@@ -100,7 +100,7 @@ function MutationRow({ m, isCitizen }: { m: Mutation; isCitizen: boolean }) {
       <td className="px-4 py-3">
         <Link
           href={`/mutation/${m.mutationId}`}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-gray-800 hover:bg-brand-700 text-gray-300 hover:text-white transition-colors"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#F8FAFC] hover:bg-[#0a3566] text-gray-600 hover:text-white transition-colors"
         >
           {isCitizen && m.status === 'ALERT_SENT' ? 'Act Now' : 'View'}
           <ChevronRight className="w-3 h-3" />
@@ -114,10 +114,10 @@ function MutationRow({ m, isCitizen }: { m: Mutation; isCitizen: boolean }) {
 
 function SkeletonRow() {
   return (
-    <tr className="border-b border-gray-800 animate-pulse">
+    <tr className="border-b border-gray-200 animate-pulse">
       {[120, 100, 120, 80, 60, 60].map((w, i) => (
         <td key={i} className="px-4 py-4">
-          <div className="h-3 bg-gray-800 rounded" style={{ width: w }} />
+          <div className="h-3 bg-[#F8FAFC] rounded" style={{ width: w }} />
         </td>
       ))}
     </tr>
@@ -167,7 +167,7 @@ export default function MutationListPage() {
   const pendingCount = mutations.filter(m => ['ALERT_SENT', 'CONSENT_GIVEN'].includes(m.status)).length;
 
   return (
-    <div className="flex h-screen bg-gray-950 overflow-hidden">
+    <div className="flex h-screen bg-[#F8FAFC] overflow-hidden">
       <Sidebar />
 
       <main className="flex-1 overflow-y-auto">
@@ -176,7 +176,7 @@ export default function MutationListPage() {
           {/* Header */}
           <div className="flex items-start justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-100">Mutation Manager</h1>
+              <h1 className="text-2xl font-bold text-gray-900">Mutation Manager</h1>
               <p className="text-gray-400 text-sm mt-1">
                 {isCitizen
                   ? 'Mutations initiated on your parcels — consent, object, or track status'
@@ -187,7 +187,7 @@ export default function MutationListPage() {
               {!isCitizen && (
                 <Link
                   href="/mutation/initiate"
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold bg-brand-600 hover:bg-brand-700 text-white transition-colors"
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold bg-[#0F4C81] hover:bg-[#0a3566] text-white transition-colors"
                 >
                   <ArrowLeftRight className="w-4 h-4" />
                   Initiate Mutation
@@ -196,7 +196,7 @@ export default function MutationListPage() {
               <button
                 onClick={fetchMutations}
                 disabled={loading}
-                className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-400 hover:text-gray-200 hover:bg-gray-800 transition-colors disabled:opacity-50"
+                className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-400 hover:text-gray-700 hover:bg-[#F8FAFC] transition-colors disabled:opacity-50"
               >
                 <RefreshCw className={clsx('w-4 h-4', loading && 'animate-spin')} />
               </button>
@@ -208,15 +208,15 @@ export default function MutationListPage() {
             <div className="grid grid-cols-3 gap-4">
               <div className="card !py-3">
                 <div className="text-xs text-gray-500 uppercase tracking-wider font-medium">Total</div>
-                <div className="text-2xl font-bold text-gray-100 mt-1">{mutations.length}</div>
+                <div className="text-2xl font-bold text-gray-900 mt-1">{mutations.length}</div>
               </div>
               <div className="card !py-3">
                 <div className="text-xs text-gray-500 uppercase tracking-wider font-medium">Objection Window Open</div>
-                <div className={clsx('text-2xl font-bold mt-1', alertCount > 0 ? 'text-saffron-400' : 'text-gray-100')}>{alertCount}</div>
+                <div className={clsx('text-2xl font-bold mt-1', alertCount > 0 ? 'text-saffron-400' : 'text-gray-900')}>{alertCount}</div>
               </div>
               <div className="card !py-3">
                 <div className="text-xs text-gray-500 uppercase tracking-wider font-medium">Pending Execution</div>
-                <div className={clsx('text-2xl font-bold mt-1', pendingCount > 0 ? 'text-blue-400' : 'text-gray-100')}>{pendingCount}</div>
+                <div className={clsx('text-2xl font-bold mt-1', pendingCount > 0 ? 'text-blue-400' : 'text-gray-900')}>{pendingCount}</div>
               </div>
             </div>
           )}
@@ -242,14 +242,14 @@ export default function MutationListPage() {
 
           {/* Tabs + Table */}
           <div className="card !p-0 overflow-hidden">
-            <div className="flex border-b border-gray-800 px-4">
+            <div className="flex border-b border-gray-200 px-4">
               {(['all', 'pending', 'executed'] as const).map(t => (
                 <button
                   key={t}
                   onClick={() => setTab(t)}
                   className={clsx(
                     'px-4 py-3 text-sm font-medium border-b-2 transition-colors -mb-px capitalize',
-                    tab === t ? 'border-brand-500 text-brand-400' : 'border-transparent text-gray-500 hover:text-gray-300',
+                    tab === t ? 'border-[#0F4C81]/60 text-[#0F4C81]' : 'border-transparent text-gray-500 hover:text-gray-600',
                   )}
                 >
                   {t === 'all' ? `All (${mutations.length})` : t === 'pending' ? `Pending (${pendingCount})` : 'Executed'}
@@ -260,7 +260,7 @@ export default function MutationListPage() {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-gray-800 bg-gray-900/50">
+                  <tr className="border-b border-gray-200 bg-white/50">
                     <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Mutation ID</th>
                     <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Type</th>
                     <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Owner → New Owner</th>

@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import clsx from 'clsx';
 import Sidebar from '@/components/dashboard/Sidebar';
+import AppHeader from '@/components/dashboard/AppHeader';
 import { getUser, apiFetch, submitESign, isOfficer, type JWTUser } from '@/lib/auth';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -64,7 +65,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; 
   CONSENT_GIVEN:   { label: 'Consent Given',                  color: 'text-blue-400',    bg: 'bg-blue-900/30 border-blue-700',     icon: CheckCircle },
   OBJECTION_FILED: { label: 'Objection Filed',                color: 'text-red-400',     bg: 'bg-red-900/30 border-red-700',       icon: XCircle },
   EXECUTED:        { label: 'Mutation Executed',              color: 'text-green-400',   bg: 'bg-green-900/30 border-green-700',   icon: CheckCircle },
-  REJECTED:        { label: 'Rejected',                       color: 'text-gray-400',    bg: 'bg-gray-800 border-gray-700',        icon: XCircle },
+  REJECTED:        { label: 'Rejected',                       color: 'text-gray-400',    bg: 'bg-[#F8FAFC] border-gray-200',        icon: XCircle },
 };
 
 // ── Telegram notification log ─────────────────────────────────────────────────
@@ -98,13 +99,13 @@ function TelegramPanel({ mutationAlerts, botUrl }: { mutationAlerts: TelegramAle
       }));
 
   return (
-    <div className="card space-y-3">
+    <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm space-y-3">
       <div className="flex items-center gap-2">
-        <MessageSquare className="w-4 h-4 text-brand-400" />
-        <span className="text-sm font-semibold text-gray-200">Telegram Notifications</span>
+        <MessageSquare className="w-4 h-4 text-[#0F4C81]" />
+        <span className="text-sm font-semibold text-gray-700">Telegram Notifications</span>
         <span className={clsx(
           'ml-auto px-2 py-0.5 rounded-full text-xs font-semibold',
-          botErr ? 'bg-gray-800 text-gray-500' : 'bg-green-900/40 border border-green-700 text-green-400',
+          botErr ? 'bg-[#F8FAFC] text-gray-500' : 'bg-green-900/40 border border-green-700 text-green-400',
         )}>
           {botErr ? 'Bot offline' : 'MOCK mode'}
         </span>
@@ -112,13 +113,13 @@ function TelegramPanel({ mutationAlerts, botUrl }: { mutationAlerts: TelegramAle
 
       <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
         {alerts.map((n, i) => (
-          <div key={n.id || i} className="p-3 rounded-xl bg-gray-800 border border-gray-700 text-xs space-y-1.5">
+          <div key={n.id || i} className="p-3 rounded-xl bg-[#F8FAFC] border border-gray-200 text-xs space-y-1.5">
             <div className="flex items-center justify-between gap-2">
-              <span className="text-brand-400 font-semibold">{n.event}</span>
+              <span className="text-[#0F4C81] font-semibold">{n.event}</span>
               <span className="text-gray-600">{new Date(n.timestamp).toLocaleTimeString('en-IN')}</span>
             </div>
             <div className="text-gray-400 font-medium">→ {n.recipient}</div>
-            <div className="text-gray-500 bg-gray-900 rounded-lg p-2 whitespace-pre-wrap font-mono leading-relaxed">
+            <div className="text-gray-500 bg-white rounded-lg p-2 whitespace-pre-wrap font-mono leading-relaxed">
               {n.message}
             </div>
             <div className="flex items-center gap-1.5 text-green-400">
@@ -183,10 +184,10 @@ function ESignModal({
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-gray-900 border border-gray-700 rounded-2xl p-6 w-full max-w-md">
+      <div className="bg-white border border-gray-200 rounded-2xl p-6 w-full max-w-md">
         <div className="flex items-center gap-3 mb-4">
-          <Zap className="w-5 h-5 text-brand-400" />
-          <h3 className="text-gray-100 font-semibold">{actionLabel}</h3>
+          <Zap className="w-5 h-5 text-[#0F4C81]" />
+          <h3 className="text-gray-900 font-semibold">{actionLabel}</h3>
         </div>
         <p className="text-sm text-gray-400 mb-5">
           SHA-256(aadhaarHash:otp:action:timestamp) recorded on Hyperledger Fabric as consent proof.
@@ -198,13 +199,13 @@ function ESignModal({
               type="tel" inputMode="numeric" maxLength={12}
               value={aadhaar} onChange={e => setAadhaar(e.target.value.replace(/\D/g, ''))}
               placeholder="9999 0001 0010"
-              className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-gray-200 placeholder-gray-600 text-sm focus:outline-none focus:border-brand-500 font-mono tracking-widest"
+              className="w-full bg-[#F8FAFC] border border-gray-200 rounded-xl px-4 py-3 text-gray-700 placeholder-gray-400 text-sm focus:outline-none focus:border-brand-500 font-mono tracking-widest"
             />
             {err && <p className="text-red-400 text-xs mt-2">{err}</p>}
             <div className="flex gap-3 mt-4">
-              <button onClick={onCancel} className="flex-1 px-4 py-2.5 rounded-xl text-sm bg-gray-800 text-gray-300">Cancel</button>
+              <button onClick={onCancel} className="flex-1 px-4 py-2.5 rounded-xl text-sm bg-[#F8FAFC] text-gray-600">Cancel</button>
               <button onClick={sendOtp} disabled={busy || aadhaar.length !== 12}
-                className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold bg-brand-600 hover:bg-brand-700 text-white disabled:opacity-50">
+                className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold bg-[#0F4C81] hover:bg-[#0a3566] text-white disabled:opacity-50">
                 {busy ? 'Sending…' : 'Send OTP'}
               </button>
             </div>
@@ -217,13 +218,13 @@ function ESignModal({
               type="tel" inputMode="numeric" maxLength={6}
               value={otp} onChange={e => setOtp(e.target.value.replace(/\D/g, ''))}
               placeholder="• • • • • •"
-              className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-gray-200 text-sm focus:outline-none focus:border-brand-500 font-mono tracking-widest text-center"
+              className="w-full bg-[#F8FAFC] border border-gray-200 rounded-xl px-4 py-3 text-gray-700 text-sm focus:outline-none focus:border-brand-500 font-mono tracking-widest text-center"
             />
             {err && <p className="text-red-400 text-xs mt-2">{err}</p>}
             <div className="flex gap-3 mt-4">
-              <button onClick={() => { setOtpSent(false); setOtp(''); }} className="flex-1 px-4 py-2.5 rounded-xl text-sm bg-gray-800 text-gray-300">Back</button>
+              <button onClick={() => { setOtpSent(false); setOtp(''); }} className="flex-1 px-4 py-2.5 rounded-xl text-sm bg-[#F8FAFC] text-gray-600">Back</button>
               <button onClick={sign} disabled={busy || otp.length !== 6}
-                className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold bg-brand-600 hover:bg-brand-700 text-white disabled:opacity-50">
+                className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold bg-[#0F4C81] hover:bg-[#0a3566] text-white disabled:opacity-50">
                 {busy ? 'Signing…' : actionLabel}
               </button>
             </div>
@@ -241,10 +242,10 @@ function ObjectionModal({ onConfirm, onCancel, busy }: { onConfirm: (reason: str
   const [evidenceCID, setEvidenceCID] = useState('');
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-gray-900 border border-gray-700 rounded-2xl p-6 w-full max-w-md space-y-4">
+      <div className="bg-white border border-gray-200 rounded-2xl p-6 w-full max-w-md space-y-4">
         <div className="flex items-center gap-3">
           <XCircle className="w-5 h-5 text-red-400" />
-          <h3 className="text-gray-100 font-semibold">File Objection</h3>
+          <h3 className="text-gray-900 font-semibold">File Objection</h3>
         </div>
         <p className="text-sm text-gray-400">
           Your objection will be recorded on Hyperledger Fabric and the Tehsil office will be notified within 60 seconds via Telegram.
@@ -253,7 +254,7 @@ function ObjectionModal({ onConfirm, onCancel, busy }: { onConfirm: (reason: str
           <label className="block text-xs text-gray-400 mb-1">Objection Reason *</label>
           <textarea value={reason} onChange={e => setReason(e.target.value)} maxLength={500} rows={3}
             placeholder="e.g. This mutation is fraudulent. I am the sole legal heir and have not given consent. Original will registered at Sub-Registrar GBN-2025-00112."
-            className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-gray-200 placeholder-gray-600 text-sm resize-none focus:outline-none focus:border-brand-500"
+            className="w-full bg-[#F8FAFC] border border-gray-200 rounded-xl px-4 py-3 text-gray-700 placeholder-gray-400 text-sm resize-none focus:outline-none focus:border-brand-500"
           />
           <div className="text-xs text-gray-600 text-right mt-0.5">{reason.length}/500</div>
         </div>
@@ -261,11 +262,11 @@ function ObjectionModal({ onConfirm, onCancel, busy }: { onConfirm: (reason: str
           <label className="block text-xs text-gray-400 mb-1">Supporting Document CID (optional)</label>
           <input value={evidenceCID} onChange={e => setEvidenceCID(e.target.value)}
             placeholder="QmYourIPFSDocumentHash"
-            className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-gray-200 placeholder-gray-600 text-sm focus:outline-none focus:border-brand-500 font-mono"
+            className="w-full bg-[#F8FAFC] border border-gray-200 rounded-xl px-4 py-3 text-gray-700 placeholder-gray-400 text-sm focus:outline-none focus:border-brand-500 font-mono"
           />
         </div>
         <div className="flex gap-3">
-          <button onClick={onCancel} disabled={busy} className="flex-1 px-4 py-2.5 rounded-xl text-sm bg-gray-800 text-gray-300 hover:bg-gray-700">Cancel</button>
+          <button onClick={onCancel} disabled={busy} className="flex-1 px-4 py-2.5 rounded-xl text-sm bg-[#F8FAFC] text-gray-600 hover:bg-gray-700">Cancel</button>
           <button onClick={() => onConfirm(reason)} disabled={busy || reason.trim().length < 10}
             className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold bg-red-700 hover:bg-red-600 text-white disabled:opacity-50">
             {busy ? 'Filing…' : 'File Objection'}
@@ -361,18 +362,21 @@ export default function MutationDetailPage() {
   const isFinished = ['EXECUTED', 'REJECTED', 'OBJECTION_FILED'].includes(mutation?.status ?? '') || !!actionDone;
 
   if (loading) return (
-    <div className="flex h-screen bg-gray-950"><Sidebar />
+    <div className="flex flex-col h-screen bg-[#F8FAFC]">
+      <AppHeader />
+      <div className="flex flex-1 overflow-hidden">
+        <Sidebar />
       <main className="flex-1 flex items-center justify-center"><div className="text-gray-500 animate-pulse">Loading mutation…</div></main>
     </div>
   );
 
   if (error || !mutation) return (
-    <div className="flex h-screen bg-gray-950"><Sidebar />
+    <div className="flex h-screen bg-[#F8FAFC]"><Sidebar />
       <main className="flex-1 flex items-center justify-center text-center">
         <div>
           <AlertTriangle className="w-10 h-10 text-red-400 mx-auto mb-3" />
           <p className="text-red-300">{error || 'Mutation not found'}</p>
-          <Link href="/mutation" className="text-brand-400 text-sm mt-3 inline-block">← All Mutations</Link>
+          <Link href="/mutation" className="text-[#0F4C81] text-sm mt-3 inline-block">← All Mutations</Link>
         </div>
       </main>
     </div>
@@ -382,7 +386,7 @@ export default function MutationDetailPage() {
   const StatusIcon = status.icon;
 
   return (
-    <div className="flex h-screen bg-gray-950 overflow-hidden">
+    <div className="flex h-screen bg-[#F8FAFC] overflow-hidden">
       <Sidebar />
 
       {showESign && (
@@ -406,11 +410,11 @@ export default function MutationDetailPage() {
 
           {/* Breadcrumb */}
           <div className="flex items-center gap-3 text-sm">
-            <Link href="/mutation" className="flex items-center gap-1.5 text-gray-400 hover:text-gray-200">
+            <Link href="/mutation" className="flex items-center gap-1.5 text-gray-400 hover:text-gray-700">
               <ArrowLeft className="w-4 h-4" />Mutations
             </Link>
             <span className="text-gray-700">/</span>
-            <span className="font-mono text-brand-400 text-sm">{mutationId}</span>
+            <span className="font-mono text-[#0F4C81] text-sm">{mutationId}</span>
           </div>
 
           {/* Action done banner */}
@@ -432,12 +436,12 @@ export default function MutationDetailPage() {
             <div className="col-span-2 space-y-5">
 
               {/* Mutation summary card */}
-              <div className="card space-y-4">
+              <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm space-y-4">
                 <div className="flex items-start justify-between">
                   <div>
-                    <div className="font-mono text-brand-400 text-xs font-semibold">{mutation.mutationId}</div>
-                    <div className="text-xl font-bold text-gray-100 mt-1">{mutation.mutationType}</div>
-                    <div className="text-gray-400 text-sm mt-0.5">on <span className="font-mono text-brand-400">{mutation.dlpiId}</span></div>
+                    <div className="font-mono text-[#0F4C81] text-xs font-semibold">{mutation.mutationId}</div>
+                    <div className="text-xl font-bold text-gray-900 mt-1">{mutation.mutationType}</div>
+                    <div className="text-gray-400 text-sm mt-0.5">on <span className="font-mono text-[#0F4C81]">{mutation.dlpiId}</span></div>
                   </div>
                   <span className={clsx(
                     'flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-sm font-semibold',
@@ -457,33 +461,33 @@ export default function MutationDetailPage() {
                     ['SLA (60s)',     mutation.slaMet ? `✓ Met (${mutation.alertElapsedSeconds}s)` : `✗ Missed (${mutation.alertElapsedSeconds}s)`],
                     ['Public Notice', mutation.requiresPublicNotice ? `${mutation.publicNoticePeriodDays}-day notice` : 'Not required'],
                   ].map(([label, value]) => (
-                    <div key={label} className="bg-gray-800 rounded-xl px-3 py-2.5">
+                    <div key={label} className="bg-[#F8FAFC] rounded-xl px-3 py-2.5">
                       <div className="text-gray-500 mb-0.5">{label}</div>
-                      <div className="text-gray-200 font-medium">{value}</div>
+                      <div className="text-gray-700 font-medium">{value}</div>
                     </div>
                   ))}
                 </div>
 
-                <div className="bg-gray-800 rounded-xl p-3">
+                <div className="bg-[#F8FAFC] rounded-xl p-3">
                   <div className="text-xs text-gray-500 mb-1">Reason / Basis</div>
-                  <p className="text-sm text-gray-300">{mutation.reason}</p>
+                  <p className="text-sm text-gray-600">{mutation.reason}</p>
                 </div>
 
-                <div className="flex items-center gap-2 p-2.5 rounded-xl bg-gray-800 border border-gray-700 text-xs text-gray-400">
-                  <FileText className="w-3.5 h-3.5 text-brand-400" />
-                  Supporting doc CID: <span className="font-mono text-gray-300">{mutation.supportingCID}</span>
+                <div className="flex items-center gap-2 p-2.5 rounded-xl bg-[#F8FAFC] border border-gray-200 text-xs text-gray-400">
+                  <FileText className="w-3.5 h-3.5 text-[#0F4C81]" />
+                  Supporting doc CID: <span className="font-mono text-gray-600">{mutation.supportingCID}</span>
                 </div>
               </div>
 
               {/* Timeline */}
-              <div className="card space-y-4">
+              <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm space-y-4">
                 <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Mutation Timeline</div>
                 <div className="space-y-3">
                   {mutation.timeline.map((step, i) => (
                     <div key={i} className="flex items-start gap-3">
                       <div className={clsx(
                         'w-7 h-7 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5',
-                        step.done ? 'bg-brand-600 border-brand-600' : 'bg-gray-900 border-gray-700',
+                        step.done ? 'bg-[#0F4C81] border-[#0F4C81]' : 'bg-white border-gray-200',
                       )}>
                         {step.done
                           ? <CheckCircle className="w-3.5 h-3.5 text-white" />
@@ -491,7 +495,7 @@ export default function MutationDetailPage() {
                         }
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className={clsx('text-sm font-semibold', step.done ? 'text-gray-200' : 'text-gray-600')}>
+                        <div className={clsx('text-sm font-semibold', step.done ? 'text-gray-700' : 'text-gray-600')}>
                           {step.label}
                         </div>
                         <div className="text-xs text-gray-500">
@@ -525,7 +529,7 @@ export default function MutationDetailPage() {
 
               {/* Action buttons */}
               {!isFinished && (
-                <div className="card space-y-3">
+                <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm space-y-3">
                   <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Your Action</div>
 
                   {actionErr && (
@@ -539,7 +543,7 @@ export default function MutationDetailPage() {
                     <button
                       onClick={() => setShowESign('consent')}
                       disabled={busy}
-                      className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-semibold text-sm transition-colors disabled:opacity-50"
+                      className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-[#0F4C81] hover:bg-[#0a3566] text-white font-semibold text-sm transition-colors disabled:opacity-50"
                     >
                       <CheckCircle className="w-4 h-4" />
                       Give eSign Consent
@@ -585,7 +589,7 @@ export default function MutationDetailPage() {
                   'border-blue-700 bg-blue-900/10',
                 )}>
                   <CheckCircle className="w-8 h-8 mx-auto text-green-400" />
-                  <div className="font-semibold text-gray-200">{(actionDone || mutation.status).replace('_', ' ')}</div>
+                  <div className="font-semibold text-gray-700">{(actionDone || mutation.status).replace('_', ' ')}</div>
                   {mutation.executedTxHash && (
                     <div className="text-xs font-mono text-gray-500 break-all">{mutation.executedTxHash}</div>
                   )}
@@ -595,10 +599,10 @@ export default function MutationDetailPage() {
               {/* Quick links */}
               <Link
                 href={`/claim/${mutation.dlpiId}`}
-                className="flex items-center justify-between p-3 rounded-xl bg-gray-900 border border-gray-800 hover:border-gray-600 transition-colors text-sm text-gray-400 hover:text-gray-200"
+                className="flex items-center justify-between p-3 rounded-xl bg-white border border-gray-200 hover:border-gray-600 transition-colors text-sm text-gray-400 hover:text-gray-700"
               >
                 <div className="flex items-center gap-2">
-                  <ArrowLeftRight className="w-4 h-4 text-brand-400" />
+                  <ArrowLeftRight className="w-4 h-4 text-[#0F4C81]" />
                   View Parcel {mutation.dlpiId}
                 </div>
                 <ChevronRight className="w-4 h-4" />
@@ -608,5 +612,6 @@ export default function MutationDetailPage() {
         </div>
       </main>
     </div>
-  );
+  </div>
+    );
 }

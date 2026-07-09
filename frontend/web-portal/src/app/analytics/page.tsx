@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import Sidebar from '@/components/dashboard/Sidebar';
+import AppHeader from '@/components/dashboard/AppHeader';
 import { useWebSocket } from '@/hooks/useWebSocket';
 import { getDemoToken } from '@/lib/api';
 import {
@@ -70,10 +71,10 @@ function ago(minutes: number): Date {
 }
 
 const SEVERITY_COLOR = {
-  success: 'text-brand-400',
-  info:    'text-blue-400',
-  warn:    'text-amber-400',
-  danger:  'text-red-400',
+  success: 'text-[#0F4C81]',
+  info:    'text-blue-700',
+  warn:    'text-amber-700',
+  danger:  'text-red-700',
 };
 
 const SEVERITY_DOT = {
@@ -135,19 +136,21 @@ export default function AnalyticsPage() {
   }, [onWs]);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-gray-950">
-      <Sidebar demoMode />
+    <div className="flex flex-col h-screen bg-[#F8FAFC]">
+      <AppHeader />
+      <div className="flex flex-1 overflow-hidden">
+        <Sidebar />
 
       <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
 
         {/* Topbar */}
-        <div className="h-12 bg-gray-900 border-b border-gray-800 flex items-center px-6 gap-3 shrink-0">
-          <BarChart3 className="w-4 h-4 text-brand-400" />
-          <span className="text-sm font-semibold text-gray-200">BhumiAnalytics</span>
+        <div className="h-12 bg-white border-b border-gray-200 flex items-center px-6 gap-3 shrink-0">
+          <BarChart3 className="w-4 h-4 text-[#0F4C81]" />
+          <span className="text-sm font-semibold text-gray-800">BhumiAnalytics</span>
           <span className="text-xs text-gray-500">— Demo Scene 8 · Nashik Pilot</span>
           <div className="ml-auto flex items-center gap-3">
             {liveCount > 0 && (
-              <div className="flex items-center gap-1.5 text-xs text-brand-400">
+              <div className="flex items-center gap-1.5 text-xs text-[#0F4C81]">
                 <Activity className="w-3 h-3 animate-pulse" />
                 {liveCount} live event{liveCount > 1 ? 's' : ''} received
               </div>
@@ -215,9 +218,9 @@ export default function AnalyticsPage() {
 
             {/* Fraud heatmap */}
             <div className="flex-1 flex flex-col min-w-0 card p-0 overflow-hidden">
-              <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-800">
-                <MapPin className="w-4 h-4 text-red-400" />
-                <span className="text-sm font-semibold text-gray-200">Fraud Risk Heatmap — Nashik District</span>
+              <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-200">
+                <MapPin className="w-4 h-4 text-red-700" />
+                <span className="text-sm font-semibold text-gray-800">Fraud Risk Heatmap — Nashik District</span>
                 <div className="ml-auto flex items-center gap-3 text-xs">
                   <LegendDot color="#ef4444" label="HIGH (≥0.85)" />
                   <LegendDot color="#f59e0b" label="MEDIUM (0.60–0.85)" />
@@ -233,14 +236,14 @@ export default function AnalyticsPage() {
             <div className="w-80 shrink-0 flex flex-col gap-4">
 
               {/* Live event feed */}
-              <div className="card flex-1 min-h-0 flex flex-col p-0 overflow-hidden">
-                <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-800 shrink-0">
-                  <Activity className="w-4 h-4 text-brand-400" />
-                  <span className="text-xs font-semibold text-gray-200">Live Fabric Events</span>
+              <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm flex-1 min-h-0 flex flex-col p-0 overflow-hidden">
+                <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-200 shrink-0">
+                  <Activity className="w-4 h-4 text-[#0F4C81]" />
+                  <span className="text-xs font-semibold text-gray-800">Live Fabric Events</span>
                 </div>
                 <div className="flex-1 overflow-y-auto">
                   {feed.map((item) => (
-                    <div key={item.id} className="flex items-start gap-2 px-3 py-2.5 border-b border-gray-800 last:border-0">
+                    <div key={item.id} className="flex items-start gap-2 px-3 py-2.5 border-b border-gray-200 last:border-0">
                       <div className={clsx('w-1.5 h-1.5 rounded-full mt-1.5 shrink-0', SEVERITY_DOT[item.severity])} />
                       <div className="flex-1 min-w-0">
                         <div className={clsx('text-xs font-medium truncate', SEVERITY_COLOR[item.severity])}>
@@ -260,10 +263,10 @@ export default function AnalyticsPage() {
           </div>
 
           {/* ── Janganana anomaly summary ──────────────────────────────── */}
-          <div className="card">
+          <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
             <div className="flex items-center gap-2 mb-4">
-              <TrendingUp className="w-4 h-4 text-brand-400" />
-              <span className="text-sm font-semibold text-gray-200">Janganana Census 2026-27 — Cross-reference Anomalies</span>
+              <TrendingUp className="w-4 h-4 text-[#0F4C81]" />
+              <span className="text-sm font-semibold text-gray-800">Janganana Census 2026-27 — Cross-reference Anomalies</span>
               <div className="ml-auto text-xs text-gray-500">
                 302 of 5,000 parcels flagged · 6.04%
               </div>
@@ -273,33 +276,33 @@ export default function AnalyticsPage() {
               {JANGANANA_ANOMALIES.map((a) => (
                 <div key={a.type} className={clsx(
                   'rounded-xl p-3 border',
-                  a.severity === 'HIGH'   ? 'bg-red-950 border-red-800' : 'bg-amber-950 border-amber-800',
+                  a.severity === 'HIGH'   ? 'bg-red-50 border-red-200' : 'bg-amber-50 border-amber-200',
                 )}>
                   <div className="text-lg mb-1">{a.icon}</div>
                   <div className={clsx(
                     'text-lg font-bold font-mono',
-                    a.severity === 'HIGH' ? 'text-red-300' : 'text-amber-300',
+                    a.severity === 'HIGH' ? 'text-red-700' : 'text-amber-700',
                   )}>
                     {a.count}
                   </div>
-                  <div className="text-xs text-gray-300 font-semibold">{a.type.replace(/_/g, ' ')}</div>
+                  <div className="text-xs text-gray-600 font-semibold">{a.type.replace(/_/g, ' ')}</div>
                   <div className="text-xs text-gray-500 mt-0.5">Primarily {a.tehsil}</div>
                 </div>
               ))}
             </div>
 
             {/* Summary stats row */}
-            <div className="grid grid-cols-3 gap-4 pt-3 border-t border-gray-800 text-xs text-gray-400">
+            <div className="grid grid-cols-3 gap-4 pt-3 border-t border-gray-200 text-xs text-gray-500">
               <div>
-                <div className="text-gray-200 font-bold text-sm">4,512</div>
+                <div className="text-gray-800 font-bold text-sm">4,512</div>
                 <div>Census households matched to DLPI</div>
               </div>
               <div>
-                <div className="text-gray-200 font-bold text-sm">302</div>
+                <div className="text-gray-800 font-bold text-sm">302</div>
                 <div>Anomalies auto-flagged for field review</div>
               </div>
               <div>
-                <div className="text-gray-200 font-bold text-sm">₹ 847 Cr</div>
+                <div className="text-gray-800 font-bold text-sm">₹ 847 Cr</div>
                 <div>Estimated value of flagged parcels</div>
               </div>
             </div>
@@ -307,8 +310,8 @@ export default function AnalyticsPage() {
 
           {/* ── Network health row ────────────────────────────────────── */}
           <div className="grid grid-cols-3 gap-4">
-            <div className="card">
-              <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
+            <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+              <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
                 Chaincode Health
               </div>
               {[
@@ -319,18 +322,18 @@ export default function AnalyticsPage() {
                 ['mutation-manager',  'MutationManager',  'RUNNING'],
                 ['encumbrance',       'Encumbrance',      'RUNNING'],
               ].map(([id, label, status]) => (
-                <div key={id} className="flex items-center justify-between py-1.5 border-b border-gray-800 last:border-0 text-xs">
+                <div key={id} className="flex items-center justify-between py-1.5 border-b border-gray-200 last:border-0 text-xs">
                   <div>
-                    <span className="text-gray-300">{label}</span>
+                    <span className="text-gray-600">{label}</span>
                     <span className="text-gray-600 font-mono ml-2">{id}</span>
                   </div>
-                  <span className="text-brand-400 font-semibold">{status}</span>
+                  <span className="text-[#0F4C81] font-semibold">{status}</span>
                 </div>
               ))}
             </div>
 
-            <div className="card">
-              <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
+            <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+              <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
                 AI Services
               </div>
               {[
@@ -340,18 +343,18 @@ export default function AnalyticsPage() {
                 ['ValuationOracle',   ':8001', 'MOCK'],
                 ['FraudSense',        ':8001', 'MOCK'],
               ].map(([name, port, mode]) => (
-                <div key={name} className="flex items-center justify-between py-1.5 border-b border-gray-800 last:border-0 text-xs">
+                <div key={name} className="flex items-center justify-between py-1.5 border-b border-gray-200 last:border-0 text-xs">
                   <div>
-                    <span className="text-gray-300">{name}</span>
+                    <span className="text-gray-600">{name}</span>
                     <span className="text-gray-600 font-mono ml-2">{port}</span>
                   </div>
-                  <span className="text-amber-400 font-semibold">{mode}</span>
+                  <span className="text-amber-700 font-semibold">{mode}</span>
                 </div>
               ))}
             </div>
 
-            <div className="card">
-              <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
+            <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+              <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
                 Demo Story Progress
               </div>
               {[
@@ -363,15 +366,15 @@ export default function AnalyticsPage() {
                 [7, 'BhumiGPT Query', true],
                 [8, 'BhumiAnalytics', true],
               ].map(([scene, label, done]) => (
-                <div key={String(scene)} className="flex items-center gap-2 py-1.5 border-b border-gray-800 last:border-0 text-xs">
+                <div key={String(scene)} className="flex items-center gap-2 py-1.5 border-b border-gray-200 last:border-0 text-xs">
                   <div className={clsx(
                     'w-4 h-4 rounded-full flex items-center justify-center font-mono text-xs shrink-0',
-                    done ? 'bg-brand-800 text-brand-300' : 'bg-gray-800 text-gray-500',
+                    done ? 'bg-[#BFDBFE] text-[#0F4C81]' : 'bg-gray-100 text-gray-500',
                   )}>
                     {done ? '✓' : scene}
                   </div>
-                  <span className={done ? 'text-gray-300' : 'text-gray-600'}>{label}</span>
-                  {done && <CheckCircle className="w-3 h-3 text-brand-500 ml-auto shrink-0" />}
+                  <span className={done ? 'text-gray-600' : 'text-gray-600'}>{label}</span>
+                  {done && <CheckCircle className="w-3 h-3 text-[#0F4C81] ml-auto shrink-0" />}
                 </div>
               ))}
             </div>
@@ -395,9 +398,9 @@ function StatCard({
   color: 'brand' | 'red' | 'amber' | 'purple';
   live?: boolean;
 }) {
-  const ring  = { brand: 'border-brand-800', red: 'border-red-900', amber: 'border-amber-900', purple: 'border-purple-900' }[color];
-  const bg    = { brand: 'bg-brand-950',     red: 'bg-red-950',     amber: 'bg-amber-950',     purple: 'bg-purple-950'    }[color];
-  const text  = { brand: 'text-brand-300',   red: 'text-red-300',   amber: 'text-amber-300',   purple: 'text-purple-300'  }[color];
+  const ring  = { brand: 'border-[#0F4C81]/20', red: 'border-red-900', amber: 'border-amber-900', purple: 'border-purple-900' }[color];
+  const bg    = { brand: 'bg-[#0F4C81]/5',     red: 'bg-red-50',     amber: 'bg-amber-50',     purple: 'bg-purple-50'    }[color];
+  const text  = { brand: 'text-[#0F4C81]',   red: 'text-red-700',   amber: 'text-amber-700',   purple: 'text-purple-700'  }[color];
 
   return (
     <div className={clsx('card border', ring, 'relative overflow-hidden')}>
@@ -408,7 +411,7 @@ function StatCard({
         <span className={text}>{icon}</span>
       </div>
       <div className={clsx('text-2xl font-bold font-mono', text)}>{value}</div>
-      <div className="text-xs text-gray-300 font-semibold mt-1">{label}</div>
+      <div className="text-xs text-gray-600 font-semibold mt-1">{label}</div>
       <div className="text-xs text-gray-600 mt-0.5">{sub}</div>
     </div>
   );
@@ -423,9 +426,9 @@ function MiniStat({
   color: 'brand' | 'red' | 'amber';
   live?: boolean;
 }) {
-  const text = { brand: 'text-brand-400', red: 'text-red-400', amber: 'text-amber-400' }[color];
+  const text = { brand: 'text-[#0F4C81]', red: 'text-red-700', amber: 'text-amber-700' }[color];
   return (
-    <div className="card flex items-center gap-3">
+    <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm flex items-center gap-3">
       <div>
         <div className={clsx('text-xl font-bold font-mono', text)}>
           {value.toLocaleString('en-IN')}
@@ -442,15 +445,16 @@ function LegendDot({ color, label }: { color: string; label: string }) {
   return (
     <div className="flex items-center gap-1.5">
       <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: color }} />
-      <span className="text-gray-400">{label}</span>
+      <span className="text-gray-500">{label}</span>
     </div>
   );
 }
 
 function MapSkeleton() {
   return (
-    <div className="w-full h-full bg-gray-800 flex items-center justify-center text-gray-500 text-sm animate-pulse rounded-xl">
+    <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-500 text-sm animate-pulse rounded-xl">
       Loading fraud heatmap…
     </div>
-  );
+  </div>
+    );
 }

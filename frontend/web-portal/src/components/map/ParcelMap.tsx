@@ -92,9 +92,9 @@ export default function ParcelMap({ geojson, onParcelSelect }: Props) {
         attributionControl: true,
       });
 
-      // Dark base tiles (CartoDB Dark Matter)
+      // Light base tiles (CartoDB Positron — clean government white map)
       L.tileLayer(
-        'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+        'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
         {
           attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
           subdomains: 'abcd',
@@ -213,12 +213,12 @@ export default function ParcelMap({ geojson, onParcelSelect }: Props) {
           placeholder="Search DLPI, owner, survey no..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-64 bg-gray-900 border border-gray-700 text-gray-100 text-sm rounded-lg px-3 py-1.5 placeholder-gray-500 focus:outline-none focus:border-brand-500"
+          className="w-64 bg-white border border-gray-200 text-gray-900 text-sm rounded-lg px-3 py-1.5 placeholder-gray-500 focus:outline-none focus:border-[#0F4C81]/60"
         />
         <select
           value={filterType}
           onChange={(e) => setFilterType(e.target.value)}
-          className="bg-gray-900 border border-gray-700 text-gray-100 text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:border-brand-500"
+          className="bg-white border border-gray-200 text-gray-900 text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:border-[#0F4C81]/60"
         >
           <option value="all">All Parcels</option>
           <option value="tribal">Tribal / Schedule V</option>
@@ -231,7 +231,7 @@ export default function ParcelMap({ geojson, onParcelSelect }: Props) {
       <div className="absolute top-16 left-4 z-[1000] flex flex-col gap-2">
         <button
           onClick={() => flyToDemoParcel('DLPI-MH-SNN-00142')}
-          className="bg-brand-700 hover:bg-brand-600 text-white text-xs font-semibold px-3 py-1.5 rounded-lg shadow-lg whitespace-nowrap"
+          className="bg-[#0a3566] hover:bg-[#0F4C81] text-white text-xs font-semibold px-3 py-1.5 rounded-lg shadow-lg whitespace-nowrap"
         >
           → Ramesh Patil (Scene 2–5)
         </button>
@@ -254,7 +254,7 @@ export default function ParcelMap({ geojson, onParcelSelect }: Props) {
         <div className="absolute top-4 right-4 z-[1000] card w-80 shadow-2xl animate-slide-up overflow-y-auto max-h-[80vh]">
           <button
             onClick={() => setSelectedParcel(null)}
-            className="absolute top-2 right-2 text-gray-500 hover:text-gray-300 text-lg leading-none"
+            className="absolute top-2 right-2 text-gray-500 hover:text-gray-600 text-lg leading-none"
           >
             ×
           </button>

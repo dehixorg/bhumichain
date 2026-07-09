@@ -5,11 +5,14 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
   MapPin, ArrowRight, CheckCircle, Clock, AlertTriangle,
-  XCircle, FileText, RefreshCw, Shield,
+  FileText, Shield, Search, ArrowUpRight, Download, Send,
+  Landmark, Map, FileSignature, HelpCircle, FileCheck,
+  TrendingUp, BellRing, Activity
 } from 'lucide-react';
 import clsx from 'clsx';
-import Sidebar from '@/components/dashboard/Sidebar';
-import { getUser, apiFetch } from '@/lib/auth';
+import CitizenHeader from '@/components/dashboard/CitizenHeader';
+import CitizenFooter from '@/components/dashboard/CitizenFooter';
+import { getUser, apiFetch, type JWTUser } from '@/lib/auth';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -20,413 +23,362 @@ interface Parcel {
   tehsil:            string;
   district:          string;
   landType:          string;
-  landTypeDesc:      string;
   areaHectares:      number;
   encumbranceStatus: string;
   claimStatus:       string;
   successionStatus?: string;
-  disputeNote?:      string;
   isTribal?:         boolean;
   isCoparcenary?:    boolean;
-  location:          { latitude: number; longitude: number };
   valuation:         { circleRateINR: number };
   updatedAt:         string;
 }
 
-// ── Status config ─────────────────────────────────────────────────────────────
+// ── Mock Data for New Sections ────────────────────────────────────────────────
 
-const STATUS_CONFIG: Record<string, {
-  label: string;
-  color: string;
-  bg: string;
-  icon: React.ElementType;
-  hint: string;
-}> = {
-  OWNER_VERIFIED: {
-    label: 'OWNER_VERIFIED',
-    color: 'text-green-400',
-    bg:    'bg-green-900 bg-opacity-40 border-green-700',
-    icon:  CheckCircle,
-    hint:  'Your ownership is confirmed on BhumiChain.',
-  },
-  UNDER_REVIEW: {
-    label: 'Under Review',
-    color: 'text-blue-400',
-    bg:    'bg-blue-900 bg-opacity-40 border-blue-700',
-    icon:  Clock,
-    hint:  'Patwari / Circle Inspector is verifying your claim.',
-  },
-  CI_APPROVED: {
-    label: 'CI Approved',
-    color: 'text-blue-400',
-    bg:    'bg-blue-900 bg-opacity-40 border-blue-700',
-    icon:  Clock,
-    hint:  'Approved by Circle Inspector. Awaiting Tehsildar final sign-off.',
-  },
-  CLAIM_SUBMITTED: {
-    label: 'Claim Submitted',
-    color: 'text-saffron-400',
-    bg:    'bg-orange-900 bg-opacity-40 border-orange-700',
-    icon:  Clock,
-    hint:  'Your claim is submitted. Next: submit for field verification.',
-  },
-  SEEDED_UNVERIFIED: {
-    label: 'Unverified',
-    color: 'text-yellow-400',
-    bg:    'bg-yellow-900 bg-opacity-30 border-yellow-700',
-    icon:  AlertTriangle,
-    hint:  'Record migrated from government database. Claim to verify ownership.',
-  },
-  SCAN_PENDING_SRO: {
-    label: 'Unverified',
-    color: 'text-yellow-400',
-    bg:    'bg-yellow-900 bg-opacity-30 border-yellow-700',
-    icon:  AlertTriangle,
-    hint:  'Record scanned from AI. Claim to verify ownership.',
-  },
-  DISPUTED: {
-    label: 'Disputed',
-    color: 'text-red-400',
-    bg:    'bg-red-900 bg-opacity-40 border-red-700',
-    icon:  AlertTriangle,
-    hint:  'Dispute raised on this parcel. Check details.',
-  },
-  REJECTED: {
-    label: 'Rejected',
-    color: 'text-gray-400',
-    bg:    'bg-gray-800 border-gray-700',
-    icon:  XCircle,
-    hint:  'Claim rejected by revenue officer. Contact your Patwari.',
-  },
-};
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-function formatArea(ha: number): string {
-  if (ha < 0.1) return `${(ha * 10000).toFixed(0)} sq.m`;
-  return `${ha.toFixed(3)} ha`;
-}
-
-function formatValue(n: number): string {
-  if (n >= 1_00_00_000) return `₹${(n / 1_00_00_000).toFixed(2)} Cr`;
-  if (n >= 1_00_000)    return `₹${(n / 1_00_000).toFixed(1)} L`;
-  return `₹${n.toLocaleString('en-IN')}`;
-}
-
-type Filter = 'all' | 'OWNER_VERIFIED' | 'pending' | 'disputed';
-
-const FILTERS: { key: Filter; label: string }[] = [
-  { key: 'all',      label: 'All' },
-  { key: 'OWNER_VERIFIED', label: 'OWNER_VERIFIED' },
-  { key: 'pending',  label: 'Pending' },
-  { key: 'disputed', label: 'Disputed' },
+const TIMELINE = [
+  { date: 'Today, 10:30 AM', title: 'EC Certificate Generated',  sub: 'DLPI-MH-SNN-00142', icon: FileCheck, color: 'text-green-600', bg: 'bg-green-100' },
+  { date: 'Yesterday',       title: 'Succession Claim Filed',    sub: 'Tehsil Dadri, GBN', icon: FileSignature, color: 'text-purple-600', bg: 'bg-purple-100' },
+  { date: '12 June 2026',    title: 'Property Transfer',         sub: 'Approved by Tehsildar', icon: ArrowRight, color: 'text-[#0F4C81]', bg: 'bg-blue-100' },
+  { date: '01 Jan 2026',     title: 'Record Seeded on Chain',    sub: 'Initial Digitization', icon: Database, color: 'text-gray-600', bg: 'bg-gray-100' },
 ];
 
-function matchFilter(parcel: Parcel, filter: Filter): boolean {
-  if (filter === 'all')      return true;
-  if (filter === 'OWNER_VERIFIED') return parcel.claimStatus === 'OWNER_VERIFIED';
-  if (filter === 'disputed') return parcel.claimStatus === 'DISPUTED';
-  return ['SEEDED_UNVERIFIED', 'CLAIM_SUBMITTED', 'UNDER_REVIEW', 'CI_APPROVED', 'SCAN_PENDING_SRO'].includes(parcel.claimStatus);
+const VAULT_DOCS = [
+  { name: 'Khatauni (RoR) - 2026',  id: 'DOC-26-4412', size: '1.2 MB', date: 'Jul 9, 2026', icon: FileText,   type: 'PDF' },
+  { name: 'Encumbrance Cert.',      id: 'EC-4412999',  size: '800 KB', date: 'Jul 9, 2026', icon: Shield,     type: 'PDF' },
+  { name: 'Digitally Signed Map',   id: 'MAP-V22-1',   size: '3.4 MB', date: 'May 1, 2026', icon: Map,        type: 'PNG' },
+];
+
+const ANNOUNCEMENTS = [
+  { badge: 'NEW', title: 'BhumiChain Pilot expands to 500 villages in Gautam Buddha Nagar.' },
+  { badge: 'ALERT', title: 'Schedule V (Tribal) land transfers strictly require Collector NOC.' },
+  { badge: 'INFO', title: 'Link Aadhaar before 31st August 2026 to claim unverified parcels.' },
+];
+
+function Database(props: any) {
+  return <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>;
 }
 
-// ── Parcel Card ───────────────────────────────────────────────────────────────
+// ── Status config ─────────────────────────────────────────────────────────────
 
-function ParcelCard({ parcel }: { parcel: Parcel }) {
-  const status = STATUS_CONFIG[parcel.claimStatus] ?? STATUS_CONFIG['SEEDED_UNVERIFIED'];
-  const StatusIcon = status.icon;
+const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; icon: React.ElementType }> = {
+  OWNER_VERIFIED:    { label: 'Verified',       color: 'text-green-700', bg: 'bg-green-50 border-green-200', icon: CheckCircle },
+  UNDER_REVIEW:      { label: 'Under Review',   color: 'text-blue-700',  bg: 'bg-blue-50 border-blue-200',   icon: Clock },
+  CLAIM_SUBMITTED:   { label: 'Claim Submitted',color: 'text-orange-700',bg: 'bg-orange-50 border-orange-200', icon: Clock },
+  SEEDED_UNVERIFIED: { label: 'Unverified',     color: 'text-yellow-700',bg: 'bg-yellow-50 border-yellow-200', icon: AlertTriangle },
+  DISPUTED:          { label: 'Disputed',       color: 'text-red-700',   bg: 'bg-red-50 border-red-200',     icon: AlertTriangle },
+};
 
-  const cta = (() => {
-    if (parcel.successionStatus === 'SUCCESSION_PENDING') {
-      return { label: 'Review Inheritance', href: `/succession`, primary: true };
-    }
-    switch (parcel.claimStatus) {
-      case 'SEEDED_UNVERIFIED': 
-      case 'SCAN_PENDING_SRO':  return { label: 'Claim Now',       href: `/claim/${parcel.dlpiId}`, primary: true };
-      case 'CLAIM_SUBMITTED':   return { label: 'Submit for Review', href: `/claim/${parcel.dlpiId}`, primary: true };
-      case 'UNDER_REVIEW':      return { label: 'Track Review',    href: `/claim/${parcel.dlpiId}`, primary: false };
-      case 'CI_APPROVED':       return { label: 'Track Review',    href: `/claim/${parcel.dlpiId}`, primary: false };
-      case 'OWNER_VERIFIED':          return { label: 'Get EC',          href: `/ec/${parcel.dlpiId}`,    primary: true };
-      case 'DISPUTED':          return { label: 'View Dispute',    href: `/claim/${parcel.dlpiId}`, primary: false };
-      default:                  return { label: 'View Details',    href: `/claim/${parcel.dlpiId}`, primary: false };
-    }
-  })();
-
-  return (
-    <div className="card flex flex-col gap-4 hover:border-gray-600 transition-colors">
-      {/* Header */}
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex-1 min-w-0">
-          <div className="font-mono text-brand-400 text-xs font-semibold tracking-wide">{parcel.dlpiId}</div>
-          <div className="text-gray-200 font-medium text-sm mt-0.5 truncate">
-            Khasra {parcel.khasraNo}
-          </div>
-          <div className="flex items-center gap-1 text-gray-500 text-xs mt-0.5">
-            <MapPin className="w-3 h-3 shrink-0" />
-            {parcel.tehsil}, {parcel.district}
-          </div>
-        </div>
-        <div className="flex flex-col items-end gap-1">
-          <span className={clsx(
-            'shrink-0 flex items-center gap-1.5 px-2 py-1 rounded-full border text-xs font-semibold',
-            status.bg, status.color,
-          )}>
-            <StatusIcon className="w-3 h-3" />
-            {status.label}
-          </span>
-          {parcel.successionStatus === 'SUCCESSION_PENDING' && (
-            <span className="shrink-0 flex items-center gap-1.5 px-2 py-1 rounded-full border text-xs font-semibold bg-purple-900 bg-opacity-40 border-purple-700 text-purple-400">
-              <Clock className="w-3 h-3" />
-              Pending Inheritance
-            </span>
-          )}
-        </div>
-      </div>
-
-      {/* Details grid */}
-      <div className="grid grid-cols-2 gap-2 text-xs">
-        <div className="bg-gray-800 rounded-lg px-3 py-2">
-          <div className="text-gray-500">Land Type</div>
-          <div className="text-gray-200 font-medium mt-0.5">{parcel.landType}</div>
-        </div>
-        <div className="bg-gray-800 rounded-lg px-3 py-2">
-          <div className="text-gray-500">Area</div>
-          <div className="text-gray-200 font-medium mt-0.5">{formatArea(parcel.areaHectares)}</div>
-        </div>
-        <div className="bg-gray-800 rounded-lg px-3 py-2">
-          <div className="text-gray-500">Circle Rate</div>
-          <div className="text-gray-200 font-medium mt-0.5">{formatValue(parcel.valuation.circleRateINR)}</div>
-        </div>
-        <div className="bg-gray-800 rounded-lg px-3 py-2">
-          <div className="text-gray-500">Encumbrance</div>
-          <div className={clsx(
-            'font-medium mt-0.5',
-            parcel.encumbranceStatus === 'CLEAR' ? 'text-green-400' : 'text-red-400',
-          )}>
-            {parcel.encumbranceStatus.replace('_', ' ')}
-          </div>
-        </div>
-      </div>
-
-      {/* Badges & Tokenization Info */}
-      <div className="flex flex-wrap gap-2">
-        {parcel.claimStatus === 'OWNER_VERIFIED' && (
-          <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-900 bg-opacity-30 border border-blue-500 text-blue-400 text-xs shadow-[0_0_10px_rgba(59,130,246,0.3)]">
-            <Shield className="w-3 h-3" />
-            Tokenized Asset (ERC-721)
-          </span>
-        )}
-        {parcel.isTribal && (
-          <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-900 bg-opacity-40 border border-amber-700 text-amber-400 text-xs">
-            <Shield className="w-3 h-3" />
-            Schedule V Protected
-          </span>
-        )}
-        {parcel.isCoparcenary && (
-          <span className="px-2 py-0.5 rounded-full bg-purple-900 bg-opacity-40 border border-purple-700 text-purple-400 text-xs">
-            Coparcenary Token (50% Share)
-          </span>
-        )}
-      </div>
-
-      {parcel.claimStatus === 'OWNER_VERIFIED' && (
-        <div className="bg-gray-800 rounded-lg px-3 py-2 mt-1 border border-gray-700/50 flex items-center justify-between group cursor-help" title="Mocked Transaction Hash for Demo">
-          <div className="min-w-0 flex-1">
-            <div className="text-gray-500 text-[10px] uppercase tracking-widest font-semibold mb-0.5">Blockchain Tx Hash</div>
-            <div className="text-blue-400/80 font-mono text-[10px] truncate">
-              0x{Array.from(parcel.dlpiId).reduce((acc, char) => acc + char.charCodeAt(0).toString(16), '')}a1b2c3d4e5f6g7h8
-            </div>
-          </div>
-          <div className="flex items-center gap-1 text-[10px] text-green-500 bg-green-500/10 px-1.5 py-0.5 rounded border border-green-500/20">
-            <CheckCircle className="w-3 h-3" />
-            Minted
-          </div>
-        </div>
-      )}
-
-      {/* Status hint */}
-      <p className="text-xs text-gray-500">{status.hint}</p>
-
-      {/* CTAs */}
-      <div className="flex gap-2 pt-1 border-t border-gray-800">
-        <Link
-          href={cta.href}
-          className={clsx(
-            'flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-semibold transition-colors',
-            cta.primary
-              ? 'bg-brand-600 hover:bg-brand-700 text-white'
-              : 'bg-gray-800 hover:bg-gray-700 text-gray-300',
-          )}
-        >
-          {cta.label}
-          <ArrowRight className="w-3 h-3" />
-        </Link>
-        <Link
-          href={`/map?dlpi=${parcel.dlpiId}`}
-          className="px-3 py-2 rounded-lg text-xs text-gray-400 hover:text-gray-200 hover:bg-gray-800 transition-colors flex items-center gap-1"
-        >
-          <MapPin className="w-3 h-3" />
-          Map
-        </Link>
-      </div>
-    </div>
-  );
-}
-
-// ── Skeleton ──────────────────────────────────────────────────────────────────
-
-function SkeletonCard() {
-  return (
-    <div className="card animate-pulse space-y-4">
-      <div className="flex justify-between">
-        <div className="space-y-2">
-          <div className="h-3 w-36 bg-gray-700 rounded" />
-          <div className="h-4 w-48 bg-gray-700 rounded" />
-          <div className="h-3 w-32 bg-gray-700 rounded" />
-        </div>
-        <div className="h-6 w-24 bg-gray-700 rounded-full" />
-      </div>
-      <div className="grid grid-cols-2 gap-2">
-        {[0, 1, 2, 3].map(i => <div key={i} className="h-12 bg-gray-800 rounded-lg" />)}
-      </div>
-      <div className="h-8 bg-gray-800 rounded-lg" />
-    </div>
-  );
-}
-
-// ── Page ──────────────────────────────────────────────────────────────────────
-
-export default function MyParcelsPage() {
-  const router  = useRouter();
+export default function CitizenDashboard() {
+  const router = useRouter();
+  const [user, setUser] = useState<JWTUser | null>(null);
   const [parcels, setParcels] = useState<Parcel[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError]     = useState('');
-  const [filter, setFilter]   = useState<Filter>('all');
-  const [userName, setUserName] = useState('');
+  const [nyayaQuery, setNyayaQuery] = useState('');
 
   useEffect(() => {
-    const user = getUser();
-    if (!user) { router.replace('/login'); return; }
-    if (user.role !== 'citizen') { router.replace('/officer-dashboard'); return; }
-    setUserName(user.name);
-    fetchParcels();
-  }, []);
+    const u = getUser();
+    if (!u) { router.replace('/login'); return; }
+    if (u.role !== 'citizen') { router.replace('/officer-dashboard'); return; }
+    setUser(u);
+    apiFetch('/api/dlpi/my-parcels')
+      .then(r => r.json())
+      .then(d => { if (Array.isArray(d)) setParcels(d); })
+      .finally(() => setLoading(false));
+  }, [router]);
 
-  async function fetchParcels() {
-    setLoading(true);
-    setError('');
-    try {
-      const res  = await apiFetch('/api/dlpi/my-parcels');
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || data.error || 'Failed to load parcels');
-      setParcels(data);
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Could not load parcels');
-    } finally {
-      setLoading(false);
-    }
-  }
+  // Aggregate stats
+  const totalParcels = parcels.length;
+  const verifiedParcels = parcels.filter(p => p.claimStatus === 'OWNER_VERIFIED').length;
+  const totalArea = parcels.reduce((acc, p) => acc + (p.areaHectares || 0), 0).toFixed(2);
 
-  const filtered  = parcels.filter(p => matchFilter(p, filter));
-  const counts    = {
-    all:      parcels.length,
-    OWNER_VERIFIED: parcels.filter(p => p.claimStatus === 'OWNER_VERIFIED').length,
-    pending:  parcels.filter(p => ['SEEDED_UNVERIFIED', 'CLAIM_SUBMITTED', 'UNDER_REVIEW', 'CI_APPROVED'].includes(p.claimStatus)).length,
-    disputed: parcels.filter(p => p.claimStatus === 'DISPUTED').length,
+  const handleNyayaSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (nyayaQuery.trim()) router.push(`/nyaya-ai?q=${encodeURIComponent(nyayaQuery)}`);
   };
 
+  if (!user) return null;
+
   return (
-    <div className="flex h-screen bg-gray-950 overflow-hidden">
-      <Sidebar />
+    <div className="min-h-screen bg-[#F8FAFC] flex flex-col font-sans">
+      <CitizenHeader />
 
-      <main className="flex-1 overflow-y-auto">
-        <div className="max-w-5xl mx-auto px-6 py-8 space-y-6">
-
-          {/* Header */}
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-100">My Parcels</h1>
-              <p className="text-gray-400 text-sm mt-1">
-                {userName && <span>{userName} · </span>}
-                {loading ? 'Loading…' : `${parcels.length} parcel${parcels.length !== 1 ? 's' : ''} on BhumiChain`}
+      <main className="flex-1">
+        
+        {/* ── 1. Hero Section ───────────────────────────────────────────────── */}
+        <div className="bg-white border-b border-gray-200 pt-10 pb-12">
+          <div className="max-w-[1200px] mx-auto px-6 lg:px-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-8">
+            <div className="space-y-4">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-50 border border-green-200 text-green-700 text-xs font-bold uppercase tracking-wider">
+                <CheckCircle className="w-3.5 h-3.5" />
+                Aadhaar KYC Verified
+              </div>
+              <h1 className="text-3xl md:text-4xl font-black text-gray-900 tracking-tight">
+                Welcome, {user.name}
+              </h1>
+              <p className="text-gray-500 text-base md:text-lg max-w-xl leading-relaxed">
+                View, manage and transfer your land records securely on India's national blockchain registry.
               </p>
+              
+              <div className="flex items-center gap-4 text-xs font-semibold text-gray-500 mt-4">
+                <div className="flex items-center gap-1.5"><MapPin className="w-4 h-4 text-gray-400" /> Uttar Pradesh</div>
+                <div className="w-1 h-1 rounded-full bg-gray-300" />
+                <div>ID: {user.aadhaarId || 'xxxx-xxxx-xxxx'}</div>
+                <div className="w-1 h-1 rounded-full bg-gray-300" />
+                <div>Last Login: Today, 10:24 AM</div>
+              </div>
             </div>
-            <button
-              onClick={fetchParcels}
-              disabled={loading}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-400 hover:text-gray-200 hover:bg-gray-800 transition-colors disabled:opacity-50"
-            >
-              <RefreshCw className={clsx('w-4 h-4', loading && 'animate-spin')} />
-              Refresh
-            </button>
+            
+            {/* Quick Stats on Hero */}
+            <div className="flex gap-4 shrink-0">
+              <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm text-center min-w-[120px]">
+                <div className="text-3xl font-black text-[#0F4C81]">{totalParcels}</div>
+                <div className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">Parcels</div>
+              </div>
+              <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm text-center min-w-[120px]">
+                <div className="text-3xl font-black text-[#0F4C81]">{totalArea}</div>
+                <div className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">Hectares</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ── 2. Quick Services Grid ────────────────────────────────────────── */}
+        <div className="max-w-[1200px] mx-auto px-6 lg:px-10 -mt-6 relative z-10">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            {[
+              { label: 'View Records',   icon: FileText, href: '#holdings' },
+              { label: 'Apply Mutation', icon: Edit3Icon, href: '/mutation' },
+              { label: 'Transfer Title', icon: Send, href: '/transfer' },
+              { label: 'Succession',     icon: Landmark, href: '/succession' },
+              { label: 'Download EC',    icon: Shield, href: '/ec' },
+              { label: 'Ask NyayaAI',    icon: HelpCircle, href: '/nyaya-ai' },
+            ].map((s, i) => (
+              <Link key={i} href={s.href} className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-md hover:border-[#0F4C81]/30 transition-all group flex flex-col items-center text-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-[#F8FAFC] group-hover:bg-[#0F4C81]/5 flex items-center justify-center transition-colors">
+                  <s.icon className="w-6 h-6 text-[#0F4C81]" />
+                </div>
+                <span className="text-xs font-bold text-gray-700 group-hover:text-[#0F4C81] transition-colors">{s.label}</span>
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        <div className="max-w-[1200px] mx-auto px-6 lg:px-10 py-12 grid grid-cols-1 lg:grid-cols-3 gap-8">
+          
+          {/* ── Left Column (Main Content) ─────────────────────────────────── */}
+          <div className="lg:col-span-2 space-y-10">
+            
+            {/* My Land Holdings */}
+            <section id="holdings">
+              <div className="flex items-center justify-between mb-5">
+                <h2 className="text-xl font-black text-gray-900 tracking-tight">My Land Holdings</h2>
+                <Link href="/my-parcels" className="text-sm font-bold text-[#0F4C81] hover:underline flex items-center gap-1">
+                  View All <ArrowRight className="w-4 h-4" />
+                </Link>
+              </div>
+
+              {loading ? (
+                <div className="space-y-4">
+                  {[1, 2].map(i => <div key={i} className="h-40 bg-white border border-gray-100 rounded-2xl animate-pulse" />)}
+                </div>
+              ) : parcels.length === 0 ? (
+                <div className="bg-white border border-gray-200 rounded-2xl p-10 text-center shadow-sm">
+                  <FileText className="w-12 h-12 text-gray-600 mx-auto mb-3" />
+                  <p className="text-gray-900 font-bold">No records found</p>
+                  <p className="text-gray-500 text-sm mt-1">Your Aadhaar is not linked to any land records yet.</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {parcels.slice(0, 3).map(p => {
+                    const status = STATUS_CONFIG[p.claimStatus] ?? STATUS_CONFIG['SEEDED_UNVERIFIED'];
+                    const StatusIcon = status.icon;
+                    return (
+                      <div key={p.dlpiId} className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
+                        {/* Govt Top Strip */}
+                        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#0F4C81] to-transparent opacity-50" />
+                        
+                        <div className="flex justify-between items-start mb-4">
+                          <div>
+                            <div className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">DLPI ID</div>
+                            <div className="text-lg font-black text-[#0F4C81] font-mono tracking-tight">{p.dlpiId}</div>
+                            <div className="text-sm font-semibold text-gray-600 mt-0.5">{p.district}, {p.tehsil}</div>
+                          </div>
+                          <div className={clsx('flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-bold', status.bg, status.color)}>
+                            <StatusIcon className="w-3.5 h-3.5" />
+                            {status.label}
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-3 gap-4 mb-5 p-3 bg-gray-50 rounded-xl border border-gray-100">
+                          <div>
+                            <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Khasra No.</div>
+                            <div className="text-sm font-bold text-gray-900">{p.khasraNo}</div>
+                          </div>
+                          <div>
+                            <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Area</div>
+                            <div className="text-sm font-bold text-gray-900">{p.areaHectares.toFixed(4)} Ha</div>
+                          </div>
+                          <div>
+                            <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Status</div>
+                            <div className={clsx('text-sm font-bold', p.encumbranceStatus === 'CLEAR' ? 'text-green-600' : 'text-red-600')}>
+                              {p.encumbranceStatus}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex gap-3">
+                          <Link href={`/ec/${p.dlpiId}`} className="btn-primary text-xs py-2 px-4 rounded-lg flex-1 text-center justify-center">
+                            Download RoR
+                          </Link>
+                          <Link href={`/map?dlpi=${p.dlpiId}`} className="btn-secondary text-xs py-2 px-4 rounded-lg flex-1 text-center justify-center bg-white">
+                            <Map className="w-4 h-4 mr-1.5 inline" /> View Map
+                          </Link>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
+
+            {/* GIS Interactive Section */}
+            <section>
+              <div className="bg-[#0F4C81] rounded-2xl p-8 text-white relative overflow-hidden shadow-lg">
+                <div className="absolute right-0 top-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
+                <div className="relative z-10 max-w-sm">
+                  <h2 className="text-2xl font-black mb-2">Bhu-Naksha (GIS Map)</h2>
+                  <p className="text-blue-100 text-sm mb-6 leading-relaxed">
+                    Explore your land boundaries overlaid with SVAMITVA satellite imagery and live blockchain ownership layers.
+                  </p>
+                  <Link href="/map" className="inline-flex items-center gap-2 bg-white text-[#0F4C81] px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-gray-50 transition-colors shadow-sm">
+                    Open GIS Viewer <ArrowUpRight className="w-4 h-4" />
+                  </Link>
+                </div>
+                {/* Decorative Map Graphic */}
+                <div className="absolute right-8 bottom-8 hidden sm:block opacity-60">
+                  <Map className="w-32 h-32 text-white/20" />
+                </div>
+              </div>
+            </section>
+
           </div>
 
-          {/* Error */}
-          {error && (
-            <div className="flex items-center gap-3 p-4 rounded-xl bg-red-900 bg-opacity-30 border border-red-700 text-red-300 text-sm">
-              <AlertTriangle className="w-4 h-4 shrink-0" />
-              {error}
-            </div>
-          )}
-
-          {/* Filter tabs */}
-          {!loading && parcels.length > 0 && (
-            <div className="flex gap-1 p-1 bg-gray-900 border border-gray-800 rounded-xl w-fit">
-              {FILTERS.map(f => (
-                <button
-                  key={f.key}
-                  onClick={() => setFilter(f.key)}
-                  className={clsx(
-                    'px-4 py-1.5 rounded-lg text-sm font-medium transition-all',
-                    filter === f.key
-                      ? 'bg-brand-600 text-white'
-                      : 'text-gray-400 hover:text-gray-200',
-                  )}
-                >
-                  {f.label}
-                  {counts[f.key] > 0 && (
-                    <span className={clsx(
-                      'ml-1.5 text-xs px-1.5 py-0.5 rounded-full',
-                      filter === f.key ? 'bg-brand-500 text-white' : 'bg-gray-800 text-gray-500',
-                    )}>
-                      {counts[f.key]}
-                    </span>
-                  )}
+          {/* ── Right Column (Sidebar equivalent) ─────────────────────────── */}
+          <div className="space-y-8">
+            
+            {/* Document Vault */}
+            <section>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-black text-gray-900 uppercase tracking-widest">Document Vault</h3>
+              </div>
+              <div className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm space-y-3">
+                {VAULT_DOCS.map((doc, i) => (
+                  <div key={i} className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors border border-transparent hover:border-gray-100 cursor-pointer group">
+                    <div className="w-10 h-10 rounded-lg bg-blue-50 text-[#0F4C81] flex items-center justify-center shrink-0">
+                      <doc.icon className="w-5 h-5" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm font-bold text-gray-900 truncate">{doc.name}</div>
+                      <div className="text-[10px] text-gray-500 font-bold uppercase mt-0.5 tracking-wider">
+                        {doc.type} · {doc.size} · {doc.date}
+                      </div>
+                    </div>
+                    <button className="p-2 text-gray-400 hover:text-[#0F4C81] bg-white rounded-lg border border-gray-200 shadow-sm opacity-0 group-hover:opacity-100 transition-all">
+                      <Download className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+                <button className="w-full py-3 text-xs font-bold text-[#0F4C81] bg-[#F1F5F9] rounded-xl hover:bg-[#E2E8F0] transition-colors">
+                  View All Documents (DigiLocker)
                 </button>
-              ))}
-            </div>
-          )}
+              </div>
+            </section>
 
-          {/* Parcels grid */}
-          {loading ? (
-            <div className="grid gap-4 sm:grid-cols-2">
-              {[0, 1, 2, 3].map(i => <SkeletonCard key={i} />)}
-            </div>
-          ) : filtered.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 text-center">
-              <FileText className="w-12 h-12 text-gray-700 mb-4" />
-              <p className="text-gray-400 font-medium">
-                {filter === 'all' ? 'No parcels found' : `No ${filter} parcels`}
-              </p>
-              {filter === 'all' && (
-                <p className="text-gray-600 text-sm mt-2 max-w-sm">
-                  Your land records will appear here once they are seeded into BhumiChain by your Tehsildar.
+            {/* NyayaAI Widget */}
+            <section>
+              <div className="bg-gradient-to-br from-[#0F4C81] to-[#0a3566] border border-[#0F4C81] rounded-2xl p-5 shadow-sm text-white">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-6 h-6 rounded bg-white/20 flex items-center justify-center">
+                    <HelpCircle className="w-4 h-4 text-white" />
+                  </div>
+                  <h3 className="text-sm font-black uppercase tracking-widest">Ask NyayaAI</h3>
+                </div>
+                <p className="text-xs text-blue-200 mb-4 leading-relaxed">
+                  Have legal questions about property transfer, succession, or encumbrances? Ask the official legal assistant.
                 </p>
-              )}
-            </div>
-          ) : (
-            <div className="grid gap-4 sm:grid-cols-2">
-              {filtered.map(p => <ParcelCard key={p.dlpiId} parcel={p} />)}
-            </div>
-          )}
+                <form onSubmit={handleNyayaSearch} className="relative">
+                  <input
+                    type="text"
+                    value={nyayaQuery}
+                    onChange={(e) => setNyayaQuery(e.target.value)}
+                    placeholder="E.g. How to transfer land to my son?"
+                    className="w-full bg-white/10 border border-white/20 text-white placeholder-blue-200 text-xs rounded-xl pl-3 pr-10 py-3 focus:outline-none focus:ring-2 focus:ring-white/50"
+                  />
+                  <button type="submit" className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-white hover:bg-white/20 rounded-lg transition-colors">
+                    <Search className="w-4 h-4" />
+                  </button>
+                </form>
+              </div>
+            </section>
 
-          {/* Footer note */}
-          {!loading && parcels.length > 0 && (
-            <p className="text-xs text-gray-600 text-center pb-4">
-              Data on BhumiChain is tamper-proof once VERIFIED. Dispute window: 30 days from seeding.
-            </p>
-          )}
+            {/* Timeline */}
+            <section>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-black text-gray-900 uppercase tracking-widest">Recent Activity</h3>
+                <Activity className="w-4 h-4 text-gray-400" />
+              </div>
+              <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
+                <div className="space-y-6">
+                  {TIMELINE.map((item, i) => (
+                    <div key={i} className="flex gap-4 relative">
+                      {i !== TIMELINE.length - 1 && <div className="absolute top-8 left-4 w-px h-10 bg-gray-200" />}
+                      <div className={clsx('w-8 h-8 rounded-full flex items-center justify-center shrink-0 z-10', item.bg, item.color)}>
+                        <item.icon className="w-4 h-4" />
+                      </div>
+                      <div className="pt-1.5">
+                        <div className="text-sm font-bold text-gray-900 leading-tight">{item.title}</div>
+                        <div className="text-xs text-gray-500 mt-0.5">{item.sub}</div>
+                        <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mt-1">{item.date}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </section>
+
+            {/* Announcements */}
+            <section>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-black text-gray-900 uppercase tracking-widest">Notices</h3>
+                <BellRing className="w-4 h-4 text-gray-400" />
+              </div>
+              <div className="space-y-3">
+                {ANNOUNCEMENTS.map((ann, i) => (
+                  <div key={i} className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm hover:border-[#0F4C81]/30 transition-colors">
+                    <span className={clsx(
+                      'text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-sm mb-2 inline-block',
+                      ann.badge === 'NEW' ? 'bg-green-100 text-green-700' :
+                      ann.badge === 'ALERT' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-[#0F4C81]'
+                    )}>
+                      {ann.badge}
+                    </span>
+                    <p className="text-xs text-gray-700 font-semibold leading-relaxed">{ann.title}</p>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+          </div>
         </div>
       </main>
+
+      <CitizenFooter />
     </div>
   );
 }
+
+// Minimal stub for Edit3 icon
+function Edit3Icon(props: any) {
+  return <Edit3 {...props} />;
+}
+import { Edit3 } from 'lucide-react';

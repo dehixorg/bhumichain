@@ -19,8 +19,8 @@ export default function ParcelPopup({ parcel, onViewFull }: Props) {
       {/* Header */}
       <div className="flex items-start justify-between mb-3">
         <div>
-          <div className="font-mono text-xs text-brand-400 mb-0.5">{parcel.dlpiId}</div>
-          <div className="font-semibold text-gray-100 text-base leading-tight">{parcel.owner.name}</div>
+          <div className="font-mono text-xs text-[#0F4C81] mb-0.5">{parcel.dlpiId}</div>
+          <div className="font-semibold text-gray-900 text-base leading-tight">{parcel.owner.name}</div>
           <div className="text-gray-400 text-xs mt-0.5">
             Survey No. {parcel.surveyNumber} · {parcel.tehsil} Tehsil
           </div>
@@ -34,15 +34,15 @@ export default function ParcelPopup({ parcel, onViewFull }: Props) {
 
       {/* Land Info */}
       <div className="grid grid-cols-2 gap-2 mb-3">
-        <div className="bg-gray-800 rounded-lg px-3 py-2">
+        <div className="bg-[#F8FAFC] rounded-lg px-3 py-2">
           <div className="text-gray-400 text-xs">Land Type</div>
-          <div className="text-gray-100 font-medium text-xs mt-0.5">
+          <div className="text-gray-900 font-medium text-xs mt-0.5">
             {LAND_TYPE_LABELS[parcel.landType]}
           </div>
         </div>
-        <div className="bg-gray-800 rounded-lg px-3 py-2">
+        <div className="bg-[#F8FAFC] rounded-lg px-3 py-2">
           <div className="text-gray-400 text-xs">Area</div>
-          <div className="text-gray-100 font-medium text-xs mt-0.5">
+          <div className="text-gray-900 font-medium text-xs mt-0.5">
             {parcel.areaHectares.toFixed(2)} Ha
           </div>
         </div>
@@ -73,23 +73,23 @@ export default function ParcelPopup({ parcel, onViewFull }: Props) {
 
       {/* Coparcenary heirs */}
       {parcel.isCoparcenary && parcel.coparcenary && (
-        <div className="bg-gray-800 rounded-lg p-2.5 mb-3">
+        <div className="bg-[#F8FAFC] rounded-lg p-2.5 mb-3">
           <div className="text-gray-400 text-xs mb-1.5 flex items-center gap-1">
             <Users className="w-3 h-3" /> Heirs ({parcel.coparcenary.heirs.length})
           </div>
           {parcel.coparcenary.heirs.map((h, i) => (
             <div key={i} className="flex items-center justify-between text-xs py-0.5">
-              <span className="text-gray-300">{h.name}</span>
+              <span className="text-gray-600">{h.name}</span>
               <span className="flex items-center gap-1">
                 <span className="text-gray-400">{h.relation}</span>
-                <span className="font-mono text-brand-400">{h.share}</span>
+                <span className="font-mono text-[#0F4C81]">{h.share}</span>
                 {h.relation === 'Daughter' && (
                   <span className="text-purple-400 font-bold" title="HSA 2005 S.6(3)">★</span>
                 )}
               </span>
             </div>
           ))}
-          <div className="text-gray-500 text-xs mt-1.5 pt-1.5 border-t border-gray-700">
+          <div className="text-gray-500 text-xs mt-1.5 pt-1.5 border-t border-gray-200">
             {parcel.coparcenary.applicableLaw}
           </div>
         </div>
@@ -99,7 +99,7 @@ export default function ParcelPopup({ parcel, onViewFull }: Props) {
       {parcel.valuation && (
         <div className="flex items-center justify-between text-xs mb-3">
           <span className="text-gray-400">Circle Rate Value</span>
-          <span className="text-gray-100 font-mono">
+          <span className="text-gray-900 font-mono">
             ₹{(parcel.valuation.estimatedValueINR / 100000).toFixed(1)}L
           </span>
         </div>

@@ -250,8 +250,8 @@ export default function RecordScan({ onDlpiCreated, mode = 'genesis', onScanComp
 
       {/* Header */}
       <div>
-        <h1 className="text-xl font-bold text-gray-100">RecordScan AI</h1>
-        <p className="text-gray-400 text-sm mt-1">
+        <h1 className="text-xl font-bold text-gray-900">RecordScan AI</h1>
+        <p className="text-gray-500 text-sm mt-1">
           Upload a UP Khatauni (खतौनी) → Azure OCR + LayoutLM NER → DLPI on Hyperledger Fabric
         </p>
       </div>
@@ -267,23 +267,23 @@ export default function RecordScan({ onDlpiCreated, mode = 'genesis', onScanComp
                 className={clsx(
                   'flex items-start gap-3 p-4 rounded-xl border text-left transition-colors',
                   p.color === 'brand'
-                    ? 'border-brand-700 bg-brand-950 hover:bg-brand-900'
-                    : 'border-amber-700 bg-amber-950 hover:bg-amber-900',
+                    ? 'border-[#0F4C81]/20 bg-[#0F4C81]/5 hover:bg-[#0F4C81]/10'
+                    : 'border-amber-200 bg-amber-50 hover:bg-amber-100',
                 )}
               >
-                <p.icon className={clsx('w-5 h-5 mt-0.5 shrink-0', p.color === 'brand' ? 'text-brand-400' : 'text-amber-400')} />
+                <p.icon className={clsx('w-5 h-5 mt-0.5 shrink-0', p.color === 'brand' ? 'text-[#0F4C81]' : 'text-amber-600')} />
                 <div>
-                  <div className="text-sm font-semibold text-gray-100">{p.label}</div>
-                  <div className="text-xs text-gray-400 mt-0.5">{p.sub}</div>
+                  <div className="text-sm font-semibold text-gray-900">{p.label}</div>
+                  <div className="text-xs text-gray-500 mt-0.5">{p.sub}</div>
                 </div>
               </button>
             ))}
           </div>
 
-          <div className="flex items-center gap-3 text-gray-600 text-xs">
-            <div className="flex-1 h-px bg-gray-800" />
+          <div className="flex items-center gap-3 text-gray-500 text-xs">
+            <div className="flex-1 h-px bg-gray-200" />
             या अपना दस्तावेज़ अपलोड करें
-            <div className="flex-1 h-px bg-gray-800" />
+            <div className="flex-1 h-px bg-gray-200" />
           </div>
 
           <div
@@ -293,11 +293,11 @@ export default function RecordScan({ onDlpiCreated, mode = 'genesis', onScanComp
             onClick={() => fileRef.current?.click()}
             className={clsx(
               'border-2 border-dashed rounded-xl p-12 text-center cursor-pointer transition-colors',
-              dragOver ? 'border-brand-500 bg-brand-950' : 'border-gray-700 hover:border-gray-600',
+              dragOver ? 'border-[#0F4C81]/60 bg-[#EFF6FF]' : 'border-gray-200 hover:border-gray-300',
             )}
           >
             <Upload className="w-8 h-8 text-gray-500 mx-auto mb-3" />
-            <p className="text-gray-300 font-medium text-sm">Drop Khatauni scan here</p>
+            <p className="text-gray-600 font-medium text-sm">Drop Khatauni scan here</p>
             <p className="text-gray-600 text-xs mt-1">JPEG, PNG, TIFF, PDF · Max 20 MB</p>
             <input ref={fileRef} type="file" accept="image/*,.pdf" className="hidden" onChange={onFileChange} />
           </div>
@@ -308,8 +308,8 @@ export default function RecordScan({ onDlpiCreated, mode = 'genesis', onScanComp
       {(stage === 'uploading' || stage === 'processing') && (
         <div className="card space-y-4">
           <div className="flex items-center gap-2 mb-2">
-            <Cpu className="w-4 h-4 text-brand-400 animate-pulse" />
-            <span className="font-semibold text-gray-200 text-sm">AI Pipeline Running...</span>
+            <Cpu className="w-4 h-4 text-[#0F4C81] animate-pulse" />
+            <span className="font-semibold text-gray-700 text-sm">AI Pipeline Running...</span>
           </div>
           {steps.map((s, i) => <PipelineStep key={i} step={s} />)}
         </div>
@@ -322,8 +322,8 @@ export default function RecordScan({ onDlpiCreated, mode = 'genesis', onScanComp
 
           <div className="card">
             <div className="flex items-center gap-2 mb-4">
-              <FileText className="w-4 h-4 text-brand-400" />
-              <span className="font-semibold text-gray-200 text-sm">Extracted Khatauni Fields</span>
+              <FileText className="w-4 h-4 text-[#0F4C81]" />
+              <span className="font-semibold text-gray-700 text-sm">Extracted Khatauni Fields</span>
               <span className="ml-auto text-xs text-gray-500">{result.fileName} · {result.fileSizeKB} KB</span>
             </div>
 
@@ -353,14 +353,14 @@ export default function RecordScan({ onDlpiCreated, mode = 'genesis', onScanComp
             </div>
 
             {/* Khatedars (owners) */}
-            <div className="mt-4 pt-4 border-t border-gray-800">
+            <div className="mt-4 pt-4 border-t border-gray-200">
               <div className="text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wider">
                 खातेदार (Owners)
               </div>
               {ext.khatedars.map((o, i) => (
-                <div key={i} className="flex items-center justify-between py-1.5 border-b border-gray-800 last:border-0">
+                <div key={i} className="flex items-center justify-between py-1.5 border-b border-gray-200 last:border-0">
                   <div>
-                    <span className={clsx('text-sm text-gray-200', ext.flaggedFields.some(f => f.includes('khatedar') || f.includes('owner')) && 'text-amber-300')}>
+                    <span className={clsx('text-sm text-gray-700', ext.flaggedFields.some(f => f.includes('khatedar') || f.includes('owner')) && 'text-amber-300')}>
                       {o.name}
                     </span>
                     {o.fatherHusbandName && (
@@ -368,14 +368,14 @@ export default function RecordScan({ onDlpiCreated, mode = 'genesis', onScanComp
                     )}
                   </div>
                   <div className="flex items-center gap-2">
-                    {o.share && <span className="font-mono text-brand-400 text-xs">{o.share}</span>}
+                    {o.share && <span className="font-mono text-[#0F4C81] text-xs">{o.share}</span>}
                     <span className="text-gray-600 text-xs">{o.ownershipType}</span>
                   </div>
                 </div>
               ))}
             </div>
 
-            <div className="mt-4 pt-4 border-t border-gray-800 flex items-center gap-2 text-xs text-gray-500">
+            <div className="mt-4 pt-4 border-t border-gray-200 flex items-center gap-2 text-xs text-gray-500">
               <Database className="w-3 h-3" />
               <span>IPFS CID:</span>
               <span className="font-mono text-gray-400 truncate">{result.ipfsCID}</span>
@@ -391,7 +391,7 @@ export default function RecordScan({ onDlpiCreated, mode = 'genesis', onScanComp
               <input
                 value={dlpiId}
                 onChange={e => setDlpiId(e.target.value)}
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-brand-300 font-mono text-sm focus:outline-none focus:border-brand-500"
+                className="w-full bg-[#F8FAFC] border border-gray-200 rounded-lg px-3 py-2 text-[#0F4C81] font-mono text-sm focus:outline-none focus:border-[#0F4C81]/60"
               />
               <p className="text-gray-600 text-xs mt-1">
                 Auto-generated from Gata No. + tehsil code (DAD).
@@ -406,7 +406,7 @@ export default function RecordScan({ onDlpiCreated, mode = 'genesis', onScanComp
                 id="ownerAadhaarInput"
                 defaultValue="999900010010"
                 placeholder="Enter 12-digit Aadhaar (e.g. 999900010010 for Priya Kumar)"
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-gray-200 text-sm focus:outline-none focus:border-brand-500"
+                className="w-full bg-[#F8FAFC] border border-gray-200 rounded-lg px-3 py-2 text-gray-700 text-sm focus:outline-none focus:border-[#0F4C81]/60"
               />
               <p className="text-gray-600 text-xs mt-1">
                 Required to link this property to the citizen's Digilocker / My Parcels.
@@ -442,8 +442,8 @@ export default function RecordScan({ onDlpiCreated, mode = 'genesis', onScanComp
       {/* ── APPROVING ───────────────────────────────────────────────────── */}
       {stage === 'approving' && (
         <div className="card text-center py-12">
-          <div className="w-10 h-10 border-2 border-brand-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <div className="text-gray-200 font-semibold">Submitting to Kanungo Queue...</div>
+          <div className="w-10 h-10 border-2 border-[#0F4C81]/60 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <div className="text-gray-700 font-semibold">Submitting to Kanungo Queue...</div>
           <div className="text-gray-500 text-sm mt-1">Pending SRO Verification</div>
         </div>
       )}
@@ -451,13 +451,13 @@ export default function RecordScan({ onDlpiCreated, mode = 'genesis', onScanComp
       {/* ── DONE ────────────────────────────────────────────────────────── */}
       {stage === 'done' && (
         <div className="card text-center py-10 animate-fade-in">
-          <div className="w-14 h-14 rounded-full bg-brand-900 flex items-center justify-center mx-auto mb-4">
-            <CheckCircle className="w-8 h-8 text-brand-400" />
+          <div className="w-14 h-14 rounded-full bg-[#DBEAFE] flex items-center justify-center mx-auto mb-4">
+            <CheckCircle className="w-8 h-8 text-[#0F4C81]" />
           </div>
-          <div className="text-brand-300 font-bold text-lg mb-1">
+          <div className="text-[#0F4C81] font-bold text-lg mb-1">
             {mode === 'transfer' ? 'Scan Completed!' : 'Sent for Approval!'}
           </div>
-          {mode === 'genesis' && <div className="font-mono text-gray-300 text-sm mb-1">{dlpiId}</div>}
+          {mode === 'genesis' && <div className="font-mono text-gray-600 text-sm mb-1">{dlpiId}</div>}
           <div className="text-gray-500 text-xs mb-6">
             {mode === 'transfer' 
               ? 'Document has been digitized and verified via RecordScan AI.' 
@@ -492,14 +492,14 @@ function PipelineStep({ step }: { step: ProcessingStep }) {
   return (
     <div className={clsx('flex items-start gap-3 py-2', step.status === 'pending' && 'opacity-40')}>
       <div className={clsx('w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5', {
-        'bg-gray-800':                       step.status === 'pending',
-        'bg-brand-900 animate-pulse-fast':    step.status === 'running',
-        'bg-brand-800':                       step.status === 'done',
+        'bg-[#F8FAFC]':                       step.status === 'pending',
+        'bg-[#DBEAFE] animate-pulse-fast':    step.status === 'running',
+        'bg-[#BFDBFE]':                       step.status === 'done',
         'bg-amber-800':                       step.status === 'partial',
         'bg-red-800':                         step.status === 'error',
       })}>
         {(step.status === 'done' || step.status === 'partial')
-          ? <CheckCircle className={clsx('w-3.5 h-3.5', step.status === 'partial' ? 'text-amber-300' : 'text-brand-300')} />
+          ? <CheckCircle className={clsx('w-3.5 h-3.5', step.status === 'partial' ? 'text-amber-300' : 'text-[#0F4C81]')} />
           : <Icon className="w-3.5 h-3.5 text-gray-400" />
         }
       </div>
@@ -507,15 +507,15 @@ function PipelineStep({ step }: { step: ProcessingStep }) {
         <div className="flex items-center gap-2">
           <span className={clsx('text-sm font-medium', {
             'text-gray-500':   step.status === 'pending',
-            'text-brand-300':  step.status === 'running',
-            'text-gray-200':   step.status === 'done',
+            'text-[#0F4C81]':  step.status === 'running',
+            'text-gray-700':   step.status === 'done',
             'text-amber-300':  step.status === 'partial',
           })}>
             {step.label}
           </span>
-          {step.status === 'running' && <span className="text-xs text-brand-500 animate-pulse">processing...</span>}
+          {step.status === 'running' && <span className="text-xs text-[#0F4C81] animate-pulse">processing...</span>}
           {step.confidence !== undefined && step.status !== 'pending' && (
-            <span className={clsx('ml-auto text-xs font-mono', step.confidence >= 0.8 ? 'text-brand-400' : 'text-amber-400')}>
+            <span className={clsx('ml-auto text-xs font-mono', step.confidence >= 0.8 ? 'text-[#0F4C81]' : 'text-amber-400')}>
               {Math.round(step.confidence * 100)}%
             </span>
           )}
@@ -538,18 +538,18 @@ function ConfidenceBanner({ extraction, storedInDynamo }: { extraction: Extracti
 
   return (
     <div className={clsx('flex items-center gap-4 rounded-xl px-4 py-3', {
-      'bg-brand-950 border border-brand-800': high,
+      'bg-[#EFF6FF] border border-blue-200': high,
       'bg-amber-950 border border-amber-700': !high && med,
       'bg-red-950 border border-red-700':     !med,
     })}>
       <div className="text-center">
-        <div className={clsx('text-2xl font-bold', high ? 'text-brand-300' : med ? 'text-amber-300' : 'text-red-300')}>
+        <div className={clsx('text-2xl font-bold', high ? 'text-[#0F4C81]' : med ? 'text-amber-300' : 'text-red-300')}>
           {Math.round(conf * 100)}%
         </div>
         <div className="text-xs text-gray-500">Confidence</div>
       </div>
       <div className="flex-1">
-        <div className="text-sm font-semibold text-gray-200 mb-0.5">
+        <div className="text-sm font-semibold text-gray-700 mb-0.5">
           {high ? 'High confidence — ready for patwari approval'
            : med ? 'Medium confidence — review flagged fields'
            : 'Low confidence — manual verification required (अधिकारी सत्यापन आवश्यक)'}
@@ -561,7 +561,7 @@ function ConfidenceBanner({ extraction, storedInDynamo }: { extraction: Extracti
             <span className="text-amber-400">{extraction.flaggedFields.length} field(s) flagged</span>
           )}
           {storedInDynamo && (
-            <span className="text-brand-400 flex items-center gap-1">
+            <span className="text-[#0F4C81] flex items-center gap-1">
               <Database className="w-3 h-3" />DynamoDB
             </span>
           )}
@@ -576,7 +576,7 @@ function Field({ label, value, flagged }: { label: string; value: string; flagge
   return (
     <div>
       <div className="text-xs text-gray-500 mb-0.5">{label}</div>
-      <div className={clsx('text-sm font-medium', flagged ? 'text-amber-300' : 'text-gray-200')}>
+      <div className={clsx('text-sm font-medium', flagged ? 'text-amber-300' : 'text-gray-700')}>
         {flagged && <AlertTriangle className="w-3 h-3 inline mr-1" />}
         {value}
       </div>
@@ -605,10 +605,10 @@ function EditableField({
           value={value}
           onChange={e => onChange(e.target.value)}
           onBlur={() => setEditing(false)}
-          className="w-full bg-gray-800 border border-brand-600 rounded px-2 py-1 text-sm text-gray-200 focus:outline-none"
+          className="w-full bg-[#F8FAFC] border border-[#0F4C81] rounded px-2 py-1 text-sm text-gray-700 focus:outline-none"
         />
       ) : (
-        <div className={clsx('text-sm font-medium', flagged ? 'text-amber-300' : 'text-gray-200')}>{value}</div>
+        <div className={clsx('text-sm font-medium', flagged ? 'text-amber-300' : 'text-gray-700')}>{value}</div>
       )}
     </div>
   );

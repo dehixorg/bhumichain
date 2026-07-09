@@ -70,7 +70,7 @@ export default function TransferPage() {
   };
 
   return (
-    <div className="flex h-screen overflow-hidden bg-gray-950">
+    <div className="flex h-screen overflow-hidden bg-[#F8FAFC]">
       <Sidebar demoMode />
 
       {showFraud && (
@@ -88,17 +88,17 @@ export default function TransferPage() {
       <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
 
         {/* Top bar */}
-        <div className="h-12 bg-gray-900 border-b border-gray-800 flex items-center px-6 gap-3 shrink-0">
-          <ArrowLeftRight className="w-4 h-4 text-brand-400" />
-          <span className="text-sm font-semibold text-gray-200">Property Transfer</span>
+        <div className="h-12 bg-white border-b border-gray-200 flex items-center px-6 gap-3 shrink-0">
+          <ArrowLeftRight className="w-4 h-4 text-[#0F4C81]" />
+          <span className="text-sm font-semibold text-gray-700">Property Transfer</span>
 
           {/* Scene toggle */}
-          <div className="ml-4 flex rounded-lg overflow-hidden border border-gray-700 text-xs">
+          <div className="ml-4 flex rounded-lg overflow-hidden border border-gray-200 text-xs">
             <button
               onClick={() => setScene(4)}
               className={clsx(
                 'px-3 py-1.5 font-semibold transition-colors',
-                scene === 4 ? 'bg-brand-700 text-white' : 'bg-gray-800 text-gray-400 hover:text-gray-200',
+                scene === 4 ? 'bg-[#0a3566] text-white' : 'bg-[#F8FAFC] text-gray-400 hover:text-gray-700',
               )}
             >
               Scene 4 — Sale
@@ -107,7 +107,7 @@ export default function TransferPage() {
               onClick={() => setScene(5)}
               className={clsx(
                 'px-3 py-1.5 font-semibold transition-colors',
-                scene === 5 ? 'bg-red-700 text-white' : 'bg-gray-800 text-gray-400 hover:text-gray-200',
+                scene === 5 ? 'bg-red-700 text-white' : 'bg-[#F8FAFC] text-gray-400 hover:text-gray-700',
               )}
             >
               Scene 5 — Fraud Demo
@@ -140,7 +140,7 @@ export default function TransferPage() {
                 <div className="card">
                   <div className="flex items-center gap-2 mb-3">
                     <Lock className="w-4 h-4 text-amber-400" />
-                    <span className="text-sm font-semibold text-gray-200">
+                    <span className="text-sm font-semibold text-gray-700">
                       Original Transfer — National Lock Active
                     </span>
                   </div>
@@ -161,7 +161,7 @@ export default function TransferPage() {
                 <div className="card border-red-900">
                   <div className="flex items-center gap-2 mb-1">
                     <AlertTriangle className="w-4 h-4 text-red-400" />
-                    <span className="text-sm font-semibold text-gray-200">
+                    <span className="text-sm font-semibold text-gray-700">
                       Second Terminal — Fraud Attempt
                     </span>
                     <span className="ml-auto text-xs text-gray-500">Dadri SRO Terminal 2</span>
@@ -170,7 +170,7 @@ export default function TransferPage() {
                     A second operator at a different terminal tries to sell the same parcel to a different buyer.
                   </div>
 
-                  <div className="bg-gray-800 rounded-xl p-3 text-xs space-y-2 mb-4">
+                  <div className="bg-[#F8FAFC] rounded-xl p-3 text-xs space-y-2 mb-4">
                     <InfoRow label="Parcel"         value={DEMO_DLPI} mono />
                     <InfoRow label="Attempted buyer" value="Deepak Verma" />
                     <InfoRow label="Declared value"  value="₹ 55,00,000" />
@@ -214,8 +214,8 @@ function SceneInfo({ scene, completedTransfer }: { scene: Scene; completedTransf
 
       <div className="card">
         <div className="flex items-center gap-2 mb-3">
-          <Info className="w-4 h-4 text-brand-400" />
-          <span className="text-sm font-semibold text-gray-200">
+          <Info className="w-4 h-4 text-[#0F4C81]" />
+          <span className="text-sm font-semibold text-gray-700">
             {scene === 4 ? 'Scene 4 flow' : 'Scene 5 flow'}
           </span>
         </div>
@@ -233,9 +233,9 @@ function SceneInfo({ scene, completedTransfer }: { scene: Scene; completedTransf
               ['DigiLocker delivery',  'Deed → buyer\'s DigiLocker'],
             ].map(([title, desc], i) => (
               <li key={i} className="flex gap-2">
-                <span className="w-4 h-4 rounded-full bg-gray-800 text-gray-500 flex items-center justify-center shrink-0 font-mono text-xs">{i + 1}</span>
+                <span className="w-4 h-4 rounded-full bg-[#F8FAFC] text-gray-500 flex items-center justify-center shrink-0 font-mono text-xs">{i + 1}</span>
                 <div>
-                  <div className="text-gray-300">{title}</div>
+                  <div className="text-gray-600">{title}</div>
                   <div className="text-gray-600">{desc}</div>
                 </div>
               </li>
@@ -254,9 +254,9 @@ function SceneInfo({ scene, completedTransfer }: { scene: Scene; completedTransf
               ['Regulator alert',      'IG Registration, UP notified'],
             ].map(([title, desc], i) => (
               <li key={i} className="flex gap-2">
-                <span className="w-4 h-4 rounded-full bg-gray-800 text-gray-500 flex items-center justify-center shrink-0 font-mono text-xs">{i + 1}</span>
+                <span className="w-4 h-4 rounded-full bg-[#F8FAFC] text-gray-500 flex items-center justify-center shrink-0 font-mono text-xs">{i + 1}</span>
                 <div>
-                  <div className="text-gray-300">{title}</div>
+                  <div className="text-gray-600">{title}</div>
                   <div className="text-gray-600">{desc}</div>
                 </div>
               </li>
@@ -281,10 +281,10 @@ function SceneInfo({ scene, completedTransfer }: { scene: Scene; completedTransf
 
       {/* Scene 4 completion status */}
       {scene === 4 && completedTransfer && (
-        <div className="card border-brand-800">
+        <div className="card border-blue-200">
           <div className="flex items-center gap-2 mb-2">
-            <CheckCircle className="w-4 h-4 text-brand-400" />
-            <span className="text-sm font-semibold text-brand-300">Transfer Submitted</span>
+            <CheckCircle className="w-4 h-4 text-[#0F4C81]" />
+            <span className="text-sm font-semibold text-[#0F4C81]">Transfer Submitted</span>
           </div>
           <div className="text-xs space-y-1.5">
             <InfoRow label="TX ID" value={completedTransfer.transferId.slice(0, 28) + '…'} mono />
@@ -303,7 +303,7 @@ function SceneInfo({ scene, completedTransfer }: { scene: Scene; completedTransf
         </div>
         <div className="text-xs text-gray-500 space-y-1.5">
           <p>India loses est. <span className="text-red-400 font-medium">₹40,000 Cr/year</span> to land fraud, primarily through dual-sale schemes.</p>
-          <p>The national parcel lock eliminates <span className="text-brand-400 font-medium">100%</span> of dual-sale attempts by design — not by detection.</p>
+          <p>The national parcel lock eliminates <span className="text-[#0F4C81] font-medium">100%</span> of dual-sale attempts by design — not by detection.</p>
         </div>
       </div>
     </div>
@@ -314,7 +314,7 @@ function InfoRow({ label, value, mono }: { label: string; value: string; mono?: 
   return (
     <div className="flex items-start justify-between gap-3">
       <span className="text-gray-500 shrink-0">{label}</span>
-      <span className={clsx('text-gray-200 text-right break-all', mono && 'font-mono text-xs')}>{value}</span>
+      <span className={clsx('text-gray-700 text-right break-all', mono && 'font-mono text-xs')}>{value}</span>
     </div>
   );
 }

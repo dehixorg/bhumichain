@@ -171,7 +171,7 @@ export default function TribalPage() {
   const quorumMet = gramSabhaQuorum >= 5;
 
   return (
-    <div className="flex h-screen overflow-hidden bg-gray-950">
+    <div className="flex h-screen overflow-hidden bg-[#F8FAFC]">
       <Sidebar demoMode />
 
       {showModal && result?.decision === 'HARD_REJECTED' && result && (
@@ -186,15 +186,15 @@ export default function TribalPage() {
       <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
 
         {/* Topbar */}
-        <div className="h-12 bg-gray-900 border-b border-gray-800 flex items-center px-6 gap-3 shrink-0">
+        <div className="h-12 bg-white border-b border-gray-200 flex items-center px-6 gap-3 shrink-0">
           <Shield className="w-4 h-4 text-amber-400" />
-          <span className="text-sm font-semibold text-gray-200">TribalGuard</span>
+          <span className="text-sm font-semibold text-gray-700">TribalGuard</span>
           <span className="text-xs text-gray-500">— Demo Scene 6</span>
           {checkMs !== null && (
             <div className={clsx(
               'ml-4 flex items-center gap-1.5 text-xs font-mono font-bold px-2.5 py-1 rounded-full',
               checkMs <= 200
-                ? 'bg-brand-950 border border-brand-700 text-brand-300'
+                ? 'bg-[#EFF6FF] border border-blue-300 text-[#0F4C81]'
                 : 'bg-amber-950 border border-amber-700 text-amber-300',
             )}>
               <Clock className="w-3 h-3" />
@@ -212,7 +212,7 @@ export default function TribalPage() {
             <div className="card border-amber-900">
               <div className="flex items-center gap-2 mb-3">
                 <Leaf className="w-4 h-4 text-amber-400" />
-                <span className="text-sm font-semibold text-gray-200">Tribal Parcel</span>
+                <span className="text-sm font-semibold text-gray-700">Tribal Parcel</span>
                 <span className="ml-auto px-2 py-0.5 rounded-full text-xs font-bold bg-amber-950 border border-amber-700 text-amber-300">
                   Schedule V · Bhil
                 </span>
@@ -235,17 +235,17 @@ export default function TribalPage() {
 
             {/* Transfer attempt form */}
             <div className="card">
-              <div className="text-sm font-semibold text-gray-200 mb-3">Attempt Transfer</div>
+              <div className="text-sm font-semibold text-gray-700 mb-3">Attempt Transfer</div>
 
               {/* Buyer type toggle */}
-              <div className="flex rounded-xl overflow-hidden border border-gray-700 text-xs mb-4">
+              <div className="flex rounded-xl overflow-hidden border border-gray-200 text-xs mb-4">
                 <button
                   onClick={() => { setBuyerMode('non_tribal'); reset(); }}
                   className={clsx(
                     'flex-1 px-3 py-2.5 font-semibold transition-colors',
                     buyerMode === 'non_tribal'
                       ? 'bg-red-700 text-white'
-                      : 'bg-gray-800 text-gray-400 hover:text-gray-200',
+                      : 'bg-[#F8FAFC] text-gray-400 hover:text-gray-700',
                   )}
                 >
                   Non-tribal buyer → HARD REJECT (Scene 6A)
@@ -256,7 +256,7 @@ export default function TribalPage() {
                     'flex-1 px-3 py-2.5 font-semibold transition-colors',
                     buyerMode === 'same_community'
                       ? 'bg-amber-700 text-white'
-                      : 'bg-gray-800 text-gray-400 hover:text-gray-200',
+                      : 'bg-[#F8FAFC] text-gray-400 hover:text-gray-700',
                   )}
                 >
                   Same community (Bhil) → Gram Sabha required (Scene 6B)
@@ -264,7 +264,7 @@ export default function TribalPage() {
               </div>
 
               {/* Buyer info */}
-              <div className="bg-gray-800 rounded-xl p-3 text-xs space-y-1.5 mb-4">
+              <div className="bg-[#F8FAFC] rounded-xl p-3 text-xs space-y-1.5 mb-4">
                 <InfoRow
                   label="Buyer"
                   value={buyerMode === 'non_tribal' ? 'Suresh Balaji Deshmukh (non-tribal)' : 'Ramesh Tukaram Bhil (Bhil community)'}
@@ -286,7 +286,7 @@ export default function TribalPage() {
 
               {checkState === 'checking' && (
                 <div className="flex items-center gap-3 text-sm text-gray-400 py-2">
-                  <span className="w-4 h-4 border border-brand-500 border-t-transparent rounded-full animate-spin shrink-0" />
+                  <span className="w-4 h-4 border border-[#0F4C81]/60 border-t-transparent rounded-full animate-spin shrink-0" />
                   Invoking TribalGuard chaincode…
                 </div>
               )}
@@ -332,7 +332,7 @@ export default function TribalPage() {
               <div className="card">
                 <div className="flex items-center gap-2 mb-1">
                   <Users className="w-4 h-4 text-amber-400" />
-                  <span className="text-sm font-semibold text-gray-200">Gram Sabha Multi-sig</span>
+                  <span className="text-sm font-semibold text-gray-700">Gram Sabha Multi-sig</span>
                   <span className="ml-auto text-xs text-gray-500">Quorum: {gramSabhaQuorum}/5</span>
                 </div>
                 <div className="text-gray-500 text-xs mb-4">
@@ -340,7 +340,7 @@ export default function TribalPage() {
                 </div>
 
                 {/* Progress bar */}
-                <div className="h-1.5 bg-gray-800 rounded-full mb-4">
+                <div className="h-1.5 bg-[#F8FAFC] rounded-full mb-4">
                   <div
                     className={clsx(
                       'h-full rounded-full transition-all duration-500',
@@ -355,20 +355,20 @@ export default function TribalPage() {
                     <div key={member.id} className={clsx(
                       'flex items-center gap-3 px-3 py-2.5 rounded-lg border transition-colors',
                       member.signed
-                        ? 'bg-brand-950 border-brand-800'
-                        : 'bg-gray-800 border-gray-700',
+                        ? 'bg-[#EFF6FF] border-blue-200'
+                        : 'bg-[#F8FAFC] border-gray-200',
                     )}>
                       <div className={clsx(
                         'w-6 h-6 rounded-full flex items-center justify-center shrink-0',
-                        member.signed ? 'bg-brand-700' : 'bg-gray-700',
+                        member.signed ? 'bg-[#0a3566]' : 'bg-gray-700',
                       )}>
                         {member.signed
-                          ? <CheckCircle className="w-3.5 h-3.5 text-brand-300" />
+                          ? <CheckCircle className="w-3.5 h-3.5 text-[#0F4C81]" />
                           : <Users className="w-3.5 h-3.5 text-gray-400" />
                         }
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="text-xs font-medium text-gray-200">{member.name}</div>
+                        <div className="text-xs font-medium text-gray-700">{member.name}</div>
                         <div className="text-xs text-gray-500">{member.role}</div>
                       </div>
                       {!member.signed && (
@@ -385,7 +385,7 @@ export default function TribalPage() {
 
                 {quorumMet && (
                   <div className="mt-4 space-y-2">
-                    <div className="flex items-center gap-2 bg-brand-950 border border-brand-700 rounded-lg px-3 py-2.5 text-sm text-brand-300">
+                    <div className="flex items-center gap-2 bg-[#EFF6FF] border border-blue-300 rounded-lg px-3 py-2.5 text-sm text-[#0F4C81]">
                       <CheckCircle className="w-4 h-4 shrink-0" />
                       Gram Sabha quorum met (5/5) — video consent + Collector approval required next
                     </div>
@@ -414,8 +414,8 @@ export default function TribalPage() {
 
             <div className="card">
               <div className="flex items-center gap-2 mb-3">
-                <Info className="w-4 h-4 text-brand-400" />
-                <span className="text-sm font-semibold text-gray-200">TribalGuard Decision Tree</span>
+                <Info className="w-4 h-4 text-[#0F4C81]" />
+                <span className="text-sm font-semibold text-gray-700">TribalGuard Decision Tree</span>
               </div>
               <div className="space-y-2.5 text-xs">
                 {[
@@ -432,15 +432,15 @@ export default function TribalPage() {
                       'text-xs font-mono shrink-0 mt-0.5',
                       color === 'red'   && 'text-red-400',
                       color === 'amber' && 'text-amber-400',
-                      color === 'brand' && 'text-brand-400',
+                      color === 'brand' && 'text-[#0F4C81]',
                     )}>→</span>
                     <div>
-                      <div className="text-gray-300">{label}</div>
+                      <div className="text-gray-600">{label}</div>
                       <div className={clsx(
                         'text-xs',
                         color === 'red'   && 'text-red-500',
                         color === 'amber' && 'text-amber-500',
-                        color === 'brand' && 'text-brand-500',
+                        color === 'brand' && 'text-[#0F4C81]',
                       )}>{res}</div>
                     </div>
                   </div>
@@ -489,7 +489,7 @@ function InfoRow({ label, value, mono }: { label: string; value: string; mono?: 
   return (
     <div className="flex items-start justify-between gap-3">
       <span className="text-gray-500 shrink-0">{label}</span>
-      <span className={clsx('text-gray-200 text-right break-all', mono && 'font-mono')}>{value}</span>
+      <span className={clsx('text-gray-700 text-right break-all', mono && 'font-mono')}>{value}</span>
     </div>
   );
 }

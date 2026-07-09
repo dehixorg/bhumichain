@@ -14,18 +14,18 @@ export default function BhumiGPTPage() {
   }, []);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-gray-950">
+    <div className="flex h-screen overflow-hidden bg-[#F8FAFC]">
       <Sidebar demoMode />
 
       <div className="flex-1 flex flex-col min-w-0">
 
         {/* Topbar */}
-        <div className="h-12 bg-gray-900 border-b border-gray-800 flex items-center px-6 gap-3 shrink-0">
-          <MessageSquare className="w-4 h-4 text-brand-400" />
-          <span className="text-sm font-semibold text-gray-200">BhumiGPT</span>
+        <div className="h-12 bg-white border-b border-gray-200 flex items-center px-6 gap-3 shrink-0">
+          <MessageSquare className="w-4 h-4 text-[#0F4C81]" />
+          <span className="text-sm font-semibold text-gray-700">BhumiGPT</span>
           <span className="text-xs text-gray-500">— Demo Scene 7</span>
           <div className="ml-auto flex items-center gap-3">
-            <div className="flex items-center gap-1.5 text-xs text-brand-400">
+            <div className="flex items-center gap-1.5 text-xs text-[#0F4C81]">
               <div className="w-1.5 h-1.5 rounded-full bg-brand-400 animate-pulse" />
               Claude API + Land Law RAG
             </div>
@@ -40,12 +40,12 @@ export default function BhumiGPTPage() {
           </div>
 
           {/* ── Right info panel ────────────────────────────────────────── */}
-          <div className="w-64 shrink-0 border-l border-gray-800 flex flex-col overflow-y-auto">
+          <div className="w-64 shrink-0 border-l border-gray-200 flex flex-col overflow-y-auto">
 
             {/* Capabilities */}
-            <div className="p-4 border-b border-gray-800">
+            <div className="p-4 border-b border-gray-200">
               <div className="flex items-center gap-2 mb-3">
-                <Cpu className="w-3.5 h-3.5 text-brand-400" />
+                <Cpu className="w-3.5 h-3.5 text-[#0F4C81]" />
                 <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Capabilities</span>
               </div>
               <div className="space-y-2 text-xs text-gray-400">
@@ -69,9 +69,9 @@ export default function BhumiGPTPage() {
             </div>
 
             {/* Languages */}
-            <div className="p-4 border-b border-gray-800">
+            <div className="p-4 border-b border-gray-200">
               <div className="flex items-center gap-2 mb-3">
-                <Globe className="w-3.5 h-3.5 text-brand-400" />
+                <Globe className="w-3.5 h-3.5 text-[#0F4C81]" />
                 <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Languages</span>
               </div>
               <div className="space-y-1.5 text-xs">
@@ -81,17 +81,17 @@ export default function BhumiGPTPage() {
                   ['English', '', 'Supported'],
                 ].map(([script, name, status]) => (
                   <div key={script} className="flex items-center justify-between">
-                    <span className="text-gray-300">{script} {name && `(${name})`}</span>
-                    <span className={status === 'Primary' ? 'text-brand-400 font-medium' : 'text-gray-600'}>{status}</span>
+                    <span className="text-gray-600">{script} {name && `(${name})`}</span>
+                    <span className={status === 'Primary' ? 'text-[#0F4C81] font-medium' : 'text-gray-600'}>{status}</span>
                   </div>
                 ))}
               </div>
             </div>
 
             {/* Sources */}
-            <div className="p-4 border-b border-gray-800">
+            <div className="p-4 border-b border-gray-200">
               <div className="flex items-center gap-2 mb-3">
-                <BookOpen className="w-3.5 h-3.5 text-brand-400" />
+                <BookOpen className="w-3.5 h-3.5 text-[#0F4C81]" />
                 <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Knowledge Base</span>
               </div>
               <div className="space-y-1.5 text-xs text-gray-500">

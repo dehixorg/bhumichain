@@ -53,15 +53,15 @@ export default function MapPage() {
   }>).filter((h) => h.isFlagged);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-gray-950">
+    <div className="flex h-screen overflow-hidden bg-[#F8FAFC]">
       <Sidebar demoMode />
 
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top bar */}
-        <div className="h-12 bg-gray-900 border-b border-gray-800 flex items-center px-4 gap-4 shrink-0">
+        <div className="h-12 bg-white border-b border-gray-200 flex items-center px-4 gap-4 shrink-0">
           <div className="flex items-center gap-2">
-            <Layers className="w-4 h-4 text-brand-400" />
-            <span className="text-sm font-semibold text-gray-200">Land Parcel Map</span>
+            <Layers className="w-4 h-4 text-[#0F4C81]" />
+            <span className="text-sm font-semibold text-gray-700">Land Parcel Map</span>
             <span className="text-xs text-gray-500">— Nashik District, Maharashtra</span>
           </div>
 
@@ -72,7 +72,7 @@ export default function MapPage() {
               className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border transition-colors ${
                 showCensus
                   ? 'bg-blue-900 border-blue-600 text-blue-300'
-                  : 'border-gray-700 text-gray-400 hover:border-gray-600'
+                  : 'border-gray-200 text-gray-400 hover:border-gray-300'
               }`}
             >
               {showCensus ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
@@ -94,12 +94,12 @@ export default function MapPage() {
           {loading ? (
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="text-center">
-                <div className="w-8 h-8 border-2 border-brand-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+                <div className="w-8 h-8 border-2 border-[#0F4C81]/60 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
                 <div className="text-gray-400 text-sm">Loading 5,000 Nashik parcels...</div>
               </div>
             </div>
           ) : geojson ? (
-            <Suspense fallback={<div className="absolute inset-0 bg-gray-950" />}>
+            <Suspense fallback={<div className="absolute inset-0 bg-[#F8FAFC]" />}>
               <ParcelMap
                 geojson={geojson}
                 onParcelSelect={setSelectedDlpiId}
@@ -111,7 +111,7 @@ export default function MapPage() {
                 <div className="text-gray-400 text-sm mb-2">GeoJSON not found at /public/data/</div>
                 <div className="text-gray-600 text-xs">
                   Copy nashik_parcels.geojson to<br />
-                  <code className="text-brand-400">frontend/web-portal/public/data/</code>
+                  <code className="text-[#0F4C81]">frontend/web-portal/public/data/</code>
                 </div>
               </div>
             </div>
@@ -120,8 +120,8 @@ export default function MapPage() {
       </div>
 
       {/* Status bar */}
-      <div className="fixed bottom-0 left-56 right-0 h-6 bg-gray-900 border-t border-gray-800 flex items-center px-4 gap-6 text-xs text-gray-600 z-50">
-        {selectedDlpiId && <span>Selected: <span className="text-brand-400 font-mono">{selectedDlpiId}</span></span>}
+      <div className="fixed bottom-0 left-56 right-0 h-6 bg-white border-t border-gray-200 flex items-center px-4 gap-6 text-xs text-gray-600 z-50">
+        {selectedDlpiId && <span>Selected: <span className="text-[#0F4C81] font-mono">{selectedDlpiId}</span></span>}
         <span className="ml-auto">Hyperledger Fabric v2.5 · CouchDB · IPFS</span>
       </div>
     </div>

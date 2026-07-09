@@ -248,7 +248,7 @@ export default function SuccessionPage() {
     stage === 'all_consented';
 
   return (
-    <div className="flex h-screen overflow-hidden bg-gray-950">
+    <div className="flex h-screen overflow-hidden bg-[#F8FAFC]">
       <Sidebar demoMode />
 
       {/* Mutation alert modal */}
@@ -268,9 +268,9 @@ export default function SuccessionPage() {
       <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
 
         {/* Topbar */}
-        <div className="h-12 bg-gray-900 border-b border-gray-800 flex items-center px-6 gap-3 shrink-0">
-          <Users className="w-4 h-4 text-brand-400" />
-          <span className="text-sm font-semibold text-gray-200">Succession & Coparcenary</span>
+        <div className="h-12 bg-white border-b border-gray-200 flex items-center px-6 gap-3 shrink-0">
+          <Users className="w-4 h-4 text-[#0F4C81]" />
+          <span className="text-sm font-semibold text-gray-700">Succession & Coparcenary</span>
           <span className="text-xs text-gray-500">— Demo Scene 3</span>
           <div className="ml-auto">
             <StageBar stage={stage} />
@@ -285,10 +285,10 @@ export default function SuccessionPage() {
             {/* IDLE: Trigger */}
             {stage === 'idle' && (
               <div className="card">
-                <div className="text-sm font-semibold text-gray-200 mb-4">
+                <div className="text-sm font-semibold text-gray-700 mb-4">
                   Scene 3 — CRS Death Certificate Trigger
                 </div>
-                <div className="bg-gray-800 rounded-xl p-4 mb-5 space-y-2">
+                <div className="bg-[#F8FAFC] rounded-xl p-4 mb-5 space-y-2">
                   <InfoRow label="Deceased" value={DEMO_DECEASED.name} />
                   <InfoRow label="Date of Death" value={format(new Date(DEMO_DECEASED.dod), 'dd MMM yyyy')} />
                   <InfoRow label="Parcel (DLPI)" value={DEMO_DLPI} mono />
@@ -306,13 +306,13 @@ export default function SuccessionPage() {
             {stage === 'crs_verified' && (
               <div className="space-y-4">
                 <Banner
-                  icon={<CheckCircle className="w-5 h-5 text-brand-400" />}
+                  icon={<CheckCircle className="w-5 h-5 text-[#0F4C81]" />}
                   title="CRS death certificate verified"
                   subtitle="CRS-GBN-2026-00541 · Civil Registration System, Dadri"
                   color="brand"
                 />
                 <div className="card">
-                  <div className="text-sm font-semibold text-gray-200 mb-1">
+                  <div className="text-sm font-semibold text-gray-700 mb-1">
                     Run CoparcenaryMapper AI
                   </div>
                   <div className="text-gray-500 text-xs mb-4">
@@ -331,8 +331,8 @@ export default function SuccessionPage() {
             {stage === 'ai_computing' && (
               <div className="card">
                 <div className="flex items-center gap-2 mb-4">
-                  <Cpu className="w-4 h-4 text-brand-400 animate-pulse" />
-                  <span className="text-sm font-semibold text-gray-200">CoparcenaryMapper AI</span>
+                  <Cpu className="w-4 h-4 text-[#0F4C81] animate-pulse" />
+                  <span className="text-sm font-semibold text-gray-700">CoparcenaryMapper AI</span>
                   <span className="text-xs text-gray-500 ml-1">port 8011</span>
                 </div>
                 <div className="space-y-2.5">
@@ -341,12 +341,12 @@ export default function SuccessionPage() {
                       key={i}
                       className={clsx(
                         'flex items-center gap-3 text-sm transition-colors',
-                        s.done ? 'text-gray-300' : 'text-gray-600',
+                        s.done ? 'text-gray-600' : 'text-gray-600',
                       )}
                     >
                       {s.done
-                        ? <CheckCircle className="w-4 h-4 text-brand-400 shrink-0" />
-                        : <div className="w-4 h-4 border border-gray-600 rounded-full shrink-0 animate-pulse" />
+                        ? <CheckCircle className="w-4 h-4 text-[#0F4C81] shrink-0" />
+                        : <div className="w-4 h-4 border border-gray-300 rounded-full shrink-0 animate-pulse" />
                       }
                       {s.label}
                     </div>
@@ -375,8 +375,8 @@ export default function SuccessionPage() {
                 {/* Family tree */}
                 <div className="card">
                   <div className="flex items-center gap-2 mb-4">
-                    <Users className="w-4 h-4 text-brand-400" />
-                    <span className="text-sm font-semibold text-gray-200">Family Tree</span>
+                    <Users className="w-4 h-4 text-[#0F4C81]" />
+                    <span className="text-sm font-semibold text-gray-700">Family Tree</span>
                     <span className="ml-auto text-xs text-gray-500">
                       {caseData?.applicableLaw ?? 'Hindu Succession Act 1956/2005'}
                     </span>
@@ -421,18 +421,18 @@ export default function SuccessionPage() {
 
                 {/* All-consented banner */}
                 {stage === 'all_consented' && (
-                  <div className="flex items-center gap-4 bg-brand-950 border border-brand-700 rounded-xl px-5 py-4">
-                    <div className="w-10 h-10 rounded-full bg-brand-800 flex items-center justify-center shrink-0">
-                      <Zap className="w-5 h-5 text-brand-300" />
+                  <div className="flex items-center gap-4 bg-[#EFF6FF] border border-blue-300 rounded-xl px-5 py-4">
+                    <div className="w-10 h-10 rounded-full bg-[#BFDBFE] flex items-center justify-center shrink-0">
+                      <Zap className="w-5 h-5 text-[#0F4C81]" />
                     </div>
                     <div>
-                      <div className="text-brand-300 font-bold text-sm">Auto-Mutation Executing</div>
-                      <div className="text-brand-500 text-xs mt-0.5">
+                      <div className="text-[#0F4C81] font-bold text-sm">Auto-Mutation Executing</div>
+                      <div className="text-[#0F4C81] text-xs mt-0.5">
                         Fabric transaction submitted · New title being written to ledger ·
                         Ankur, Nitin &amp; Neeta each hold 1/3
                       </div>
                     </div>
-                    <CheckCircle className="w-6 h-6 text-brand-400 ml-auto shrink-0" />
+                    <CheckCircle className="w-6 h-6 text-[#0F4C81] ml-auto shrink-0" />
                   </div>
                 )}
               </>
@@ -445,8 +445,8 @@ export default function SuccessionPage() {
             {/* Scene flow */}
             <div className="card">
               <div className="flex items-center gap-2 mb-3">
-                <Info className="w-4 h-4 text-brand-400" />
-                <span className="text-sm font-semibold text-gray-200">Scene 3 flow</span>
+                <Info className="w-4 h-4 text-[#0F4C81]" />
+                <span className="text-sm font-semibold text-gray-700">Scene 3 flow</span>
               </div>
               <ol className="space-y-2.5 text-xs text-gray-400">
                 {[
@@ -458,11 +458,11 @@ export default function SuccessionPage() {
                   ['Auto-mutation',   'All consent → Fabric executes automatically'],
                 ].map(([title, desc], i) => (
                   <li key={i} className="flex gap-2">
-                    <span className="w-4 h-4 rounded-full bg-gray-800 text-gray-500 flex items-center justify-center shrink-0 font-mono text-xs">
+                    <span className="w-4 h-4 rounded-full bg-[#F8FAFC] text-gray-500 flex items-center justify-center shrink-0 font-mono text-xs">
                       {i + 1}
                     </span>
                     <div>
-                      <div className="text-gray-300">{title}</div>
+                      <div className="text-gray-600">{title}</div>
                       <div className="text-gray-600">{desc}</div>
                     </div>
                   </li>
@@ -561,7 +561,7 @@ function Banner({
   color: 'brand' | 'amber' | 'red';
 }) {
   const colors = {
-    brand: 'bg-brand-950 border-brand-700 text-brand-300 text-brand-500',
+    brand: 'bg-[#EFF6FF] border-blue-300 text-[#0F4C81] text-[#0F4C81]',
     amber: 'bg-amber-950 border-amber-700 text-amber-300 text-amber-500',
     red:   'bg-red-950 border-red-700 text-red-300 text-red-500',
   }[color].split(' ');
@@ -588,7 +588,7 @@ function InfoRow({
   return (
     <div className="flex items-start justify-between gap-3">
       <span className={clsx('text-gray-500 shrink-0', small ? 'text-xs' : 'text-sm')}>{label}</span>
-      <span className={clsx('text-gray-200 text-right break-all', small ? 'text-xs' : 'text-sm', mono && 'font-mono')}>
+      <span className={clsx('text-gray-700 text-right break-all', small ? 'text-xs' : 'text-sm', mono && 'font-mono')}>
         {value}
       </span>
     </div>

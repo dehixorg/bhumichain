@@ -82,15 +82,15 @@ export default function ECPage() {
   };
 
   return (
-    <div className="flex h-screen overflow-hidden bg-gray-950">
+    <div className="flex h-screen overflow-hidden bg-[#F8FAFC]">
       <Sidebar demoMode />
 
       <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
 
         {/* Topbar */}
-        <div className="h-12 bg-gray-900 border-b border-gray-800 flex items-center px-6 gap-3 shrink-0">
-          <ScrollText className="w-4 h-4 text-brand-400" />
-          <span className="text-sm font-semibold text-gray-200">Encumbrance Certificate</span>
+        <div className="h-12 bg-white border-b border-gray-200 flex items-center px-6 gap-3 shrink-0">
+          <ScrollText className="w-4 h-4 text-[#0F4C81]" />
+          <span className="text-sm font-semibold text-gray-700">Encumbrance Certificate</span>
           <div className="ml-auto flex items-center gap-1.5 text-xs text-gray-500">
             <Shield className="w-3.5 h-3.5" />
             Multi-source cross-verification · IGRS UP
@@ -105,10 +105,10 @@ export default function ECPage() {
             {/* Request card */}
             <div className="card">
               <div className="flex items-center gap-2 mb-4">
-                <ScrollText className="w-4 h-4 text-brand-400" />
-                <span className="text-sm font-semibold text-gray-200">EC Request</span>
+                <ScrollText className="w-4 h-4 text-[#0F4C81]" />
+                <span className="text-sm font-semibold text-gray-700">EC Request</span>
               </div>
-              <div className="bg-gray-800 rounded-xl p-4 space-y-2 mb-4">
+              <div className="bg-[#F8FAFC] rounded-xl p-4 space-y-2 mb-4">
                 <InfoRow label="DLPI"         value={DEMO_DLPI} mono />
                 <InfoRow label="Parcel Owner" value="Deepak Narayan Singh" />
                 <InfoRow label="Khasra No."   value="402/1" mono />
@@ -128,8 +128,8 @@ export default function ECPage() {
             {(stage === 'generating' || stage === 'done') && (
               <div className="card">
                 <div className="flex items-center gap-2 mb-4">
-                  <Shield className={clsx('w-4 h-4 text-brand-400', stage === 'generating' && 'animate-pulse')} />
-                  <span className="text-sm font-semibold text-gray-200">Multi-source Verification</span>
+                  <Shield className={clsx('w-4 h-4 text-[#0F4C81]', stage === 'generating' && 'animate-pulse')} />
+                  <span className="text-sm font-semibold text-gray-700">Multi-source Verification</span>
                   {stage === 'done' && (
                     <span className="ml-auto text-xs text-gray-500 font-mono">
                       {elapsedMs}ms (sim. of {(DEMO_EC_RESULT.generationTimeMs / 1000).toFixed(1)}s real)
@@ -140,10 +140,10 @@ export default function ECPage() {
                   {steps.map((step, i) => (
                     <div key={i} className={clsx(
                       'flex items-start gap-3 transition-colors',
-                      step.done ? 'text-gray-300' : 'text-gray-600',
+                      step.done ? 'text-gray-600' : 'text-gray-600',
                     )}>
                       {step.done
-                        ? <CheckCircle className="w-4 h-4 text-brand-400 mt-0.5 shrink-0" />
+                        ? <CheckCircle className="w-4 h-4 text-[#0F4C81] mt-0.5 shrink-0" />
                         : <div className="w-4 h-4 border border-gray-600 rounded-full mt-0.5 shrink-0 animate-pulse" />
                       }
                       <div>
@@ -172,19 +172,19 @@ export default function ECPage() {
 
             <div className="card">
               <div className="flex items-center gap-2 mb-3">
-                <Info className="w-4 h-4 text-brand-400" />
-                <span className="text-sm font-semibold text-gray-200">What is an EC?</span>
+                <Info className="w-4 h-4 text-[#0F4C81]" />
+                <span className="text-sm font-semibold text-gray-700">What is an EC?</span>
               </div>
               <div className="text-xs text-gray-500 space-y-2">
                 <p>
-                  An <span className="text-gray-300 font-medium">Encumbrance Certificate</span> confirms
+                  An <span className="text-gray-600 font-medium">Encumbrance Certificate</span> confirms
                   that a property is free from financial and legal liabilities.
                 </p>
                 <p>
                   Required for: property purchase, home loans, succession mutation, and legal heir certification.
                 </p>
                 <p>
-                  BhumiChain's EC queries <span className="text-brand-400 font-medium">5 registries simultaneously</span> — traditional IGRS takes 15–30 days;
+                  BhumiChain's EC queries <span className="text-[#0F4C81] font-medium">5 registries simultaneously</span> — traditional IGRS takes 15–30 days;
                   BhumiChain delivers in &lt; 18 seconds.
                 </p>
               </div>
@@ -203,7 +203,7 @@ export default function ECPage() {
                   ['IGRS UP',              'Stamp & Registration deeds'],
                 ].map(([name, desc]) => (
                   <div key={name}>
-                    <div className="text-gray-300 font-medium">{name}</div>
+                    <div className="text-gray-600 font-medium">{name}</div>
                     <div className="text-gray-600">{desc}</div>
                   </div>
                 ))}
@@ -224,11 +224,11 @@ export default function ECPage() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-500">BhumiChain EC</span>
-                  <span className="text-brand-400 font-semibold">&lt; 18 seconds</span>
+                  <span className="text-[#0F4C81] font-semibold">&lt; 18 seconds</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-500">Cost (citizen)</span>
-                  <span className="text-brand-400 font-semibold">₹ 0 (gasless)</span>
+                  <span className="text-[#0F4C81] font-semibold">₹ 0 (gasless)</span>
                 </div>
               </div>
             </div>
@@ -245,7 +245,7 @@ function ECCertificate({ ec }: { ec: typeof DEMO_EC_RESULT }) {
   const isClear = ec.encumbrances.length === 0;
 
   return (
-    <div className="border-2 border-brand-700 rounded-2xl overflow-hidden">
+    <div className="border-2 border-[#0F4C81]/40 rounded-2xl overflow-hidden">
       {/* Certificate header */}
       <div className="bg-gradient-to-r from-brand-900 to-brand-950 border-b border-brand-800 px-6 py-4">
         <div className="flex items-center justify-between">
@@ -269,7 +269,7 @@ function ECCertificate({ ec }: { ec: typeof DEMO_EC_RESULT }) {
       </div>
 
       {/* Certificate body */}
-      <div className="p-6 bg-gray-900 space-y-4">
+      <div className="p-6 bg-white space-y-4">
 
         <div className="grid grid-cols-2 gap-x-8 gap-y-2.5">
           <InfoRow label="EC Number"     value={ec.ecId} mono />
@@ -299,7 +299,7 @@ function ECCertificate({ ec }: { ec: typeof DEMO_EC_RESULT }) {
           <div className="min-w-0 flex-1">
             <div className="text-blue-300 font-semibold text-sm">Tokenized Asset (ERC-721)</div>
             <div className="text-gray-400 text-xs mt-1">This property is cryptographically secured on the Hyperledger Fabric ledger.</div>
-            <div className="flex items-center justify-between mt-2 bg-gray-950 rounded px-2.5 py-1.5 border border-gray-800">
+            <div className="flex items-center justify-between mt-2 bg-[#F8FAFC] rounded px-2.5 py-1.5 border border-gray-200">
               <span className="text-gray-500 text-[10px] uppercase tracking-wider font-semibold">Mint Tx Hash</span>
               <span className="text-blue-400/80 font-mono text-[10px] truncate ml-2">{(ec as any).blockchainTxHash}</span>
             </div>
@@ -310,7 +310,7 @@ function ECCertificate({ ec }: { ec: typeof DEMO_EC_RESULT }) {
         <div className={clsx(
           'border rounded-xl px-4 py-3 text-sm',
           isClear
-            ? 'bg-brand-950 border-brand-800 text-brand-300'
+            ? 'bg-[#EFF6FF] border-brand-800 text-[#0F4C81]'
             : 'bg-red-950 border-red-800 text-red-300',
         )}>
           {ec.summary}
@@ -331,7 +331,7 @@ function ECCertificate({ ec }: { ec: typeof DEMO_EC_RESULT }) {
         )}
 
         {/* QR & Download row */}
-        <div className="flex items-center justify-between pt-2 border-t border-gray-800">
+        <div className="flex items-center justify-between pt-2 border-t border-gray-200">
           <div className="flex items-center gap-2 text-xs">
             <QrCode className="w-4 h-4 text-gray-400" />
             <span className="text-gray-500">Verify: </span>
@@ -353,7 +353,7 @@ function InfoRow({ label, value, mono }: { label: string; value: string; mono?: 
   return (
     <div className="flex items-start justify-between gap-3">
       <span className="text-gray-500 text-sm shrink-0">{label}</span>
-      <span className={clsx('text-gray-200 text-right text-sm break-all', mono && 'font-mono text-xs')}>{value}</span>
+      <span className={clsx('text-gray-700 text-right text-sm break-all', mono && 'font-mono text-xs')}>{value}</span>
     </div>
   );
 }

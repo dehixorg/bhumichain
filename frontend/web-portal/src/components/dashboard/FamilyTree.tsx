@@ -138,7 +138,7 @@ export default function FamilyTree({
       {/* ── Legend / status ───────────────────────────────────────────── */}
       <div className="mt-4 flex flex-wrap items-center gap-4 text-xs text-gray-500 px-2">
         <div className="flex items-center gap-1.5">
-          <CheckCircle className="w-3 h-3 text-brand-400" /> Consented
+          <CheckCircle className="w-3 h-3 text-[#0F4C81]" /> Consented
         </div>
         <div className="flex items-center gap-1.5">
           <Clock className="w-3 h-3 text-amber-400" /> Awaiting consent
@@ -158,7 +158,7 @@ export default function FamilyTree({
           {successionStatus && (
             <span className={clsx(
               'ml-3 px-2 py-0.5 rounded-full text-xs font-semibold',
-              successionStatus === 'AUTO_MUTATED'       && 'bg-brand-900 text-brand-300',
+              successionStatus === 'AUTO_MUTATED'       && 'bg-[#DBEAFE] text-[#0F4C81]',
               successionStatus === 'AWAITING_CONSENTS'  && 'bg-amber-900 text-amber-300',
               successionStatus === 'COURT_REFERRED'     && 'bg-red-900 text-red-300',
               successionStatus === 'HEIRS_IDENTIFIED'   && 'bg-blue-900 text-blue-300',
@@ -182,15 +182,15 @@ function PatriarchNode({ patriarch }: { patriarch: Patriarch }) {
       className={clsx(
         'w-full h-full rounded-xl border-2 flex flex-col items-center justify-center p-2 text-center',
         isDead
-          ? 'bg-gray-800 border-gray-600'
-          : 'bg-brand-900 border-brand-700',
+          ? 'bg-[#F8FAFC] border-gray-300'
+          : 'bg-[#DBEAFE] border-blue-300',
       )}
     >
       <div className={clsx('w-8 h-8 rounded-full flex items-center justify-center mb-1',
-        isDead ? 'bg-gray-700' : 'bg-brand-700')}>
+        isDead ? 'bg-gray-700' : 'bg-[#0a3566]')}>
         <Users className={clsx('w-4 h-4', isDead ? 'text-gray-400' : 'text-brand-200')} />
       </div>
-      <div className="text-xs font-semibold text-gray-200 leading-tight">{patriarch.name}</div>
+      <div className="text-xs font-semibold text-gray-700 leading-tight">{patriarch.name}</div>
       <div className="text-xs text-gray-500 mt-0.5">
         {patriarch.dob?.slice(0, 4)}
         {isDead && patriarch.dod && ` – ${patriarch.dod.slice(0, 4)}`}
@@ -207,9 +207,9 @@ function HeirNode({ heir, onClick }: { heir: TreeMember; onClick: () => void }) 
   const consentDone = heir.hasConsented;
   const objected = heir.hasObjected;
 
-  let borderColor = 'border-gray-700';
-  let bgColor = 'bg-gray-800';
-  if (consentDone)  { borderColor = 'border-brand-600'; bgColor = 'bg-brand-950'; }
+  let borderColor = 'border-gray-200';
+  let bgColor = 'bg-[#F8FAFC]';
+  if (consentDone)  { borderColor = 'border-[#0F4C81]'; bgColor = 'bg-[#EFF6FF]'; }
   if (objected)     { borderColor = 'border-red-600';   bgColor = 'bg-red-950'; }
 
   return (
@@ -231,19 +231,19 @@ function HeirNode({ heir, onClick }: { heir: TreeMember; onClick: () => void }) 
           {heir.relation}
           {isDaughter && <span className="ml-1 text-purple-300">★</span>}
         </span>
-        {consentDone  && <CheckCircle className="w-3.5 h-3.5 text-brand-400 shrink-0" />}
+        {consentDone  && <CheckCircle className="w-3.5 h-3.5 text-[#0F4C81] shrink-0" />}
         {objected     && <AlertTriangle className="w-3.5 h-3.5 text-red-400 shrink-0" />}
         {!consentDone && !objected && <Clock className="w-3.5 h-3.5 text-amber-500 shrink-0" />}
       </div>
 
       {/* Name */}
-      <div className="text-xs font-semibold text-gray-200 leading-tight flex-1">{heir.name}</div>
+      <div className="text-xs font-semibold text-gray-700 leading-tight flex-1">{heir.name}</div>
       <div className="text-xs text-gray-500">{heir.dob?.slice(0, 4)}</div>
 
       {/* Share badge */}
       {heir.share && (
-        <div className="mt-1.5 bg-gray-900 rounded-md px-2 py-0.5 text-center">
-          <span className="font-mono text-sm font-bold text-brand-300">{heir.share}</span>
+        <div className="mt-1.5 bg-white rounded-md px-2 py-0.5 text-center">
+          <span className="font-mono text-sm font-bold text-[#0F4C81]">{heir.share}</span>
           <span className="text-gray-600 text-xs ml-1">share</span>
         </div>
       )}

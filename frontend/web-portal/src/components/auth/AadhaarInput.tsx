@@ -42,17 +42,17 @@ export default function AadhaarInput({ value, onChange, disabled, error, placeho
         disabled={disabled}
         placeholder={placeholder || 'XXXX-XXXX-XXXX'}
         className={clsx(
-          'w-full pr-10 px-4 py-3 rounded-xl border-2 bg-gray-800 text-white',
-          'font-mono text-base tracking-widest placeholder-gray-500',
-          'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
-          error ? 'border-red-500' : 'border-gray-600',
+          'w-full pr-10 px-4 py-3 rounded-xl border-2 bg-white text-gray-900',
+          'font-mono text-base tracking-widest placeholder-gray-400',
+          'focus:outline-none focus:ring-2 focus:ring-[#0F4C81]/30 focus:border-[#0F4C81]',
+          error ? 'border-red-400' : 'border-gray-300 hover:border-gray-400',
           disabled && 'opacity-50 cursor-not-allowed',
         )}
       />
       <button
         type="button"
         onClick={() => setShow(v => !v)}
-        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-200 transition-colors"
+        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 transition-colors"
         tabIndex={-1}
       >
         {show ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}

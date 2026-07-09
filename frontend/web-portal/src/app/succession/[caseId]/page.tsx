@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Sidebar from '@/components/dashboard/Sidebar';
+import AppHeader from '@/components/dashboard/AppHeader';
 import { getSuccessionCase, recordHeirConsent } from '@/lib/api';
 import type { SuccessionCase, SuccessionHeir } from '@/types';
 import toast from 'react-hot-toast';
@@ -88,23 +89,25 @@ export default function SuccessionDetailPage() {
 
   if (loading) {
     return (
-      <div className="flex h-screen bg-gray-950">
-        <Sidebar demoMode />
+      <div className="flex flex-col h-screen bg-[#F8FAFC]">
+      <AppHeader />
+      <div className="flex flex-1 overflow-hidden">
+        <Sidebar />
         <div className="flex-1 flex items-center justify-center text-gray-500 text-sm animate-pulse">
           Loading succession case…
         </div>
       </div>
-    );
+  );
   }
 
   if (!caseData) {
     return (
-      <div className="flex h-screen bg-gray-950">
-        <Sidebar demoMode />
+      <div className="flex h-screen bg-[#F8FAFC]">
+        <Sidebar />
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
-            <AlertTriangle className="w-10 h-10 text-red-400 mx-auto mb-3" />
-            <div className="text-gray-300 font-semibold">Case not found</div>
+            <AlertTriangle className="w-10 h-10 text-red-700 mx-auto mb-3" />
+            <div className="text-gray-600 font-semibold">Case not found</div>
             <button onClick={() => router.push('/succession')} className="mt-4 btn-ghost text-sm">
               ← Back to Succession List
             </button>
@@ -127,8 +130,8 @@ export default function SuccessionDetailPage() {
   const pendingCount  = heirs.filter((h) => !h.hasConsented && !h.hasObjected).length;
 
   return (
-    <div className="flex h-screen overflow-hidden bg-gray-950">
-      <Sidebar demoMode />
+    <div className="flex h-screen overflow-hidden bg-[#F8FAFC]">
+      <Sidebar />
 
       {/* Objection modal */}
       {showObjection && (
@@ -144,17 +147,17 @@ export default function SuccessionDetailPage() {
       <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
 
         {/* Topbar */}
-        <div className="h-12 bg-gray-900 border-b border-gray-800 flex items-center px-6 gap-3 shrink-0">
+        <div className="h-12 bg-white border-b border-gray-200 flex items-center px-6 gap-3 shrink-0">
           <button
             onClick={() => router.push('/succession')}
-            className="text-gray-400 hover:text-gray-200 flex items-center gap-1 text-xs"
+            className="text-gray-500 hover:text-gray-800 flex items-center gap-1 text-xs"
           >
             <ChevronLeft className="w-3.5 h-3.5" />
             Succession
           </button>
           <span className="text-gray-700">/</span>
-          <Users className="w-4 h-4 text-brand-400" />
-          <span className="text-sm font-semibold text-gray-200 font-mono">{caseId}</span>
+          <Users className="w-4 h-4 text-[#0F4C81]" />
+          <span className="text-sm font-semibold text-gray-800 font-mono">{caseId}</span>
           <StatusPill status={allConsented ? 'AUTO_MUTATED' : anyObjected ? 'OBJECTION_FILED' : caseData.status} />
         </div>
 
@@ -164,10 +167,10 @@ export default function SuccessionDetailPage() {
           <div className="flex-1 min-w-0 space-y-5">
 
             {/* Case summary */}
-            <div className="card">
+            <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
               <div className="flex items-center gap-2 mb-4">
-                <FileText className="w-4 h-4 text-brand-400" />
-                <span className="text-sm font-semibold text-gray-200">Case Summary</span>
+                <FileText className="w-4 h-4 text-[#0F4C81]" />
+                <span className="text-sm font-semibold text-gray-800">Case Summary</span>
               </div>
               <div className="grid grid-cols-2 gap-x-8 gap-y-2.5 text-sm">
                 <InfoRow label="Deceased"    value={caseData.deceasedName} />
@@ -185,12 +188,12 @@ export default function SuccessionDetailPage() {
             <div className={clsx(
               'flex items-center gap-3 border rounded-xl px-4 py-3',
               deadlineUrgent
-                ? 'bg-red-950 border-red-700'
-                : 'bg-amber-950 border-amber-800',
+                ? 'bg-red-50 border-red-200'
+                : 'bg-amber-50 border-amber-200',
             )}>
-              <Clock className={clsx('w-4 h-4 shrink-0', deadlineUrgent ? 'text-red-400' : 'text-amber-400')} />
+              <Clock className={clsx('w-4 h-4 shrink-0', deadlineUrgent ? 'text-red-700' : 'text-amber-700')} />
               <div>
-                <div className={clsx('font-semibold text-sm', deadlineUrgent ? 'text-red-300' : 'text-amber-300')}>
+                <div className={clsx('font-semibold text-sm', deadlineUrgent ? 'text-red-700' : 'text-amber-700')}>
                   Consent deadline: {format(consentDeadline, 'dd MMM yyyy')}
                   {daysLeft >= 0 ? ` (${daysLeft} day${daysLeft !== 1 ? 's' : ''} remaining)` : ' (OVERDUE)'}
                 </div>
@@ -201,13 +204,13 @@ export default function SuccessionDetailPage() {
             </div>
 
             {/* HSA 2005 notice */}
-            <div className="flex items-start gap-3 bg-purple-950 border border-purple-800 rounded-xl px-4 py-3">
-              <Shield className="w-4 h-4 text-purple-400 mt-0.5 shrink-0" />
+            <div className="flex items-start gap-3 bg-purple-50 border border-purple-200 rounded-xl px-4 py-3">
+              <Shield className="w-4 h-4 text-purple-700 mt-0.5 shrink-0" />
               <div>
-                <div className="text-purple-300 font-semibold text-sm">
+                <div className="text-purple-700 font-semibold text-sm">
                   HSA 2005 S.6(3) — Daughters are coparceners by birth
                 </div>
-                <div className="text-purple-500 text-xs mt-0.5">
+                <div className="text-purple-600 text-xs mt-0.5">
                   Neeta Singh's share is equal to her brothers' — enforced at chaincode level. No officer override possible.
                 </div>
               </div>
@@ -216,7 +219,7 @@ export default function SuccessionDetailPage() {
             {/* Heir consent cards */}
             <div>
               <div className="flex items-center gap-2 mb-3">
-                <span className="text-sm font-semibold text-gray-200">Heir Consent Status</span>
+                <span className="text-sm font-semibold text-gray-800">Heir Consent Status</span>
                 <span className="text-xs text-gray-500 ml-auto">
                   {consentCount} consented · {objectionCount} objected · {pendingCount} pending
                 </span>
@@ -235,26 +238,26 @@ export default function SuccessionDetailPage() {
 
             {/* Resolution banner */}
             {allConsented && (
-              <div className="flex items-center gap-4 bg-brand-950 border border-brand-700 rounded-xl px-5 py-4">
+              <div className="flex items-center gap-4 bg-[#0F4C81]/5 border border-[#0F4C81]/20 rounded-xl px-5 py-4">
                 <div className="w-10 h-10 rounded-full bg-brand-800 flex items-center justify-center shrink-0">
-                  <Zap className="w-5 h-5 text-brand-300" />
+                  <Zap className="w-5 h-5 text-[#0F4C81]" />
                 </div>
                 <div>
-                  <div className="text-brand-300 font-bold text-sm">Auto-Mutation Executing</div>
-                  <div className="text-brand-500 text-xs mt-0.5">
+                  <div className="text-[#0F4C81] font-bold text-sm">Auto-Mutation Executing</div>
+                  <div className="text-[#0F4C81] text-xs mt-0.5">
                     All 3 heirs consented · Fabric transaction submitted · New title written to BhumiChain ledger ·
                     Ankur, Nitin &amp; Neeta each hold 1/3 Bhumidhari share
                   </div>
                 </div>
-                <CheckCircle className="w-6 h-6 text-brand-400 ml-auto shrink-0" />
+                <CheckCircle className="w-6 h-6 text-[#0F4C81] ml-auto shrink-0" />
               </div>
             )}
 
             {!allConsented && anyObjected && allResolved && (
-              <div className="flex items-center gap-4 bg-red-950 border border-red-700 rounded-xl px-5 py-4">
-                <AlertTriangle className="w-5 h-5 text-red-400 shrink-0" />
+              <div className="flex items-center gap-4 bg-red-50 border border-red-200 rounded-xl px-5 py-4">
+                <AlertTriangle className="w-5 h-5 text-red-700 shrink-0" />
                 <div>
-                  <div className="text-red-300 font-bold text-sm">Objection Filed — Referred to Civil Court</div>
+                  <div className="text-red-700 font-bold text-sm">Objection Filed — Referred to Civil Court</div>
                   <div className="text-red-500 text-xs mt-0.5">
                     Case is now pending civil court adjudication. BhumiChain preserves all evidence immutably on-chain.
                   </div>
@@ -267,10 +270,10 @@ export default function SuccessionDetailPage() {
           <div className="w-72 shrink-0 space-y-4">
 
             {/* Progress */}
-            <div className="card">
+            <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
               <div className="flex items-center gap-2 mb-3">
-                <Info className="w-4 h-4 text-brand-400" />
-                <span className="text-sm font-semibold text-gray-200">Succession Pipeline</span>
+                <Info className="w-4 h-4 text-[#0F4C81]" />
+                <span className="text-sm font-semibold text-gray-800">Succession Pipeline</span>
               </div>
               <ol className="space-y-3 text-xs">
                 {[
@@ -283,12 +286,12 @@ export default function SuccessionDetailPage() {
                   <li key={i} className="flex gap-2.5">
                     <div className={clsx(
                       'w-5 h-5 rounded-full flex items-center justify-center shrink-0 text-xs font-mono',
-                      done ? 'bg-brand-800 text-brand-300' : 'bg-gray-800 text-gray-500',
+                      done ? 'bg-brand-800 text-[#0F4C81]' : 'bg-gray-100 text-gray-500',
                     )}>
                       {done ? <CheckCircle className="w-3 h-3" /> : i + 1}
                     </div>
                     <div>
-                      <div className={clsx('font-medium', done ? 'text-gray-200' : 'text-gray-500')}>{label}</div>
+                      <div className={clsx('font-medium', done ? 'text-gray-800' : 'text-gray-500')}>{label}</div>
                       <div className="text-gray-600 mt-0.5">{sub}</div>
                     </div>
                   </li>
@@ -297,20 +300,20 @@ export default function SuccessionDetailPage() {
             </div>
 
             {/* Legal context */}
-            <div className="card">
+            <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
               <div className="flex items-center gap-1.5 mb-2">
-                <Shield className="w-3.5 h-3.5 text-purple-400" />
-                <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                <Shield className="w-3.5 h-3.5 text-purple-700" />
+                <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
                   Legal Framework
                 </div>
               </div>
               <div className="text-xs text-gray-500 space-y-2">
                 <p>
-                  <span className="text-purple-400 font-medium">Mitakshara coparcenary</span> — property devolves
+                  <span className="text-purple-700 font-medium">Mitakshara coparcenary</span> — property devolves
                   by survivorship among coparceners (sons/daughters by birth).
                 </p>
                 <p>
-                  After 2005 amendment, daughters are coparceners <span className="text-purple-400 font-medium">from birth</span>,
+                  After 2005 amendment, daughters are coparceners <span className="text-purple-700 font-medium">from birth</span>,
                   regardless of marriage. Equal 1/3 share for each heir here.
                 </p>
                 <p className="text-gray-600">
@@ -320,18 +323,18 @@ export default function SuccessionDetailPage() {
             </div>
 
             {/* Share distribution */}
-            <div className="card">
-              <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
+            <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+              <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
                 Share Distribution
               </div>
               <div className="space-y-2">
                 {heirs.map((heir) => (
                   <div key={heir.heirId} className="flex items-center gap-2 text-xs">
                     <div
-                      className="h-1.5 rounded-full bg-brand-600 shrink-0"
+                      className="h-1.5 rounded-full bg-[#0F4C81] shrink-0"
                       style={{ width: `${Math.round(heir.shareDecimal * 100)}%` }}
                     />
-                    <span className="text-gray-300 shrink-0">{heir.share}</span>
+                    <span className="text-gray-600 shrink-0">{heir.share}</span>
                     <span className="text-gray-500 truncate">{heir.name}</span>
                   </div>
                 ))}
@@ -358,44 +361,44 @@ function HeirCard({
   return (
     <div className={clsx(
       'rounded-xl border p-4',
-      heir.hasConsented  ? 'bg-brand-950 border-brand-800' :
-      heir.hasObjected   ? 'bg-red-950 border-red-800' :
-                           'bg-gray-800 border-gray-700',
+      heir.hasConsented  ? 'bg-[#0F4C81]/5 border-[#0F4C81]/20' :
+      heir.hasObjected   ? 'bg-red-50 border-red-200' :
+                           'bg-gray-100 border-gray-200',
     )}>
       <div className="flex items-start gap-3">
         <div className={clsx(
           'w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold shrink-0',
-          heir.hasConsented ? 'bg-brand-800 text-brand-300' :
-          heir.hasObjected  ? 'bg-red-900 text-red-300' :
-                              'bg-gray-700 text-gray-300',
+          heir.hasConsented ? 'bg-brand-800 text-[#0F4C81]' :
+          heir.hasObjected  ? 'bg-red-50 text-red-700' :
+                              'bg-gray-700 text-gray-600',
         )}>
           {heir.name.charAt(0)}
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-semibold text-gray-100">{heir.name}</span>
+            <span className="text-sm font-semibold text-gray-900">{heir.name}</span>
             <span className="text-xs text-gray-500">{heir.relation}</span>
             {heir.gender === 'Female' && (
-              <span className="text-xs bg-purple-900 text-purple-300 px-1.5 py-0.5 rounded">
+              <span className="text-xs bg-purple-50 text-purple-700 px-1.5 py-0.5 rounded">
                 HSA 2005
               </span>
             )}
           </div>
           <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
-            <span>Share: <span className="text-gray-300 font-mono">{heir.share}</span></span>
+            <span>Share: <span className="text-gray-600 font-mono">{heir.share}</span></span>
             <span>DOB: {format(new Date(heir.dob), 'dd MMM yyyy')}</span>
           </div>
           {heir.legalNote && (
-            <div className="mt-1.5 text-xs text-purple-400 leading-relaxed">{heir.legalNote}</div>
+            <div className="mt-1.5 text-xs text-purple-700 leading-relaxed">{heir.legalNote}</div>
           )}
           {heir.hasConsented && heir.consentedAt && (
-            <div className="mt-1.5 flex items-center gap-1.5 text-xs text-brand-400">
+            <div className="mt-1.5 flex items-center gap-1.5 text-xs text-[#0F4C81]">
               <CheckCircle className="w-3 h-3" />
               Consented at {format(new Date(heir.consentedAt), 'dd MMM yyyy, HH:mm')}
             </div>
           )}
           {heir.hasObjected && (
-            <div className="mt-1.5 flex items-center gap-1.5 text-xs text-red-400">
+            <div className="mt-1.5 flex items-center gap-1.5 text-xs text-red-700">
               <AlertTriangle className="w-3 h-3" />
               Objection filed — case in civil court
             </div>
@@ -408,7 +411,7 @@ function HeirCard({
             </button>
             <button
               onClick={onObject}
-              className="text-xs px-3 py-1.5 rounded-lg border border-red-700 text-red-400 hover:bg-red-950 transition-colors"
+              className="text-xs px-3 py-1.5 rounded-lg border border-red-200 text-red-700 hover:bg-red-50 transition-colors"
             >
               File Objection
             </button>
@@ -434,30 +437,30 @@ function ObjectionModal({
 }) {
   return (
     <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/80 backdrop-blur-sm">
-      <div className="w-full max-w-md mx-4 bg-gray-900 border border-red-700 rounded-2xl shadow-2xl overflow-hidden">
-        <div className="bg-red-950 border-b border-red-800 px-5 py-4 flex items-center gap-3">
-          <AlertTriangle className="w-5 h-5 text-red-400" />
+      <div className="w-full max-w-md mx-4 bg-white border border-red-200 rounded-2xl shadow-2xl overflow-hidden">
+        <div className="bg-red-50 border-b border-red-200 px-5 py-4 flex items-center gap-3">
+          <AlertTriangle className="w-5 h-5 text-red-700" />
           <div>
             <div className="text-red-200 font-bold text-sm">File Objection</div>
             <div className="text-red-500 text-xs mt-0.5">{heirName}</div>
           </div>
-          <button onClick={onClose} className="ml-auto text-red-500 hover:text-red-300">
+          <button onClick={onClose} className="ml-auto text-red-500 hover:text-red-700">
             <X className="w-4 h-4" />
           </button>
         </div>
         <div className="p-5 space-y-4">
-          <div className="text-xs text-gray-400 bg-gray-800 rounded-lg px-3 py-2">
+          <div className="text-xs text-gray-500 bg-gray-100 rounded-lg px-3 py-2">
             Filing an objection will halt the auto-mutation and refer this case to the Civil Court
             for adjudication. This action is recorded immutably on BhumiChain.
           </div>
           <div>
-            <label className="block text-xs text-gray-400 mb-1.5">Reason for Objection</label>
+            <label className="block text-xs text-gray-500 mb-1.5">Reason for Objection</label>
             <textarea
               value={reason}
               onChange={(e) => onReasonChange(e.target.value)}
               rows={4}
               placeholder="Describe the grounds for your objection (min. 10 characters)…"
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-brand-500 resize-none"
+              className="w-full bg-gray-100 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#0F4C81] resize-none"
             />
             <div className="text-xs text-gray-600 mt-1">{reason.length} / 10 minimum</div>
           </div>
@@ -479,13 +482,13 @@ function ObjectionModal({
 
 function StatusPill({ status }: { status: string }) {
   const map: Record<string, { label: string; cls: string }> = {
-    HEIRS_IDENTIFIED:  { label: 'Heirs Identified', cls: 'bg-amber-900 text-amber-300' },
-    AWAITING_CONSENTS: { label: 'Awaiting Consents', cls: 'bg-amber-900 text-amber-300' },
-    AUTO_MUTATED:      { label: 'Auto-Mutated ✓', cls: 'bg-brand-900 text-brand-300' },
-    OBJECTION_FILED:   { label: 'Objection Filed', cls: 'bg-red-900 text-red-300' },
-    COURT_REFERRED:    { label: 'Court Referred', cls: 'bg-red-900 text-red-300' },
+    HEIRS_IDENTIFIED:  { label: 'Heirs Identified', cls: 'bg-amber-50 text-amber-700' },
+    AWAITING_CONSENTS: { label: 'Awaiting Consents', cls: 'bg-amber-50 text-amber-700' },
+    AUTO_MUTATED:      { label: 'Auto-Mutated ✓', cls: 'bg-[#0F4C81] text-[#0F4C81]' },
+    OBJECTION_FILED:   { label: 'Objection Filed', cls: 'bg-red-50 text-red-700' },
+    COURT_REFERRED:    { label: 'Court Referred', cls: 'bg-red-50 text-red-700' },
   };
-  const { label, cls } = (map as Record<string, { label: string; cls: string }>)[status] ?? { label: status, cls: 'bg-gray-800 text-gray-400' };
+  const { label, cls } = (map as Record<string, { label: string; cls: string }>)[status] ?? { label: status, cls: 'bg-gray-100 text-gray-500' };
   return (
     <span className={clsx('text-xs font-semibold px-2.5 py-1 rounded-full', cls)}>
       {label}
@@ -497,9 +500,10 @@ function InfoRow({ label, value, mono }: { label: string; value: string; mono?: 
   return (
     <div className="flex items-start justify-between gap-3">
       <span className="text-gray-500 shrink-0 text-sm">{label}</span>
-      <span className={clsx('text-gray-200 text-right break-all text-sm', mono && 'font-mono text-xs')}>
+      <span className={clsx('text-gray-800 text-right break-all text-sm', mono && 'font-mono text-xs')}>
         {value}
       </span>
     </div>
-  );
+  </div>
+    );
 }
