@@ -581,6 +581,7 @@ export default function ReviewPage() {
           <div className="text-gray-500 animate-pulse">Loading parcel…</div>
         </main>
       </div>
+      </div>
     );
   }
 

@@ -97,6 +97,7 @@ export default function SuccessionDetailPage() {
           Loading succession case…
         </div>
       </div>
+      </div>
   );
   }
 
