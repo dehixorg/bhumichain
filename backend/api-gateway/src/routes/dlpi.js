@@ -22,7 +22,7 @@ const validate = (req, res, next) => {
   next();
 };
 
-const dlpiParam = param('dlpiId').matches(/^DLPI-[A-Z]{2}-[A-Z]{3}-[A-Z0-9]+$/);
+const dlpiParam = param('dlpiId').matches(/^DLPI-([A-Z]{2}-[A-Z]{3}-[A-Z0-9]+|\d+)$/);
 
 // ── Static routes (must come before /:dlpiId) ─────────────────────────────────
 
