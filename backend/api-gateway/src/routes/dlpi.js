@@ -123,7 +123,7 @@ router.post(
   '/',
   authenticate,
   requireRole(ROLES.PATWARI, ROLES.CIRCLE_INSPECTOR, ROLES.TEHSILDAR, ROLES.COLLECTOR, ROLES.SUPER_ADMIN),
-  body('dlpiId').matches(/^DLPI-[A-Z]{2}-[A-Z]{3}-[A-Z0-9]+$/),
+  body('dlpiId').matches(/^DLPI-([A-Z]{2}-[A-Z]{3}-[A-Z0-9]+|\d+)$/),
   validate,
   async (req, res) => {
     try {
