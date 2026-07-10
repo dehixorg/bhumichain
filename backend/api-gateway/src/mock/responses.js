@@ -675,8 +675,9 @@ module.exports = {
           { txId: '0xfabric-tx-000003', timestamp: '2025-09-01T14:00:00Z', action: 'ENCUMBRANCE_RELEASED', actor: 'SBI Noida Branch' },
         ];
 
+      case 'dlpi::QueryDLPIsByOwner':
       case 'dlpi::GetMyParcels':
-        return DEMO_MY_PARCELS;
+        return DEMO_MY_PARCELS.concat(MOCK_SCANS);
 
       case 'dlpi::GetPendingReview':
         return DEMO_PENDING_REVIEW;
@@ -787,6 +788,7 @@ module.exports = {
       case 'dlpi::CreateDLPI':
         const input = JSON.parse(args[0]);
         input.claimStatus = input.sourceType === 'RECORD_SCAN_AI' ? 'SCAN_PENDING_SRO' : 'SEEDED_UNVERIFIED';
+        input.encumbranceStatus = 'CLEAR';
         // Add fake submittedAt for sorting in queue
         input.submittedAt = new Date().toISOString();
         // Give it ownerName derived from initialOwners
