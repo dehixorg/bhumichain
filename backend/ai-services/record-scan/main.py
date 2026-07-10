@@ -282,27 +282,40 @@ async def approve_scan_tehsildar_by_dlpi(dlpiId: str, req: TehsildarApproveReque
     # For blockchain minting, we only need one of the scans to generate the payload
     scan = found_scans[0]
     ext = scan.extraction
+    def _get(obj, key, default=None):
+        if isinstance(obj, dict):
+            return obj.get(key, default)
+        return getattr(obj, key, default)
+
+    tehsil = _get(ext, 'tehsil', 'Dadri')
     tehsil_map = {"Dadri": "DAD", "Noida": "NDA", "Jewar": "JWR", "Bisrakh": "BSK"}
-    tehsil_code = tehsil_map.get(ext.tehsil, "DAD")
+    tehsil_code = tehsil_map.get(tehsil, "DAD")
+
+    land_type_raw = _get(ext, 'landType')
+    land_type_val = land_type_raw.value if hasattr(land_type_raw, 'value') else (land_type_raw or "Bhumidhari")
+    khasraNo = _get(ext, 'khasraNo', '0') or '0'
+    areaHectares = _get(ext, 'areaHectares', 0.0)
+    zila = _get(ext, 'zila', 'Gautam Buddha Nagar')
+    khatedars = _get(ext, 'khatedars', [])
+    owner_name = _get(khatedars[0], 'name', 'Unknown') if khatedars else "Unknown"
 
     # Post to gateway to commit to blockchain
-    land_type_val = ext.landType.value
     dlpi_payload = {
         "dlpiId":              dlpiId,
-        "surveyNumber":        ext.khasraNo or "0",
-        "khasraNo":            ext.khasraNo or "0",
-        "tehsil":              ext.tehsil or "Dadri",
+        "surveyNumber":        khasraNo,
+        "khasraNo":            khasraNo,
+        "tehsil":              tehsil,
         "tehsilCode":          tehsil_code,
-        "district":            ext.zila or "Gautam Buddha Nagar",
+        "district":            zila,
         "state":               "Uttar Pradesh",
         "landType":            "Jirayat" if land_type_val == "Bhumidhari" else land_type_val,
         "landTypeDescription": land_type_val,
-        "areaHectares":        float(ext.areaHectares),
+        "areaHectares":        float(areaHectares),
         "isTribal":            False,
         "scheduleVArea":       False,
         "initialOwners": [
             {
-                "name":         ext.khatedars[0].name if ext.khatedars else "Unknown",
+                "name":         owner_name,
                 "aadhaarHash":  scan.ownerAadhaarHash or ("sha256:" + "0" * 64),
                 "share":        "1/1",
                 "shareDecimal": 1.0
