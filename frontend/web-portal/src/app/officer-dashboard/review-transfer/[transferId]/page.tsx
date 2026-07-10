@@ -73,7 +73,19 @@ export default function ReviewTransferPage() {
   };
 
   if (loading) return <div className="flex items-center justify-center h-screen bg-[#F8FAFC] text-[#0F4C81]">Loading...</div>;
-  if (error || !transfer) return <div className="p-8 text-red-400">{error || 'Not found'}</div>;
+  if (error || !transfer) return (
+    <div className="p-8 flex flex-col gap-3">
+      <div className="text-red-400 font-bold text-lg">⚠ Transfer Not Found</div>
+      <div className="text-red-300 text-sm font-mono bg-red-950/30 rounded p-3 border border-red-800">
+        {error || 'Transfer record does not exist on the blockchain'}
+      </div>
+      <div className="text-gray-400 text-sm">Transfer ID: <span className="font-mono text-yellow-400">{transferId}</span></div>
+      <div className="text-gray-500 text-xs mt-2">
+        This usually means the transfer was created before the blockchain was re-initialized, or the API gateway returned an error.<br/>
+        Check the API gateway logs: <span className="font-mono text-blue-400">pm2 logs api-gateway</span>
+      </div>
+    </div>
+  );
 
   let canApprove = false;
   let actionLabel = 'Approve';
