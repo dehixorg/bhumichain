@@ -91,13 +91,13 @@ class KhatauniExtraction(BaseModel):
 class ScanResult(BaseModel):
     """Full pipeline result returned to the officer UI."""
     scanId: str
-    fileName: str
-    fileSizeKB: float
-    ipfsCID: str
-    processingSteps: List[dict]
-    extraction: Union[KhatauniExtraction, dict]
-    suggestedDlpiId: str
-    processingTimeMs: int
+    fileName: str = "external-document"
+    fileSizeKB: float = 0.0
+    ipfsCID: str = "QmPending"
+    processingSteps: List[dict] = []
+    extraction: Union[KhatauniExtraction, dict] = {}
+    suggestedDlpiId: str = ""
+    processingTimeMs: int = 0
     storedInDynamoDB: bool = False
     status: str = 'COMPLETED'
     ownerAadhaarHash: Optional[str] = None
