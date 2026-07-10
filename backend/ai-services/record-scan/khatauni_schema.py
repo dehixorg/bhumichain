@@ -9,7 +9,7 @@ Equivalent to Maharashtra Satbara (7/12) but different format/terminology.
 """
 
 from pydantic import BaseModel, Field
-from typing import Optional, List
+from typing import Optional, List, Union
 from enum import Enum
 
 
@@ -95,7 +95,7 @@ class ScanResult(BaseModel):
     fileSizeKB: float
     ipfsCID: str
     processingSteps: List[dict]
-    extraction: KhatauniExtraction
+    extraction: Union[KhatauniExtraction, dict]
     suggestedDlpiId: str
     processingTimeMs: int
     storedInDynamoDB: bool = False
