@@ -804,6 +804,5 @@ export default function ReviewPage() {
         </div>
       </main>
     </div>
-  </div>
-    );
+  );
 }

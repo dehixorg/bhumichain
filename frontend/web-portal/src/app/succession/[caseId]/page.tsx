@@ -505,6 +505,5 @@ function InfoRow({ label, value, mono }: { label: string; value: string; mono?: 
         {value}
       </span>
     </div>
-  </div>
-    );
+  );
 }
