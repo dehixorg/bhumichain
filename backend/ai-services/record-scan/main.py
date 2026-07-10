@@ -221,7 +221,8 @@ def approve_scan_sro_by_dlpi(dlpiId: str):
     try:
         from pipeline import update_scan_status
         for scan in found_scans:
-            update_scan_status(scan.scanId, "SCAN_PENDING_TEHSILDAR")
+            if not MOCK:
+                update_scan_status(scan.scanId, "SCAN_PENDING_TEHSILDAR")
             if scan.scanId in _scan_cache:
                 _scan_cache[scan.scanId].status = "SCAN_PENDING_TEHSILDAR"
     except Exception as e:
@@ -273,7 +274,8 @@ async def approve_scan_tehsildar_by_dlpi(dlpiId: str, req: TehsildarApproveReque
     # Transition ALL found scans to APPROVED
     from pipeline import update_scan_status
     for scan in found_scans:
-        update_scan_status(scan.scanId, "APPROVED")
+        if not MOCK:
+            update_scan_status(scan.scanId, "APPROVED")
         if scan.scanId in _scan_cache:
             _scan_cache[scan.scanId].status = "APPROVED"
 
