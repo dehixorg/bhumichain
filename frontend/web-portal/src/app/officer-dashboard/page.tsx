@@ -104,7 +104,8 @@ function QueueRow({ item, userRole, fetchQueue }: { item: QueueItem; userRole: s
         toast.success(data.message || 'Scan approved successfully!');
         fetchQueue();
       } else {
-        toast.error(data.message || data.error || 'Approval failed');
+        console.error('Approval error data:', data);
+        toast.error(data.detail || data.message || data.error || `Approval failed: ${JSON.stringify(data)}`);
       }
     } catch (e: any) {
       toast.error(e.message || 'An error occurred during approval');
