@@ -58,8 +58,9 @@ services:
       - /var/run/docker.sock:/host/var/run/docker.sock
       - ./crypto-config/peerOrganizations/revenuedept.bhumichain.in/peers/peer1.revenuedept.bhumichain.in/msp:/etc/hyperledger/fabric/msp
       - ./crypto-config/peerOrganizations/revenuedept.bhumichain.in/peers/peer1.revenuedept.bhumichain.in/tls:/etc/hyperledger/fabric/tls
+      - ./crypto-config:/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto
       - peer1.revenuedept.bhumichain.in:/var/hyperledger/production
-    working_dir: /root
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric/peer
     command: peer node start
     ports:
       - "9051:9051"
