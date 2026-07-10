@@ -11,10 +11,10 @@ const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 50 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
-    if (file.mimetype === 'application/pdf') {
+    if (file.mimetype === 'application/pdf' || file.mimetype.startsWith('image/')) {
       cb(null, true);
     } else {
-      cb(new Error('Only PDF files are allowed.'));
+      cb(new Error('Only PDF and image files are allowed.'));
     }
   },
 });
@@ -530,26 +530,46 @@ app.post('/api/translate', async (req, res) => {
 });
 
 // --- API endpoint: Analyze ---
-app.post('/api/analyze', upload.single('pdf'), async (req, res) => {
+app.post('/api/analyze', upload.single('file'), async (req, res) => {
   try {
     if (!req.file) {
-      return res.status(400).json({ error: 'No PDF file uploaded.' });
+      return res.status(400).json({ error: 'No file uploaded.' });
     }
 
-    // 1. Try to extract text from PDF
-    const pdfParse = require('pdf-parse');
     let pdfText = '';
     let numPages = 0;
+    let hasText = false;
+    let pageImages = [];
+    
+    const isPdf = req.file.mimetype === 'application/pdf';
 
-    try {
-      const pdfData = await pdfParse(req.file.buffer);
-      pdfText = pdfData.text || '';
-      numPages = pdfData.numpages || 0;
-    } catch (parseErr) {
-      console.warn('pdf-parse failed, will try vision fallback:', parseErr.message);
+    if (isPdf) {
+      // 1. Try to extract text from PDF
+      const pdfParse = require('pdf-parse');
+      try {
+        const pdfData = await pdfParse(req.file.buffer);
+        pdfText = pdfData.text || '';
+        numPages = pdfData.numpages || 0;
+      } catch (parseErr) {
+        console.warn('pdf-parse failed, will try vision fallback:', parseErr.message);
+      }
+      hasText = pdfText.trim().length > 50;
+
+      if (!hasText) {
+        console.log('No text found in PDF. Converting pages to images for vision analysis...');
+        pageImages = await convertPdfToImages(req.file.buffer);
+        numPages = pageImages.length;
+        if (pageImages.length === 0) {
+          return res.status(400).json({ error: 'Could not process this PDF. The file may be corrupted or empty.' });
+        }
+      }
+    } else {
+      // It's an image
+      hasText = false;
+      const base64Image = req.file.buffer.toString('base64');
+      pageImages = [base64Image];
+      numPages = 1;
     }
-
-    const hasText = pdfText.trim().length > 50;
 
     // 2. Call Azure OpenAI GPT-5.4
     const rawEndpoint = process.env.AZURE_OPENAI_ENDPOINT;
@@ -574,31 +594,24 @@ app.post('/api/analyze', upload.single('pdf'), async (req, res) => {
       ];
     } else {
       mode = 'vision';
-      console.log('No text found in PDF. Converting pages to images for vision analysis...');
-
-      const pageImages = await convertPdfToImages(req.file.buffer);
-      numPages = pageImages.length;
-
-      if (pageImages.length === 0) {
-        return res.status(400).json({
-          error: 'Could not process this PDF. The file may be corrupted or empty.',
-        });
-      }
-
-      console.log(`Converted ${pageImages.length} page(s) to images. Sending to GPT-5.4 vision...`);
+      console.log(`Sending ${pageImages.length} image(s) to GPT-5.4 vision...`);
 
       const userContent = [
         {
           type: 'text',
           text: 'Extract all relevant fields in the original language of the document. Analyze each page image carefully.',
         },
-        ...pageImages.map((base64Img, idx) => ({
-          type: 'image_url',
-          image_url: {
-            url: `data:image/png;base64,${base64Img}`,
-            detail: 'high',
-          },
-        })),
+        ...pageImages.map((base64Img) => {
+          // Determine mime type for Data URI
+          const mime = isPdf ? 'image/png' : req.file.mimetype;
+          return {
+            type: 'image_url',
+            image_url: {
+              url: `data:${mime};base64,${base64Img}`,
+              detail: 'high',
+            },
+          };
+        }),
       ];
 
       messages = [

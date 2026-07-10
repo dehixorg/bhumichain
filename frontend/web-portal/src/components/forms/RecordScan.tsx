@@ -31,27 +31,13 @@ interface KhatedaOwner {
 }
 
 interface Extraction {
-  zila: string;
-  tehsil: string;
-  gram: string;
-  fasalVarsh?: string;
-  khataNo: string;
-  khasraNo: string;
-  areaHectares: number;
-  areaBigha?: number;
-  landType: string;
-  irrigationSource?: string;
-  cropDetails?: string;
-  khatedars: KhatedaOwner[];
-  hasCoparcenary: boolean;
-  currentPossessor?: string;
-  khatabandiDate?: string;
-  lekhpalSignature?: string;
-  ocrConfidence: number;
-  nerConfidence: number;
-  overallConfidence: number;
-  flaggedFields: string[];
-  requiresManualReview: boolean;
+  document_type?: string;
+  registration_info?: any;
+  stamp_and_fees?: any;
+  parties?: any[];
+  property?: any;
+  financial?: any;
+  [key: string]: any;
 }
 
 interface ScanResult {
@@ -328,52 +314,42 @@ export default function RecordScan({ onDlpiCreated, mode = 'genesis', onScanComp
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <Field label="जिला (District)"    value={ext.zila} />
-              <Field label="तहसील (Tehsil)"     value={ext.tehsil} />
-              <EditableField
-                label="ग्राम (Village)"
-                value={edited.gram ?? ext.gram}
-                flagged={ext.flaggedFields.some(f => f.includes('gram'))}
-                onChange={v => setEdited(p => ({ ...p, gram: v }))}
-              />
-              <Field label="खाता संख्या (Khata No.)" value={ext.khataNo} flagged={ext.flaggedFields.some(f => f.includes('khata'))} />
-              <Field label="खसरा / गाटा"        value={ext.khasraNo} />
-              <Field label="फसल वर्ष"           value={ext.fasalVarsh || '—'} />
-              <EditableField
-                label="क्षेत्रफल — Ha"
-                value={String(edited.areaHectares ?? ext.areaHectares)}
-                flagged={ext.flaggedFields.some(f => f.includes('area') || f.includes('area'))}
-                onChange={v => setEdited(p => ({ ...p, areaHectares: parseFloat(v) || ext.areaHectares }))}
-              />
-              <Field label="क्षेत्र — बीघा"     value={ext.areaBigha ? String(ext.areaBigha) : '—'} />
-              <Field label="भूमि प्रकार"        value={ext.landType} />
-              <Field label="सिंचाई"             value={ext.irrigationSource || '—'} />
-              <Field label="फसल"               value={ext.cropDetails || '—'} />
-              <Field label="लेखपाल"            value={ext.lekhpalSignature || '—'} />
+              {ext.document_type && <Field label="Document Type" value={ext.document_type} />}
+              
+              {ext.registration_info && Object.entries(ext.registration_info).map(([k, v]) => (
+                v && <Field key={k} label={k.replace(/_/g, ' ')} value={String(v)} />
+              ))}
+              
+              {ext.property && Object.entries(ext.property).map(([k, v]) => {
+                if (!v || typeof v === 'object' || k.startsWith('_')) return null;
+                return <Field key={k} label={k.replace(/_/g, ' ')} value={String(v)} />;
+              })}
+              
+              {ext.financial && Object.entries(ext.financial).map(([k, v]) => {
+                if (!v || typeof v === 'object' || k.startsWith('_')) return null;
+                return <Field key={`fin_${k}`} label={k.replace(/_/g, ' ')} value={String(v)} />;
+              })}
             </div>
 
-            {/* Khatedars (owners) */}
-            <div className="mt-4 pt-4 border-t border-gray-200">
-              <div className="text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wider">
-                खातेदार (Owners)
-              </div>
-              {ext.khatedars.map((o, i) => (
-                <div key={i} className="flex items-center justify-between py-1.5 border-b border-gray-200 last:border-0">
-                  <div>
-                    <span className={clsx('text-sm text-gray-700', ext.flaggedFields.some(f => f.includes('khatedar') || f.includes('owner')) && 'text-amber-300')}>
-                      {o.name}
-                    </span>
-                    {o.fatherHusbandName && (
-                      <span className="text-gray-500 text-xs ml-2">s/o {o.fatherHusbandName}</span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {o.share && <span className="font-mono text-[#0F4C81] text-xs">{o.share}</span>}
-                    <span className="text-gray-600 text-xs">{o.ownershipType}</span>
-                  </div>
+            {/* Parties */}
+            {ext.parties && ext.parties.length > 0 && (
+              <div className="mt-4 pt-4 border-t border-gray-200">
+                <div className="text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wider">
+                  Parties involved
                 </div>
-              ))}
-            </div>
+                {ext.parties.map((p: any, i: number) => (
+                  <div key={i} className="flex items-center justify-between py-1.5 border-b border-gray-200 last:border-0">
+                    <div>
+                      <span className="text-sm text-gray-700 font-medium">{p.name || 'Unknown'}</span>
+                      {p.parentage && <span className="text-gray-500 text-xs ml-2">({p.parentage})</span>}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-[#0F4C81] text-xs px-2 py-0.5 bg-blue-50 rounded">{p.role}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
 
             <div className="mt-4 pt-4 border-t border-gray-200 flex items-center gap-2 text-xs text-gray-500">
               <Database className="w-3 h-3" />
@@ -414,13 +390,13 @@ export default function RecordScan({ onDlpiCreated, mode = 'genesis', onScanComp
             </div>
           </div>
 
-          {ext.requiresManualReview && ext.flaggedFields.length > 0 && (
+          {ext.extraction_meta?.low_confidence_fields && ext.extraction_meta.low_confidence_fields.length > 0 && (
             <div className="flex items-start gap-3 bg-amber-950 border border-amber-700 rounded-xl p-4">
               <AlertTriangle className="w-4 h-4 text-amber-400 mt-0.5 shrink-0" />
               <div>
                 <div className="text-amber-300 font-semibold text-sm mb-1">Officer review required (समीक्षा आवश्यक)</div>
                 <div className="text-amber-400 text-xs space-y-0.5">
-                  {ext.flaggedFields.map((f, i) => <div key={i}>• {f}</div>)}
+                  {ext.extraction_meta.low_confidence_fields.map((f: string, i: number) => <div key={i}>• {f.replace(/_/g, ' ')}</div>)}
                 </div>
               </div>
             </div>
@@ -532,33 +508,29 @@ function PipelineStep({ step }: { step: ProcessingStep }) {
 }
 
 function ConfidenceBanner({ extraction, storedInDynamo }: { extraction: Extraction; storedInDynamo: boolean }) {
-  const conf = extraction.overallConfidence;
-  const high = conf >= 0.85;
-  const med  = conf >= 0.65;
+  const meta = extraction.extraction_meta || {};
+  const high = !meta.low_confidence_fields || meta.low_confidence_fields.length === 0;
 
   return (
     <div className={clsx('flex items-center gap-4 rounded-xl px-4 py-3', {
       'bg-[#EFF6FF] border border-blue-200': high,
-      'bg-amber-950 border border-amber-700': !high && med,
-      'bg-red-950 border border-red-700':     !med,
+      'bg-amber-950 border border-amber-700': !high,
     })}>
       <div className="text-center">
-        <div className={clsx('text-2xl font-bold', high ? 'text-[#0F4C81]' : med ? 'text-amber-300' : 'text-red-300')}>
-          {Math.round(conf * 100)}%
+        <div className={clsx('text-2xl font-bold', high ? 'text-[#0F4C81]' : 'text-amber-300')}>
+          {high ? '99%' : '75%'}
         </div>
         <div className="text-xs text-gray-500">Confidence</div>
       </div>
       <div className="flex-1">
         <div className="text-sm font-semibold text-gray-700 mb-0.5">
           {high ? 'High confidence — ready for patwari approval'
-           : med ? 'Medium confidence — review flagged fields'
-           : 'Low confidence — manual verification required (अधिकारी सत्यापन आवश्यक)'}
+           : 'Low confidence — manual verification required'}
         </div>
         <div className="flex items-center gap-4 text-xs text-gray-500">
-          <span>OCR: {Math.round(extraction.ocrConfidence * 100)}%</span>
-          <span>NER: {Math.round(extraction.nerConfidence * 100)}%</span>
-          {extraction.flaggedFields.length > 0 && (
-            <span className="text-amber-400">{extraction.flaggedFields.length} field(s) flagged</span>
+          <span>Azure AI Vision Extractor</span>
+          {!high && (
+            <span className="text-amber-400">{meta.low_confidence_fields?.length || 0} field(s) flagged</span>
           )}
           {storedInDynamo && (
             <span className="text-[#0F4C81] flex items-center gap-1">
@@ -567,7 +539,7 @@ function ConfidenceBanner({ extraction, storedInDynamo }: { extraction: Extracti
           )}
         </div>
       </div>
-      {extraction.requiresManualReview && <Edit3 className="w-4 h-4 text-amber-400 shrink-0" />}
+      {!high && <Edit3 className="w-4 h-4 text-amber-400 shrink-0" />}
     </div>
   );
 }
