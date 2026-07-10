@@ -393,6 +393,7 @@ export default function AuctionPage() {
         </div>
       </div>
     </div>
+    </div>
   );
 }
 
@@ -543,5 +544,4 @@ function fmtINR(n: number): string {
   return n.toLocaleString('en-IN');
 }
 
-const delay = (ms: number) => new Promise<void>((r) => setTimeout(r, ms)</div>
-    );
+const delay = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));

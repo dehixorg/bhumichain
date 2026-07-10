@@ -383,6 +383,7 @@ export default function AnalyticsPage() {
         </div>
       </div>
     </div>
+    </div>
   );
 }
 
@@ -455,6 +456,5 @@ function MapSkeleton() {
     <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-500 text-sm animate-pulse rounded-xl">
       Loading fraud heatmap…
     </div>
-  </div>
-    );
+  );
 }
