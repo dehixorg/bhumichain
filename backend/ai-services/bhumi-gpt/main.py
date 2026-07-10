@@ -22,7 +22,9 @@ from pydantic import BaseModel
 from mock_responses import get_mock_response
 
 MOCK = os.getenv("BHUMI_GPT_MODE", "mock") == "mock"
-ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
+AZURE_OPENAI_ENDPOINT = os.getenv("AZURE_OPENAI_ENDPOINT", "")
+AZURE_OPENAI_API_KEY = os.getenv("AZURE_OPENAI_API_KEY", "")
+DEPLOYMENT_NAME = os.getenv("DEPLOYMENT_NAME", "gpt-5.4")
 
 app = FastAPI(
     title="BhumiChain BhumiGPT",
@@ -91,7 +93,7 @@ def health():
     return {
         "status": "ok",
         "mode": "mock" if MOCK else "real",
-        "model": "claude-sonnet-4-6" if not MOCK else "mock",
+        "model": DEPLOYMENT_NAME if not MOCK else "mock",
     }
 
 
@@ -100,16 +102,16 @@ async def query(req: QueryRequest):
     query_id = f"BGPT-{uuid.uuid4().hex[:8].upper()}"
     asked_at = datetime.utcnow().isoformat() + "Z"
 
-    if MOCK or not ANTHROPIC_API_KEY:
+    if MOCK or not AZURE_OPENAI_API_KEY:
         result = _mock_query(req.query)
     else:
-        result = await _claude_query(req.query)
+        result = await _azure_query(req.query)
 
     entry = {
         "queryId": query_id,
         "query": req.query,
         **result,
-        "mode": "mock" if (MOCK or not ANTHROPIC_API_KEY) else "real",
+        "mode": "mock" if (MOCK or not AZURE_OPENAI_API_KEY) else "real",
         "askedAt": asked_at,
     }
     _history.append(entry)
@@ -149,19 +151,32 @@ def _mock_query(query: str) -> dict:
     }
 
 
-# ─── Real Claude query ────────────────────────────────────────────────────────
+# ─── Real Azure OpenAI query ────────────────────────────────────────────────────────
 
-async def _claude_query(query: str) -> dict:
+async def _azure_query(query: str) -> dict:
     try:
-        import anthropic
-        client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
-        msg = client.messages.create(
-            model="claude-sonnet-4-6",
-            max_tokens=1024,
-            system=SYSTEM_PROMPT,
-            messages=[{"role": "user", "content": query}],
-        )
-        response_text = msg.content[0].text if msg.content else ""
+        import httpx
+        from urllib.parse import urlparse
+        parsed = urlparse(AZURE_OPENAI_ENDPOINT)
+        base_host = f"{parsed.scheme}://{parsed.netloc}"
+        url = f"{base_host}/openai/deployments/{DEPLOYMENT_NAME}/chat/completions?api-version=2024-12-01-preview"
+        headers = {
+            "api-key": AZURE_OPENAI_API_KEY,
+            "Content-Type": "application/json"
+        }
+        payload = {
+            "messages": [
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": query}
+            ],
+            "max_completion_tokens": 1024,
+            "temperature": 0.1
+        }
+        async with httpx.AsyncClient() as client:
+            resp = await client.post(url, headers=headers, json=payload, timeout=30.0)
+            resp.raise_for_status()
+            data = resp.json()
+            response_text = data.get("choices", [{}])[0].get("message", {}).get("content", "")
         lang = "mr" if any(ord(c) > 0x0900 for c in query) else "en"
         return {
             "response":   response_text,
@@ -170,7 +185,54 @@ async def _claude_query(query: str) -> dict:
             "sources":    [],
         }
     except Exception as e:
-        raise HTTPException(status_code=502, detail=f"Claude API error: {str(e)}")
+        raise HTTPException(status_code=502, detail=f"Azure OpenAI API error: {str(e)}")
+
+# ─── Fallback for NyayaAI /nyaya/predict ──────────────────────────────────────
+class NyayaPredictRequest(BaseModel):
+    dlpiId: str
+    disputeType: str
+    facts: str
+
+@app.post("/nyaya/predict")
+async def nyaya_predict(req: NyayaPredictRequest):
+    if MOCK or not AZURE_OPENAI_API_KEY:
+        return {
+            "winProbability": 0.7,
+            "settleProbability": 0.2,
+            "loseProbability": 0.1,
+            "confidence": 0.85,
+            "recommendedAction": "File a suit for declaration of title.",
+            "reasoning": "[MOCK] Strong evidence of possession.",
+            "precedents": []
+        }
+    try:
+        import httpx
+        import json
+        from urllib.parse import urlparse
+        parsed = urlparse(AZURE_OPENAI_ENDPOINT)
+        base_host = f"{parsed.scheme}://{parsed.netloc}"
+        url = f"{base_host}/openai/deployments/{DEPLOYMENT_NAME}/chat/completions?api-version=2024-12-01-preview"
+        headers = {
+            "api-key": AZURE_OPENAI_API_KEY,
+            "Content-Type": "application/json"
+        }
+        sys_prompt = "You are NyayaAI. Respond with JSON matching schema: winProbability, settleProbability, loseProbability, confidence, recommendedAction, reasoning, precedents (array)."
+        payload = {
+            "messages": [
+                {"role": "system", "content": sys_prompt},
+                {"role": "user", "content": f"DLPI: {req.dlpiId}\\nDispute: {req.disputeType}\\nFacts: {req.facts}"}
+            ],
+            "response_format": {"type": "json_object"},
+            "temperature": 0.1
+        }
+        async with httpx.AsyncClient() as client:
+            resp = await client.post(url, headers=headers, json=payload, timeout=30.0)
+            resp.raise_for_status()
+            data = resp.json()
+            response_text = data.get("choices", [{}])[0].get("message", {}).get("content", "{}")
+            return json.loads(response_text)
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Azure OpenAI API error: {str(e)}")
 
 
 if __name__ == "__main__":
@@ -179,5 +241,5 @@ if __name__ == "__main__":
     print(f"\n💬 BhumiChain BhumiGPT AI Service")
     print(f"   REST  → http://localhost:{port}")
     print(f"   Docs  → http://localhost:{port}/docs")
-    print(f"   Mode  → {'MOCK' if MOCK else 'REAL (Claude API)'}")
+    print(f"   Mode  → {'MOCK' if MOCK else 'REAL (Azure OpenAI)'}")
     uvicorn.run("main:app", host="0.0.0.0", port=port, reload=True)
