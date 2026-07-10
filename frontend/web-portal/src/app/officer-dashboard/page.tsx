@@ -72,7 +72,8 @@ function daysPending(dateStr: string): number {
   return Math.floor((Date.now() - new Date(dateStr).getTime()) / 86400000);
 }
 
-function formatArea(ha: number): string {
+function formatArea(ha?: number): string {
+  if (ha === undefined || ha === null || isNaN(ha)) return 'N/A';
   if (ha < 0.1) return `${(ha * 10000).toFixed(0)} sq.m`;
   return `${ha.toFixed(3)} ha`;
 }
