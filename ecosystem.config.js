@@ -13,13 +13,6 @@ module.exports = {
       args: "run dev",
       cwd: "./frontend/web-portal",
       watch: false,
-    },
-    {
-      name: "record-scan",
-      script: "python.exe",
-      args: "app.py",
-      cwd: "./backend/ai-services/record-scan",
-      watch: false,
     }
   ]
 };
