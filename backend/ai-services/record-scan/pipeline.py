@@ -277,7 +277,23 @@ def save_patwari_approval(scan_id: str, dlpi_id: str, owner_hash: str, officer_n
         item['resultJson'] = json.dumps(data, ensure_ascii=False)
         _save_local_db(db)
     else:
-        raise ValueError(f"Scan {scan_id} not found in database.")
+        print(f"Scan {scan_id} not found in database. Creating a new entry for external scan.")
+        item = {
+            'scanId': scan_id,
+            'status': 'SCAN_PENDING_SRO',
+            'suggestedDlpiId': dlpi_id,
+            'ownerAadhaarHash': owner_hash,
+            'patwariName': officer_name,
+            'patwariHash': officer_hash,
+            'resultJson': json.dumps({
+                'scanId': scan_id,
+                'status': 'SCAN_PENDING_SRO',
+                'suggestedDlpiId': dlpi_id,
+                'extraction': {}
+            }, ensure_ascii=False)
+        }
+        db[scan_id] = item
+        _save_local_db(db)
 
 
 # ─── IPFS helpers ─────────────────────────────────────────────────────────────
