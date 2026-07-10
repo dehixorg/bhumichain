@@ -43,9 +43,9 @@ services:
       CORE_PEER_LISTENADDRESS: 0.0.0.0:9051
       CORE_PEER_CHAINCODEADDRESS: peer1.revenuedept.bhumichain.in:9052
       CORE_PEER_CHAINCODELISTENADDRESS: 0.0.0.0:9052
-      CORE_PEER_GOSSIP_EXTERNALENDPOINT: <VM2_PUBLIC_IP>:9051
+      CORE_PEER_GOSSIP_EXTERNALENDPOINT: 20.198.127.97:9051
       # Connect back to Peer 0 on VM1
-      CORE_PEER_GOSSIP_BOOTSTRAP: <VM1_PUBLIC_IP>:7051
+      CORE_PEER_GOSSIP_BOOTSTRAP: 4.213.3.32:7051
       CORE_PEER_LOCALMSPID: RevenueDeptMSP
       CORE_PEER_MSPCONFIGPATH: /etc/hyperledger/fabric/msp
       CORE_OPERATIONS_LISTENADDRESS: 0.0.0.0:17052
@@ -68,8 +68,8 @@ services:
       - couchdb1
     # NOTE: You will need to add extra_hosts if DNS isn't resolving properly between VMs
     extra_hosts:
-      - "orderer.bhumichain.in:<VM1_PUBLIC_IP>"
-      - "peer0.revenuedept.bhumichain.in:<VM1_PUBLIC_IP>"
+      - "orderer.bhumichain.in:4.213.3.32"
+      - "peer0.revenuedept.bhumichain.in:4.213.3.32"
     networks:
       - bhumichain
 
