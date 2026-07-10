@@ -195,7 +195,7 @@ export default function LoginPage() {
               <img
                 src="/citizen_land_visual.png"
                 alt="BhumiChain — Blockchain Land Registry"
-                className="w-full h-[380px] object-cover object-top"
+                className="w-full h-[440px] object-cover object-top"
                 onError={(e) => {
                   const p = e.currentTarget.parentElement!;
                   p.style.background = 'linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 50%, #BFDBFE 100%)';

@@ -15,6 +15,7 @@ import toast from 'react-hot-toast';
 import {
   Users, Shield, CheckCircle, Zap, FileText,
   ChevronRight, Info, Clock, Cpu, AlertTriangle,
+  Upload, Scan, Database
 } from 'lucide-react';
 import clsx from 'clsx';
 import { format } from 'date-fns';
@@ -97,6 +98,7 @@ const AI_STEPS = [
 
 type Stage =
   | 'idle'
+  | 'scanning_crs'
   | 'crs_verified'
   | 'ai_computing'
   | 'heirs_identified'
@@ -111,6 +113,8 @@ export default function SuccessionPage() {
   const [heirs, setHeirs]         = useState<SuccessionHeir[]>([]);
   const [showAlert, setShowAlert] = useState(false);
   const [aiSteps, setAiSteps]     = useState(AI_STEPS.map((label) => ({ label, done: false })));
+  const [crsAiSteps, setCrsAiSteps] = useState<{label: string, done: boolean}[]>([]);
+  const [crsExtraction, setCrsExtraction] = useState<any>(null);
 
   const { triggerMock, on: onWs } = useWebSocket(DEMO_DLPI);
 
@@ -134,12 +138,39 @@ export default function SuccessionPage() {
 
   // ── Step 1: Verify CRS death certificate ─────────────────────────────────
 
-  const handleVerifyCRS = async () => {
-    try {
-      await verifyCRS(DEMO_CRS.crsRegistrationNo);
-    } catch { /* mock ok */ }
-    setStage('crs_verified');
+  const CRS_AI_STEPS_LABELS = [
+    'Uploading Death Certificate to secure IPFS vault',
+    'Azure Document Intelligence OCR extraction',
+    'LayoutLM NER — locating deceased name & Aadhaar',
+    'Cross-referencing CRS Registration No. with UP database',
+    'Validation successful'
+  ];
+
+  const handleUploadCRS = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setStage('scanning_crs');
+    setCrsAiSteps(CRS_AI_STEPS_LABELS.map(label => ({ label, done: false })));
+    setCrsExtraction(null);
+
+    // Simulate AI scanning
+    for (let i = 0; i < CRS_AI_STEPS_LABELS.length; i++) {
+      await delay(600);
+      setCrsAiSteps(prev => prev.map((s, idx) => idx <= i ? { ...s, done: true } : s));
+    }
+
+    // Set extracted data
+    setCrsExtraction({
+      name: DEMO_DECEASED.name,
+      dod: DEMO_DECEASED.dod,
+      aadhaarHash: 'XXXX-XXXX-1234', // Simplified for UI
+      crsRegistrationNo: DEMO_CRS.crsRegistrationNo,
+      dlpiId: DEMO_DLPI
+    });
+
     toast.success('CRS death certificate verified — CRS-GBN-2026-00541');
+    setStage('crs_verified');
   };
 
   // ── Step 2: Run CoparcenaryMapper AI ─────────────────────────────────────
@@ -284,45 +315,105 @@ export default function SuccessionPage() {
 
             {/* IDLE: Trigger */}
             {stage === 'idle' && (
+              <div className="card border-dashed border-2 bg-[#F8FAFC]/50 hover:bg-[#F8FAFC] transition-colors cursor-pointer relative">
+                <input
+                  type="file"
+                  accept="image/*,.pdf"
+                  onChange={handleUploadCRS}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                />
+                <div className="flex flex-col items-center justify-center py-10">
+                  <div className="w-16 h-16 bg-[#0F4C81]/10 rounded-full flex items-center justify-center mb-4">
+                    <Upload className="w-8 h-8 text-[#0F4C81]" />
+                  </div>
+                  <div className="text-base font-semibold text-gray-800">
+                    Upload CRS Death Certificate
+                  </div>
+                  <div className="text-sm text-gray-500 mt-1">
+                    Drag and drop or click to browse
+                  </div>
+                  <div className="text-xs text-gray-400 mt-3 font-mono">
+                    AI Document Scanner will automatically extract details
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* SCANNING CRS */}
+            {stage === 'scanning_crs' && (
               <div className="card">
-                <div className="text-sm font-semibold text-gray-700 mb-4">
-                  Scene 3 — CRS Death Certificate Trigger
+                <div className="flex items-center gap-2 mb-4">
+                  <Scan className="w-4 h-4 text-[#0F4C81] animate-pulse" />
+                  <span className="text-sm font-semibold text-gray-700">AI Document Scanner</span>
+                  <span className="text-xs text-gray-500 ml-1">Analyzing...</span>
                 </div>
-                <div className="bg-[#F8FAFC] rounded-xl p-4 mb-5 space-y-2">
-                  <InfoRow label="Deceased" value={DEMO_DECEASED.name} />
-                  <InfoRow label="Date of Death" value={format(new Date(DEMO_DECEASED.dod), 'dd MMM yyyy')} />
-                  <InfoRow label="Parcel (DLPI)" value={DEMO_DLPI} mono />
-                  <InfoRow label="CRS No." value={DEMO_CRS.crsRegistrationNo} mono />
+                <div className="space-y-2.5">
+                  {crsAiSteps.map((s, i) => (
+                    <div
+                      key={i}
+                      className={clsx(
+                        'flex items-center gap-3 text-sm transition-colors',
+                        s.done ? 'text-gray-800' : 'text-gray-400',
+                      )}
+                    >
+                      {s.done
+                        ? <CheckCircle className="w-4 h-4 text-[#138808] shrink-0" />
+                        : <div className="w-4 h-4 border border-gray-300 rounded-full shrink-0 animate-pulse" />
+                      }
+                      {s.label}
+                    </div>
+                  ))}
                 </div>
-                <button onClick={handleVerifyCRS} className="btn-primary flex items-center gap-2">
-                  <FileText className="w-4 h-4" />
-                  Verify CRS Death Certificate
-                  <ChevronRight className="w-4 h-4" />
-                </button>
               </div>
             )}
 
             {/* CRS VERIFIED: run AI */}
             {stage === 'crs_verified' && (
               <div className="space-y-4">
-                <Banner
-                  icon={<CheckCircle className="w-5 h-5 text-[#0F4C81]" />}
-                  title="CRS death certificate verified"
-                  subtitle="CRS-GBN-2026-00541 · Civil Registration System, Dadri"
-                  color="brand"
-                />
                 <div className="card">
-                  <div className="text-sm font-semibold text-gray-700 mb-1">
-                    Run CoparcenaryMapper AI
+                  <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-100">
+                    <CheckCircle className="w-5 h-5 text-[#138808]" />
+                    <span className="text-sm font-semibold text-gray-800">AI Extraction Complete</span>
+                    <span className="ml-auto text-xs text-[#0F4C81] font-mono bg-[#0F4C81]/10 px-2 py-0.5 rounded">
+                      Confidence: 99.2%
+                    </span>
                   </div>
-                  <div className="text-gray-500 text-xs mb-4">
-                    Rule engine + HSA 2005 enforcement → compute heir shares automatically from family registry
+                  <div className="grid grid-cols-2 gap-y-4 gap-x-6 text-sm mb-5">
+                    <div>
+                      <div className="text-xs text-gray-500 mb-0.5">Deceased Name</div>
+                      <div className="font-semibold text-gray-800">{crsExtraction?.name}</div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-gray-500 mb-0.5">Date of Death</div>
+                      <div className="font-semibold text-gray-800">{format(new Date(crsExtraction?.dod || Date.now()), 'dd MMM yyyy')}</div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-gray-500 mb-0.5">Aadhaar (Masked)</div>
+                      <div className="font-semibold text-gray-800 font-mono">{crsExtraction?.aadhaarHash}</div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-gray-500 mb-0.5">Linked Land Parcel</div>
+                      <div className="font-semibold text-[#0F4C81] font-mono">{crsExtraction?.dlpiId}</div>
+                    </div>
+                    <div className="col-span-2">
+                      <div className="text-xs text-gray-500 mb-0.5">CRS Registration No.</div>
+                      <div className="font-semibold text-gray-800 font-mono">{crsExtraction?.crsRegistrationNo}</div>
+                    </div>
                   </div>
-                  <button onClick={handleRunAI} className="btn-primary flex items-center gap-2">
-                    <Cpu className="w-4 h-4" />
-                    Compute Succession Shares
-                    <ChevronRight className="w-4 h-4" />
-                  </button>
+                  
+                  <div className="pt-4 border-t border-gray-100">
+                    <div className="text-sm font-semibold text-gray-700 mb-1">
+                      Identify Legal Heirs
+                    </div>
+                    <div className="text-gray-500 text-xs mb-4">
+                      Run CoparcenaryMapper AI rule engine + HSA 2005 enforcement to compute heir shares
+                    </div>
+                    <button onClick={handleRunAI} className="btn-primary flex items-center gap-2 w-full justify-center">
+                      <Cpu className="w-4 h-4" />
+                      Run Coparcenary AI
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
@@ -530,7 +621,7 @@ export default function SuccessionPage() {
 // ─── Sub-components ──────────────────────────────────────────────────────────
 
 const STAGE_ORDER: Stage[] = [
-  'idle', 'crs_verified', 'ai_computing',
+  'idle', 'scanning_crs', 'crs_verified', 'ai_computing',
   'heirs_identified', 'awaiting_consents', 'all_consented',
 ];
 
