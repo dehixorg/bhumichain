@@ -10,7 +10,7 @@ module.exports = {
     {
       name: "ai-document-analyzer",
       script: "npm",
-      args: "run start",
+      args: "run server",
       cwd: "./backend/ai-document-analyzer",
       watch: false,
     }
