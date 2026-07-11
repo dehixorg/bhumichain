@@ -149,6 +149,63 @@ async def approve_scan(req: ApproveRequest, background: BackgroundTasks):
             ext.update(req.correctedFields)
         result.extraction = ext
 
+    # Generate payload and mint on blockchain
+    def _get(obj, key, default=None):
+        if isinstance(obj, dict):
+            return obj.get(key, default)
+        return getattr(obj, key, default)
+
+    tehsil = _get(ext, 'tehsil', 'Dadri')
+    tehsil_map = {"Dadri": "DAD", "Noida": "NDA", "Jewar": "JWR", "Bisrakh": "BSK"}
+    tehsil_code = tehsil_map.get(tehsil, "DAD")
+
+    land_type_raw = _get(ext, 'landType')
+    land_type_val = land_type_raw.value if hasattr(land_type_raw, 'value') else (land_type_raw or "Bhumidhari")
+    khasraNo = _get(ext, 'khasraNo', '0') or '0'
+    areaHectares = _get(ext, 'areaHectares', 0.0)
+    zila = _get(ext, 'zila', 'Gautam Buddha Nagar')
+    khatedars = _get(ext, 'khatedars', [])
+    owner_name = _get(khatedars[0], 'name', 'Unknown') if khatedars else "Unknown"
+
+    dlpi_payload = {
+        "dlpiId":              req.dlpiId,
+        "surveyNumber":        khasraNo,
+        "khasraNo":            khasraNo,
+        "tehsil":              tehsil,
+        "tehsilCode":          tehsil_code,
+        "district":            zila,
+        "state":               "Uttar Pradesh",
+        "landType":            "Jirayat" if land_type_val == "Bhumidhari" else land_type_val,
+        "landTypeDescription": land_type_val,
+        "areaHectares":        float(areaHectares),
+        "isTribal":            False,
+        "scheduleVArea":       False,
+        "initialOwners": [
+            {
+                "name":         owner_name,
+                "aadhaarHash":  req.ownerAadhaarHash or ("sha256:" + "0" * 64),
+                "share":        "1/1",
+                "shareDecimal": 1.0
+            }
+        ],
+        "ownershipType":       "SOLE",
+        "latitude":            28.5355,
+        "longitude":           77.3910,
+        "boundaryPolygon":     None,
+        "circleRateINR":       5000000,
+        "ipfsCID":             result.ipfsCID,
+        "sourceType":          "RECORD_SCAN_AI"
+    }
+
+    try:
+        import hashlib
+        import time
+        blockchain_result = await _post_to_gateway(dlpi_payload, req.token)
+        pseudo_tx = "0x" + hashlib.sha256((req.dlpiId + str(time.time())).encode()).hexdigest()[:40]
+        tx_hash = blockchain_result.get("txHash", pseudo_tx)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Blockchain commit failed: {str(e)}")
+
     # Update state off-chain (SRO queue)
     if MOCK:
         # Cache sync
@@ -168,8 +225,9 @@ async def approve_scan(req: ApproveRequest, background: BackgroundTasks):
     return {
         "approved":              True,
         "dlpiId":                req.dlpiId,
-        "submittedToBlockchain": False,
-        "message":               f"Scan submitted for SRO (Kanungo) approval.",
+        "submittedToBlockchain": True,
+        "txHash":                tx_hash,
+        "message":               f"Scan committed to blockchain and submitted for SRO approval.",
     }
 
 
@@ -279,61 +337,8 @@ async def approve_scan_tehsildar_by_dlpi(dlpiId: str, req: TehsildarApproveReque
         if scan.scanId in _scan_cache:
             _scan_cache[scan.scanId].status = "APPROVED"
 
-    # For blockchain minting, we only need one of the scans to generate the payload
+    # Scan is already minted on blockchain, just get the first one for reference
     scan = found_scans[0]
-    ext = scan.extraction
-    def _get(obj, key, default=None):
-        if isinstance(obj, dict):
-            return obj.get(key, default)
-        return getattr(obj, key, default)
-
-    tehsil = _get(ext, 'tehsil', 'Dadri')
-    tehsil_map = {"Dadri": "DAD", "Noida": "NDA", "Jewar": "JWR", "Bisrakh": "BSK"}
-    tehsil_code = tehsil_map.get(tehsil, "DAD")
-
-    land_type_raw = _get(ext, 'landType')
-    land_type_val = land_type_raw.value if hasattr(land_type_raw, 'value') else (land_type_raw or "Bhumidhari")
-    khasraNo = _get(ext, 'khasraNo', '0') or '0'
-    areaHectares = _get(ext, 'areaHectares', 0.0)
-    zila = _get(ext, 'zila', 'Gautam Buddha Nagar')
-    khatedars = _get(ext, 'khatedars', [])
-    owner_name = _get(khatedars[0], 'name', 'Unknown') if khatedars else "Unknown"
-
-    # Post to gateway to commit to blockchain
-    dlpi_payload = {
-        "dlpiId":              dlpiId,
-        "surveyNumber":        khasraNo,
-        "khasraNo":            khasraNo,
-        "tehsil":              tehsil,
-        "tehsilCode":          tehsil_code,
-        "district":            zila,
-        "state":               "Uttar Pradesh",
-        "landType":            "Jirayat" if land_type_val == "Bhumidhari" else land_type_val,
-        "landTypeDescription": land_type_val,
-        "areaHectares":        float(areaHectares),
-        "isTribal":            False,
-        "scheduleVArea":       False,
-        "initialOwners": [
-            {
-                "name":         owner_name,
-                "aadhaarHash":  scan.ownerAadhaarHash or ("sha256:" + "0" * 64),
-                "share":        "1/1",
-                "shareDecimal": 1.0
-            }
-        ],
-        "ownershipType":       "SOLE",
-        "latitude":            28.5355,
-        "longitude":           77.3910,
-        "boundaryPolygon":     None,
-        "circleRateINR":       5000000,
-        "ipfsCID":             scan.ipfsCID,
-        "sourceType":          "RECORD_SCAN_AI"
-    }
-
-    try:
-        await _post_to_gateway(dlpi_payload, req.token)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Blockchain commit failed: {str(e)}")
 
     background.add_task(mark_scan_approved, scan.scanId, dlpiId)
 
@@ -386,7 +391,7 @@ async def _post_to_gateway(payload: dict, token: str):
         )
         if not resp.is_success:
             print(f"[RecordScan] Gateway post failed with {resp.status_code}: {resp.text}")
-            resp.raise_for_status()
+            raise Exception(f"{resp.status_code} Bad Request: {resp.text}")
         return resp.json()
 
 

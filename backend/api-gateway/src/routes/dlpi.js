@@ -318,9 +318,13 @@ router.post(
   validate,
   async (req, res) => {
     try {
-      // Approve off-chain in RecordScan python service
+      // 1. Submit on-chain approval
+      const txResult = await submit('dlpi', 'ApproveScanSRO', [req.params.dlpiId]);
+
+      // 2. Approve off-chain in RecordScan python service
       const result = await axios.post(`${RECORD_SCAN_URL}/scan/approve-sro-by-dlpi/${req.params.dlpiId}`);
-      res.json(result.data || { success: true });
+      
+      res.json({ success: true, txHash: txResult.txHash || (result.data && result.data.txHash) });
     } catch (e) {
       const errMsg = e.response && e.response.data && (e.response.data.detail || e.response.data.message)
         ? (e.response.data.detail || e.response.data.message)
@@ -340,7 +344,10 @@ router.post(
   validate,
   async (req, res) => {
     try {
-      // Approve off-chain which finally triggers CreateDLPI on the blockchain
+      // 1. Submit on-chain approval
+      const txResult = await submit('dlpi', 'ApproveScanTehsildar', [req.params.dlpiId]);
+
+      // 2. Approve off-chain in RecordScan python service
       const payload = {
         officerAadhaarHash: req.user.aadhaarHash || ('sha256:' + '0'.repeat(64)),
         officerName: req.user.name || 'Tehsildar',
@@ -350,7 +357,7 @@ router.post(
         `${RECORD_SCAN_URL}/scan/approve-tehsildar-by-dlpi/${req.params.dlpiId}`,
         payload
       );
-      res.json(result.data || { success: true });
+      res.json({ success: true, txHash: txResult.txHash || (result.data && result.data.txHash) });
     } catch (e) {
       const errMsg = e.response && e.response.data && (e.response.data.detail || e.response.data.message)
         ? (e.response.data.detail || e.response.data.message)
