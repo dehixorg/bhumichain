@@ -395,8 +395,18 @@ export default function RecordScan({ onDlpiCreated, mode = 'genesis', onScanComp
               <AlertTriangle className="w-4 h-4 text-amber-400 mt-0.5 shrink-0" />
               <div>
                 <div className="text-amber-300 font-semibold text-sm mb-1">Officer review required (समीक्षा आवश्यक)</div>
-                <div className="text-amber-400 text-xs space-y-0.5">
-                  {ext.extraction_meta.low_confidence_fields.map((f: string, i: number) => <div key={i}>• {f.replace(/_/g, ' ')}</div>)}
+                <div className="text-amber-400 text-xs space-y-2 mt-2">
+                  {ext.extraction_meta.low_confidence_fields.map((f: string, i: number) => (
+                    <div key={i} className="flex flex-col gap-1">
+                      <label className="uppercase tracking-wider font-semibold opacity-90">{f.replace(/_/g, ' ')}</label>
+                      <input
+                        className="bg-amber-950 border border-amber-700 rounded px-2 py-1.5 text-amber-200 placeholder-amber-700/50 focus:outline-none focus:border-amber-500 font-medium"
+                        placeholder={`Enter ${f.split('.').pop()}`}
+                        value={edited[f] || ''}
+                        onChange={(e) => setEdited({ ...edited, [f]: e.target.value })}
+                      />
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
