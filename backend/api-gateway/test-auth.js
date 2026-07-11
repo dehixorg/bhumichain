@@ -1,0 +1,1 @@
+require('dotenv').config(); const { issueDemoToken } = require('./src/middleware/auth'); const token = issueDemoToken('patwari', 'Vijay Singh', { jurisdictionCode: 'GBN-DAD', tehsilCode: 'DAD' }); console.log(token);

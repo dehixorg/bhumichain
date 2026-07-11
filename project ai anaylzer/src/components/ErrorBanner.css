@@ -1,0 +1,35 @@
+.error-banner {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  padding: 24px;
+  background: rgba(244, 63, 94, 0.08);
+  border: 1px solid rgba(244, 63, 94, 0.25);
+  border-radius: var(--radius-lg);
+  margin-bottom: 32px;
+  animation: fadeSlideUp 0.4s ease-out;
+}
+
+.error-banner .error-icon {
+  flex-shrink: 0;
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  background: rgba(244, 63, 94, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent-rose);
+}
+
+.error-banner .error-text h4 {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--accent-rose);
+  margin-bottom: 4px;
+}
+
+.error-banner .error-text p {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}

@@ -41,7 +41,9 @@ function authenticate(req, res, next) {
 function requireRole(...roles) {
   return (req, res, next) => {
     if (!req.user) return res.status(401).json({ error: 'UNAUTHENTICATED' });
+    console.log(`[AUTH DEBUG] requireRole checking. req.user.role: '${req.user.role}' (type: ${typeof req.user.role}), roles array:`, roles);
     if (!roles.includes(req.user.role)) {
+      console.log(`[AUTH DEBUG] FAILING! includes returned false!`);
       return res.status(403).json({ error: 'FORBIDDEN', required: roles, current: req.user.role });
     }
     next();

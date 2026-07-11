@@ -223,7 +223,17 @@ export default function CitizenDashboard() {
                             <div className="text-sm font-bold text-[#0F4C81]">
                               {p.ownershipType === 'JOINT' || (p.owners && p.owners.length > 1) ? 'Joint' : 'Sole'}
                               {p.owners && p.owners.length > 0 && p.owners[0].share && (
-                                <span className="text-xs text-gray-500 ml-1 font-medium">({p.owners[0].share} Share)</span>
+                                <span className="text-xs text-gray-500 ml-1 font-medium">
+                                  ({(() => {
+                                    const share = p.owners[0].share;
+                                    if (share.includes('/')) {
+                                      const [num, den] = share.split('/');
+                                      const percent = (parseInt(num) / parseInt(den)) * 100;
+                                      return !isNaN(percent) ? `${percent.toFixed(2)}%` : share;
+                                    }
+                                    return share;
+                                  })()})
+                                </span>
                               )}
                             </div>
                           </div>
