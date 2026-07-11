@@ -145,10 +145,12 @@ router.post(
   validate,
   async (req, res) => {
     try {
-      // HACK for demo: Forcibly assign the property to Priya Kumar so it always appears in her dashboard
-      if (req.body && req.body.initialOwners && req.body.initialOwners.length > 0) {
-        req.body.initialOwners[0].name = 'Priya Kumar';
-        req.body.initialOwners[0].aadhaarHash = 'sha256:ea4b4befa7b81d22612b818df40a69ed179458423773a63aee7848177c0ecb72';
+      // If no owner was provided, fallback to Priya Kumar (for automated testing)
+      if (process.env.AADHAAR_MOCK === 'true' && req.body && req.body.initialOwners && req.body.initialOwners.length > 0) {
+        if (!req.body.initialOwners[0].aadhaarHash || req.body.initialOwners[0].aadhaarHash === 'sha256:' + '0'.repeat(64)) {
+          req.body.initialOwners[0].name = 'Priya Kumar';
+          req.body.initialOwners[0].aadhaarHash = 'sha256:ea4b4befa7b81d22612b818df40a69ed179458423773a63aee7848177c0ecb72';
+        }
       }
 
       // In a real app we'd map all fields carefully. For now, pass JSON string.

@@ -247,7 +247,7 @@ export default function LoginPage() {
                     key={p.persona}
                     onClick={() => handleDemoLogin(p.persona)}
                     disabled={loading}
-                    title={p.aadhaar ? `Aadhaar ID: ${p.aadhaar}` : undefined}
+                    title={p.aadhaar ? `Aadhaar No: ${p.aadhaar}` : undefined}
                     style={{ backgroundColor: p.color }}
                     className="flex items-center justify-between px-4 py-3 rounded-xl text-white text-left hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-50 shadow-sm"
                   >
@@ -255,7 +255,7 @@ export default function LoginPage() {
                       <div className="text-sm font-bold leading-tight">{p.label}</div>
                       <div className="text-xs opacity-75 mt-0.5 flex flex-col gap-0.5">
                         <span>{p.name}</span>
-                        {p.aadhaar && <span className="font-mono text-[10px] opacity-90 tracking-wider">ID: {p.aadhaar}</span>}
+                        {p.aadhaar && <span className="font-mono text-[10px] opacity-90 tracking-wider" title={p.aadhaar}>Aadhaar: {p.aadhaar}</span>}
                       </div>
                     </div>
                     <ChevronRight className="w-4 h-4 opacity-60 shrink-0" />
