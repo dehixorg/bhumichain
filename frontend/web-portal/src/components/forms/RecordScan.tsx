@@ -626,27 +626,20 @@ function EditableField({
 }: {
   label: string; value: string; flagged?: boolean; onChange: (v: string) => void;
 }) {
-  const [editing, setEditing] = useState(false);
   return (
-    <div>
-      <div className="flex items-center gap-1 mb-0.5">
-        <span className="text-xs text-gray-500">{label}</span>
-        {flagged && <AlertTriangle className="w-3 h-3 text-amber-400" />}
-        <button onClick={() => setEditing(e => !e)} className="ml-auto">
-          <Edit3 className="w-3 h-3 text-gray-600 hover:text-gray-400" />
-        </button>
+    <div className="flex flex-col gap-1.5">
+      <div className="flex items-center gap-1">
+        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{label}</label>
+        {flagged && <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />}
       </div>
-      {editing ? (
-        <input
-          autoFocus
-          value={value}
-          onChange={e => onChange(e.target.value)}
-          onBlur={() => setEditing(false)}
-          className="w-full bg-[#F8FAFC] border border-[#0F4C81] rounded px-2 py-1 text-sm text-gray-700 focus:outline-none"
-        />
-      ) : (
-        <div className={clsx('text-sm font-medium', flagged ? 'text-amber-300' : 'text-gray-700')}>{value}</div>
-      )}
+      <input
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        className={clsx(
+          "w-full bg-[#F8FAFC] border rounded-lg px-3 py-2 text-gray-800 text-sm focus:outline-none focus:bg-white transition-colors",
+          flagged ? "border-amber-300 focus:border-amber-500" : "border-gray-200 focus:border-[#0F4C81]/60"
+        )}
+      />
     </div>
   );
 }
