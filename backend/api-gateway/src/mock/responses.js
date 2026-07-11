@@ -676,8 +676,18 @@ module.exports = {
         ];
 
       case 'dlpi::QueryDLPIsByOwner':
-      case 'dlpi::GetMyParcels':
-        return DEMO_MY_PARCELS.concat(MOCK_SCANS);
+      case 'dlpi::GetMyParcels': {
+        const ownerHash = args[0];
+        const PRIYA_HASH = 'sha256:ea4b4befa7b81d22612b818df40a69ed179458423773a63aee7848177c0ecb72';
+        // Filter MOCK_SCANS to only include parcels where this citizen is an owner
+        const myScans = MOCK_SCANS.filter(s => {
+          if (!s.initialOwners || !Array.isArray(s.initialOwners)) return false;
+          return s.initialOwners.some(o => o.aadhaarHash === ownerHash);
+        });
+        // Also include DEMO_MY_PARCELS for Priya Kumar (demo persona)
+        const demoParcels = ownerHash === PRIYA_HASH ? DEMO_MY_PARCELS : [];
+        return demoParcels.concat(myScans);
+      }
 
       case 'dlpi::GetPendingReview':
         return DEMO_PENDING_REVIEW;

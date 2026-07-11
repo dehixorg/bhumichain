@@ -61,31 +61,18 @@ router.get('/my-parcels', authenticate, requireRole(ROLES.CITIZEN), async (req, 
     }
     if (!Array.isArray(parcels)) parcels = [];
 
-    // HACK: Also fetch all properties minted by the AI Scanner (which used the default 0-hash)
-    try {
-      let mockParcels = await evaluate('dlpi', 'QueryDLPIsByOwner', ['sha256:' + '0'.repeat(64)]);
-      if (mockParcels && !Array.isArray(mockParcels)) {
-        mockParcels = mockParcels.parcels || mockParcels.data || Object.values(mockParcels);
-      }
-      if (Array.isArray(mockParcels)) {
-        // Override the owner name to the logged in user so it looks seamless in the UI
-        mockParcels = mockParcels.map(p => ({
-          ...p,
-          owners: [{ name: req.user.name, aadhaarHash: req.user.aadhaarHash }]
-        }));
-        parcels = parcels.concat(mockParcels);
-      }
-    } catch (e) {
-      console.error("Failed to fetch mock AI parcels:", e.message);
-    }
-
-    // Adapt legacy structure
+    // Adapt legacy structure: ensure owner field is present
     const adapted = parcels.map(p => {
       if (p.owners && p.owners.length > 0 && !p.owner) {
         p.owner = {
           name: p.owners[0].name,
           aadhaarHash: p.owners[0].aadhaarHash,
         };
+      }
+      // For initialOwners (from scan), also map to owners array if missing
+      if (p.initialOwners && p.initialOwners.length > 0 && (!p.owners || p.owners.length === 0)) {
+        p.owners = p.initialOwners;
+        p.owner = { name: p.initialOwners[0].name, aadhaarHash: p.initialOwners[0].aadhaarHash };
       }
       return p;
     });
@@ -95,6 +82,7 @@ router.get('/my-parcels', authenticate, requireRole(ROLES.CITIZEN), async (req, 
     res.status(500).json({ error: 'FABRIC_ERROR', message: e.message });
   }
 });
+
 
 // GET /api/dlpi/pending-review — officer review queue
 router.get(
