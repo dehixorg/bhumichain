@@ -136,11 +136,59 @@ router.get(
   },
 );
 
+// POST /api/dlpi/from-scan — Internal endpoint for RecordScan AI service.
+// Accepts either a valid officer JWT or the shared SERVICE_SECRET header.
+// This avoids requiring the RecordScan Python service to hold a user JWT.
+router.post(
+  '/from-scan',
+  (req, res, next) => {
+    const secret = process.env.SERVICE_SECRET || 'bhumichain-internal-service-secret';
+    const providedSecret = req.headers['x-service-secret'];
+    if (providedSecret && providedSecret === secret) {
+      // Internal service call — bypass JWT auth, inject a synthetic patwari identity
+      req.user = { role: 'patwari', name: 'RecordScan-Service', aadhaarHash: 'sha256:' + '0'.repeat(64) };
+      return next();
+    }
+    // Otherwise fall through to normal JWT auth
+    authenticate(req, res, () => {
+      requireRole(
+        ROLES.PATWARI, ROLES.CITIZEN,
+        ROLES.CIRCLE_INSPECTOR, ROLES.TEHSILDAR, ROLES.COLLECTOR, ROLES.SUPER_ADMIN
+      )(req, res, next);
+    });
+  },
+  body('dlpiId').matches(/^DLPI-([A-Z]{2}-[A-Z]{3}-[A-Z0-9]+|\d+)$/),
+  validate,
+  async (req, res) => {
+    try {
+      const payload = req.body;
+      // If owner hash is the zero placeholder, swap in Priya Kumar for demo
+      if (
+        process.env.AADHAAR_MOCK === 'true' &&
+        payload.initialOwners && payload.initialOwners.length > 0 &&
+        (!payload.initialOwners[0].aadhaarHash ||
+          payload.initialOwners[0].aadhaarHash === 'sha256:' + '0'.repeat(64))
+      ) {
+        payload.initialOwners[0].name = 'Priya Kumar';
+        payload.initialOwners[0].aadhaarHash = 'sha256:ea4b4befa7b81d22612b818df40a69ed179458423773a63aee7848177c0ecb72';
+      }
+      const result = await submit('dlpi', 'CreateDLPI', [JSON.stringify(payload)]);
+      res.status(201).json(result || { success: true });
+    } catch (e) {
+      console.error('[from-scan]', e);
+      res.status(500).json({ error: 'FABRIC_ERROR', message: e.message });
+    }
+  },
+);
+
 // POST /api/dlpi — Create a new DLPI record (e.g. from RecordScan Patwari)
 router.post(
   '/',
   authenticate,
-  requireRole(ROLES.PATWARI, ROLES.CIRCLE_INSPECTOR, ROLES.TEHSILDAR, ROLES.COLLECTOR, ROLES.SUPER_ADMIN),
+  requireRole(
+    ROLES.PATWARI, ROLES.CITIZEN,
+    ROLES.CIRCLE_INSPECTOR, ROLES.TEHSILDAR, ROLES.COLLECTOR, ROLES.SUPER_ADMIN
+  ),
   body('dlpiId').matches(/^DLPI-([A-Z]{2}-[A-Z]{3}-[A-Z0-9]+|\d+)$/),
   validate,
   async (req, res) => {

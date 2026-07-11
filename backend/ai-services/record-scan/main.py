@@ -397,25 +397,62 @@ def demo_image_list():
 # ─── Helpers ─────────────────────────────────────────────────────────────────
 
 async def _post_to_gateway(payload: dict, token: str):
-    if not token:
-        raise Exception("Missing authentication token. Please log in.")
+    """
+    POST the DLPI payload to the API Gateway.
+    Tries the internal /from-scan endpoint first (no user JWT needed),
+    then falls back to the standard /api/dlpi endpoint with the user's token.
+    """
+    service_secret = os.getenv("SERVICE_SECRET", "bhumichain-internal-service-secret")
+
     async with httpx.AsyncClient() as client:
-        resp = await client.post(
+        # ── 1. Try the internal /from-scan route (service-secret auth) ──────────
+        try:
+            resp = await client.post(
+                f"{API_GATEWAY}/api/dlpi/from-scan",
+                json=payload,
+                headers={
+                    "Content-Type": "application/json",
+                    "X-Service-Secret": service_secret,
+                },
+                timeout=15,
+            )
+            if resp.is_success:
+                print(f"[RecordScan] ✅ DLPI created via /from-scan (service auth)")
+                return resp.json()
+            else:
+                try:
+                    err_body = resp.json()
+                    err_detail = err_body.get("message") or err_body.get("detail") or err_body.get("error") or resp.text
+                except Exception:
+                    err_detail = resp.text
+                print(f"[RecordScan] /from-scan failed {resp.status_code}: {err_detail}")
+        except Exception as e:
+            print(f"[RecordScan] /from-scan connection error: {e}")
+
+        # ── 2. Fallback: original /api/dlpi endpoint with user token ────────────
+        if not token:
+            raise Exception("Missing authentication token. Please log in as a Patwari officer.")
+
+        resp2 = await client.post(
             f"{API_GATEWAY}/api/dlpi",
             json=payload,
-            headers={"Authorization": f"Bearer {token}"},
+            headers={
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {token}",
+            },
             timeout=15,
         )
-        if not resp.is_success:
-            # Try to parse a structured error from the gateway
+        if not resp2.is_success:
             try:
-                err_body = resp.json()
-                err_msg = err_body.get("message") or err_body.get("detail") or err_body.get("error") or resp.text
+                err_body = resp2.json()
+                err_msg = err_body.get("message") or err_body.get("detail") or err_body.get("error") or resp2.text
             except Exception:
-                err_msg = resp.text
-            print(f"[RecordScan] Gateway post failed with {resp.status_code}: {err_msg}")
-            raise Exception(f"Gateway returned {resp.status_code}: {err_msg}")
-        return resp.json()
+                err_msg = resp2.text
+            print(f"[RecordScan] Gateway /api/dlpi also failed {resp2.status_code}: {err_msg}")
+            raise Exception(f"Gateway returned {resp2.status_code}: {err_msg}")
+
+        print(f"[RecordScan] ✅ DLPI created via /api/dlpi (user token fallback)")
+        return resp2.json()
 
 
 if __name__ == "__main__":
