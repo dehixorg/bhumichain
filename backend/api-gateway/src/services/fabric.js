@@ -7,7 +7,39 @@ const path = require('path');
 const { createPrivateKey } = require('crypto');
 const { getMockResponse } = require('../mock/responses');
 
-const isMock = () => process.env.FABRIC_MODE === 'mock';
+// ─── Fabric Mode Detection ─────────────────────────────────────────────────────
+// Automatically fall back to mock if Fabric env vars are missing or still have
+// their placeholder values (e.g. FABRIC_PEER_ENDPOINT=<azure-vm-ip>:7051).
+// This prevents ERR_INVALID_ARG_TYPE crashes when running without a live Fabric network.
+
+function _isFabricConfigured() {
+  const endpoint = process.env.FABRIC_PEER_ENDPOINT || '';
+  const certPath  = process.env.FABRIC_CERT_PATH    || '';
+  const keyPath   = process.env.FABRIC_KEY_PATH      || '';
+  const tlsCert   = process.env.FABRIC_PEER_TLS_ROOT_CERT || '';
+
+  const missingOrPlaceholder = (v) =>
+    !v || v.startsWith('<') || v === 'undefined' || v === '';
+
+  return (
+    !missingOrPlaceholder(endpoint) &&
+    !missingOrPlaceholder(certPath) &&
+    !missingOrPlaceholder(keyPath) &&
+    !missingOrPlaceholder(tlsCert)
+  );
+}
+
+const _fabricConfigured = _isFabricConfigured();
+
+if (process.env.FABRIC_MODE === 'real' && !_fabricConfigured) {
+  console.warn(
+    '[fabric.js] ⚠️  FABRIC_MODE=real but Fabric connection env vars are missing or placeholders.' +
+    ' Falling back to MOCK mode automatically. Set FABRIC_CERT_PATH, FABRIC_KEY_PATH,' +
+    ' FABRIC_PEER_TLS_ROOT_CERT and FABRIC_PEER_ENDPOINT to use a real network.'
+  );
+}
+
+const isMock = () => process.env.FABRIC_MODE === 'mock' || !_fabricConfigured;
 
 // ─── Real Fabric Connection ───────────────────────────────────────────────────
 

@@ -407,8 +407,14 @@ async def _post_to_gateway(payload: dict, token: str):
             timeout=15,
         )
         if not resp.is_success:
-            print(f"[RecordScan] Gateway post failed with {resp.status_code}: {resp.text}")
-            raise Exception(f"{resp.status_code} Bad Request: {resp.text}")
+            # Try to parse a structured error from the gateway
+            try:
+                err_body = resp.json()
+                err_msg = err_body.get("message") or err_body.get("detail") or err_body.get("error") or resp.text
+            except Exception:
+                err_msg = resp.text
+            print(f"[RecordScan] Gateway post failed with {resp.status_code}: {err_msg}")
+            raise Exception(f"Gateway returned {resp.status_code}: {err_msg}")
         return resp.json()
 
 
