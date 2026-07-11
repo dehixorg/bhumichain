@@ -209,7 +209,7 @@ export default function CitizenDashboard() {
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-3 gap-4 mb-5 p-3 bg-gray-50 rounded-xl border border-gray-100">
+                        <div className="grid grid-cols-4 gap-4 mb-5 p-3 bg-gray-50 rounded-xl border border-gray-100">
                           <div>
                             <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Khasra No.</div>
                             <div className="text-sm font-bold text-gray-900">{p.khasraNo}</div>
@@ -217,6 +217,15 @@ export default function CitizenDashboard() {
                           <div>
                             <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Area</div>
                             <div className="text-sm font-bold text-gray-900">{p.areaHectares.toFixed(4)} Ha</div>
+                          </div>
+                          <div>
+                            <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Ownership</div>
+                            <div className="text-sm font-bold text-[#0F4C81]">
+                              {p.ownershipType === 'JOINT' || (p.owners && p.owners.length > 1) ? 'Joint' : 'Sole'}
+                              {p.owners && p.owners.length > 0 && p.owners[0].share && (
+                                <span className="text-xs text-gray-500 ml-1 font-medium">({p.owners[0].share} Share)</span>
+                              )}
+                            </div>
                           </div>
                           <div>
                             <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Status</div>
