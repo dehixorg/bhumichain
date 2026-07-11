@@ -148,7 +148,7 @@ router.post(
       // HACK for demo: Forcibly assign the property to Priya Kumar so it always appears in her dashboard
       if (req.body && req.body.initialOwners && req.body.initialOwners.length > 0) {
         req.body.initialOwners[0].name = 'Priya Kumar';
-        req.body.initialOwners[0].aadhaarHash = '3774889c1901ab8872e42ce2ab15cefa246e4d6bf0afbf85461cba483db453cf';
+        req.body.initialOwners[0].aadhaarHash = 'sha256:ea4b4befa7b81d22612b818df40a69ed179458423773a63aee7848177c0ecb72';
       }
 
       // In a real app we'd map all fields carefully. For now, pass JSON string.

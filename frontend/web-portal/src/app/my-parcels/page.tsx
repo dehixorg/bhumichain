@@ -189,7 +189,7 @@ export default function CitizenDashboard() {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {parcels.slice(0, 3).map(p => {
+                  {parcels.map(p => {
                     const status = STATUS_CONFIG[p.claimStatus] ?? STATUS_CONFIG['SEEDED_UNVERIFIED'];
                     const StatusIcon = status.icon;
                     return (
