@@ -233,7 +233,8 @@ def query_scans_by_status(status: str) -> list[ScanResult]:
     return results
 
 
-def save_patwari_approval(scan_id: str, dlpi_id: str, owner_hash: str, officer_name: str, officer_hash: str):
+def save_patwari_approval(scan_id: str, dlpi_id: str, owners: list, officer_name: str, officer_hash: str):
+    first_owner_hash = owners[0].get('aadhaarHash', 'sha256:' + '0'*64) if owners else 'sha256:' + '0'*64
     table = _get_dynamo_table()
     if table:
         try:
@@ -243,14 +244,16 @@ def save_patwari_approval(scan_id: str, dlpi_id: str, owner_hash: str, officer_n
                 data = json.loads(item['resultJson'])
                 data['status'] = 'SCAN_PENDING_SRO'
                 data['suggestedDlpiId'] = dlpi_id
-                data['ownerAadhaarHash'] = owner_hash
+                data['owners'] = owners
+                data['ownerAadhaarHash'] = first_owner_hash
                 data['patwariName'] = officer_name
                 data['patwariHash'] = officer_hash
                 table.put_item(Item={
                     **item,
                     'status': 'SCAN_PENDING_SRO',
                     'suggestedDlpiId': dlpi_id,
-                    'ownerAadhaarHash': owner_hash,
+                    'owners': owners,
+                    'ownerAadhaarHash': first_owner_hash,
                     'patwariName': officer_name,
                     'patwariHash': officer_hash,
                     'resultJson': json.dumps(data, ensure_ascii=False)
@@ -266,12 +269,14 @@ def save_patwari_approval(scan_id: str, dlpi_id: str, owner_hash: str, officer_n
         data = json.loads(item['resultJson'])
         data['status'] = 'SCAN_PENDING_SRO'
         data['suggestedDlpiId'] = dlpi_id
-        data['ownerAadhaarHash'] = owner_hash
+        data['owners'] = owners
+        data['ownerAadhaarHash'] = first_owner_hash
         data['patwariName'] = officer_name
         data['patwariHash'] = officer_hash
         item['status'] = 'SCAN_PENDING_SRO'
         item['suggestedDlpiId'] = dlpi_id
-        item['ownerAadhaarHash'] = owner_hash
+        item['owners'] = owners
+        item['ownerAadhaarHash'] = first_owner_hash
         item['patwariName'] = officer_name
         item['patwariHash'] = officer_hash
         item['resultJson'] = json.dumps(data, ensure_ascii=False)
@@ -279,16 +284,19 @@ def save_patwari_approval(scan_id: str, dlpi_id: str, owner_hash: str, officer_n
     else:
         print(f"Scan {scan_id} not found in database. Creating a new entry for external scan.")
         item = {
-            'scanId': scan_id,
-            'status': 'SCAN_PENDING_SRO',
-            'suggestedDlpiId': dlpi_id,
-            'ownerAadhaarHash': owner_hash,
-            'patwariName': officer_name,
-            'patwariHash': officer_hash,
-            'resultJson': json.dumps({
+            "pk": f"SCAN#{scan_id}",
+            "scanId": scan_id,
+            "status": "SCAN_PENDING_SRO",
+            "suggestedDlpiId": dlpi_id,
+            "owners": owners,
+            "ownerAadhaarHash": first_owner_hash,
+            "patwariName": officer_name,
+            "patwariHash": officer_hash,
+            "resultJson": json.dumps({
                 'scanId': scan_id,
                 'status': 'SCAN_PENDING_SRO',
                 'suggestedDlpiId': dlpi_id,
+                'owners': owners,
                 'extraction': {}
             }, ensure_ascii=False)
         }

@@ -111,7 +111,7 @@ class ApproveRequest(BaseModel):
     scanId:             str
     dlpiId:             str
     officerAadhaarHash: str
-    ownerAadhaarHash:   str
+    owners:             list[dict]
     officerName:        str
     correctedFields:    Optional[dict] = None
     token:              str
@@ -167,6 +167,28 @@ async def approve_scan(req: ApproveRequest, background: BackgroundTasks):
     khatedars = _get(ext, 'khatedars', [])
     owner_name = _get(khatedars[0], 'name', 'Unknown') if khatedars else "Unknown"
 
+    # Calculate shares for multiple owners
+    num_owners = max(len(req.owners), 1)
+    share_str = f"1/{num_owners}"
+    share_dec = 1.0 / num_owners
+    
+    initial_owners = []
+    if req.owners:
+        for owner in req.owners:
+            initial_owners.append({
+                "name":         owner.get("name", "Unknown"),
+                "aadhaarHash":  owner.get("aadhaarHash", "sha256:" + "0" * 64),
+                "share":        share_str,
+                "shareDecimal": share_dec
+            })
+    else:
+        initial_owners.append({
+            "name":         owner_name,
+            "aadhaarHash":  "sha256:" + "0" * 64,
+            "share":        "1/1",
+            "shareDecimal": 1.0
+        })
+
     dlpi_payload = {
         "dlpiId":              req.dlpiId,
         "surveyNumber":        khasraNo,
@@ -180,15 +202,8 @@ async def approve_scan(req: ApproveRequest, background: BackgroundTasks):
         "areaHectares":        float(areaHectares),
         "isTribal":            False,
         "scheduleVArea":       False,
-        "initialOwners": [
-            {
-                "name":         owner_name,
-                "aadhaarHash":  req.ownerAadhaarHash or ("sha256:" + "0" * 64),
-                "share":        "1/1",
-                "shareDecimal": 1.0
-            }
-        ],
-        "ownershipType":       "SOLE",
+        "initialOwners":       initial_owners,
+        "ownershipType":       "JOINT" if num_owners > 1 else "SOLE",
         "latitude":            28.5355,
         "longitude":           77.3910,
         "boundaryPolygon":     None,
@@ -213,12 +228,12 @@ async def approve_scan(req: ApproveRequest, background: BackgroundTasks):
             s = _scan_cache[req.scanId]
             s.status = "SCAN_PENDING_SRO"
             s.suggestedDlpiId = req.dlpiId
-            s.ownerAadhaarHash = req.ownerAadhaarHash
+            s.owners = req.owners
             s.patwariName = req.officerName
             s.patwariHash = req.officerAadhaarHash
     else:
         try:
-            save_patwari_approval(req.scanId, req.dlpiId, req.ownerAadhaarHash, req.officerName, req.officerAadhaarHash)
+            save_patwari_approval(req.scanId, req.dlpiId, req.owners, req.officerName, req.officerAadhaarHash)
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Failed to save Patwari approval: {str(e)}")
 

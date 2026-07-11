@@ -188,19 +188,42 @@ export default function RecordScan({ onDlpiCreated, mode = 'genesis', onScanComp
       return;
     }
     
-    let finalOwnerHash = 'sha256:ea4b4befa6136e0d37e28328bd54425bf7e04cc996e387063cc17fc148bd94e1'; // Match Priya Kumar's computed hash
+    // Gather owners from parties
+    let finalOwners: { name: string; aadhaarHash: string }[] = [];
     try {
-      const inputEl = document.getElementById('ownerAadhaarInput') as HTMLInputElement;
-      if (inputEl && inputEl.value) {
-        const aadhaar = inputEl.value.trim();
-        const salt = 'bhumichain-aadhaar-salt-change-in-prod';
-        const msgBuffer = new TextEncoder().encode(aadhaar + salt);
-        const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-        const hashArray = Array.from(new Uint8Array(hashBuffer));
-        finalOwnerHash = 'sha256:' + hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+      const partiesList = ext?.parties || [];
+      for (let i = 0; i < partiesList.length; i++) {
+        const p = partiesList[i];
+        const namePath = `parties[${i}].name`;
+        const aadhaarPath = `parties[${i}].aadhaar`;
+        const pName = edited[namePath] !== undefined ? edited[namePath] : p.name;
+        let pAadhaar = edited[aadhaarPath] !== undefined ? edited[aadhaarPath] : p.aadhaar;
+        
+        if (pAadhaar && typeof pAadhaar === 'string') {
+          pAadhaar = pAadhaar.trim();
+          if (pAadhaar.length > 0) {
+            const salt = 'bhumichain-aadhaar-salt-change-in-prod';
+            const msgBuffer = new TextEncoder().encode(pAadhaar + salt);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+            finalOwners.push({
+              name: pName || 'Unknown',
+              aadhaarHash: 'sha256:' + hashHex
+            });
+          }
+        }
       }
     } catch (e) {
-      console.error('Failed to hash aadhaar', e);
+      console.error('Failed to hash aadhaars', e);
+    }
+
+    if (finalOwners.length === 0) {
+      // Fallback
+      finalOwners = [{
+        name: 'Unknown',
+        aadhaarHash: 'sha256:' + '0'.repeat(64)
+      }];
     }
 
     try {
@@ -211,7 +234,7 @@ export default function RecordScan({ onDlpiCreated, mode = 'genesis', onScanComp
           scanId:             result.scanId,
           dlpiId,
           officerAadhaarHash: 'sha256:' + '0'.repeat(64),
-          ownerAadhaarHash:   finalOwnerHash,
+          owners:             finalOwners,
           officerName:        'Vijay Singh (Patwari DAD-P1)',
           correctedFields:    Object.keys(edited).length ? edited : undefined,
           token,
@@ -403,8 +426,10 @@ export default function RecordScan({ onDlpiCreated, mode = 'genesis', onScanComp
                 {ext.parties.map((p: any, i: number) => {
                   const namePath = `parties[${i}].name`;
                   const rolePath = `parties[${i}].role`;
+                  const aadhaarPath = `parties[${i}].aadhaar`;
                   const nameVal = edited[namePath] !== undefined ? edited[namePath] : p.name;
                   const roleVal = edited[rolePath] !== undefined ? edited[rolePath] : p.role;
+                  const aadhaarVal = edited[aadhaarPath] !== undefined ? edited[aadhaarPath] : p.aadhaar;
 
                   return (
                     <div key={i} className="flex flex-col gap-2 py-3 border-b border-gray-200 last:border-0">
@@ -419,6 +444,12 @@ export default function RecordScan({ onDlpiCreated, mode = 'genesis', onScanComp
                         value={roleVal || ''} 
                         onChange={(v) => setEdited({ ...edited, [rolePath]: v })}
                         flagged={ext.extraction_meta?.low_confidence_fields?.includes(rolePath)}
+                      />
+                      <EditableField 
+                        label={`Party ${i + 1} Aadhaar Number (Optional)`} 
+                        value={aadhaarVal || ''} 
+                        onChange={(v) => setEdited({ ...edited, [aadhaarPath]: v })}
+                        flagged={ext.extraction_meta?.low_confidence_fields?.includes(aadhaarPath)}
                       />
                     </div>
                   );
@@ -449,20 +480,6 @@ export default function RecordScan({ onDlpiCreated, mode = 'genesis', onScanComp
               </p>
             </div>
             
-            <div>
-              <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
-                Owner Aadhaar Number
-              </label>
-              <input
-                id="ownerAadhaarInput"
-                defaultValue="999900010010"
-                placeholder="Enter 12-digit Aadhaar (e.g. 999900010010 for Priya Kumar)"
-                className="w-full bg-[#F8FAFC] border border-gray-200 rounded-lg px-3 py-2 text-gray-700 text-sm focus:outline-none focus:border-[#0F4C81]/60"
-              />
-              <p className="text-gray-600 text-xs mt-1">
-                Required to link this property to the citizen's Digilocker / My Parcels.
-              </p>
-            </div>
           </div>
 
           {/* Removed separate Officer review required block in favor of inline editing above */}
