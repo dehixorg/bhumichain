@@ -382,6 +382,8 @@ def demo_image_list():
 # ─── Helpers ─────────────────────────────────────────────────────────────────
 
 async def _post_to_gateway(payload: dict, token: str):
+    if not token:
+        raise Exception("Missing authentication token. Please log in.")
     async with httpx.AsyncClient() as client:
         resp = await client.post(
             f"{API_GATEWAY}/api/dlpi",

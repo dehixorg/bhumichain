@@ -181,7 +181,12 @@ export default function RecordScan({ onDlpiCreated, mode = 'genesis', onScanComp
     }
 
     // Genesis mode (default)
-    const token = getToken() || '';
+    const token = getToken();
+    if (!token) {
+      toast.error('Session expired or not logged in. Please log in to approve scans.');
+      setStage('review');
+      return;
+    }
     
     let finalOwnerHash = 'sha256:ea4b4befa6136e0d37e28328bd54425bf7e04cc996e387063cc17fc148bd94e1'; // Match Priya Kumar's computed hash
     try {
