@@ -328,38 +328,50 @@ export default function RecordScan({ onDlpiCreated, mode = 'genesis', onScanComp
                 />
               )}
               
-              {ext.registration_info && Object.entries(ext.registration_info).map(([k, v]) => (
-                <EditableField 
-                  key={k} 
-                  label={k.replace(/_/g, ' ')} 
-                  value={v === null || v === undefined ? '' : String(v)} 
-                  onChange={(val) => setEdited({ ...edited, [`registration_info.${k}`]: val })}
-                  flagged={ext.extraction_meta?.low_confidence_fields?.includes(`registration_info.${k}`)}
-                />
-              ))}
+              {ext.registration_info && Object.entries(ext.registration_info).map(([k, v]) => {
+                const path = `registration_info.${k}`;
+                const val = edited[path] !== undefined ? edited[path] : v;
+                return (
+                  <EditableField 
+                    key={k} 
+                    label={k.replace(/_/g, ' ')} 
+                    value={val === null || val === undefined ? '' : String(val)} 
+                    onChange={(newVal) => setEdited({ ...edited, [path]: newVal })}
+                    flagged={ext.extraction_meta?.low_confidence_fields?.includes(path)}
+                  />
+                );
+              })}
               
               {ext.property && Object.entries(ext.property).map(([k, v]) => {
                 if (typeof v === 'object' && v !== null) return null;
                 if (k.startsWith('_')) return null;
-                return <EditableField 
-                  key={k} 
-                  label={k.replace(/_/g, ' ')} 
-                  value={v === null || v === undefined ? '' : String(v)} 
-                  onChange={(val) => setEdited({ ...edited, [`property.${k}`]: val })}
-                  flagged={ext.extraction_meta?.low_confidence_fields?.includes(`property.${k}`)}
-                />;
+                const path = `property.${k}`;
+                const val = edited[path] !== undefined ? edited[path] : v;
+                return (
+                  <EditableField 
+                    key={k} 
+                    label={k.replace(/_/g, ' ')} 
+                    value={val === null || val === undefined ? '' : String(val)} 
+                    onChange={(newVal) => setEdited({ ...edited, [path]: newVal })}
+                    flagged={ext.extraction_meta?.low_confidence_fields?.includes(path)}
+                  />
+                );
               })}
               
               {ext.financial && Object.entries(ext.financial).map(([k, v]) => {
                 if (typeof v === 'object' && v !== null) return null;
                 if (k.startsWith('_')) return null;
-                return <EditableField 
-                  key={`fin_${k}`} 
-                  label={k.replace(/_/g, ' ')} 
-                  value={v === null || v === undefined ? '' : String(v)} 
-                  onChange={(val) => setEdited({ ...edited, [`financial.${k}`]: val })}
-                  flagged={ext.extraction_meta?.low_confidence_fields?.includes(`financial.${k}`)}
-                />;
+                const path = `financial.${k}`;
+                const val = edited[path] !== undefined ? edited[path] : v;
+                return (
+                  <EditableField 
+                    key={`fin_${k}`} 
+                    label={k.replace(/_/g, ' ')} 
+                    value={val === null || val === undefined ? '' : String(val)} 
+                    onChange={(newVal) => setEdited({ ...edited, [path]: newVal })}
+                    flagged={ext.extraction_meta?.low_confidence_fields?.includes(path)}
+                  />
+                );
               })}
               
               {ext.type_specific && Object.entries(ext.type_specific).map(([k, v]) => {
@@ -368,13 +380,16 @@ export default function RecordScan({ onDlpiCreated, mode = 'genesis', onScanComp
                 return Object.entries(v as object).map(([subK, subV]) => {
                   if (typeof subV === 'object' && subV !== null) return null;
                   const path = `type_specific.${k}.${subK}`;
-                  return <EditableField 
-                    key={path} 
-                    label={`${k.replace(/_/g, ' ')}: ${subK.replace(/_/g, ' ')}`} 
-                    value={subV === null || subV === undefined ? '' : String(subV)} 
-                    onChange={(val) => setEdited({ ...edited, [path]: val })}
-                    flagged={ext.extraction_meta?.low_confidence_fields?.includes(path)}
-                  />;
+                  const val = edited[path] !== undefined ? edited[path] : subV;
+                  return (
+                    <EditableField 
+                      key={path} 
+                      label={`${k.replace(/_/g, ' ')}: ${subK.replace(/_/g, ' ')}`} 
+                      value={val === null || val === undefined ? '' : String(val)} 
+                      onChange={(newVal) => setEdited({ ...edited, [path]: newVal })}
+                      flagged={ext.extraction_meta?.low_confidence_fields?.includes(path)}
+                    />
+                  );
                 });
               })}
             </div>
@@ -385,22 +400,29 @@ export default function RecordScan({ onDlpiCreated, mode = 'genesis', onScanComp
                 <div className="text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wider">
                   Parties involved
                 </div>
-                {ext.parties.map((p: any, i: number) => (
-                  <div key={i} className="flex flex-col gap-2 py-3 border-b border-gray-200 last:border-0">
-                    <EditableField 
-                      label={`Party ${i + 1} Name`} 
-                      value={p.name || ''} 
-                      onChange={(v) => setEdited({ ...edited, [`parties[${i}].name`]: v })}
-                      flagged={ext.extraction_meta?.low_confidence_fields?.includes(`parties[${i}].name`)}
-                    />
-                    <EditableField 
-                      label={`Party ${i + 1} Role`} 
-                      value={p.role || ''} 
-                      onChange={(v) => setEdited({ ...edited, [`parties[${i}].role`]: v })}
-                      flagged={ext.extraction_meta?.low_confidence_fields?.includes(`parties[${i}].role`)}
-                    />
-                  </div>
-                ))}
+                {ext.parties.map((p: any, i: number) => {
+                  const namePath = `parties[${i}].name`;
+                  const rolePath = `parties[${i}].role`;
+                  const nameVal = edited[namePath] !== undefined ? edited[namePath] : p.name;
+                  const roleVal = edited[rolePath] !== undefined ? edited[rolePath] : p.role;
+
+                  return (
+                    <div key={i} className="flex flex-col gap-2 py-3 border-b border-gray-200 last:border-0">
+                      <EditableField 
+                        label={`Party ${i + 1} Name`} 
+                        value={nameVal || ''} 
+                        onChange={(v) => setEdited({ ...edited, [namePath]: v })}
+                        flagged={ext.extraction_meta?.low_confidence_fields?.includes(namePath)}
+                      />
+                      <EditableField 
+                        label={`Party ${i + 1} Role`} 
+                        value={roleVal || ''} 
+                        onChange={(v) => setEdited({ ...edited, [rolePath]: v })}
+                        flagged={ext.extraction_meta?.low_confidence_fields?.includes(rolePath)}
+                      />
+                    </div>
+                  );
+                })}
               </div>
             )}
 
@@ -560,23 +582,23 @@ function ConfidenceBanner({ extraction, storedInDynamo }: { extraction: Extracti
       'bg-amber-950 border border-amber-700': !high,
     })}>
       <div className="text-center">
-        <div className={clsx('text-2xl font-bold', high ? 'text-[#0F4C81]' : 'text-amber-300')}>
+        <div className={clsx('text-2xl font-bold', high ? 'text-[#0F4C81]' : 'text-amber-400')}>
           {high ? '99%' : '75%'}
         </div>
-        <div className="text-xs text-gray-500">Confidence</div>
+        <div className={clsx('text-xs', high ? 'text-gray-500' : 'text-amber-200/70')}>Confidence</div>
       </div>
       <div className="flex-1">
-        <div className="text-sm font-semibold text-gray-700 mb-0.5">
+        <div className={clsx('text-sm font-semibold mb-0.5', high ? 'text-gray-700' : 'text-amber-50')}>
           {high ? 'High confidence — ready for patwari approval'
            : 'Low confidence — manual verification required'}
         </div>
-        <div className="flex items-center gap-4 text-xs text-gray-500">
+        <div className={clsx('flex items-center gap-4 text-xs', high ? 'text-gray-500' : 'text-amber-200/70')}>
           <span>Azure AI Vision Extractor</span>
           {!high && (
             <span className="text-amber-400">{meta.low_confidence_fields?.length || 0} field(s) flagged</span>
           )}
           {storedInDynamo && (
-            <span className="text-[#0F4C81] flex items-center gap-1">
+            <span className={clsx('flex items-center gap-1', high ? 'text-[#0F4C81]' : 'text-amber-200/90')}>
               <Database className="w-3 h-3" />DynamoDB
             </span>
           )}
