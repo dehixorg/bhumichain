@@ -314,20 +314,63 @@ export default function RecordScan({ onDlpiCreated, mode = 'genesis', onScanComp
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              {ext.document_type && <Field label="Document Type" value={ext.document_type} />}
+              {ext.document_type && (
+                <EditableField 
+                  label="Document Type" 
+                  value={ext.document_type} 
+                  onChange={(v) => setEdited({ ...edited, 'document_type': v })}
+                  flagged={ext.extraction_meta?.low_confidence_fields?.includes('document_type')}
+                />
+              )}
               
               {ext.registration_info && Object.entries(ext.registration_info).map(([k, v]) => (
-                v && <Field key={k} label={k.replace(/_/g, ' ')} value={String(v)} />
+                <EditableField 
+                  key={k} 
+                  label={k.replace(/_/g, ' ')} 
+                  value={v === null || v === undefined ? '' : String(v)} 
+                  onChange={(val) => setEdited({ ...edited, [`registration_info.${k}`]: val })}
+                  flagged={ext.extraction_meta?.low_confidence_fields?.includes(`registration_info.${k}`)}
+                />
               ))}
               
               {ext.property && Object.entries(ext.property).map(([k, v]) => {
-                if (!v || typeof v === 'object' || k.startsWith('_')) return null;
-                return <Field key={k} label={k.replace(/_/g, ' ')} value={String(v)} />;
+                if (typeof v === 'object' && v !== null) return null;
+                if (k.startsWith('_')) return null;
+                return <EditableField 
+                  key={k} 
+                  label={k.replace(/_/g, ' ')} 
+                  value={v === null || v === undefined ? '' : String(v)} 
+                  onChange={(val) => setEdited({ ...edited, [`property.${k}`]: val })}
+                  flagged={ext.extraction_meta?.low_confidence_fields?.includes(`property.${k}`)}
+                />;
               })}
               
               {ext.financial && Object.entries(ext.financial).map(([k, v]) => {
-                if (!v || typeof v === 'object' || k.startsWith('_')) return null;
-                return <Field key={`fin_${k}`} label={k.replace(/_/g, ' ')} value={String(v)} />;
+                if (typeof v === 'object' && v !== null) return null;
+                if (k.startsWith('_')) return null;
+                return <EditableField 
+                  key={`fin_${k}`} 
+                  label={k.replace(/_/g, ' ')} 
+                  value={v === null || v === undefined ? '' : String(v)} 
+                  onChange={(val) => setEdited({ ...edited, [`financial.${k}`]: val })}
+                  flagged={ext.extraction_meta?.low_confidence_fields?.includes(`financial.${k}`)}
+                />;
+              })}
+              
+              {ext.type_specific && Object.entries(ext.type_specific).map(([k, v]) => {
+                if (typeof v !== 'object' || v === null) return null;
+                // If it's a nested object like mutation_extract
+                return Object.entries(v as object).map(([subK, subV]) => {
+                  if (typeof subV === 'object' && subV !== null) return null;
+                  const path = `type_specific.${k}.${subK}`;
+                  return <EditableField 
+                    key={path} 
+                    label={`${k.replace(/_/g, ' ')}: ${subK.replace(/_/g, ' ')}`} 
+                    value={subV === null || subV === undefined ? '' : String(subV)} 
+                    onChange={(val) => setEdited({ ...edited, [path]: val })}
+                    flagged={ext.extraction_meta?.low_confidence_fields?.includes(path)}
+                  />;
+                });
               })}
             </div>
 
@@ -338,14 +381,19 @@ export default function RecordScan({ onDlpiCreated, mode = 'genesis', onScanComp
                   Parties involved
                 </div>
                 {ext.parties.map((p: any, i: number) => (
-                  <div key={i} className="flex items-center justify-between py-1.5 border-b border-gray-200 last:border-0">
-                    <div>
-                      <span className="text-sm text-gray-700 font-medium">{p.name || 'Unknown'}</span>
-                      {p.parentage && <span className="text-gray-500 text-xs ml-2">({p.parentage})</span>}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono text-[#0F4C81] text-xs px-2 py-0.5 bg-blue-50 rounded">{p.role}</span>
-                    </div>
+                  <div key={i} className="flex flex-col gap-2 py-3 border-b border-gray-200 last:border-0">
+                    <EditableField 
+                      label={`Party ${i + 1} Name`} 
+                      value={p.name || ''} 
+                      onChange={(v) => setEdited({ ...edited, [`parties[${i}].name`]: v })}
+                      flagged={ext.extraction_meta?.low_confidence_fields?.includes(`parties[${i}].name`)}
+                    />
+                    <EditableField 
+                      label={`Party ${i + 1} Role`} 
+                      value={p.role || ''} 
+                      onChange={(v) => setEdited({ ...edited, [`parties[${i}].role`]: v })}
+                      flagged={ext.extraction_meta?.low_confidence_fields?.includes(`parties[${i}].role`)}
+                    />
                   </div>
                 ))}
               </div>
@@ -390,27 +438,7 @@ export default function RecordScan({ onDlpiCreated, mode = 'genesis', onScanComp
             </div>
           </div>
 
-          {ext.extraction_meta?.low_confidence_fields && ext.extraction_meta.low_confidence_fields.length > 0 && (
-            <div className="flex flex-col bg-white border border-red-200 rounded-xl p-5 shadow-sm">
-              <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-100">
-                <AlertTriangle className="w-5 h-5 text-red-500 shrink-0" />
-                <div className="text-gray-900 font-bold text-sm">Officer review required (समीक्षा आवश्यक)</div>
-              </div>
-              <div className="space-y-4">
-                {ext.extraction_meta.low_confidence_fields.map((f: string, i: number) => (
-                  <div key={i} className="flex flex-col gap-1.5">
-                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{f.replace(/_/g, ' ')}</label>
-                    <input
-                      className="w-full bg-[#F8FAFC] border border-gray-200 rounded-lg px-3 py-2 text-gray-800 text-sm focus:outline-none focus:border-[#0F4C81]/60 focus:bg-white transition-colors"
-                      placeholder={`Enter ${f.split('.').pop()}`}
-                      value={edited[f] || ''}
-                      onChange={(e) => setEdited({ ...edited, [f]: e.target.value })}
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+          {/* Removed separate Officer review required block in favor of inline editing above */}
 
           <div className="flex items-center gap-3">
             <button onClick={() => setStage('idle')} className="btn-ghost flex items-center gap-2">
