@@ -3,6 +3,7 @@
 const { Router }                 = require('express');
 const { body, param, validationResult } = require('express-validator');
 const axios                      = require('axios');
+const crypto                     = require('crypto');
 const RECORD_SCAN_URL            = process.env.RECORD_SCAN_URL || 'http://localhost:8010';
 const { submit, evaluate }       = require('../services/fabric');
 const {
@@ -15,6 +16,29 @@ const {
 const { checkJurisdiction }      = require('../middleware/jurisdiction');
 
 const router = Router();
+
+// Compute Aadhaar hash the same way auth.js does during login,
+// so citizen portal queries match what's stored in the DLPI.
+function computeAadhaarHash(digits) {
+  const salt = process.env.AADHAAR_SALT || 'bhumichain-aadhaar-salt-change-in-prod';
+  return 'sha256:' + crypto.createHash('sha256').update(digits + salt).digest('hex');
+}
+
+// Resolve initialOwners: if any owner has aadhaarRaw, hash it server-side.
+function resolveOwnerHashes(initialOwners) {
+  if (!Array.isArray(initialOwners)) return initialOwners;
+  return initialOwners.map(owner => {
+    if (owner.aadhaarRaw && owner.aadhaarRaw.length >= 12) {
+      const digits = owner.aadhaarRaw.replace(/\D/g, '');
+      const hash = computeAadhaarHash(digits);
+      console.log(`[dlpi] Hashing aadhaarRaw for '${owner.name}': ...${digits.slice(-4)} → ${hash.slice(0,20)}...`);
+      const { aadhaarRaw, ...rest } = owner;  // strip aadhaarRaw from payload
+      return { ...rest, aadhaarHash: hash };
+    }
+    return owner;
+  });
+}
+
 
 const validate = (req, res, next) => {
   const errs = validationResult(req);
@@ -138,18 +162,16 @@ router.get(
 
 // POST /api/dlpi/from-scan — Internal endpoint for RecordScan AI service.
 // Accepts either a valid officer JWT or the shared SERVICE_SECRET header.
-// This avoids requiring the RecordScan Python service to hold a user JWT.
+// Owners with aadhaarRaw are hashed server-side to match citizen login hashes.
 router.post(
   '/from-scan',
   (req, res, next) => {
     const secret = process.env.SERVICE_SECRET || 'bhumichain-internal-service-secret';
     const providedSecret = req.headers['x-service-secret'];
     if (providedSecret && providedSecret === secret) {
-      // Internal service call — bypass JWT auth, inject a synthetic patwari identity
       req.user = { role: 'patwari', name: 'RecordScan-Service', aadhaarHash: 'sha256:' + '0'.repeat(64) };
       return next();
     }
-    // Otherwise fall through to normal JWT auth
     authenticate(req, res, () => {
       requireRole(
         ROLES.PATWARI, ROLES.CITIZEN,
@@ -162,15 +184,9 @@ router.post(
   async (req, res) => {
     try {
       const payload = req.body;
-      // If owner hash is the zero placeholder, swap in Priya Kumar for demo
-      if (
-        process.env.AADHAAR_MOCK === 'true' &&
-        payload.initialOwners && payload.initialOwners.length > 0 &&
-        (!payload.initialOwners[0].aadhaarHash ||
-          payload.initialOwners[0].aadhaarHash === 'sha256:' + '0'.repeat(64))
-      ) {
-        payload.initialOwners[0].name = 'Priya Kumar';
-        payload.initialOwners[0].aadhaarHash = 'sha256:ea4b4befa7b81d22612b818df40a69ed179458423773a63aee7848177c0ecb72';
+      // Hash any raw Aadhaar numbers server-side (removes aadhaarRaw, adds aadhaarHash)
+      if (payload.initialOwners) {
+        payload.initialOwners = resolveOwnerHashes(payload.initialOwners);
       }
       const result = await submit('dlpi', 'CreateDLPI', [JSON.stringify(payload)]);
       res.status(201).json(result || { success: true });
@@ -181,7 +197,7 @@ router.post(
   },
 );
 
-// POST /api/dlpi — Create a new DLPI record (e.g. from RecordScan Patwari)
+// POST /api/dlpi — Create a new DLPI record
 router.post(
   '/',
   authenticate,
@@ -193,15 +209,9 @@ router.post(
   validate,
   async (req, res) => {
     try {
-      // If no owner was provided, fallback to Priya Kumar (for automated testing)
-      if (process.env.AADHAAR_MOCK === 'true' && req.body && req.body.initialOwners && req.body.initialOwners.length > 0) {
-        if (!req.body.initialOwners[0].aadhaarHash || req.body.initialOwners[0].aadhaarHash === 'sha256:' + '0'.repeat(64)) {
-          req.body.initialOwners[0].name = 'Priya Kumar';
-          req.body.initialOwners[0].aadhaarHash = 'sha256:ea4b4befa7b81d22612b818df40a69ed179458423773a63aee7848177c0ecb72';
-        }
+      if (req.body && req.body.initialOwners) {
+        req.body.initialOwners = resolveOwnerHashes(req.body.initialOwners);
       }
-
-      // In a real app we'd map all fields carefully. For now, pass JSON string.
       const result = await submit('dlpi', 'CreateDLPI', [JSON.stringify(req.body)]);
       res.status(201).json(result || { success: true });
     } catch (e) {
@@ -210,6 +220,7 @@ router.post(
     }
   },
 );
+
 
 // POST /api/dlpi/bulk-seed — tehsildar seeds district records from DILRMP migration
 router.post(

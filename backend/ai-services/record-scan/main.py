@@ -108,13 +108,14 @@ async def upload_scan(
 # ─── POST /scan/approve ───────────────────────────────────────────────────────
 
 class ApproveRequest(BaseModel):
-    scanId:             str
-    dlpiId:             str
-    officerAadhaarHash: str
-    owners:             list[dict]
-    officerName:        str
-    correctedFields:    Optional[dict] = None
-    token:              str
+    scanId:              str
+    dlpiId:              str
+    officerAadhaarHash:  str
+    owners:              list[dict] = []       # Legacy: pre-hashed owners (may mismatch server hash)
+    ownerAadhaarNumbers: Optional[list[dict]] = None  # Preferred: raw digits for server-side hashing
+    officerName:         str
+    correctedFields:     Optional[dict] = None
+    token:               str
 
 
 @app.post("/scan/approve")
@@ -167,13 +168,24 @@ async def approve_scan(req: ApproveRequest, background: BackgroundTasks):
     khatedars = _get(ext, 'khatedars', [])
     owner_name = _get(khatedars[0], 'name', 'Unknown') if khatedars else "Unknown"
 
-    # Calculate shares for multiple owners
-    num_owners = max(len(req.owners), 1)
+    # Build owners list — prefer raw Aadhaar numbers (hashed server-side) over pre-hashed values
+    num_owners = max(len(req.ownerAadhaarNumbers or req.owners or []), 1)
     share_str = f"1/{num_owners}"
     share_dec = 1.0 / num_owners
     
     initial_owners = []
-    if req.owners:
+    if req.ownerAadhaarNumbers and len(req.ownerAadhaarNumbers) > 0:
+        # Preferred path: pass raw Aadhaar digits to gateway for proper server-side hashing
+        for o in req.ownerAadhaarNumbers:
+            initial_owners.append({
+                "name":         o.get("name", "Unknown"),
+                "aadhaarRaw":   o.get("aadhaar", ""),  # Gateway will HMAC-hash this
+                "aadhaarHash":  "sha256:" + "0" * 64,  # Placeholder; gateway overwrites
+                "share":        share_str,
+                "shareDecimal": share_dec
+            })
+    elif req.owners and len(req.owners) > 0:
+        # Legacy fallback: use pre-hashed values (may not match server's hash)
         for owner in req.owners:
             initial_owners.append({
                 "name":         owner.get("name", "Unknown"),
@@ -184,6 +196,7 @@ async def approve_scan(req: ApproveRequest, background: BackgroundTasks):
     else:
         initial_owners.append({
             "name":         owner_name,
+            "aadhaarRaw":   "",
             "aadhaarHash":  "sha256:" + "0" * 64,
             "share":        "1/1",
             "shareDecimal": 1.0

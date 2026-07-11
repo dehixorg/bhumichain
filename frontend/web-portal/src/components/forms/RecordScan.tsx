@@ -171,7 +171,6 @@ export default function RecordScan({ onDlpiCreated, mode = 'genesis', onScanComp
     setStage('approving');
 
     if (mode === 'transfer') {
-      // In transfer mode, we just pass back the scanned document CID
       setTimeout(() => {
         setStage('done');
         toast.success(`Document scanned successfully.`);
@@ -188,8 +187,8 @@ export default function RecordScan({ onDlpiCreated, mode = 'genesis', onScanComp
       return;
     }
     
-    // Gather owners from parties
-    let finalOwners: { name: string; aadhaarHash: string }[] = [];
+    // Collect raw Aadhaar numbers from parties (hashing happens server-side with correct HMAC)
+    let ownerAadhaarNumbers: { name: string; aadhaar: string }[] = [];
     try {
       const partiesList = ext?.parties || [];
       for (let i = 0; i < partiesList.length; i++) {
@@ -200,30 +199,18 @@ export default function RecordScan({ onDlpiCreated, mode = 'genesis', onScanComp
         let pAadhaar = edited[aadhaarPath] !== undefined ? edited[aadhaarPath] : p.aadhaar;
         
         if (pAadhaar && typeof pAadhaar === 'string') {
-          pAadhaar = pAadhaar.trim();
-          if (pAadhaar.length > 0) {
-            const salt = 'bhumichain-aadhaar-salt-change-in-prod';
-            const msgBuffer = new TextEncoder().encode(pAadhaar + salt);
-            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-            const hashArray = Array.from(new Uint8Array(hashBuffer));
-            const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-            finalOwners.push({
+          // Strip all non-digits (handles formats like 9999-0001-0012 or 999900010012)
+          const digits = pAadhaar.replace(/\D/g, '').trim();
+          if (digits.length >= 12) {
+            ownerAadhaarNumbers.push({
               name: pName || 'Unknown',
-              aadhaarHash: 'sha256:' + hashHex
+              aadhaar: digits,
             });
           }
         }
       }
     } catch (e) {
-      console.error('Failed to hash aadhaars', e);
-    }
-
-    if (finalOwners.length === 0) {
-      // Fallback
-      finalOwners = [{
-        name: 'Unknown',
-        aadhaarHash: 'sha256:' + '0'.repeat(64)
-      }];
+      console.error('Failed to collect aadhaars', e);
     }
 
     try {
@@ -231,12 +218,13 @@ export default function RecordScan({ onDlpiCreated, mode = 'genesis', onScanComp
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify({
-          scanId:             result.scanId,
+          scanId:              result.scanId,
           dlpiId,
-          officerAadhaarHash: 'sha256:' + '0'.repeat(64),
-          owners:             finalOwners,
-          officerName:        'Vijay Singh (Patwari DAD-P1)',
-          correctedFields:    Object.keys(edited).length ? edited : undefined,
+          officerAadhaarHash:  'sha256:' + '0'.repeat(64),
+          ownerAadhaarNumbers, // Raw digits — gateway will HMAC-hash these correctly
+          owners:              [],  // Deprecated: backend uses ownerAadhaarNumbers instead
+          officerName:         'Vijay Singh (Patwari DAD-P1)',
+          correctedFields:     Object.keys(edited).length ? edited : undefined,
           token,
         }),
       });
