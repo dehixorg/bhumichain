@@ -391,23 +391,23 @@ export default function RecordScan({ onDlpiCreated, mode = 'genesis', onScanComp
           </div>
 
           {ext.extraction_meta?.low_confidence_fields && ext.extraction_meta.low_confidence_fields.length > 0 && (
-            <div className="flex items-start gap-3 bg-amber-950 border border-amber-700 rounded-xl p-4">
-              <AlertTriangle className="w-4 h-4 text-amber-400 mt-0.5 shrink-0" />
-              <div>
-                <div className="text-amber-300 font-semibold text-sm mb-1">Officer review required (समीक्षा आवश्यक)</div>
-                <div className="text-amber-400 text-xs space-y-2 mt-2">
-                  {ext.extraction_meta.low_confidence_fields.map((f: string, i: number) => (
-                    <div key={i} className="flex flex-col gap-1">
-                      <label className="uppercase tracking-wider font-semibold opacity-90">{f.replace(/_/g, ' ')}</label>
-                      <input
-                        className="bg-amber-950 border border-amber-700 rounded px-2 py-1.5 text-amber-200 placeholder-amber-700/50 focus:outline-none focus:border-amber-500 font-medium"
-                        placeholder={`Enter ${f.split('.').pop()}`}
-                        value={edited[f] || ''}
-                        onChange={(e) => setEdited({ ...edited, [f]: e.target.value })}
-                      />
-                    </div>
-                  ))}
-                </div>
+            <div className="flex flex-col bg-white border border-red-200 rounded-xl p-5 shadow-sm">
+              <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-100">
+                <AlertTriangle className="w-5 h-5 text-red-500 shrink-0" />
+                <div className="text-gray-900 font-bold text-sm">Officer review required (समीक्षा आवश्यक)</div>
+              </div>
+              <div className="space-y-4">
+                {ext.extraction_meta.low_confidence_fields.map((f: string, i: number) => (
+                  <div key={i} className="flex flex-col gap-1.5">
+                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{f.replace(/_/g, ' ')}</label>
+                    <input
+                      className="w-full bg-[#F8FAFC] border border-gray-200 rounded-lg px-3 py-2 text-gray-800 text-sm focus:outline-none focus:border-[#0F4C81]/60 focus:bg-white transition-colors"
+                      placeholder={`Enter ${f.split('.').pop()}`}
+                      value={edited[f] || ''}
+                      onChange={(e) => setEdited({ ...edited, [f]: e.target.value })}
+                    />
+                  </div>
+                ))}
               </div>
             </div>
           )}
