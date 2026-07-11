@@ -326,9 +326,15 @@ router.post(
       
       res.json({ success: true, txHash: txResult.txHash || (result.data && result.data.txHash) });
     } catch (e) {
-      const errMsg = e.response && e.response.data && (e.response.data.detail || e.response.data.message)
-        ? (e.response.data.detail || e.response.data.message)
-        : e.message;
+      let errMsg = e.message;
+      if (e.responses && e.responses.length > 0) {
+        errMsg += " | Details: " + e.responses.map(r => r.response?.message || r.message).join(", ");
+      } else if (e.details && e.details.length > 0) {
+        errMsg += " | Details: " + JSON.stringify(e.details);
+      }
+      if (e.response && e.response.data) {
+        errMsg += " | Axios: " + (e.response.data.detail || e.response.data.message);
+      }
       console.error("[scan-approve-sro] error:", errMsg);
       res.status(500).json({ error: 'FABRIC_ERROR', message: errMsg });
     }
