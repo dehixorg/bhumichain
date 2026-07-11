@@ -21,13 +21,13 @@ type AuthMethod = 'digilocker' | 'aadhaar' | 'mobile' | 'janparichay';
 
 // ── Demo personas ─────────────────────────────────────────────────────────────
 const DEMO_PERSONAS = [
-  { persona: 'tehsildar',        label: 'Tehsildar',  name: 'Amit Saxena',  color: '#7C3AED' },
-  { persona: 'circle_inspector', label: 'Kanungo',    name: 'Rajesh Verma', color: '#1D4ED8' },
-  { persona: 'patwari',          label: 'Patwari',    name: 'Vijay Singh',  color: '#0F766E' },
-  { persona: 'citizen_deceased', label: 'Deceased',   name: 'Ramesh Kumar', color: '#0F4C81' },
-  { persona: 'citizen',          label: 'Heir 1',     name: 'Priya Kumar',  color: '#6D28D9' },
-  { persona: 'citizen_heir1',    label: 'Heir 2',     name: 'Arun Kumar',   color: '#B45309' },
-  { persona: 'citizen_heir2',    label: 'Heir 3',     name: 'Sunita Kumar', color: '#BE185D' },
+  { persona: 'tehsildar',        label: 'Tehsildar',  name: 'Amit Saxena',  color: '#7C3AED', aadhaar: '9999-0001-0001' },
+  { persona: 'circle_inspector', label: 'Kanungo',    name: 'Rajesh Verma', color: '#1D4ED8', aadhaar: '9999-0001-0002' },
+  { persona: 'patwari',          label: 'Patwari',    name: 'Vijay Singh',  color: '#0F766E', aadhaar: '9999-0001-0003' },
+  { persona: 'citizen_deceased', label: 'Deceased',   name: 'Ramesh Kumar', color: '#0F4C81', aadhaar: '9999-0001-0009' },
+  { persona: 'citizen',          label: 'Heir 1',     name: 'Priya Kumar',  color: '#6D28D9', aadhaar: '9999-0001-0010' },
+  { persona: 'citizen_heir1',    label: 'Heir 2',     name: 'Arun Kumar',   color: '#B45309', aadhaar: '9999-0001-0014' },
+  { persona: 'citizen_heir2',    label: 'Heir 3',     name: 'Sunita Kumar', color: '#BE185D', aadhaar: '9999-0001-0015' },
 ];
 
 // ── Trust Badges ──────────────────────────────────────────────────────────────
@@ -247,12 +247,16 @@ export default function LoginPage() {
                     key={p.persona}
                     onClick={() => handleDemoLogin(p.persona)}
                     disabled={loading}
+                    title={p.aadhaar ? `Aadhaar ID: ${p.aadhaar}` : undefined}
                     style={{ backgroundColor: p.color }}
                     className="flex items-center justify-between px-4 py-3 rounded-xl text-white text-left hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-50 shadow-sm"
                   >
                     <div>
                       <div className="text-sm font-bold leading-tight">{p.label}</div>
-                      <div className="text-xs opacity-75 mt-0.5">{p.name}</div>
+                      <div className="text-xs opacity-75 mt-0.5 flex flex-col gap-0.5">
+                        <span>{p.name}</span>
+                        {p.aadhaar && <span className="font-mono text-[10px] opacity-90 tracking-wider">ID: {p.aadhaar}</span>}
+                      </div>
                     </div>
                     <ChevronRight className="w-4 h-4 opacity-60 shrink-0" />
                   </button>
