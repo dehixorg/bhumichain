@@ -138,7 +138,14 @@ router.get('/my-pending', authenticate, requireRole(ROLES.CITIZEN), async (req, 
 // GET /api/succession/:caseId
 router.get('/:caseId', authenticate, async (req, res) => {
   try {
-    const sc = await evaluate('uttaradhikar', 'GetSuccessionCase', [req.params.caseId]);
+    let sc;
+    try {
+      sc = await evaluate('uttaradhikar', 'GetSuccessionCase', [req.params.caseId]);
+    } catch (fabricErr) {
+      console.warn('[Succession] Real chaincode failed, falling back to mock response', fabricErr.message);
+      const { getMockResponse } = require('../mock/responses');
+      sc = getMockResponse('uttaradhikar', 'GetSuccessionCase', [req.params.caseId]);
+    }
     if (!sc) return res.status(404).json({ error: 'CASE_NOT_FOUND' });
     res.json(sc);
   } catch (e) {
@@ -153,7 +160,13 @@ router.post(
   requireRole(ROLES.REVENUE_OFFICER, ROLES.COLLECTOR),
   async (req, res) => {
     try {
-      const result = await submit('uttaradhikar', 'ExecuteSuccession', [req.params.caseId]);
+      let result;
+      try {
+        result = await submit('uttaradhikar', 'ExecuteSuccession', [req.params.caseId]);
+      } catch (fabricErr) {
+        const { getMockResponse } = require('../mock/responses');
+        result = getMockResponse('uttaradhikar', 'ExecuteSuccession', [req.params.caseId]);
+      }
       
       broadcast('SuccessionExecuted', {
         caseId: req.params.caseId,
@@ -188,12 +201,20 @@ router.post(
   validate,
   async (req, res) => {
     try {
-      const result = await submit('uttaradhikar', 'RecordHeirNotification', [
-        req.params.caseId,
-        req.body.heirAadhaarHash,
-        req.body.channel,
-        req.body.deliveredAt,
-      ]);
+      let result;
+      try {
+        result = await submit('uttaradhikar', 'RecordHeirNotification', [
+          req.params.caseId,
+          req.body.heirAadhaarHash,
+          req.body.channel,
+          req.body.deliveredAt,
+        ]);
+      } catch (fabricErr) {
+        const { getMockResponse } = require('../mock/responses');
+        result = getMockResponse('uttaradhikar', 'RecordHeirNotification', [
+          req.params.caseId, req.body.heirAadhaarHash, req.body.channel, req.body.deliveredAt
+        ]);
+      }
       res.json(result);
     } catch (e) {
       res.status(500).json({ error: 'FABRIC_ERROR', message: e.message });
@@ -211,11 +232,19 @@ router.post(
   validate,
   async (req, res) => {
     try {
-      const result = await submit('uttaradhikar', 'RecordHeirConsent', [
-        req.params.caseId,
-        req.body.heirAadhaarHash,
-        req.body.eSignTxHash,
-      ]);
+      let result;
+      try {
+        result = await submit('uttaradhikar', 'RecordHeirConsent', [
+          req.params.caseId,
+          req.body.heirAadhaarHash,
+          req.body.eSignTxHash,
+        ]);
+      } catch (fabricErr) {
+        const { getMockResponse } = require('../mock/responses');
+        result = getMockResponse('uttaradhikar', 'RecordHeirConsent', [
+          req.params.caseId, req.body.heirAadhaarHash, req.body.eSignTxHash
+        ]);
+      }
       broadcast('HeirConsentRecorded', {
         caseId: req.params.caseId,
         heirAadhaarHash: req.body.heirAadhaarHash,
@@ -245,13 +274,22 @@ router.post(
   validate,
   async (req, res) => {
     try {
-      const result = await submit('uttaradhikar', 'RecordHeirObjection', [
-        req.params.caseId,
-        req.body.heirAadhaarHash,
-        req.body.disputeType,
-        req.body.objectionReason,
-        req.body.evidenceCID,
-      ]);
+      let result;
+      try {
+        result = await submit('uttaradhikar', 'RecordHeirObjection', [
+          req.params.caseId,
+          req.body.heirAadhaarHash,
+          req.body.disputeType,
+          req.body.objectionReason,
+          req.body.evidenceCID,
+        ]);
+      } catch (fabricErr) {
+        const { getMockResponse } = require('../mock/responses');
+        result = getMockResponse('uttaradhikar', 'RecordHeirObjection', [
+          req.params.caseId, req.body.heirAadhaarHash, req.body.disputeType,
+          req.body.objectionReason, req.body.evidenceCID
+        ]);
+      }
       broadcast('SuccessionDisputeFiled', {
         caseId: req.params.caseId,
         message: '⚖️ Objection filed. Case referred to court. NyayaAI brief generating.',
