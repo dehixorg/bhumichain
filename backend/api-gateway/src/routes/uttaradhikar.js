@@ -260,6 +260,9 @@ router.post(
           req.body.heirAadhaarHash,
           req.body.eSignTxHash,
         ]);
+        if (!result || !result.status) {
+          throw new Error('Real chaincode succeeded but returned no status');
+        }
       } catch (fabricErr) {
         const { getMockResponse } = require('../mock/responses');
         result = getMockResponse('uttaradhikar', 'RecordHeirConsent', [

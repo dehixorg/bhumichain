@@ -111,7 +111,7 @@ export default function CitizenDashboard() {
       toast.loading('Initiating Aadhaar eSign...', { id: 'esign' });
       await new Promise(r => setTimeout(r, 1500));
       await recordHeirConsent(caseId, {
-        heirAadhaarHash: user.aadhaarId || '',
+        heirAadhaarHash: user.aadhaarHash || '',
         eSignTxHash: '0x' + Math.random().toString(16).slice(2)
       });
       toast.success('Successfully provided eSign consent!', { id: 'esign' });
