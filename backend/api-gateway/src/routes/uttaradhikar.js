@@ -166,7 +166,9 @@ router.get('/pending/all', authenticate, requireRole(ROLES.TEHSILDAR, ROLES.COLL
     }
     
     // Adapt to QueueItem format expected by dashboard
-    const adapted = (cases || []).map(c => ({
+    const adapted = (cases || [])
+      .filter(c => ['PENDING_TEHSILDAR_APPROVAL', 'ALL_CONSENTED', 'PENDING_TEHSILDAR'].includes(c.status))
+      .map(c => ({
       dlpiId: c.caseId, // HACK: put caseId here so the frontend can call /execute easily
       ownerName: c.deceasedName + ' (Succession)',
       gram: 'Dadri', tehsil: 'Gautam Buddha Nagar',
@@ -214,6 +216,7 @@ router.post(
       try {
         result = await submit('uttaradhikar', 'ExecuteSuccession', [req.params.caseId]);
       } catch (fabricErr) {
+        console.error('[ExecuteSuccession] Real chaincode failed:', fabricErr?.message || fabricErr);
         const { getMockResponse } = require('../mock/responses');
         result = getMockResponse('uttaradhikar', 'ExecuteSuccession', [req.params.caseId]);
       }
