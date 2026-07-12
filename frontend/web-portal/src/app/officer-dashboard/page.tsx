@@ -46,6 +46,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; 
   DISPUTED:        { label: 'Disputed',        color: 'text-red-700',    bg: 'bg-red-50 border-red-200',       icon: AlertTriangle },
   SCAN_PENDING_SRO: { label: 'Pending SRO',    color: 'text-amber-700',  bg: 'bg-amber-50 border-amber-200',   icon: Clock },
   SCAN_PENDING_TEHSILDAR: { label: 'Pending Tehsildar', color: 'text-orange-700', bg: 'bg-orange-50 border-orange-200', icon: Clock },
+  SUCCESSION_PENDING_TEHSILDAR: { label: 'Pending Succession', color: 'text-purple-700', bg: 'bg-purple-50 border-purple-200', icon: Clock },
 };
 
 // Role → which statuses this officer should act on
@@ -53,18 +54,18 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; 
 const ROLE_ACTION_STATUSES: Record<string, string[]> = {
   patwari:          ['CLAIM_SUBMITTED'],
   circle_inspector: ['UNDER_REVIEW', 'SCAN_PENDING_SRO'],
-  tehsildar:        ['CI_APPROVED', 'SCAN_PENDING_TEHSILDAR'],
+  tehsildar:        ['CI_APPROVED', 'SCAN_PENDING_TEHSILDAR', 'SUCCESSION_PENDING_TEHSILDAR'],
   kotwal:           ['CLAIM_SUBMITTED', 'UNDER_REVIEW', 'CI_APPROVED'],
 };
 
 type TabKey = 'all' | 'claim_submitted' | 'under_review' | 'ci_approved' | 'pending_scans';
 
 const TABS: { key: TabKey; label: string; statuses: string[] }[] = [
-  { key: 'all',            label: 'All',           statuses: ['CLAIM_SUBMITTED', 'UNDER_REVIEW', 'CI_APPROVED', 'DISPUTED', 'SCAN_PENDING_SRO', 'SCAN_PENDING_TEHSILDAR'] },
+  { key: 'all',            label: 'All',           statuses: ['CLAIM_SUBMITTED', 'UNDER_REVIEW', 'CI_APPROVED', 'DISPUTED', 'SCAN_PENDING_SRO', 'SCAN_PENDING_TEHSILDAR', 'SUCCESSION_PENDING_TEHSILDAR'] },
   { key: 'claim_submitted',label: 'Claim Submitted', statuses: ['CLAIM_SUBMITTED'] },
   { key: 'under_review',   label: 'Under Review',  statuses: ['UNDER_REVIEW'] },
   { key: 'ci_approved',    label: 'CI Approved',   statuses: ['CI_APPROVED'] },
-  { key: 'pending_scans',  label: 'Pending Scans', statuses: ['SCAN_PENDING_SRO', 'SCAN_PENDING_TEHSILDAR'] },
+  { key: 'pending_scans',  label: 'Pending Scans', statuses: ['SCAN_PENDING_SRO', 'SCAN_PENDING_TEHSILDAR', 'SUCCESSION_PENDING_TEHSILDAR'] },
 ];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -111,6 +112,24 @@ function QueueRow({ item, userRole, fetchQueue }: { item: QueueItem; userRole: s
     } catch (e: any) {
       toast.error(e.message || 'An error occurred during approval');
       console.error(e);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleSuccessionApprove(caseId: string) {
+    setBusy(true);
+    try {
+      const res = await apiFetch(`/api/succession/${caseId}/execute`, { method: 'POST' });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        toast.success(data.message || 'Succession approved successfully!');
+        fetchQueue();
+      } else {
+        toast.error(data.detail || data.message || data.error || `Approval failed`);
+      }
+    } catch (e: any) {
+      toast.error(e.message || 'An error occurred during approval');
     } finally {
       setBusy(false);
     }
@@ -191,6 +210,11 @@ function QueueRow({ item, userRole, fetchQueue }: { item: QueueItem; userRole: s
           <button onClick={() => handleScanApprove('/scan-approve-tehsildar')} disabled={busy} className="bg-[#0F4C81] hover:bg-[#0c3d67] px-3 py-1.5 text-xs font-semibold text-white rounded-lg flex items-center gap-1.5 transition-colors disabled:opacity-50">
              {busy ? <RefreshCw className="w-3 h-3 animate-spin" /> : <CheckCircle className="w-3 h-3" />}
              Final Approve
+          </button>
+        ) : item.claimStatus === 'SUCCESSION_PENDING_TEHSILDAR' && userRole === 'tehsildar' ? (
+          <button onClick={() => handleSuccessionApprove(item.dlpiId)} disabled={busy} className="bg-purple-600 hover:bg-purple-700 px-3 py-1.5 text-xs font-semibold text-white rounded-lg flex items-center gap-1.5 transition-colors disabled:opacity-50">
+             {busy ? <RefreshCw className="w-3 h-3 animate-spin" /> : <CheckCircle className="w-3 h-3" />}
+             Execute Succession
           </button>
         ) : (
           <Link
@@ -297,7 +321,7 @@ export default function OfficerDashboardPage() {
     claim_submitted: queue.filter(q => q.claimStatus === 'CLAIM_SUBMITTED').length,
     under_review:    queue.filter(q => q.claimStatus === 'UNDER_REVIEW').length,
     ci_approved:     queue.filter(q => q.claimStatus === 'CI_APPROVED').length,
-    pending_scans:   queue.filter(q => ['SCAN_PENDING_SRO', 'SCAN_PENDING_TEHSILDAR'].includes(q.claimStatus)).length,
+    pending_scans:   queue.filter(q => ['SCAN_PENDING_SRO', 'SCAN_PENDING_TEHSILDAR', 'SUCCESSION_PENDING_TEHSILDAR'].includes(q.claimStatus)).length,
   };
 
   return (
