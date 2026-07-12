@@ -26,7 +26,7 @@ const DEMO_PERSONAS = [
   { persona: 'patwari',          label: 'Patwari',    name: 'Vijay Singh',  color: '#0F766E', aadhaar: '9999-0001-0003' },
   { persona: 'citizen_deceased', label: 'Deceased',   name: 'Ramesh Kumar', color: '#0F4C81', aadhaar: '9999-0001-0009' },
   { persona: 'citizen',          label: 'Heir 1',     name: 'Priya Kumar',  color: '#6D28D9', aadhaar: '9999-0001-0010' },
-  { persona: 'citizen_heir1',    label: 'Heir 2',     name: 'Suresh Yadav', color: '#B45309', aadhaar: '9999-0001-0012' },
+  { persona: 'suresh_yadav',     label: 'Heir 2',     name: 'Suresh Yadav', color: '#B45309', aadhaar: '9999-0001-0012' },
   { persona: 'citizen_heir2',    label: 'Heir 3',     name: 'Sunita Kumar', color: '#BE185D', aadhaar: '9999-0001-0015' },
 ];
 
