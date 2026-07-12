@@ -890,7 +890,8 @@ func (c *UttaradhikarContract) RecordHeirConsent(
 	_ = ctx.GetStub().InvokeChaincode("dlpi", dlpiArgs, "")
 
 	if c.allAdultHeirsConsented(sCase) {
-		return c.executeAutoMutation(ctx, sCase, now)
+		sCase.Status = "PENDING_TEHSILDAR_APPROVAL"
+		sCase.AllConsentedAt = now
 	}
 	sCase.UpdatedAt = now
 	return c.saveCase(ctx, sCase)
@@ -1288,6 +1289,26 @@ func (c *UttaradhikarContract) executeAutoMutation(
 }
 
 // ──────────────────────────────────────────────────────────────────────────
+// OFFICER EXECUTION
+// ──────────────────────────────────────────────────────────────────────────
+
+func (c *UttaradhikarContract) ExecuteSuccession(ctx contractapi.TransactionContextInterface, caseID string) (*SuccessionCase, error) {
+	sCase, err := c.getCase(ctx, caseID)
+	if err != nil {
+		return nil, err
+	}
+	if sCase.Status != "PENDING_TEHSILDAR_APPROVAL" && sCase.Status != "COURT_REFERRED" && sCase.Status != "ALL_CONSENTED" {
+		return nil, fmt.Errorf("case not ready for execution, current status: %s", sCase.Status)
+	}
+	now := time.Now().UTC().Format(time.RFC3339)
+	err = c.executeAutoMutation(ctx, sCase, now)
+	if err != nil {
+		return nil, err
+	}
+	return sCase, nil
+}
+
+// ──────────────────────────────────────────────────────────────────────────
 // QUERY FUNCTIONS
 // ──────────────────────────────────────────────────────────────────────────
 
@@ -1309,7 +1330,7 @@ func (c *UttaradhikarContract) GetSuccessionByDLPI(ctx contractapi.TransactionCo
 }
 
 func (c *UttaradhikarContract) QueryPendingSuccessions(ctx contractapi.TransactionContextInterface) ([]*SuccessionCase, error) {
-	query := `{"selector":{"status":{"$in":["AWAITING_CONSENTS","HEIRS_IDENTIFIED"]}}}`
+	query := `{"selector":{"status":{"$in":["AWAITING_CONSENTS","HEIRS_IDENTIFIED","PENDING_TEHSILDAR_APPROVAL"]}}}`
 	return c.executeQuery(ctx, query)
 }
 

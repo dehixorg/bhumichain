@@ -213,11 +213,11 @@ router.post(
         caseId: req.params.caseId,
         heirAadhaarHash: req.body.heirAadhaarHash,
       });
-      // If auto-mutation triggered, broadcast that too
-      if (result && result.status === 'AUTO_MUTATED') {
+      // If tehsildar approval triggered, broadcast that too
+      if (result && result.status === 'PENDING_TEHSILDAR_APPROVAL') {
         broadcast('AllHeirsConsented', {
           caseId: req.params.caseId,
-          message: '✅ All heirs have consented. Succession mutation executing automatically.',
+          message: '✅ All heirs have consented. Case forwarded to Tehsildar for final approval.',
         });
       }
       res.json(result);

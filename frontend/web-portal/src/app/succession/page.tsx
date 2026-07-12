@@ -248,9 +248,9 @@ export default function SuccessionPage() {
           : h,
       );
       if (updated.every((h) => h.hasConsented)) {
-        setStage('all_consented');
-        toast.success('All 3 heirs consented — auto-mutation executing!');
-        triggerMock('scene3_auto_mutation');
+        setStage('pending_tehsildar_approval');
+        toast.success('All 3 heirs consented — forwarded to Tehsildar!');
+        triggerMock('scene3_auto_mutation'); // Keep same mock trigger so we don't break mock dependencies
       } else {
         toast.success(`${heir.name} consented ✓`);
       }
@@ -605,27 +605,27 @@ export default function SuccessionPage() {
                 {/* Multi-sig consent panel */}
                 <MultiSig
                   title="Heir Consent Collection"
-                  subtitle="All adult heirs must eSign to trigger automatic succession mutation"
+                  subtitle="All adult heirs must eSign to forward succession for Tehsildar approval"
                   signers={signers}
                   onSign={handleConsent}
                   onObject={handleObject}
-                  completedText="All heirs consented — succession mutation executing automatically"
+                  completedText="All heirs consented — case forwarded to Tehsildar"
                 />
 
-                {/* All-consented banner */}
-                {stage === 'all_consented' && (
-                  <div className="flex items-center gap-4 bg-[#EFF6FF] border border-blue-300 rounded-xl px-5 py-4">
-                    <div className="w-10 h-10 rounded-full bg-[#BFDBFE] flex items-center justify-center shrink-0">
-                      <Zap className="w-5 h-5 text-[#0F4C81]" />
+                {/* Tehsildar-approval banner */}
+                {stage === 'pending_tehsildar_approval' && (
+                  <div className="flex items-center gap-4 bg-[#FFFbeb] border border-amber-300 rounded-xl px-5 py-4">
+                    <div className="w-10 h-10 rounded-full bg-[#fde68a] flex items-center justify-center shrink-0">
+                      <Zap className="w-5 h-5 text-amber-600" />
                     </div>
                     <div>
-                      <div className="text-[#0F4C81] font-bold text-sm">Auto-Mutation Executing</div>
-                      <div className="text-[#0F4C81] text-xs mt-0.5">
-                        Fabric transaction submitted · New title being written to ledger ·
-                        Ankur, Nitin &amp; Neeta each hold 1/3
+                      <div className="text-amber-800 font-bold text-sm">Pending Tehsildar Approval</div>
+                      <div className="text-amber-700 text-xs mt-0.5">
+                        Fabric transaction submitted · Forwarded to Tehsildar · 
+                        Awaiting final officer execution to mutate title
                       </div>
                     </div>
-                    <CheckCircle className="w-6 h-6 text-[#0F4C81] ml-auto shrink-0" />
+                    <CheckCircle className="w-6 h-6 text-amber-600 ml-auto shrink-0" />
                   </div>
                 )}
               </>
@@ -648,7 +648,7 @@ export default function SuccessionPage() {
                   ['Mutation alert',  'Officer alerted in 64s (SLA: 60s)'],
                   ['Heir notifications', 'SMS + WhatsApp to all 3 heirs'],
                   ['Multi-sig consent', 'Each heir eSigns their share'],
-                  ['Auto-mutation',   'All consent → Fabric executes automatically'],
+                  ['Auto-mutation',   'Disabled — Tehsildar approval required'],
                 ].map(([title, desc], i) => (
                   <li key={i} className="flex gap-2">
                     <span className="w-4 h-4 rounded-full bg-[#F8FAFC] text-gray-500 flex items-center justify-center shrink-0 font-mono text-xs">
