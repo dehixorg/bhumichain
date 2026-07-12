@@ -183,7 +183,13 @@ export default function SuccessionPage() {
         method: 'POST',
         body: formData,
       });
-      const data = await res.json();
+      
+      let data: any = {};
+      try {
+        data = await res.json();
+      } catch (e) {
+        throw new Error(`Server returned HTML (did you forget to run 'npm run build'?) Status: ${res.status}`);
+      }
       
       // Animate remaining steps
       for (let i = 1; i < CRS_AI_STEPS_LABELS.length; i++) {
