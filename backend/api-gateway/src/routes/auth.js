@@ -270,6 +270,10 @@ router.post('/demo-token', (req, res) => {
   }
 
   const DEMO_PERSONAS = {
+    oracle: {
+      role: 'oracle', name: 'CRS Oracle',
+      aadhaarHash: '999900010099'
+    },
     tehsildar: {
       role: 'tehsildar', name: 'Amit Saxena',
       aadhaarHash: '999900010001',

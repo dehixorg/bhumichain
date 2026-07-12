@@ -11,7 +11,10 @@ const router = Router();
 
 const validate = (req, res, next) => {
   const errs = validationResult(req);
-  if (!errs.isEmpty()) return res.status(400).json({ errors: errs.array() });
+  if (!errs.isEmpty()) {
+    const errorMsg = errs.array().map(e => `${e.path}: ${e.msg}`).join(', ');
+    return res.status(400).json({ message: `Validation failed - ${errorMsg}`, errors: errs.array() });
+  }
   next();
 };
 
