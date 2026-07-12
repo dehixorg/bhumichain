@@ -75,31 +75,31 @@ export async function POST(req: NextRequest) {
 
     // 3. Regex Extraction
     let name = "Unknown";
-    let dod = "2026-05-20";
+    let dod = "";
     let reg_no = "CRS-UNKNOWN";
+    let aadhaar = "";
 
     const nameMatch = text.match(/(?:Name of Deceased|Deceased Name|Name)[:\-\s]+([A-Za-z\s]+)(?:\n|\r|$)/i);
     if (nameMatch && nameMatch[1]) name = nameMatch[1].trim();
 
-    const dodMatch = text.match(/(?:Date of Death|DOD)[:\-\s]+(\d{2}[-/\.]\d{2}[-/\.]\d{4}|\d{4}[-/\.]\d{2}[-/\.]\d{2})/i);
+    // Permissive Date of Death regex (matches DD/MM/YYYY, DD-MMM-YYYY, DD MM YYYY, etc.)
+    const dodMatch = text.match(/(?:Date of Death|DOD|Date)[:\-\s]*([0-9]{1,2}[\-\/\s\.]+[A-Za-z0-9]{2,9}[\-\/\s\.]+[0-9]{2,4})/i);
     if (dodMatch && dodMatch[1]) {
-      const parts = dodMatch[1].replace(/[\/\.]/g, '-').split('-');
-      if (parts[0].length === 4) {
-        dod = `${parts[0]}-${parts[1]}-${parts[2]}`;
-      } else {
-        dod = `${parts[2]}-${parts[1]}-${parts[0]}`;
-      }
+      dod = dodMatch[1].trim();
     }
 
     const regMatch = text.match(/(?:Registration No|Reg No)[:\.\-\s]+([A-Z0-9\-]+)/i);
     if (regMatch && regMatch[1]) reg_no = regMatch[1].trim();
 
+    const aadhaarMatch = text.match(/(?:Aadhaar|Aadhar|UID|Aadhaar No|UID No)[:\.\-\s]*(\d{4}[\s\-]?\d{4}[\s\-]?\d{4}|X{4}[\s\-]?X{4}[\s\-]?\d{4})/i);
+    if (aadhaarMatch && aadhaarMatch[1]) aadhaar = aadhaarMatch[1].trim();
+
     return NextResponse.json({
       name,
-      dod,
+      dod: dod || undefined, // undefined lets frontend use default if missing
       crsRegistrationNo: reg_no,
       dlpiId: "DLPI-UP-DAD-00100",
-      aadhaarHash: "XXXX-XXXX-1234",
+      aadhaarHash: aadhaar || "XXXX-XXXX-1234",
       rawText: text
     });
 
