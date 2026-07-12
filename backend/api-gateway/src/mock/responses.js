@@ -685,8 +685,8 @@ module.exports = {
           if (!s.initialOwners || !Array.isArray(s.initialOwners)) return false;
           return s.initialOwners.some(o => o.aadhaarHash === ownerHash);
         });
-        // Also include DEMO_MY_PARCELS for Priya Kumar (demo persona)
-        const demoParcels = ownerHash === PRIYA_AADHAAR ? DEMO_MY_PARCELS : [];
+        // Also include DEMO_MY_PARCELS for Priya Kumar (demo persona), but deduplicate
+        const demoParcels = ownerHash === PRIYA_AADHAAR ? DEMO_MY_PARCELS.filter(p => !myScans.find(s => s.dlpiId === p.dlpiId)) : [];
         return demoParcels.concat(myScans);
       }
 
@@ -850,7 +850,12 @@ module.exports = {
           sc.status = 'EXECUTED';
           fs.writeFileSync('/tmp/bhumichain_mock_cases.json', JSON.stringify(cases));
           // Find the parcel in MOCK_SCANS and replace initialOwners
-          const parcel = MOCK_SCANS.find(p => p.dlpiId === sc.dlpiId);
+          let parcel = MOCK_SCANS.find(p => p.dlpiId === sc.dlpiId);
+          if (!parcel) {
+            parcel = JSON.parse(JSON.stringify(DEMO_DLPI));
+            parcel.dlpiId = sc.dlpiId; // Just in case
+            MOCK_SCANS.push(parcel);
+          }
           if (parcel) {
             parcel.initialOwners = sc.heirs.map(h => ({
               name: h.name,

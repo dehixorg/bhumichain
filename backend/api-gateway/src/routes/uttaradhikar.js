@@ -153,13 +153,20 @@ router.get('/my-pending', authenticate, requireRole(ROLES.CITIZEN), async (req, 
 });
 
 // GET /api/succession/pending/all — Officer queue
-router.get('/pending/all', authenticate, requireRole(ROLES.REVENUE_OFFICER, ROLES.COLLECTOR, ROLES.TEHSILDAR), async (req, res) => {
+router.get('/pending/all', authenticate, requireRole(ROLES.TEHSILDAR, ROLES.COLLECTOR), async (req, res) => {
   try {
-    const { getMockResponse } = require('../mock/responses');
-    const cases = getMockResponse('uttaradhikar', 'QueryPendingSuccessions', []);
+    let cases;
+    try {
+      cases = await evaluate('uttaradhikar', 'QueryPendingSuccessions', []);
+      if (!cases || !Array.isArray(cases)) throw new Error('Real chaincode returned invalid array');
+    } catch (fabricErr) {
+      console.warn('[Succession] Real chaincode failed for QueryPendingSuccessions, falling back to mock response', fabricErr?.message);
+      const { getMockResponse } = require('../mock/responses');
+      cases = getMockResponse('uttaradhikar', 'QueryPendingSuccessions', []);
+    }
     
     // Adapt to QueueItem format expected by dashboard
-    const adapted = cases.map(c => ({
+    const adapted = (cases || []).map(c => ({
       dlpiId: c.caseId, // HACK: put caseId here so the frontend can call /execute easily
       ownerName: c.deceasedName + ' (Succession)',
       gram: 'Dadri', tehsil: 'Gautam Buddha Nagar',
