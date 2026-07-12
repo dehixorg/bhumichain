@@ -213,6 +213,12 @@ export default function RecordScan({ onDlpiCreated, mode = 'genesis', onScanComp
       console.error('Failed to collect aadhaars', e);
     }
 
+    if (ownerAadhaarNumbers.length === 0) {
+      toast.error('You must enter at least one valid 12-digit Aadhaar number for a party before submitting.');
+      setStage('review');
+      return;
+    }
+
     try {
       const res = await fetch('/api/scan/approve', {
         method:  'POST',
@@ -434,7 +440,7 @@ export default function RecordScan({ onDlpiCreated, mode = 'genesis', onScanComp
                         flagged={ext.extraction_meta?.low_confidence_fields?.includes(rolePath)}
                       />
                       <EditableField 
-                        label={`Party ${i + 1} Aadhaar Number (Optional)`} 
+                        label={`Party ${i + 1} Aadhaar Number (Required)`} 
                         value={aadhaarVal || ''} 
                         onChange={(v) => setEdited({ ...edited, [aadhaarPath]: v })}
                         flagged={ext.extraction_meta?.low_confidence_fields?.includes(aadhaarPath)}
