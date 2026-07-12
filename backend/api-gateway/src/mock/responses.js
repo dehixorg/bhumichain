@@ -770,8 +770,18 @@ module.exports = {
           familyId: args[1],
           deceasedName: args[2],
           deceasedAadhaarHash: args[3],
-          status: 'AWAITING_CONSENT',
+          dateOfDeath: args[4],
+          deathCertCID: args[5],
+          crsRegistrationNo: args[6],
+          applicableLaw: args[8] || 'Hindu Succession Act 1956/2005',
+          status: 'AWAITING_CONSENTS',
           heirs: heirs,
+          totalHeirs: heirs.length,
+          consentDeadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+          aiComputationCID: args[11] || 'QmDynamicHeirComputation',
+          aiConfidenceScore: parseFloat(args[12] || '1.0'),
+          initiatedAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
         };
         const fs = require('fs');
         let cases = [];
