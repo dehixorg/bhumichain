@@ -705,7 +705,14 @@ module.exports = {
         // Filter dynamicScans to only include parcels where this citizen is an owner
         const myScans = dynamicScans.filter(s => {
           if (!s.initialOwners || !Array.isArray(s.initialOwners)) return false;
-          return s.initialOwners.some(o => o.aadhaarHash === ownerHash);
+          return s.initialOwners.some(o => {
+            if (o.aadhaarHash === ownerHash) return true;
+            // Robust fallback for demo: if they typed the wrong aadhaar during succession initiation
+            const nameLower = (o.name || '').toLowerCase();
+            if (ownerHash === PRIYA_AADHAAR && nameLower.includes('priya')) return true;
+            if (ownerHash === '999900010015' && nameLower.includes('sunita')) return true;
+            return false;
+          });
         });
         // Also include DEMO_MY_PARCELS for Priya Kumar (demo persona), but deduplicate
         const demoParcels = ownerHash === PRIYA_AADHAAR ? DEMO_MY_PARCELS.filter(p => !myScans.find(s => s.dlpiId === p.dlpiId)) : [];
