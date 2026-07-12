@@ -379,17 +379,20 @@ export default function SuccessionPage() {
 
             {/* IDLE: Trigger */}
             {stage === 'idle' && (
-              <div className="space-y-6">
+              <div className="space-y-5">
+                
+                {/* Section 1: Legal Heirs */}
                 <div className="card">
                   <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-100">
                     <Users className="w-5 h-5 text-[#0F4C81]" />
                     <span className="text-base font-semibold text-gray-800">Legal Heirs</span>
+                    <span className="ml-auto text-xs text-gray-400">Enter each heir's name & Aadhaar number</span>
                   </div>
-                  <div className="space-y-4">
+                  <div className="space-y-3">
                     {dynamicHeirs.map((heir, idx) => (
-                      <div key={idx} className="flex gap-4 items-end bg-gray-50 p-4 rounded-lg border border-gray-200">
+                      <div key={idx} className="flex gap-4 items-end bg-gray-50 p-4 rounded-xl border border-gray-200">
                         <div className="flex-1">
-                          <label className="block text-xs text-gray-500 mb-1">Full Name</label>
+                          <label className="block text-xs font-semibold text-gray-500 mb-1.5">Full Name</label>
                           <input
                             type="text"
                             value={heir.name}
@@ -399,20 +402,20 @@ export default function SuccessionPage() {
                           />
                         </div>
                         <div className="flex-1">
-                          <label className="block text-xs text-gray-500 mb-1">Aadhaar Number</label>
+                          <label className="block text-xs font-semibold text-gray-500 mb-1.5">Aadhaar Number</label>
                           <input
                             type="text"
                             value={heir.aadhaar}
                             onChange={(e) => updateHeir(idx, 'aadhaar', e.target.value)}
                             className="input-field w-full text-sm font-mono"
-                            placeholder="123412341234"
+                            placeholder="12-digit Aadhaar"
                             maxLength={12}
                           />
                         </div>
                         {dynamicHeirs.length > 1 && (
                           <button
                             onClick={() => removeHeir(idx)}
-                            className="text-red-500 hover:bg-red-50 p-2 rounded transition-colors mb-0.5"
+                            className="text-red-400 hover:text-red-600 hover:bg-red-50 px-3 py-2 rounded-lg transition-colors text-xs font-semibold border border-red-100"
                           >
                             Remove
                           </button>
@@ -421,37 +424,65 @@ export default function SuccessionPage() {
                     ))}
                     <button
                       onClick={addHeir}
-                      className="text-[#0F4C81] text-sm font-semibold hover:underline flex items-center gap-1"
+                      className="text-[#0F4C81] text-sm font-semibold hover:underline flex items-center gap-1 mt-1"
                     >
                       + Add Another Heir
                     </button>
                   </div>
                 </div>
 
-                <div className="card border-dashed border-2 bg-[#F8FAFC]/50 hover:bg-[#F8FAFC] transition-colors cursor-pointer relative">
-                <input
-                  type="file"
-                  accept="image/*,.pdf"
-                  onChange={handleUploadCRS}
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                />
-                <div className="flex flex-col items-center justify-center py-10">
-                  <div className="w-16 h-16 bg-[#0F4C81]/10 rounded-full flex items-center justify-center mb-4">
-                    <Upload className="w-8 h-8 text-[#0F4C81]" />
+                {/* Section 2: Upload Certificate + Submit */}
+                <div className="card border-2 border-dashed border-gray-200 relative">
+                  <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-100">
+                    <Upload className="w-5 h-5 text-[#0F4C81]" />
+                    <span className="text-base font-semibold text-gray-800">Death Certificate</span>
+                    {crsExtraction && (
+                      <span className="ml-auto flex items-center gap-1 text-xs text-green-700 font-bold bg-green-50 border border-green-200 px-2 py-0.5 rounded-full">
+                        <CheckCircle className="w-3 h-3" /> Uploaded
+                      </span>
+                    )}
                   </div>
-                  <div className="text-base font-semibold text-gray-800">
-                    Upload CRS Death Certificate
-                  </div>
-                  <div className="text-sm text-gray-500 mt-1">
-                    Drag and drop or click to browse
-                  </div>
-                  <div className="text-xs text-gray-400 mt-3 font-mono">
-                    AI Document Scanner will automatically extract details
-                  </div>
+
+                  {!crsExtraction ? (
+                    <label className="flex flex-col items-center justify-center py-8 cursor-pointer hover:bg-gray-50 rounded-xl transition-colors group">
+                      <input
+                        type="file"
+                        accept="image/*,.pdf"
+                        onChange={handleUploadCRS}
+                        className="hidden"
+                      />
+                      <div className="w-14 h-14 bg-[#0F4C81]/10 group-hover:bg-[#0F4C81]/20 rounded-full flex items-center justify-center mb-3 transition-colors">
+                        <Upload className="w-7 h-7 text-[#0F4C81]" />
+                      </div>
+                      <div className="text-sm font-semibold text-gray-700">Click to Upload CRS Death Certificate</div>
+                      <div className="text-xs text-gray-400 mt-1">PDF or image · AI will auto-extract details</div>
+                    </label>
+                  ) : (
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-2 gap-3 text-sm bg-green-50 border border-green-100 rounded-xl p-4">
+                        <div><span className="text-xs text-gray-500 block">Deceased</span><strong>{crsExtraction.name}</strong></div>
+                        <div><span className="text-xs text-gray-500 block">Date of Death</span><strong>{format(new Date(crsExtraction.dod || Date.now()), 'dd MMM yyyy')}</strong></div>
+                        <div><span className="text-xs text-gray-500 block">Parcel ID</span><strong className="text-[#0F4C81] font-mono">{crsExtraction.dlpiId}</strong></div>
+                        <div><span className="text-xs text-gray-500 block">CRS Reg. No.</span><strong className="font-mono">{crsExtraction.crsRegistrationNo}</strong></div>
+                      </div>
+
+                      {/* THE SUBMIT BUTTON */}
+                      <button
+                        onClick={handleRunAI}
+                        disabled={!dynamicHeirs.some(h => h.aadhaar.length >= 12)}
+                        className="w-full bg-[#0F4C81] hover:bg-[#0a3860] disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3.5 px-6 rounded-xl flex items-center justify-center gap-3 shadow-md hover:shadow-lg transition-all text-sm"
+                      >
+                        <Zap className="w-5 h-5" />
+                        Submit & Send eSign Requests to All Heirs
+                        <ChevronRight className="w-4 h-4" />
+                      </button>
+                      <p className="text-xs text-center text-gray-400">Each heir will receive an eSign request in their portal</p>
+                    </div>
+                  )}
                 </div>
               </div>
-            </div>
             )}
+
 
             {/* SCANNING CRS */}
             {stage === 'scanning_crs' && (
