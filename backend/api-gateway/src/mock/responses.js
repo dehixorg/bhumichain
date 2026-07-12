@@ -815,7 +815,7 @@ module.exports = {
         let cases = [];
         try { cases = JSON.parse(fs.readFileSync('/tmp/bhumichain_mock_cases.json')); } catch(e) {}
         return cases.filter(c => {
-          if (c.status !== 'AWAITING_CONSENT') return false;
+          if (c.status !== 'AWAITING_CONSENTS') return false;
           const me = c.heirs?.find(h => h.aadhaarHash === myHash);
           return me && !me.hasConsented;
         });

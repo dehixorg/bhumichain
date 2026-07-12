@@ -212,7 +212,7 @@ Owner who received property card → claims on BhumiSeva
 All NEW property registrations go directly on blockchain from Day 1
 → SRO office: buyer + seller + SRO → PropertyTransfer workflow
 → No paper record created — blockchain is the primary record
-```
+``` 
 
 ### 3.3 DLPI Status Lifecycle
 
