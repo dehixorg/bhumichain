@@ -261,11 +261,12 @@ router.get('/me', authenticate, (req, res) => {
 });
 
 // ─── POST /api/auth/demo-token ───────────────────────────────────────────────
-// One-click demo login — mock mode only
-// Body: { role, name } — picks the correct demo persona
+// One-click demo login — available in mock mode OR when AADHAAR_MOCK=true (real VM demo)
+// Body: { persona } — picks the correct demo persona
 router.post('/demo-token', (req, res) => {
-  if (process.env.FABRIC_MODE !== 'mock') {
-    return res.status(403).json({ error: 'Demo tokens only available in mock mode' });
+  const isDemoAllowed = process.env.FABRIC_MODE === 'mock' || process.env.AADHAAR_MOCK === 'true';
+  if (!isDemoAllowed) {
+    return res.status(403).json({ error: 'Demo tokens only available in mock/demo mode' });
   }
 
   const DEMO_PERSONAS = {
