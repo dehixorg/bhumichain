@@ -234,7 +234,35 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {/* Demo Quick Access removed to enforce manual Aadhaar entry */}
+            {/* Demo Quick Login */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-3">
+                <div className="h-px flex-1 bg-gray-200" />
+                <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest px-2">Demo Quick Access</span>
+                <div className="h-px flex-1 bg-gray-200" />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                {DEMO_PERSONAS.map(p => (
+                  <button
+                    key={p.persona}
+                    onClick={() => handleDemoLogin(p.persona)}
+                    disabled={loading}
+                    title={p.aadhaar ? `Aadhaar No: ${p.aadhaar}` : undefined}
+                    style={{ backgroundColor: p.color }}
+                    className="flex items-center justify-between px-4 py-3 rounded-xl text-white text-left hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-50 shadow-sm"
+                  >
+                    <div>
+                      <div className="text-sm font-bold leading-tight">{p.label}</div>
+                      <div className="text-xs opacity-75 mt-0.5 flex flex-col gap-0.5">
+                        <span>{p.name}</span>
+                        {p.aadhaar && <span className="font-mono text-[10px] opacity-90 tracking-wider" title={p.aadhaar}>Aadhaar: {p.aadhaar}</span>}
+                      </div>
+                    </div>
+                    <ChevronRight className="w-4 h-4 opacity-60 shrink-0" />
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
 

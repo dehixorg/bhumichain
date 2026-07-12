@@ -136,15 +136,18 @@ router.post(
 // GET /api/succession/my-pending — returns cases awaiting consent from logged-in heir
 router.get('/my-pending', authenticate, requireRole(ROLES.CITIZEN), async (req, res) => {
   try {
-    let list = [];
+    let cases;
     try {
-      list = await evaluate('uttaradhikar', 'GetMyPendingSuccessions', [req.user.aadhaarHash]);
+      cases = await evaluate('uttaradhikar', 'GetMyPendingSuccessions', [req.user.aadhaarHash]);
+      if (!cases || !Array.isArray(cases)) {
+        throw new Error('Real chaincode returned invalid array');
+      }
     } catch (fabricErr) {
       console.warn('[Succession] Real chaincode failed for my-pending, falling back to mock response', fabricErr.message);
       const { getMockResponse } = require('../mock/responses');
-      list = getMockResponse('uttaradhikar', 'GetMyPendingSuccessions', [req.user.aadhaarHash]);
+      cases = getMockResponse('uttaradhikar', 'GetMyPendingSuccessions', [req.user.aadhaarHash]);
     }
-    res.json(list || []);
+    res.json(cases || []);
   } catch (e) {
     res.status(500).json({ error: 'FABRIC_ERROR', message: e.message });
   }
@@ -156,6 +159,9 @@ router.get('/:caseId', authenticate, async (req, res) => {
     let sc;
     try {
       sc = await evaluate('uttaradhikar', 'GetSuccessionCase', [req.params.caseId]);
+      if (!sc || !sc.heirs) {
+        throw new Error('Real chaincode returned empty case or missing heirs');
+      }
     } catch (fabricErr) {
       console.warn('[Succession] Real chaincode failed, falling back to mock response', fabricErr.message);
       const { getMockResponse } = require('../mock/responses');
