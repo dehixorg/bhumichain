@@ -172,22 +172,49 @@ export default function SuccessionPage() {
     setCrsAiSteps(CRS_AI_STEPS_LABELS.map(label => ({ label, done: false })));
     setCrsExtraction(null);
 
-    // Simulate AI scanning
-    for (let i = 0; i < CRS_AI_STEPS_LABELS.length; i++) {
-      await delay(600);
-      setCrsAiSteps(prev => prev.map((s, idx) => idx <= i ? { ...s, done: true } : s));
+    try {
+      // Fast forward first step
+      setCrsAiSteps(prev => prev.map((s, idx) => idx === 0 ? { ...s, done: true } : s));
+      
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const res = await fetch('/api/scan/death-cert', {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await res.json();
+      
+      // Animate remaining steps
+      for (let i = 1; i < CRS_AI_STEPS_LABELS.length; i++) {
+        await delay(300);
+        setCrsAiSteps(prev => prev.map((s, idx) => idx <= i ? { ...s, done: true } : s));
+      }
+      
+      if (!res.ok) throw new Error(data.detail || 'Extraction failed');
+      
+      setCrsExtraction({
+        name: data.name || DEMO_DECEASED.name,
+        dod: data.dod || DEMO_DECEASED.dod,
+        aadhaarHash: data.aadhaarHash || 'XXXX-XXXX-1234',
+        crsRegistrationNo: data.crsRegistrationNo || DEMO_CRS.crsRegistrationNo,
+        dlpiId: data.dlpiId || DEMO_DLPI
+      });
+      toast.success(`CRS verified — ${data.crsRegistrationNo || 'Extracted successfully'}`);
+    } catch (err: any) {
+      console.error(err);
+      toast.error('Failed to extract data: ' + err.message);
+      // Fallback
+      setCrsAiSteps(prev => prev.map(s => ({ ...s, done: true })));
+      setCrsExtraction({
+        name: DEMO_DECEASED.name,
+        dod: DEMO_DECEASED.dod,
+        aadhaarHash: 'XXXX-XXXX-1234',
+        crsRegistrationNo: DEMO_CRS.crsRegistrationNo,
+        dlpiId: DEMO_DLPI
+      });
     }
 
-    // Set extracted data
-    setCrsExtraction({
-      name: DEMO_DECEASED.name,
-      dod: DEMO_DECEASED.dod,
-      aadhaarHash: 'XXXX-XXXX-1234', // Simplified for UI
-      crsRegistrationNo: DEMO_CRS.crsRegistrationNo,
-      dlpiId: DEMO_DLPI
-    });
-
-    toast.success('CRS death certificate verified — CRS-GBN-2026-00541');
     setStage('crs_verified');
   };
 
