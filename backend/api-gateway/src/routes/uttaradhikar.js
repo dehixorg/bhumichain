@@ -110,7 +110,18 @@ router.post(
 // GET /api/succession/my-pending — returns cases awaiting consent from logged-in heir
 router.get('/my-pending', authenticate, requireRole(ROLES.CITIZEN), async (req, res) => {
   try {
-    const list = await evaluate('uttaradhikar', 'GetMyPendingSuccessions', [req.user.aadhaarHash]);
+    let list = [];
+    try {
+      list = await evaluate('uttaradhikar', 'GetMyPendingSuccessions', [req.user.aadhaarHash]);
+    } catch (fabricErr) {
+      // Fallback if chaincode doesn't have GetMyPendingSuccessions implemented yet
+      const allPending = await evaluate('uttaradhikar', 'QueryPendingSuccessions', []);
+      list = (allPending || []).filter(c => {
+        if (c.status !== 'AWAITING_CONSENTS') return false;
+        const me = c.heirs?.find(h => h.aadhaarHash === req.user.aadhaarHash);
+        return me && !me.hasConsented;
+      });
+    }
     res.json(list || []);
   } catch (e) {
     res.status(500).json({ error: 'FABRIC_ERROR', message: e.message });
