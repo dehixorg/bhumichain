@@ -825,6 +825,7 @@ module.exports = {
         let cases = [];
         try { cases = JSON.parse(fs.readFileSync('/tmp/bhumichain_mock_cases.json')); } catch(e) {}
         const sc = cases.find(c => c.caseId === args[0]);
+        let returnedStatus = 'CONSENT_RECORDED';
         if (sc && sc.heirs) {
           const heir = sc.heirs.find(h => h.aadhaarHash === args[1]);
           if (heir) {
@@ -834,22 +835,28 @@ module.exports = {
           }
           if (sc.heirs.every(h => h.hasConsented)) {
             sc.status = 'PENDING_TEHSILDAR';
+            returnedStatus = 'PENDING_TEHSILDAR_APPROVAL';
           }
+          fs.writeFileSync('/tmp/bhumichain_mock_cases.json', JSON.stringify(cases));
         }
-        return { caseId: args[0], heirAadhaarHash: args[1], eSignTxHash: args[2], consentedAt: new Date().toISOString(), status: 'CONSENT_RECORDED' };
+        return { caseId: args[0], heirAadhaarHash: args[1], eSignTxHash: args[2], consentedAt: new Date().toISOString(), status: returnedStatus };
       }
       case 'uttaradhikar::ExecuteSuccession': {
-        const sc = MOCK_SUCCESSION_CASES.find(c => c.caseId === args[0]);
+        const fs = require('fs');
+        let cases = [];
+        try { cases = JSON.parse(fs.readFileSync('/tmp/bhumichain_mock_cases.json')); } catch(e) {}
+        const sc = cases.find(c => c.caseId === args[0]);
         if (sc && sc.heirs) {
           sc.status = 'EXECUTED';
+          fs.writeFileSync('/tmp/bhumichain_mock_cases.json', JSON.stringify(cases));
           // Find the parcel in MOCK_SCANS and replace initialOwners
           const parcel = MOCK_SCANS.find(p => p.dlpiId === sc.dlpiId);
           if (parcel) {
             parcel.initialOwners = sc.heirs.map(h => ({
               name: h.name,
               aadhaarHash: h.aadhaarHash,
-              share: h.share,
-              shareDecimal: h.shareDecimal
+              share: h.share || h.finalShare,
+              shareDecimal: h.shareDecimal || h.finalShareDec
             }));
             parcel.claimStatus = 'VERIFIED';
           }

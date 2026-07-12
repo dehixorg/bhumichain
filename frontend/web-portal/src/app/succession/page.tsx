@@ -214,7 +214,10 @@ export default function SuccessionPage() {
         dateOfDeath:         DEMO_DECEASED.dod,
         deathCertCID:        DEMO_CRS.deathCertCID,
         crsRegistrationNo:   DEMO_CRS.crsRegistrationNo,
-        heirs:               dynamicHeirs,
+        heirs: [
+          { name: user?.name || 'Initiator', aadhaar: user?.aadhaarHash || '' },
+          ...dynamicHeirs
+        ],
       });
       // IMMEDIATELY restore the citizen's original token
       if (citizenToken) setToken(citizenToken);
