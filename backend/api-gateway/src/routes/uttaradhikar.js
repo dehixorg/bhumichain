@@ -50,7 +50,9 @@ router.post(
           aadhaarHash: h.aadhaar, // Store raw Aadhaar
           relation: 'Legal Heir', gender: 'Unknown', dob: '1990-01-01',
           isAlive: true, isAdult: true, isNri: false,
-          share: shareStr, shareDecimal: shareDec,
+          finalShare: shareStr, finalShareDec: shareDec,
+          legalBasis: 'Hindu Succession Act 1956/2005',
+          legalShare: shareStr, legalShareDec: shareDec,
           hasConsented: false, hasObjected: false,
         }));
         

@@ -233,7 +233,7 @@ export default function SuccessionPage() {
 
     try {
       await recordHeirConsent(
-        DEMO_DLPI,
+        caseData?.caseId || DEMO_DLPI,
         {
           heirAadhaarHash: heir.aadhaarHash,
           eSignTxHash: '0x' + Array.from({length: 40}, () => Math.floor(Math.random()*16).toString(16)).join(''),
