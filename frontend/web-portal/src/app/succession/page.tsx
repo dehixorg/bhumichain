@@ -221,7 +221,11 @@ export default function SuccessionPage() {
       const sc = await getSuccessionCase(res.caseId || 'SUC-DLPI-UP-DAD-00100-a1b2c3d4');
       setCaseData(sc);
       setHeirs(sc.heirs.map((h) => ({ ...h, hasConsented: false, hasObjected: false })));
-    } catch {
+    } catch (e: any) {
+      console.error("[Succession] initiateSuccession failed:", e);
+      const errMsg = e.response?.data?.error || e.message || "Unknown error";
+      toast.error(`Initiation Failed: ${errMsg}`);
+      
       // Full offline fallback — also restore token
       const citizenToken = citizenTokenRef.current;
       if (citizenToken) setToken(citizenToken);
