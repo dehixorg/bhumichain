@@ -10,7 +10,7 @@ import {
   getDemoToken, initiateSuccession, recordHeirConsent,
   getSuccessionCase, verifyCRS, getMyPendingSuccessions
 } from '@/lib/api';
-import { setToken } from '@/lib/auth';
+import { setToken, getUser, type JWTUser } from '@/lib/auth';
 import type { SuccessionCase, SuccessionHeir } from '@/types';
 import toast from 'react-hot-toast';
 import {
@@ -109,6 +109,7 @@ type Stage =
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function SuccessionPage() {
+  const [user, setUser]           = useState<JWTUser | null>(null);
   const [stage, setStage]         = useState<Stage>('idle');
   const [caseData, setCaseData]   = useState<SuccessionCase | null>(null);
   const [heirs, setHeirs]         = useState<SuccessionHeir[]>([]);
@@ -133,6 +134,7 @@ export default function SuccessionPage() {
 
   // Acquire oracle token temporarily — but RESTORE citizen session after
   useEffect(() => {
+    setUser(getUser());
     // Save the current citizen token before acquiring oracle token
     citizenTokenRef.current = typeof window !== 'undefined' ? localStorage.getItem('bhumichain_token') : null;
     // Load pending successions using the CITIZEN's token (before oracle override)
