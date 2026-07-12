@@ -584,7 +584,11 @@ export default function SuccessionPage() {
                     </div>
                     <div>
                       <div className="text-xs text-gray-500 mb-0.5">Date of Death</div>
-                      <div className="font-semibold text-gray-800">{format(new Date(crsExtraction?.dod || Date.now()), 'dd MMM yyyy')}</div>
+                      <div className="font-semibold text-gray-800">
+                        {crsExtraction?.dod && !isNaN(new Date(crsExtraction.dod).getTime()) 
+                          ? format(new Date(crsExtraction.dod), 'dd MMM yyyy') 
+                          : format(Date.now(), 'dd MMM yyyy')}
+                      </div>
                     </div>
                     <div>
                       <div className="text-xs text-gray-500 mb-0.5">Aadhaar (Masked)</div>
