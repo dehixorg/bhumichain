@@ -27,7 +27,7 @@ router.post(
   body('dlpiId').matches(/^DLPI-[A-Z]{2}-[A-Z]{3}-[A-Z0-9]+$/),
   body('familyId').notEmpty(),
   body('deceasedName').notEmpty().trim(),
-  body('deceasedAadhaarHash').matches(/^sha256:[a-f0-9]{64}$/),
+  body('deceasedAadhaarHash').notEmpty(),
   body('dateOfDeath').isISO8601(),
   body('deathCertCID').notEmpty(),
   body('crsRegistrationNo').notEmpty(),
@@ -162,7 +162,7 @@ router.post(
   '/:caseId/notification',
   authenticate,
   requireRole(ROLES.ORACLE),
-  body('heirAadhaarHash').matches(/^sha256:[a-f0-9]{64}$/),
+  body('heirAadhaarHash').notEmpty(),
   body('channel').isIn(['SMS', 'WHATSAPP', 'PUSH', 'DIGILOCKER', 'EMAIL']),
   body('deliveredAt').isISO8601(),
   validate,
@@ -186,7 +186,7 @@ router.post(
 router.post(
   '/:caseId/consent',
   authenticate,
-  body('heirAadhaarHash').matches(/^sha256:[a-f0-9]{64}$/),
+  body('heirAadhaarHash').notEmpty(),
   body('eSignTxHash').notEmpty(),
   validate,
   async (req, res) => {
@@ -218,7 +218,7 @@ router.post(
 router.post(
   '/:caseId/objection',
   authenticate,
-  body('heirAadhaarHash').matches(/^sha256:[a-f0-9]{64}$/),
+  body('heirAadhaarHash').notEmpty(),
   body('disputeType').isIn(['ShareDispute', 'RightToInherit', 'FalseClaim']),
   body('objectionReason').notEmpty(),
   body('evidenceCID').notEmpty(),
