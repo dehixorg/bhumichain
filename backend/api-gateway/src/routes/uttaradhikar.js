@@ -36,26 +36,47 @@ router.post(
     try {
       const {
         dlpiId, familyId, deceasedName, deceasedAadhaarHash,
-        dateOfDeath, deathCertCID, crsRegistrationNo,
+        dateOfDeath, deathCertCID, crsRegistrationNo, heirs
       } = req.body;
 
-      // Step 1: Call CoparcenaryMapper AI to compute heirs and applicable law
       let aiResult = null;
-      try {
-        const aiRes = await axios.post(`${AI_URL()}/coparcenary/compute`, {
-          dlpiId, familyId, deceasedName, dateOfDeath,
-        });
-        aiResult = aiRes.data;
-      } catch (e) {
-        console.warn('[CoparcenaryMapper] AI service unreachable, using mock');
-        // Return pre-scripted heirs in mock mode
+      if (heirs && Array.isArray(heirs) && heirs.length > 0) {
+        // Compute equal shares based on the dynamic heirs
+        const shareDec = 1.0 / heirs.length;
+        const shareStr = `1/${heirs.length}`;
+        const formattedHeirs = heirs.map((h, i) => ({
+          heirId: `HEIR-DYN-${i+1}`,
+          name: h.name || 'Unknown',
+          aadhaarHash: h.aadhaar, // Store raw Aadhaar
+          relation: 'Legal Heir', gender: 'Unknown', dob: '1990-01-01',
+          isAlive: true, isAdult: true, isNri: false,
+          share: shareStr, shareDecimal: shareDec,
+          hasConsented: false, hasObjected: false,
+        }));
+        
         aiResult = {
           applicableLaw: 'Hindu Succession Act 1956/2005',
-          heirs: JSON.stringify(require('../mock/responses').DEMO_SUCCESSION_CASE.heirs),
+          heirs: JSON.stringify(formattedHeirs),
           minorHeirs: '[]',
-          aiComputationCID: 'QmMockCoparcenaryOutput',
-          aiConfidenceScore: 0.97,
+          aiComputationCID: 'QmDynamicHeirComputation',
+          aiConfidenceScore: 1.0,
         };
+      } else {
+        try {
+          const aiRes = await axios.post(`${AI_URL()}/coparcenary/compute`, {
+            dlpiId, familyId, deceasedName, dateOfDeath,
+          });
+          aiResult = aiRes.data;
+        } catch (e) {
+          console.warn('[CoparcenaryMapper] AI service unreachable, using mock');
+          aiResult = {
+            applicableLaw: 'Hindu Succession Act 1956/2005',
+            heirs: JSON.stringify(require('../mock/responses').DEMO_SUCCESSION_CASE.heirs),
+            minorHeirs: '[]',
+            aiComputationCID: 'QmMockCoparcenaryOutput',
+            aiConfidenceScore: 0.97,
+          };
+        }
       }
 
       // Step 2: Submit succession to chaincode
@@ -84,6 +105,16 @@ router.post(
   },
 );
 
+// GET /api/succession/my-pending — returns cases awaiting consent from logged-in heir
+router.get('/my-pending', authenticate, requireRole(ROLES.CITIZEN), async (req, res) => {
+  try {
+    const list = await evaluate('uttaradhikar', 'GetMyPendingSuccessions', [req.user.aadhaarHash]);
+    res.json(list || []);
+  } catch (e) {
+    res.status(500).json({ error: 'FABRIC_ERROR', message: e.message });
+  }
+});
+
 // GET /api/succession/:caseId
 router.get('/:caseId', authenticate, async (req, res) => {
   try {
@@ -94,6 +125,27 @@ router.get('/:caseId', authenticate, async (req, res) => {
     res.status(500).json({ error: 'FABRIC_ERROR', message: e.message });
   }
 });
+
+// POST /api/succession/:caseId/execute — Officer finalizes succession
+router.post(
+  '/:caseId/execute',
+  authenticate,
+  requireRole(ROLES.REVENUE_OFFICER, ROLES.COLLECTOR),
+  async (req, res) => {
+    try {
+      const result = await submit('uttaradhikar', 'ExecuteSuccession', [req.params.caseId]);
+      
+      broadcast('SuccessionExecuted', {
+        caseId: req.params.caseId,
+        message: 'Succession finalized. Parcel ownership updated.',
+      }, req.params.caseId); // Assuming we can use caseId as room for now
+
+      res.json(result);
+    } catch (e) {
+      res.status(500).json({ error: 'FABRIC_ERROR', message: e.message });
+    }
+  }
+);
 
 // GET /api/succession/dlpi/:dlpiId — active succession case for a parcel
 router.get('/dlpi/:dlpiId', authenticate, async (req, res) => {

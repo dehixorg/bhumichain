@@ -10,6 +10,7 @@ import {
 import clsx from 'clsx';
 import Sidebar from '@/components/dashboard/Sidebar';
 import { getUser, apiFetch, type JWTUser } from '@/lib/auth';
+import { executeSuccession } from '@/lib/api';
 import toast from 'react-hot-toast';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -246,14 +247,16 @@ export default function OfficerDashboardPage() {
   const [error, setError]   = useState('');
   const [tab, setTab]       = useState<TabKey>('all');
   const [transfersQueue, setTransfersQueue] = useState<any[]>([]);
+  const [successionsQueue, setSuccessionsQueue] = useState<any[]>([]);
 
   const fetchQueue = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
-      const [resDlpi, resTransfers] = await Promise.all([
+      const [resDlpi, resTransfers, resSuccessions] = await Promise.all([
         apiFetch('/api/dlpi/pending-review'),
-        apiFetch('/api/transfer/pending/all').catch(() => ({ ok: false, json: async () => [] })) // Ignore transfer fetch errors for now
+        apiFetch('/api/transfer/pending/all').catch(() => ({ ok: false, json: async () => [] })),
+        apiFetch('/api/succession/pending/all').catch(() => ({ ok: false, json: async () => [] }))
       ]);
       
       const dlpiData = await resDlpi.json();
@@ -263,6 +266,11 @@ export default function OfficerDashboardPage() {
       if (resTransfers.ok) {
         const transfersData = await resTransfers.json();
         setTransfersQueue(transfersData);
+      }
+      
+      if (resSuccessions.ok) {
+        const successionsData = await resSuccessions.json();
+        setSuccessionsQueue(successionsData);
       }
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Could not load queue');
@@ -456,6 +464,56 @@ export default function OfficerDashboardPage() {
                              Review
                              <ChevronRight className="w-3 h-3" />
                            </Link>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* Pending Successions Queue */}
+          {successionsQueue.length > 0 && (
+            <div className="bg-white border border-gray-200 rounded-xl overflow-hidden mt-6 shadow-sm">
+              <div className="flex items-center gap-2 border-b border-gray-100 px-4 py-3 bg-[#138808]/5">
+                <Users className="w-4 h-4 text-[#138808]" />
+                <h2 className="text-sm font-bold text-gray-900">Pending Successions (Mutations)</h2>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-gray-100 bg-gray-50">
+                      <th className="px-4 py-2.5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Case ID</th>
+                      <th className="px-4 py-2.5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Deceased Name</th>
+                      <th className="px-4 py-2.5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Parcel DLPI</th>
+                      <th className="px-4 py-2.5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {successionsQueue.map(item => (
+                      <tr key={item.caseId} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                        <td className="px-4 py-3 font-mono text-[#0F4C81] text-xs font-semibold">{item.caseId}</td>
+                        <td className="px-4 py-3 text-gray-900 text-sm font-semibold">{item.deceasedName}</td>
+                        <td className="px-4 py-3 text-gray-900 font-mono text-sm">{item.dlpiId}</td>
+                        <td className="px-4 py-3">
+                           {user?.role === 'tehsildar' && (
+                             <button
+                               onClick={async () => {
+                                 try {
+                                   await executeSuccession(item.caseId);
+                                   toast.success('Succession Executed');
+                                   fetchQueue();
+                                 } catch (e: any) {
+                                   toast.error('Failed to execute succession: ' + e.message);
+                                 }
+                               }}
+                               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors bg-[#138808] hover:bg-[#0e6306] text-white"
+                             >
+                               Execute
+                               <CheckCircle className="w-3 h-3" />
+                             </button>
+                           )}
                         </td>
                       </tr>
                     ))}

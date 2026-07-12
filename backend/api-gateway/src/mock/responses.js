@@ -643,6 +643,7 @@ const DEMO_WS_EVENTS = {
 };
 
 let MOCK_SCANS = [];
+let MOCK_SUCCESSION_CASES = [];
 
 module.exports = {
   DEMO_DLPI,
@@ -754,16 +755,75 @@ module.exports = {
         return { mutationId: args[0], status: 'OBJECTION_FILED', objectionAt: new Date().toISOString() };
       case 'mutation-manager::ExecuteMutation':
         return { mutationId: args[0], status: 'EXECUTED', executedAt: new Date().toISOString(), txHash: `0xmut-exec-${Date.now()}` };
-      case 'uttaradhikar::InitiateSuccession':
-        return { caseId: DEMO_SUCCESSION_CASE.caseId, status: 'HEIRS_IDENTIFIED' };
+      case 'uttaradhikar::InitiateSuccessionByDeathCert':
+      case 'uttaradhikar::InitiateSuccession': {
+        const caseId = `SUC-${args[0]}-${Date.now().toString(16)}`;
+        let heirs = [];
+        try {
+          if (args.length >= 10 && args[9]) {
+            heirs = JSON.parse(args[9]);
+          }
+        } catch (e) {}
+        const newCase = {
+          caseId,
+          dlpiId: args[0],
+          familyId: args[1],
+          deceasedName: args[2],
+          deceasedAadhaarHash: args[3],
+          status: 'AWAITING_CONSENT',
+          heirs: heirs,
+        };
+        MOCK_SUCCESSION_CASES.push(newCase);
+        return { caseId, status: 'HEIRS_IDENTIFIED' };
+      }
       case 'uttaradhikar::GetSuccessionCase':
-        return DEMO_SUCCESSION_CASE;
+        return MOCK_SUCCESSION_CASES.find(c => c.caseId === args[0]) || DEMO_SUCCESSION_CASE;
       case 'uttaradhikar::GetSuccessionByDLPI':
-        return args[0] === DEMO_SUCCESSION_CASE.dlpiId ? [DEMO_SUCCESSION_CASE] : [];
+        const activeCase = MOCK_SUCCESSION_CASES.find(c => c.dlpiId === args[0]);
+        return activeCase ? [activeCase] : [];
       case 'uttaradhikar::QueryPendingSuccessions':
-        return [DEMO_SUCCESSION_CASE];
-      case 'uttaradhikar::RecordHeirConsent':
+        return MOCK_SUCCESSION_CASES.filter(c => c.status === 'PENDING_TEHSILDAR');
+      case 'uttaradhikar::GetMyPendingSuccessions': {
+        const myHash = args[0];
+        return MOCK_SUCCESSION_CASES.filter(c => {
+          if (c.status !== 'AWAITING_CONSENT') return false;
+          const me = c.heirs?.find(h => h.aadhaarHash === myHash);
+          return me && !me.hasConsented;
+        });
+      }
+      case 'uttaradhikar::RecordHeirConsent': {
+        const sc = MOCK_SUCCESSION_CASES.find(c => c.caseId === args[0]);
+        if (sc && sc.heirs) {
+          const heir = sc.heirs.find(h => h.aadhaarHash === args[1]);
+          if (heir) {
+            heir.hasConsented = true;
+            heir.consentedAt = new Date().toISOString();
+            heir.eSignTxHash = args[2];
+          }
+          if (sc.heirs.every(h => h.hasConsented)) {
+            sc.status = 'PENDING_TEHSILDAR';
+          }
+        }
         return { caseId: args[0], heirAadhaarHash: args[1], eSignTxHash: args[2], consentedAt: new Date().toISOString(), status: 'CONSENT_RECORDED' };
+      }
+      case 'uttaradhikar::ExecuteSuccession': {
+        const sc = MOCK_SUCCESSION_CASES.find(c => c.caseId === args[0]);
+        if (sc && sc.heirs) {
+          sc.status = 'EXECUTED';
+          // Find the parcel in MOCK_SCANS and replace initialOwners
+          const parcel = MOCK_SCANS.find(p => p.dlpiId === sc.dlpiId);
+          if (parcel) {
+            parcel.initialOwners = sc.heirs.map(h => ({
+              name: h.name,
+              aadhaarHash: h.aadhaarHash,
+              share: h.share,
+              shareDecimal: h.shareDecimal
+            }));
+            parcel.claimStatus = 'VERIFIED';
+          }
+        }
+        return { caseId: args[0], status: 'EXECUTED', executedAt: new Date().toISOString(), txHash: `0xsuc-exec-${Date.now()}` };
+      }
       case 'uttaradhikar::RecordHeirObjection':
         return { caseId: args[0], heirAadhaarHash: args[1], reason: args[2], objectedAt: new Date().toISOString(), status: 'OBJECTION_FILED' };
       case 'uttaradhikar::RecordHeirNotification':

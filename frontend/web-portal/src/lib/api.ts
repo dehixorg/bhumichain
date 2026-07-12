@@ -122,18 +122,27 @@ export async function initiateSuccession(payload: {
   dateOfDeath: string;
   deathCertCID: string;
   crsRegistrationNo: string;
+  heirs?: { name: string; aadhaar: string }[];
 }) {
-  const res = await api.post(`/api/dlpi/${payload.dlpiId}/initiate-succession`, {
-    deceasedHash: payload.deceasedAadhaarHash
-  });
+  const res = await api.post(`/api/succession/initiate`, payload);
   return res.data;
 }
 
-export async function recordHeirConsent(dlpiId: string, payload: {
+export async function recordHeirConsent(caseId: string, payload: {
   heirAadhaarHash: string;
   eSignTxHash: string;
 }) {
-  const res = await api.post(`/api/dlpi/${dlpiId}/consent-succession`, payload);
+  const res = await api.post(`/api/succession/${caseId}/consent`, payload);
+  return res.data;
+}
+
+export async function getMyPendingSuccessions() {
+  const res = await api.get(`/api/succession/my-pending`);
+  return res.data;
+}
+
+export async function executeSuccession(caseId: string) {
+  const res = await api.post(`/api/succession/${caseId}/execute`);
   return res.data;
 }
 

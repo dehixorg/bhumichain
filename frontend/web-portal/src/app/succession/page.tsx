@@ -8,7 +8,7 @@ import MutationAlert from '@/components/modals/MutationAlert';
 import { useWebSocket } from '@/hooks/useWebSocket';
 import {
   getDemoToken, initiateSuccession, recordHeirConsent,
-  getSuccessionCase, verifyCRS,
+  getSuccessionCase, verifyCRS, getMyPendingSuccessions
 } from '@/lib/api';
 import type { SuccessionCase, SuccessionHeir } from '@/types';
 import toast from 'react-hot-toast';
@@ -115,12 +115,23 @@ export default function SuccessionPage() {
   const [aiSteps, setAiSteps]     = useState(AI_STEPS.map((label) => ({ label, done: false })));
   const [crsAiSteps, setCrsAiSteps] = useState<{label: string, done: boolean}[]>([]);
   const [crsExtraction, setCrsExtraction] = useState<any>(null);
+  const [dynamicHeirs, setDynamicHeirs] = useState([{ name: '', aadhaar: '' }]);
+  const [myPendingCases, setMyPendingCases] = useState<SuccessionCase[]>([]);
+
+  const addHeir = () => setDynamicHeirs([...dynamicHeirs, { name: '', aadhaar: '' }]);
+  const removeHeir = (idx: number) => setDynamicHeirs(dynamicHeirs.filter((_, i) => i !== idx));
+  const updateHeir = (idx: number, field: string, val: string) => {
+    const newHeirs = [...dynamicHeirs];
+    newHeirs[idx][field as 'name' | 'aadhaar'] = val;
+    setDynamicHeirs(newHeirs);
+  };
 
   const { triggerMock, on: onWs } = useWebSocket(DEMO_DLPI);
 
   // Acquire demo token on mount
   useEffect(() => {
     getDemoToken('oracle', 'CRS Oracle').catch(() => {});
+    getMyPendingSuccessions().then(setMyPendingCases).catch(() => {});
   }, []);
 
   // Live WebSocket events
@@ -195,6 +206,7 @@ export default function SuccessionPage() {
         dateOfDeath:         DEMO_DECEASED.dod,
         deathCertCID:        DEMO_CRS.deathCertCID,
         crsRegistrationNo:   DEMO_CRS.crsRegistrationNo,
+        heirs:               dynamicHeirs,
       });
       const sc = await getSuccessionCase(res.caseId || 'SUC-DLPI-UP-DAD-00100-a1b2c3d4');
       setCaseData(sc);
@@ -313,9 +325,98 @@ export default function SuccessionPage() {
           {/* ── Left column: main flow ──────────────────────────────────── */}
           <div className="flex-1 min-w-0 space-y-5">
 
+            {myPendingCases.length > 0 && (
+              <div className="card border-[#0F4C81] border-2 shadow-lg relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
+                  <AlertTriangle className="w-32 h-32" />
+                </div>
+                <div className="flex items-center gap-3 mb-4 border-b border-gray-100 pb-4 relative">
+                  <div className="bg-[#0F4C81] p-2 rounded-lg shrink-0">
+                    <FileText className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-gray-900">Pending Successions</h3>
+                    <p className="text-sm text-gray-500">You have been listed as a legal heir</p>
+                  </div>
+                </div>
+                <div className="space-y-4 relative">
+                  {myPendingCases.map((c) => (
+                    <div key={c.caseId} className="flex flex-col gap-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                      <div className="flex justify-between">
+                        <span className="font-semibold text-gray-800">{c.deceasedName}</span>
+                        <span className="text-xs text-gray-500 font-mono">{c.dlpiId}</span>
+                      </div>
+                      <div className="flex justify-between items-center mt-2">
+                        <span className="text-sm text-gray-600">Please provide your eSign consent</span>
+                        <button
+                          onClick={() => {
+                            setCaseData(c);
+                            setHeirs(c.heirs.map(h => ({ ...h, hasConsented: h.hasConsented || false, hasObjected: false })));
+                            setStage('heirs_identified');
+                          }}
+                          className="btn-primary py-1 px-4 text-sm"
+                        >
+                          Review & eSign
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* IDLE: Trigger */}
             {stage === 'idle' && (
-              <div className="card border-dashed border-2 bg-[#F8FAFC]/50 hover:bg-[#F8FAFC] transition-colors cursor-pointer relative">
+              <div className="space-y-6">
+                <div className="card">
+                  <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-100">
+                    <Users className="w-5 h-5 text-[#0F4C81]" />
+                    <span className="text-base font-semibold text-gray-800">Legal Heirs</span>
+                  </div>
+                  <div className="space-y-4">
+                    {dynamicHeirs.map((heir, idx) => (
+                      <div key={idx} className="flex gap-4 items-end bg-gray-50 p-4 rounded-lg border border-gray-200">
+                        <div className="flex-1">
+                          <label className="block text-xs text-gray-500 mb-1">Full Name</label>
+                          <input
+                            type="text"
+                            value={heir.name}
+                            onChange={(e) => updateHeir(idx, 'name', e.target.value)}
+                            className="input-field w-full text-sm"
+                            placeholder="e.g. Suresh Yadav"
+                          />
+                        </div>
+                        <div className="flex-1">
+                          <label className="block text-xs text-gray-500 mb-1">Aadhaar Number</label>
+                          <input
+                            type="text"
+                            value={heir.aadhaar}
+                            onChange={(e) => updateHeir(idx, 'aadhaar', e.target.value)}
+                            className="input-field w-full text-sm font-mono"
+                            placeholder="123412341234"
+                            maxLength={12}
+                          />
+                        </div>
+                        {dynamicHeirs.length > 1 && (
+                          <button
+                            onClick={() => removeHeir(idx)}
+                            className="text-red-500 hover:bg-red-50 p-2 rounded transition-colors mb-0.5"
+                          >
+                            Remove
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                    <button
+                      onClick={addHeir}
+                      className="text-[#0F4C81] text-sm font-semibold hover:underline flex items-center gap-1"
+                    >
+                      + Add Another Heir
+                    </button>
+                  </div>
+                </div>
+
+                <div className="card border-dashed border-2 bg-[#F8FAFC]/50 hover:bg-[#F8FAFC] transition-colors cursor-pointer relative">
                 <input
                   type="file"
                   accept="image/*,.pdf"
@@ -337,6 +438,7 @@ export default function SuccessionPage() {
                   </div>
                 </div>
               </div>
+            </div>
             )}
 
             {/* SCANNING CRS */}
