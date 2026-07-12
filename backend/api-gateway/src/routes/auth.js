@@ -271,40 +271,49 @@ router.post('/demo-token', (req, res) => {
   const DEMO_PERSONAS = {
     tehsildar: {
       role: 'tehsildar', name: 'Amit Saxena',
-      aadhaarHash: computeAadhaarHash('999900010001'),
+      aadhaarHash: '999900010001',
       jurisdictionCode: 'GBN-DAD', tehsilCode: 'DAD',
     },
     circle_inspector: {
       role: 'circle_inspector', name: 'Rajesh Verma',
-      aadhaarHash: computeAadhaarHash('999900010002'),
+      aadhaarHash: '999900010002',
       jurisdictionCode: 'GBN-DAD', circleCode: 'DAD-C1',
       patwariCodes: ['DAD-P1', 'DAD-P2', 'DAD-P3'], tehsilCode: 'DAD',
     },
     patwari: {
       role: 'patwari', name: 'Vijay Singh',
-      aadhaarHash: computeAadhaarHash('999900010003'),
+      aadhaarHash: '999900010003',
       jurisdictionCode: 'GBN-DAD', patwariCode: 'DAD-P1',
       villageCodes: ['DAD-001', 'DAD-002', 'DAD-003'], tehsilCode: 'DAD',
     },
     citizen_deceased: {
       role: 'citizen', name: 'Ramesh Kumar',
-      aadhaarHash: computeAadhaarHash('999900010009'),
+      aadhaarHash: '999900010009',
     },
     citizen: {
       role: 'citizen', name: 'Priya Kumar',
-      aadhaarHash: computeAadhaarHash('999900010010'),
+      aadhaarHash: '999900010010',
     },
     citizen_buyer: {
       role: 'citizen', name: 'Rakesh Agarwal',
-      aadhaarHash: computeAadhaarHash('999900010011'),
+      aadhaarHash: '999900010011',
+    },
+    // Suresh Yadav — heir who receives eSign requests
+    suresh_yadav: {
+      role: 'citizen', name: 'Suresh Yadav',
+      aadhaarHash: '999900010012',
+    },
+    meena_devi: {
+      role: 'citizen', name: 'Meena Devi',
+      aadhaarHash: '999900010013',
     },
     citizen_heir1: {
       role: 'citizen', name: 'Arun Kumar',
-      aadhaarHash: computeAadhaarHash('999900010014'),
+      aadhaarHash: '999900010014',
     },
     citizen_heir2: {
       role: 'citizen', name: 'Sunita Kumar',
-      aadhaarHash: computeAadhaarHash('999900010015'),
+      aadhaarHash: '999900010015',
     },
   };
 

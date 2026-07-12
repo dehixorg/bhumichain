@@ -208,6 +208,8 @@ const DEMO_PERSONAS: Record<string, any> = {
 const state = {
   myParcels: [...DEMO_MY_PARCELS],
   pendingReview: [...DEMO_PENDING_REVIEW],
+  // Shared in-memory succession store — persists across page loads within same browser session
+  pendingSuccessions: [] as any[],
   mutations: [
     {
       mutationId:              'MUT-DLPI-UP-DAD-00100-d4e5f6a7',
@@ -273,7 +275,21 @@ export async function handleMockApi(path: string, options: RequestInit): Promise
   }
 
   if (path === '/api/dlpi/my-parcels') {
-    return jsonResponse(state.myParcels);
+    // Get the currently logged-in user from the auth header
+    const authHeader = (options.headers as Record<string, string>)?.['Authorization'] || '';
+    const tokenPayload = authHeader.startsWith('Bearer mock.') ? JSON.parse(atob(authHeader.split('.')[1])) : null;
+    const myAadhaar = tokenPayload?.aadhaarHash || '';
+    // Filter to only return parcels that belong to this user
+    const myParcels = myAadhaar
+      ? state.myParcels.filter(p => {
+          const owners = (p as any).owners || [];
+          if (owners.length > 0) return owners.some((o: any) => o.aadhaarHash === myAadhaar);
+          // Fallback: check by name for demo parcels
+          const persona = Object.values(DEMO_PERSONAS).find((p: any) => p.aadhaarHash === myAadhaar) as any;
+          return persona && (p as any).owner?.name === persona.name;
+        })
+      : state.myParcels;
+    return jsonResponse(myParcels);
   }
 
   if (path === '/api/dlpi/pending-review') {
@@ -325,6 +341,65 @@ export async function handleMockApi(path: string, options: RequestInit): Promise
 
   if (path.match(/^\/api\/mutation\/[^\/]+$/)) {
     return jsonResponse(state.mutations[0]);
+  }
+
+  // ── Succession routes ───────────────────────────────────────────────────────
+
+  if (path === '/api/succession/initiate' && method === 'POST') {
+    const { dlpiId, deceasedName, heirs } = body;
+    const caseId = 'SUC-' + dlpiId + '-' + Math.random().toString(36).slice(2, 8);
+    const successionCase = {
+      caseId,
+      dlpiId,
+      deceasedName,
+      status: 'AWAITING_CONSENTS',
+      heirs: (heirs || []).map((h: any, i: number) => ({
+        heirId: `HEIR-DYN-${i+1}`,
+        name: h.name || 'Unknown',
+        aadhaarHash: (h.aadhaar || '').replace(/\D/g, ''), // normalize — store raw digits
+        hasConsented: false,
+        hasObjected: false,
+        finalShare: `1/${heirs.length}`,
+        finalShareDec: 1 / heirs.length,
+      })),
+      createdAt: new Date().toISOString(),
+    };
+    state.pendingSuccessions.push(successionCase);
+    return jsonResponse({ caseId, status: 'AWAITING_CONSENTS', heirs: successionCase.heirs });
+  }
+
+  if (path === '/api/succession/my-pending' && method === 'GET') {
+    // Parse the logged-in user's Aadhaar from the Bearer mock token
+    const authHeader = (options.headers as Record<string, string>)?.['Authorization'] || '';
+    const tokenPayload = authHeader.startsWith('Bearer mock.') ? JSON.parse(atob(authHeader.split('.')[1])) : null;
+    const myAadhaar = (tokenPayload?.aadhaarHash || '').replace(/\D/g, '');
+    console.log('[MOCK my-pending] My Aadhaar:', myAadhaar, 'All cases:', state.pendingSuccessions.length);
+    const pending = state.pendingSuccessions.filter(sc => {
+      if (sc.status !== 'AWAITING_CONSENTS') return false;
+      const heir = sc.heirs?.find((h: any) => h.aadhaarHash.replace(/\D/g, '') === myAadhaar);
+      return heir && !heir.hasConsented;
+    });
+    return jsonResponse(pending);
+  }
+
+  if (path.match(/^\/api\/succession\/[^\/]+\/consent$/) && method === 'POST') {
+    const caseId = path.split('/')[3];
+    const { heirAadhaarHash } = body;
+    const sc = state.pendingSuccessions.find(c => c.caseId === caseId);
+    if (sc) {
+      const heir = sc.heirs?.find((h: any) => h.aadhaarHash.replace(/\D/g, '') === (heirAadhaarHash || '').replace(/\D/g, ''));
+      if (heir) heir.hasConsented = true;
+      const allConsented = sc.heirs?.every((h: any) => h.hasConsented);
+      if (allConsented) sc.status = 'PENDING_TEHSILDAR_APPROVAL';
+    }
+    return jsonResponse({ caseId, status: sc?.status || 'AWAITING_CONSENTS' });
+  }
+
+  if (path.match(/^\/api\/succession\/[^\/]+$/) && method === 'GET') {
+    const caseId = path.split('/')[3];
+    const sc = state.pendingSuccessions.find(c => c.caseId === caseId);
+    if (sc) return jsonResponse(sc);
+    return jsonResponse({ error: 'CASE_NOT_FOUND' }, 404);
   }
 
   return jsonResponse({ error: 'MOCK_NOT_FOUND', message: 'Mock route not implemented' }, 404);
