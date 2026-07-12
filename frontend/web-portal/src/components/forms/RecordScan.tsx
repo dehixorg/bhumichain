@@ -189,6 +189,7 @@ export default function RecordScan({ onDlpiCreated, mode = 'genesis', onScanComp
     
     // Collect raw Aadhaar numbers from parties (hashing happens server-side with correct HMAC)
     let ownerAadhaarNumbers: { name: string; aadhaar: string }[] = [];
+    let legacyOwners: { name: string; aadhaarHash: string }[] = [];
     try {
       const partiesList = ext?.parties || [];
       for (let i = 0; i < partiesList.length; i++) {
@@ -205,6 +206,16 @@ export default function RecordScan({ onDlpiCreated, mode = 'genesis', onScanComp
             ownerAadhaarNumbers.push({
               name: pName || 'Unknown',
               aadhaar: digits,
+            });
+            // Backward compatibility for old Python backend that expects pre-hashed owners
+            const salt = 'bhumichain-aadhaar-salt-change-in-prod';
+            const msgBuffer = new TextEncoder().encode(digits + salt);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+            legacyOwners.push({
+              name: pName || 'Unknown',
+              aadhaarHash: 'sha256:' + hashHex
             });
           }
         }
@@ -228,7 +239,7 @@ export default function RecordScan({ onDlpiCreated, mode = 'genesis', onScanComp
           dlpiId,
           officerAadhaarHash:  'sha256:' + '0'.repeat(64),
           ownerAadhaarNumbers, // Raw digits — gateway will HMAC-hash these correctly
-          owners:              [],  // Deprecated: backend uses ownerAadhaarNumbers instead
+          owners:              legacyOwners.length > 0 ? legacyOwners : [],  // Fallback for older remote backend versions
           officerName:         'Vijay Singh (Patwari DAD-P1)',
           correctedFields:     Object.keys(edited).length ? edited : undefined,
           token,
