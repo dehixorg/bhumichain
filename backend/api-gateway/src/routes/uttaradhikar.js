@@ -200,7 +200,7 @@ router.get('/:caseId', authenticate, async (req, res) => {
 router.post(
   '/:caseId/execute',
   authenticate,
-  requireRole(ROLES.REVENUE_OFFICER, ROLES.COLLECTOR),
+  requireRole(ROLES.TEHSILDAR, ROLES.COLLECTOR, ROLES.CIRCLE_INSPECTOR),
   async (req, res) => {
     try {
       let result;
