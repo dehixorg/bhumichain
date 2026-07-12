@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import axios from 'axios';
 
 export async function POST(req: NextRequest) {
   try {
@@ -19,26 +20,25 @@ export async function POST(req: NextRequest) {
       throw new Error("AZURE_DOC_INTEL_KEY environment variable is missing");
     }
 
-    // 1. Submit to Azure
-    const submitUrl = `${endpoint}/formrecognizer/documentModels/${model}:analyze?api-version=2023-07-31`;
-    const submitRes = await fetch(submitUrl, {
-      method: 'POST',
+    // 1. Submit to Azure using axios
+    const submitUrl = `${endpoint.replace(/\/$/, '')}/formrecognizer/documentModels/${model}:analyze?api-version=2023-07-31`;
+    
+    const submitRes = await axios.post(submitUrl, { base64Source }, {
       headers: {
         'Ocp-Apim-Subscription-Key': key,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ base64Source })
+      validateStatus: () => true // Handle errors manually
     });
 
-    if (!submitRes.ok) {
-      const err = await submitRes.text();
-      throw new Error(`Azure Submit Failed: ${submitRes.status} ${err}`);
+    if (submitRes.status >= 400) {
+      throw new Error(`Azure Submit Failed: ${submitRes.status} ${JSON.stringify(submitRes.data)}`);
     }
 
-    const operationUrl = submitRes.headers.get('Operation-Location');
+    const operationUrl = submitRes.headers['operation-location'];
     if (!operationUrl) throw new Error("No Operation-Location returned by Azure");
 
-    // 2. Poll for results
+    // 2. Poll for results using axios
     let status = "running";
     let text = "";
     
@@ -46,13 +46,14 @@ export async function POST(req: NextRequest) {
     for (let i = 0; i < 15; i++) {
       await new Promise(r => setTimeout(r, 2000));
       
-      const pollRes = await fetch(operationUrl, {
-        headers: { 'Ocp-Apim-Subscription-Key': key }
+      const pollRes = await axios.get(operationUrl, {
+        headers: { 'Ocp-Apim-Subscription-Key': key },
+        validateStatus: () => true
       });
       
-      if (!pollRes.ok) throw new Error(`Azure Poll Failed: ${pollRes.status}`);
+      if (pollRes.status >= 400) throw new Error(`Azure Poll Failed: ${pollRes.status}`);
       
-      const pollData = await pollRes.json();
+      const pollData = pollRes.data;
       status = pollData.status;
       
       if (status === "succeeded") {
@@ -102,8 +103,8 @@ export async function POST(req: NextRequest) {
       rawText: text
     });
 
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Unknown OCR error';
+  } catch (err: any) {
+    const message = err.message || 'Unknown OCR error';
     console.error('[/api/scan/death-cert] Error:', message);
     return NextResponse.json(
       { detail: `OCR Service Unavailable: ${message}` },
