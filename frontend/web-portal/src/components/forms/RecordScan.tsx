@@ -187,7 +187,7 @@ export default function RecordScan({ onDlpiCreated, mode = 'genesis', onScanComp
       return;
     }
     
-    // Collect raw Aadhaar numbers from parties (hashing happens server-side with correct HMAC)
+    // Collect raw Aadhaar numbers from parties — stored directly, no hashing
     let ownerAadhaarNumbers: { name: string; aadhaar: string }[] = [];
     let legacyOwners: { name: string; aadhaarHash: string }[] = [];
     try {
@@ -207,15 +207,10 @@ export default function RecordScan({ onDlpiCreated, mode = 'genesis', onScanComp
               name: pName || 'Unknown',
               aadhaar: digits,
             });
-            // Backward compatibility for old Python backend that expects pre-hashed owners
-            const salt = 'bhumichain-aadhaar-salt-change-in-prod';
-            const msgBuffer = new TextEncoder().encode(digits + salt);
-            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-            const hashArray = Array.from(new Uint8Array(hashBuffer));
-            const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+            // Legacy owners array — store raw digits directly as aadhaarHash (no hashing)
             legacyOwners.push({
               name: pName || 'Unknown',
-              aadhaarHash: 'sha256:' + hashHex
+              aadhaarHash: digits  // Raw Aadhaar stored directly for instant matching
             });
           }
         }

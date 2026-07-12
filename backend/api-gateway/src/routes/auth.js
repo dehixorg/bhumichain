@@ -82,7 +82,8 @@ router.post('/request-otp', async (req, res) => {
     return res.status(400).json({ error: 'Aadhaar must be 12 digits' });
   }
 
-  const aadhaarHash = computeAadhaarHash(digits);
+  // Store raw digits as aadhaarHash — no hashing, direct match with DLPI records
+  const aadhaarHash = digits;
   const otp = generateOTP();
   otpStore.set(aadhaarHash, { otp, expiresAt: Date.now() + OTP_TTL_MS });
 
@@ -109,7 +110,8 @@ router.post('/verify-otp', async (req, res) => {
   }
 
   const digits = aadhaarNumber.replace(/\D/g, '');
-  const aadhaarHash = computeAadhaarHash(digits);
+  // Use raw digits as aadhaarHash — direct match with DLPI initialOwners
+  const aadhaarHash = digits;
 
   // Verify OTP
   const stored = otpStore.get(aadhaarHash);
@@ -169,7 +171,7 @@ router.post('/officer-login', async (req, res) => {
   }
 
   const digits = aadhaarNumber.replace(/\D/g, '');
-  const aadhaarHash = computeAadhaarHash(digits);
+  const aadhaarHash = digits; // Raw digits — no hash
 
   // Verify OTP
   const stored = otpStore.get(aadhaarHash);
