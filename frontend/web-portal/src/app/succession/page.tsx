@@ -209,13 +209,13 @@ export default function SuccessionPage() {
       const citizenToken = citizenTokenRef.current || localStorage.getItem('bhumichain_token');
       await getDemoToken('oracle', 'CRS Oracle'); // sets oracle token in localStorage
       const res = await initiateSuccession({
-        dlpiId:              DEMO_DLPI,
+        dlpiId:              crsExtraction?.dlpiId || DEMO_DLPI,
         familyId:            DEMO_FAMILY_ID,
-        deceasedName:        DEMO_DECEASED.name,
-        deceasedAadhaarHash: DEMO_DECEASED.aadhaarHash,
-        dateOfDeath:         DEMO_DECEASED.dod,
+        deceasedName:        crsExtraction?.name || DEMO_DECEASED.name,
+        deceasedAadhaarHash: crsExtraction?.aadhaarHash || DEMO_DECEASED.aadhaarHash,
+        dateOfDeath:         crsExtraction?.dod || DEMO_DECEASED.dod,
         deathCertCID:        DEMO_CRS.deathCertCID,
-        crsRegistrationNo:   DEMO_CRS.crsRegistrationNo,
+        crsRegistrationNo:   crsExtraction?.crsRegistrationNo || DEMO_CRS.crsRegistrationNo,
         heirs: [
           { name: user?.name || 'Initiator', aadhaar: user?.aadhaarHash || '' },
           ...dynamicHeirs
@@ -469,10 +469,22 @@ export default function SuccessionPage() {
                   ) : (
                     <div className="space-y-3">
                       <div className="grid grid-cols-2 gap-3 text-sm bg-green-50 border border-green-100 rounded-xl p-4">
-                        <div><span className="text-xs text-gray-500 block">Deceased</span><strong>{crsExtraction.name}</strong></div>
-                        <div><span className="text-xs text-gray-500 block">Date of Death</span><strong>{format(new Date(crsExtraction.dod || Date.now()), 'dd MMM yyyy')}</strong></div>
-                        <div><span className="text-xs text-gray-500 block">Parcel ID</span><strong className="text-[#0F4C81] font-mono">{crsExtraction.dlpiId}</strong></div>
-                        <div><span className="text-xs text-gray-500 block">CRS Reg. No.</span><strong className="font-mono">{crsExtraction.crsRegistrationNo}</strong></div>
+                        <div>
+                          <span className="text-xs text-gray-500 block mb-1">Deceased</span>
+                          <input type="text" value={crsExtraction.name} onChange={e => setCrsExtraction({...crsExtraction, name: e.target.value})} className="input-field w-full text-sm font-bold bg-white" />
+                        </div>
+                        <div>
+                          <span className="text-xs text-gray-500 block mb-1">Date of Death</span>
+                          <input type="date" value={crsExtraction.dod} onChange={e => setCrsExtraction({...crsExtraction, dod: e.target.value})} className="input-field w-full text-sm font-bold bg-white" />
+                        </div>
+                        <div>
+                          <span className="text-xs text-gray-500 block mb-1">Parcel ID</span>
+                          <input type="text" value={crsExtraction.dlpiId} onChange={e => setCrsExtraction({...crsExtraction, dlpiId: e.target.value})} className="input-field w-full text-sm font-bold text-[#0F4C81] font-mono bg-white" />
+                        </div>
+                        <div>
+                          <span className="text-xs text-gray-500 block mb-1">CRS Reg. No.</span>
+                          <input type="text" value={crsExtraction.crsRegistrationNo} onChange={e => setCrsExtraction({...crsExtraction, crsRegistrationNo: e.target.value})} className="input-field w-full text-sm font-bold font-mono bg-white" />
+                        </div>
                       </div>
 
                       {/* THE SUBMIT BUTTON */}
