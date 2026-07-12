@@ -81,7 +81,8 @@ export default function CitizenDashboard() {
   useEffect(() => {
     const u = getUser();
     if (!u) { router.replace('/login'); return; }
-    if (u.role !== 'citizen') { router.replace('/officer-dashboard'); return; }
+    // Officers should be on /officer-dashboard, not here
+    if (u.role && u.role !== 'citizen') { router.replace('/officer-dashboard'); return; }
     setUser(u);
     apiFetch('/api/dlpi/my-parcels')
       .then(r => r.json())
