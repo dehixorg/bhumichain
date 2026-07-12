@@ -63,7 +63,7 @@ const MOCK_ALERT = {
 // Offline fallback heirs — used when API is unreachable
 const OFFLINE_HEIRS: SuccessionHeir[] = [
   {
-    heirId: 'HEIR-001', name: 'Arun Kumar', aadhaarHash: 'sha256:1a8df9e...',
+    heirId: 'HEIR-001', name: 'Suresh Yadav', aadhaarHash: 'sha256:1a8df9e...',
     relation: 'Son', gender: 'Male', dob: '1988-03-15',
     isAlive: true, isAdult: true, isNri: false,
     share: '1/3', shareDecimal: 0.3333, legalNote: undefined,
