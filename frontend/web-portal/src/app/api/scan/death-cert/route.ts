@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const RECORD_SCAN_URL = process.env.RECORD_SCAN_URL || 'http://localhost:8010';
+const RECORD_SCAN_URL = 'http://localhost:8010';
 
 export async function POST(req: NextRequest) {
   try {
