@@ -47,7 +47,7 @@ router.post(
         const formattedHeirs = heirs.map((h, i) => ({
           heirId: `HEIR-DYN-${i+1}`,
           name: h.name || 'Unknown',
-          aadhaarHash: h.aadhaar, // Store raw Aadhaar
+          aadhaarHash: (h.aadhaar || '').replace(/\D/g, ''), // Store normalized raw digits (strip dashes/spaces)
           relation: 'Legal Heir', gender: 'Unknown', dob: '1990-01-01',
           isAlive: true, isAdult: true, isNri: false,
           finalShare: shareStr, finalShareDec: shareDec,
@@ -116,9 +116,10 @@ router.get('/my-pending', authenticate, requireRole(ROLES.CITIZEN), async (req, 
     } catch (fabricErr) {
       // Fallback if chaincode doesn't have GetMyPendingSuccessions implemented yet
       const allPending = await evaluate('uttaradhikar', 'QueryPendingSuccessions', []);
+      const myAadhaar = (req.user.aadhaarHash || '').replace(/\D/g, '');
       list = (allPending || []).filter(c => {
-        if (c.status !== 'AWAITING_CONSENTS') return false;
-        const me = c.heirs?.find(h => h.aadhaarHash === req.user.aadhaarHash);
+        if (!['AWAITING_CONSENTS', 'HEIRS_IDENTIFIED'].includes(c.status)) return false;
+        const me = c.heirs?.find(h => (h.aadhaarHash || '').replace(/\D/g, '') === myAadhaar);
         return me && !me.hasConsented;
       });
     }

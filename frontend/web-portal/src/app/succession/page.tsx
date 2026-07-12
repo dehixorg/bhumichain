@@ -10,6 +10,7 @@ import {
   getDemoToken, initiateSuccession, recordHeirConsent,
   getSuccessionCase, verifyCRS, getMyPendingSuccessions
 } from '@/lib/api';
+import { setToken } from '@/lib/auth';
 import type { SuccessionCase, SuccessionHeir } from '@/types';
 import toast from 'react-hot-toast';
 import {
@@ -127,10 +128,14 @@ export default function SuccessionPage() {
   };
 
   const { triggerMock, on: onWs } = useWebSocket(DEMO_DLPI);
+  // Store the original citizen token before any oracle override
+  const citizenTokenRef = React.useRef<string | null>(null);
 
-  // Acquire demo token on mount
+  // Acquire oracle token temporarily — but RESTORE citizen session after
   useEffect(() => {
-    getDemoToken('oracle', 'CRS Oracle').catch(() => {});
+    // Save the current citizen token before acquiring oracle token
+    citizenTokenRef.current = typeof window !== 'undefined' ? localStorage.getItem('bhumichain_token') : null;
+    // Load pending successions using the CITIZEN's token (before oracle override)
     getMyPendingSuccessions().then(setMyPendingCases).catch(() => {});
   }, []);
 
@@ -198,6 +203,9 @@ export default function SuccessionPage() {
 
     // Initiate on-chain + load case
     try {
+      // Temporarily use oracle token ONLY for this call, then restore citizen session
+      const citizenToken = citizenTokenRef.current || localStorage.getItem('bhumichain_token');
+      await getDemoToken('oracle', 'CRS Oracle'); // sets oracle token in localStorage
       const res = await initiateSuccession({
         dlpiId:              DEMO_DLPI,
         familyId:            DEMO_FAMILY_ID,
@@ -208,11 +216,15 @@ export default function SuccessionPage() {
         crsRegistrationNo:   DEMO_CRS.crsRegistrationNo,
         heirs:               dynamicHeirs,
       });
+      // IMMEDIATELY restore the citizen's original token
+      if (citizenToken) setToken(citizenToken);
       const sc = await getSuccessionCase(res.caseId || 'SUC-DLPI-UP-DAD-00100-a1b2c3d4');
       setCaseData(sc);
       setHeirs(sc.heirs.map((h) => ({ ...h, hasConsented: false, hasObjected: false })));
     } catch {
-      // Full offline fallback
+      // Full offline fallback — also restore token
+      const citizenToken = citizenTokenRef.current;
+      if (citizenToken) setToken(citizenToken);
       setHeirs(OFFLINE_HEIRS);
     }
 
