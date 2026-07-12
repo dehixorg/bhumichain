@@ -23,10 +23,10 @@ export async function POST(req: NextRequest) {
     // 1. Submit to Azure using axios
     const submitUrl = `${endpoint.replace(/\/$/, '')}/formrecognizer/documentModels/${model}:analyze?api-version=2023-07-31`;
     
-    const submitRes = await axios.post(submitUrl, { base64Source }, {
+    const submitRes = await axios.post(submitUrl, buffer, {
       headers: {
         'Ocp-Apim-Subscription-Key': key,
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/octet-stream'
       },
       validateStatus: () => true // Handle errors manually
     });
