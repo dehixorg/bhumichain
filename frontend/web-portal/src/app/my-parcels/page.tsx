@@ -13,6 +13,8 @@ import clsx from 'clsx';
 import CitizenHeader from '@/components/dashboard/CitizenHeader';
 import CitizenFooter from '@/components/dashboard/CitizenFooter';
 import { getUser, apiFetch, type JWTUser } from '@/lib/auth';
+import { recordHeirConsent } from '@/lib/api';
+import toast from 'react-hot-toast';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -73,6 +75,7 @@ export default function CitizenDashboard() {
   const [user, setUser] = useState<JWTUser | null>(null);
   const [parcels, setParcels] = useState<Parcel[]>([]);
   const [loading, setLoading] = useState(true);
+  const [pendingSuccessions, setPendingSuccessions] = useState<any[]>([]);
   const [nyayaQuery, setNyayaQuery] = useState('');
 
   useEffect(() => {
@@ -84,6 +87,11 @@ export default function CitizenDashboard() {
       .then(r => r.json())
       .then(d => { if (Array.isArray(d)) setParcels(d); })
       .finally(() => setLoading(false));
+
+    apiFetch('/api/succession/my-pending')
+      .then(r => r.json())
+      .then(d => { if (Array.isArray(d)) setPendingSuccessions(d); })
+      .catch(e => console.error("Failed to fetch pending successions", e));
   }, [router]);
 
   // Aggregate stats
@@ -94,6 +102,23 @@ export default function CitizenDashboard() {
   const handleNyayaSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (nyayaQuery.trim()) router.push(`/nyaya-ai?q=${encodeURIComponent(nyayaQuery)}`);
+  };
+
+  const handleESign = async (caseId: string) => {
+    if (!user) return;
+    try {
+      toast.loading('Initiating Aadhaar eSign...', { id: 'esign' });
+      await new Promise(r => setTimeout(r, 1500));
+      await recordHeirConsent(caseId, {
+        heirAadhaarHash: user.aadhaarId || '',
+        eSignTxHash: '0x' + Math.random().toString(16).slice(2)
+      });
+      toast.success('Successfully provided eSign consent!', { id: 'esign' });
+      setPendingSuccessions(prev => prev.filter(c => c.caseId !== caseId));
+    } catch (err) {
+      toast.error('Failed to provide consent.', { id: 'esign' });
+      console.error(err);
+    }
   };
 
   if (!user) return null;
@@ -168,6 +193,42 @@ export default function CitizenDashboard() {
           {/* ── Left Column (Main Content) ─────────────────────────────────── */}
           <div className="lg:col-span-2 space-y-10">
             
+            {/* Pending Successions Alert */}
+            {pendingSuccessions.length > 0 && (
+              <section id="pending-actions" className="mb-8">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                  <h2 className="text-xl font-black text-gray-900 tracking-tight">Action Required</h2>
+                </div>
+                <div className="space-y-4">
+                  {pendingSuccessions.map((scase: any) => (
+                    <div key={scase.caseId} className="bg-[#FFFbeb] border border-amber-300 rounded-2xl p-5 shadow-sm">
+                      <div className="flex items-start gap-4">
+                        <div className="w-12 h-12 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
+                          <FileSignature className="w-6 h-6 text-amber-600" />
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="text-base font-bold text-amber-900">Pending Succession eSign</h3>
+                          <p className="text-sm text-amber-800 mt-1">
+                            A succession case has been initiated for Late {scase.deceasedName} (DLPI: {scase.dlpiId}). 
+                            You have been identified as a legal heir. Please review your share and provide your Aadhaar eSign to consent to the mutation.
+                          </p>
+                          <div className="mt-4 flex gap-3">
+                            <button
+                              onClick={() => handleESign(scase.caseId)}
+                              className="bg-amber-600 hover:bg-amber-700 text-white text-sm font-bold py-2 px-5 rounded-lg shadow-sm transition-colors flex items-center gap-2"
+                            >
+                              <FileSignature className="w-4 h-4" /> Review &amp; eSign Now
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
             {/* My Land Holdings */}
             <section id="holdings">
               <div className="flex items-center justify-between mb-5">
