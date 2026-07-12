@@ -773,26 +773,48 @@ module.exports = {
           status: 'AWAITING_CONSENT',
           heirs: heirs,
         };
-        MOCK_SUCCESSION_CASES.push(newCase);
+        const fs = require('fs');
+        let cases = [];
+        try { cases = JSON.parse(fs.readFileSync('/tmp/bhumichain_mock_cases.json')); } catch(e) {}
+        cases.push(newCase);
+        fs.writeFileSync('/tmp/bhumichain_mock_cases.json', JSON.stringify(cases));
         return { caseId, status: 'HEIRS_IDENTIFIED' };
       }
-      case 'uttaradhikar::GetSuccessionCase':
-        return MOCK_SUCCESSION_CASES.find(c => c.caseId === args[0]) || DEMO_SUCCESSION_CASE;
-      case 'uttaradhikar::GetSuccessionByDLPI':
-        const activeCase = MOCK_SUCCESSION_CASES.find(c => c.dlpiId === args[0]);
+      case 'uttaradhikar::GetSuccessionCase': {
+        const fs = require('fs');
+        let cases = [];
+        try { cases = JSON.parse(fs.readFileSync('/tmp/bhumichain_mock_cases.json')); } catch(e) {}
+        return cases.find(c => c.caseId === args[0]) || DEMO_SUCCESSION_CASE;
+      }
+      case 'uttaradhikar::GetSuccessionByDLPI': {
+        const fs = require('fs');
+        let cases = [];
+        try { cases = JSON.parse(fs.readFileSync('/tmp/bhumichain_mock_cases.json')); } catch(e) {}
+        const activeCase = cases.find(c => c.dlpiId === args[0]);
         return activeCase ? [activeCase] : [];
-      case 'uttaradhikar::QueryPendingSuccessions':
-        return MOCK_SUCCESSION_CASES.filter(c => c.status === 'PENDING_TEHSILDAR');
+      }
+      case 'uttaradhikar::QueryPendingSuccessions': {
+        const fs = require('fs');
+        let cases = [];
+        try { cases = JSON.parse(fs.readFileSync('/tmp/bhumichain_mock_cases.json')); } catch(e) {}
+        return cases.filter(c => c.status === 'PENDING_TEHSILDAR');
+      }
       case 'uttaradhikar::GetMyPendingSuccessions': {
         const myHash = args[0];
-        return MOCK_SUCCESSION_CASES.filter(c => {
+        const fs = require('fs');
+        let cases = [];
+        try { cases = JSON.parse(fs.readFileSync('/tmp/bhumichain_mock_cases.json')); } catch(e) {}
+        return cases.filter(c => {
           if (c.status !== 'AWAITING_CONSENT') return false;
           const me = c.heirs?.find(h => h.aadhaarHash === myHash);
           return me && !me.hasConsented;
         });
       }
       case 'uttaradhikar::RecordHeirConsent': {
-        const sc = MOCK_SUCCESSION_CASES.find(c => c.caseId === args[0]);
+        const fs = require('fs');
+        let cases = [];
+        try { cases = JSON.parse(fs.readFileSync('/tmp/bhumichain_mock_cases.json')); } catch(e) {}
+        const sc = cases.find(c => c.caseId === args[0]);
         if (sc && sc.heirs) {
           const heir = sc.heirs.find(h => h.aadhaarHash === args[1]);
           if (heir) {
