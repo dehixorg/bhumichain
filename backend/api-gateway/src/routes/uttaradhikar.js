@@ -83,7 +83,7 @@ router.post(
 
       let result;
       try {
-        result = await submit('uttaradhikar', 'InitiateSuccessionByDeathCert', [
+        const argsArray = [
           dlpiId, familyId, deceasedName, deceasedAadhaarHash,
           dateOfDeath, deathCertCID, crsRegistrationNo,
           'Hindu', // default religion to Hindu
@@ -92,11 +92,25 @@ router.post(
           aiResult.minorHeirs || '[]',
           aiResult.aiComputationCID,
           String(aiResult.aiConfidenceScore),
-        ]);
+        ];
+        
+        result = await submit('uttaradhikar', 'InitiateSuccessionByDeathCert', argsArray);
       } catch (fabricErr) {
         console.warn('[Succession] Real chaincode failed, falling back to mock response', fabricErr.message);
         const { getMockResponse } = require('../mock/responses');
-        result = getMockResponse('uttaradhikar', 'InitiateSuccessionByDeathCert', []);
+        
+        const argsArray = [
+          dlpiId, familyId, deceasedName, deceasedAadhaarHash,
+          dateOfDeath, deathCertCID, crsRegistrationNo,
+          'Hindu',
+          aiResult.applicableLaw,
+          aiResult.heirs,
+          aiResult.minorHeirs || '[]',
+          aiResult.aiComputationCID,
+          String(aiResult.aiConfidenceScore),
+        ];
+        
+        result = getMockResponse('uttaradhikar', 'InitiateSuccessionByDeathCert', argsArray);
       }
 
       broadcast('SuccessionInitiated', {
