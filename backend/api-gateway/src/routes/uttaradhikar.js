@@ -23,7 +23,7 @@ const AI_URL = () => process.env.AI_SERVICE_URL || 'http://localhost:8002';
 router.post(
   '/initiate',
   authenticate,
-  requireRole(ROLES.ORACLE, ROLES.REVENUE_OFFICER, ROLES.COLLECTOR),
+  requireRole(ROLES.ORACLE, ROLES.TEHSILDAR, ROLES.COLLECTOR),
   body('dlpiId').matches(/^DLPI-[A-Z]{2}-[A-Z]{3}-[A-Z0-9]+$/),
   body('familyId').notEmpty(),
   body('deceasedName').notEmpty().trim(),
