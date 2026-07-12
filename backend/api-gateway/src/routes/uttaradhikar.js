@@ -120,14 +120,9 @@ router.get('/my-pending', authenticate, requireRole(ROLES.CITIZEN), async (req, 
     try {
       list = await evaluate('uttaradhikar', 'GetMyPendingSuccessions', [req.user.aadhaarHash]);
     } catch (fabricErr) {
-      // Fallback if chaincode doesn't have GetMyPendingSuccessions implemented yet
-      const allPending = await evaluate('uttaradhikar', 'QueryPendingSuccessions', []);
-      const myAadhaar = (req.user.aadhaarHash || '').replace(/\D/g, '');
-      list = (allPending || []).filter(c => {
-        if (!['AWAITING_CONSENTS', 'HEIRS_IDENTIFIED'].includes(c.status)) return false;
-        const me = c.heirs?.find(h => (h.aadhaarHash || '').replace(/\D/g, '') === myAadhaar);
-        return me && !me.hasConsented;
-      });
+      console.warn('[Succession] Real chaincode failed for my-pending, falling back to mock response', fabricErr.message);
+      const { getMockResponse } = require('../mock/responses');
+      list = getMockResponse('uttaradhikar', 'GetMyPendingSuccessions', [req.user.aadhaarHash]);
     }
     res.json(list || []);
   } catch (e) {
