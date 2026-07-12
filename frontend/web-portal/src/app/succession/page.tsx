@@ -223,7 +223,7 @@ export default function SuccessionPage() {
       setHeirs(sc.heirs.map((h) => ({ ...h, hasConsented: false, hasObjected: false })));
     } catch (e: any) {
       console.error("[Succession] initiateSuccession failed:", e);
-      const errMsg = e.response?.data?.error || e.message || "Unknown error";
+      const errMsg = e.response?.data?.message || e.response?.data?.error || e.message || "Unknown error";
       toast.error(`Initiation Failed: ${errMsg}`);
       
       // Full offline fallback — also restore token
