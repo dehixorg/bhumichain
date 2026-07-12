@@ -678,10 +678,32 @@ module.exports = {
 
       case 'dlpi::QueryDLPIsByOwner':
       case 'dlpi::GetMyParcels': {
+        const fs = require('fs');
         const ownerHash = args[0]; // now raw Aadhaar digits
         const PRIYA_AADHAAR = '999900010010'; // Priya Kumar raw aadhaar
-        // Filter MOCK_SCANS to only include parcels where this citizen is an owner
-        const myScans = MOCK_SCANS.filter(s => {
+        
+        let dynamicScans = [...MOCK_SCANS];
+        // Read executed mock cases to persist property mutations across restarts
+        try {
+          const cases = JSON.parse(fs.readFileSync('/tmp/bhumichain_mock_cases.json'));
+          cases.filter(c => c.status === 'EXECUTED').forEach(sc => {
+            if (!dynamicScans.find(s => s.dlpiId === sc.dlpiId)) {
+               const parcel = JSON.parse(JSON.stringify(DEMO_DLPI));
+               parcel.dlpiId = sc.dlpiId;
+               parcel.initialOwners = sc.heirs.map(h => ({
+                 name: h.name,
+                 aadhaarHash: h.aadhaarHash,
+                 share: h.share || h.finalShare,
+                 shareDecimal: h.shareDecimal || h.finalShareDec
+               }));
+               parcel.claimStatus = 'VERIFIED';
+               dynamicScans.push(parcel);
+            }
+          });
+        } catch(e) {}
+
+        // Filter dynamicScans to only include parcels where this citizen is an owner
+        const myScans = dynamicScans.filter(s => {
           if (!s.initialOwners || !Array.isArray(s.initialOwners)) return false;
           return s.initialOwners.some(o => o.aadhaarHash === ownerHash);
         });
