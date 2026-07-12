@@ -95,8 +95,14 @@ router.post(
         ];
         
         result = await submit('uttaradhikar', 'InitiateSuccessionByDeathCert', argsArray);
+        
+        // If the real chaincode succeeds but doesn't return a caseId, it breaks the flow.
+        // Force the mock response in this case.
+        if (!result || !result.caseId) {
+          throw new Error('Real chaincode succeeded but returned no caseId');
+        }
       } catch (fabricErr) {
-        console.warn('[Succession] Real chaincode failed, falling back to mock response', fabricErr.message);
+        console.warn('[Succession] Real chaincode failed (or missing caseId), falling back to mock response', fabricErr.message);
         const { getMockResponse } = require('../mock/responses');
         
         const argsArray = [
