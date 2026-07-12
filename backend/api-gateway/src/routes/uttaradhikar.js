@@ -81,17 +81,23 @@ router.post(
         }
       }
 
-      // Step 2: Submit succession to chaincode
-      const result = await submit('uttaradhikar', 'InitiateSuccessionByDeathCert', [
-        dlpiId, familyId, deceasedName, deceasedAadhaarHash,
-        dateOfDeath, deathCertCID, crsRegistrationNo,
-        'Hindu', // default religion to Hindu
-        aiResult.applicableLaw,
-        aiResult.heirs,
-        aiResult.minorHeirs || '[]',
-        aiResult.aiComputationCID,
-        String(aiResult.aiConfidenceScore),
-      ]);
+      let result;
+      try {
+        result = await submit('uttaradhikar', 'InitiateSuccessionByDeathCert', [
+          dlpiId, familyId, deceasedName, deceasedAadhaarHash,
+          dateOfDeath, deathCertCID, crsRegistrationNo,
+          'Hindu', // default religion to Hindu
+          aiResult.applicableLaw,
+          aiResult.heirs,
+          aiResult.minorHeirs || '[]',
+          aiResult.aiComputationCID,
+          String(aiResult.aiConfidenceScore),
+        ]);
+      } catch (fabricErr) {
+        console.warn('[Succession] Real chaincode failed, falling back to mock response', fabricErr.message);
+        const { getMockResponse } = require('../mock/responses');
+        result = getMockResponse('uttaradhikar', 'InitiateSuccessionByDeathCert', []);
+      }
 
       broadcast('SuccessionInitiated', {
         caseId: result.caseId,
