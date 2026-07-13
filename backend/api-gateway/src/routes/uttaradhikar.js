@@ -193,28 +193,45 @@ router.get('/:caseId', authenticate, async (req, res) => {
   }
 });
 
-// POST /api/succession/:caseId/execute — Officer finalizes succession
+// POST /api/succession/:caseId/execute — tehsildar executes (auto-mutates)
 router.post(
   '/:caseId/execute',
   authenticate,
   requireRole(ROLES.TEHSILDAR, ROLES.COLLECTOR, ROLES.CIRCLE_INSPECTOR),
   async (req, res) => {
     try {
-      let result;
+      // 1. Execute the succession on the real chaincode
+      const result = await submit('uttaradhikar', 'ExecuteSuccession', [req.params.caseId]);
+      
+      // 2. Format data for the Mutation Manager
+      const sCase = result;
+      const currentOwnersJSON = JSON.stringify([{ aadhaarHash: sCase.deceasedHash }]);
+      const newOwnersJSON = JSON.stringify((sCase.heirs || []).map(h => ({
+        aadhaarHash: h.aadhaarHash,
+        name: h.name,
+        share: h.finalShare,
+        shareDecimal: h.finalShareDec,
+        isTribal: h.isTribal || false
+      })));
+
+      // 3. Trigger the mutation automatically on the real chaincode
       try {
-        result = await submit('uttaradhikar', 'ExecuteSuccession', [req.params.caseId]);
-      } catch (fabricErr) {
-        console.error('[ExecuteSuccession] Real chaincode failed:', fabricErr?.message || fabricErr);
+        await submit('mutation-manager', 'InitiateMutation', [
+          sCase.dlpiId, "INHERITANCE",
+          req.user.name, req.user.aadhaarHash, "Tehsildar",
+          "UTTARADHIKAR_ENGINE", sCase.caseId,
+          currentOwnersJSON, newOwnersJSON,
+          "Succession executed by Tehsildar", "", "", "", ""
+        ]);
+      } catch (mutErr) {
+        console.error('[ExecuteSuccession] Mutation trigger failed:', mutErr?.message || mutErr);
+        // We do not fail the request if mutation trigger fails, but we log it
       }
-      // ALWAYS update mock state to prevent UI queue inconsistencies if queries fall back to mock
-      const { getMockResponse } = require('../mock/responses');
-      const mockResult = getMockResponse('uttaradhikar', 'ExecuteSuccession', [req.params.caseId]);
-      if (!result) result = mockResult;
       
       broadcast('SuccessionExecuted', {
         caseId: req.params.caseId,
         message: 'Succession finalized. Parcel ownership updated.',
-      }, req.params.caseId); // Assuming we can use caseId as room for now
+      }, req.params.caseId);
 
       res.json(result);
     } catch (e) {

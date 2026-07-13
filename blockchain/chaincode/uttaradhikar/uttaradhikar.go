@@ -129,29 +129,29 @@ type SuccessionCase struct {
 	FamilyID          string          `json:"familyId"`
 	DeceasedName      string          `json:"deceasedName"`
 	DeceasedHash      string          `json:"deceasedHash"`
-	DateOfDeath       string          `json:"dateOfDeath,omitempty"`
-	DeathCertCID      string          `json:"deathCertCid,omitempty"`
-	CRSRegistrationNo string          `json:"crsRegistrationNo,omitempty"`
+	DateOfDeath       string          `json:"dateOfDeath,omitempty" metadata:",optional"`
+	DeathCertCID      string          `json:"deathCertCid,omitempty" metadata:",optional"`
+	CRSRegistrationNo string          `json:"crsRegistrationNo,omitempty" metadata:",optional"`
 
 	// Trigger source
 	TriggerSource     string          `json:"triggerSource"` // DEATH_CERT | OWNER_ALIVE | HEIR_PETITION
 	TriggeredByHash   string          `json:"triggeredByHash"`
-	DeathAffidavitCID string          `json:"deathAffidavitCid,omitempty"` // for HEIR_PETITION without CRS
+	DeathAffidavitCID string          `json:"deathAffidavitCid,omitempty" metadata:",optional"` // for HEIR_PETITION without CRS
 
 	// Pre-registered plan (if any)
 	HasInheritancePlan  bool          `json:"hasInheritancePlan"`
-	InheritancePlanID   string        `json:"inheritancePlanId,omitempty"`
+	InheritancePlanID   string        `json:"inheritancePlanId,omitempty" metadata:",optional"`
 
 	// Law + heirs
 	ApplicableLaw     string          `json:"applicableLaw"`
 	Religion          string          `json:"religion"`
 	Heirs             []SuccessionHeir `json:"heirs"`
 	TotalHeirs        int             `json:"totalHeirs"`
-	MinorHeirs        []MinorHeir     `json:"minorHeirs,omitempty"`
+	MinorHeirs        []MinorHeir     `json:"minorHeirs,omitempty" metadata:",optional"`
 
 	// Law enforcement flags
-	LegalEdgeCases    []string        `json:"legalEdgeCases,omitempty"`
-	LegalWarnings     []string        `json:"legalWarnings,omitempty"`  // non-blocking, just alerts
+	LegalEdgeCases    []string        `json:"legalEdgeCases,omitempty" metadata:",optional"`
+	LegalWarnings     []string        `json:"legalWarnings,omitempty" metadata:",optional"`  // non-blocking, just alerts
 
 	// AI computation
 	AIComputationCID  string          `json:"aiComputationCid"`
@@ -159,14 +159,14 @@ type SuccessionCase struct {
 
 	// Consent tracking
 	ConsentDeadline   string          `json:"consentDeadline"`
-	AllConsentedAt    string          `json:"allConsentedAt,omitempty"`
+	AllConsentedAt    string          `json:"allConsentedAt,omitempty" metadata:",optional"`
 
 	// Dispute
-	DisputeInfo       *DisputeRecord  `json:"disputeInfo,omitempty"`
+	DisputeInfo       *DisputeRecord  `json:"disputeInfo,omitempty" metadata:",optional"`
 
 	// Execution
-	AutoMutatedAt     string          `json:"autoMutatedAt,omitempty"`
-	MutationCaseID    string          `json:"mutationCaseId,omitempty"` // linked mutation-manager ID
+	AutoMutatedAt     string          `json:"autoMutatedAt,omitempty" metadata:",optional"`
+	MutationCaseID    string          `json:"mutationCaseId,omitempty" metadata:",optional"` // linked mutation-manager ID
 
 	Status            string          `json:"status"`
 	// INITIATED → HEIRS_IDENTIFIED → AWAITING_CONSENTS →
@@ -1331,6 +1331,11 @@ func (c *UttaradhikarContract) GetSuccessionByDLPI(ctx contractapi.TransactionCo
 
 func (c *UttaradhikarContract) QueryPendingSuccessions(ctx contractapi.TransactionContextInterface) ([]*SuccessionCase, error) {
 	query := `{"selector":{"status":{"$in":["AWAITING_CONSENTS","HEIRS_IDENTIFIED","PENDING_TEHSILDAR_APPROVAL"]}}}`
+	return c.executeQuery(ctx, query)
+}
+
+func (c *UttaradhikarContract) GetMyPendingSuccessions(ctx contractapi.TransactionContextInterface, aadhaarHash string) ([]*SuccessionCase, error) {
+	query := fmt.Sprintf(`{"selector":{"status":{"$in":["AWAITING_CONSENTS","HEIRS_IDENTIFIED","PENDING_TEHSILDAR_APPROVAL"]},"heirs":{"$elemMatch":{"aadhaarHash":"%s"}}}}`, aadhaarHash)
 	return c.executeQuery(ctx, query)
 }
 
