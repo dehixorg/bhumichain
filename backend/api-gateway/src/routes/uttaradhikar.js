@@ -165,20 +165,8 @@ router.get('/pending/all', authenticate, requireRole(ROLES.TEHSILDAR, ROLES.COLL
       cases = getMockResponse('uttaradhikar', 'QueryPendingSuccessions', []);
     }
     
-    // Adapt to QueueItem format expected by dashboard
-    const adapted = (cases || [])
-      .filter(c => ['PENDING_TEHSILDAR_APPROVAL', 'ALL_CONSENTED', 'PENDING_TEHSILDAR'].includes(c.status))
-      .map(c => ({
-      dlpiId: c.caseId, // HACK: put caseId here so the frontend can call /execute easily
-      ownerName: c.deceasedName + ' (Succession)',
-      gram: 'Dadri', tehsil: 'Gautam Buddha Nagar',
-      khasraNo: '00100', landType: 'Agricultural', areaHectares: 2.4,
-      claimStatus: 'SUCCESSION_PENDING_TEHSILDAR', 
-      submittedAt: c.initiatedAt,
-      priority: 'URGENT',
-      isCoparcenary: true
-    }));
-    res.json(adapted);
+    const pendingCases = (cases || []).filter(c => ['PENDING_TEHSILDAR_APPROVAL', 'ALL_CONSENTED', 'PENDING_TEHSILDAR'].includes(c.status));
+    res.json(pendingCases);
   } catch (e) {
     res.status(500).json({ error: 'FABRIC_ERROR', message: e.message });
   }
