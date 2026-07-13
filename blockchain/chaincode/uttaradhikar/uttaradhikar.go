@@ -194,25 +194,25 @@ type SuccessionHeir struct {
 	LegalBasis      string  `json:"legalBasis"`    // which law section gives them this
 	LegalShare      string  `json:"legalShare"`    // what LAW mandates: "1/4"
 	LegalShareDec   float64 `json:"legalShareDec"`
-	IntendedShare   string  `json:"intendedShare,omitempty"` // what owner WANTED (from plan)
-	IntendedShareDec float64 `json:"intendedShareDec,omitempty"`
+	IntendedShare   string  `json:"intendedShare,omitempty" metadata:",optional"` // what owner WANTED (from plan)
+	IntendedShareDec float64 `json:"intendedShareDec,omitempty" metadata:",optional"`
 	FinalShare      string  `json:"finalShare"`    // what they actually receive
 	FinalShareDec   float64 `json:"finalShareDec"`
-	LegalNote       string  `json:"legalNote,omitempty"`
+	LegalNote       string  `json:"legalNote,omitempty" metadata:",optional"`
 
 	// For minor heirs
-	GuardianHash    string  `json:"guardianHash,omitempty"`
-	GuardianName    string  `json:"guardianName,omitempty"`
+	GuardianHash    string  `json:"guardianHash,omitempty" metadata:",optional"`
+	GuardianName    string  `json:"guardianName,omitempty" metadata:",optional"`
 
 	// Consent tracking
-	NotifiedAt      string  `json:"notifiedAt,omitempty"`
-	NotifyChannel   string  `json:"notifyChannel,omitempty"`
+	NotifiedAt      string  `json:"notifiedAt,omitempty" metadata:",optional"`
+	NotifyChannel   string  `json:"notifyChannel,omitempty" metadata:",optional"`
 	HasConsented    bool    `json:"hasConsented"`
-	ConsentedAt     string  `json:"consentedAt,omitempty"`
-	ConsentTxHash   string  `json:"consentTxHash,omitempty"`
+	ConsentedAt     string  `json:"consentedAt,omitempty" metadata:",optional"`
+	ConsentTxHash   string  `json:"consentTxHash,omitempty" metadata:",optional"`
 	HasObjected     bool    `json:"hasObjected"`
-	ObjectedAt      string  `json:"objectedAt,omitempty"`
-	ObjectionReason string  `json:"objectionReason,omitempty"`
+	ObjectedAt      string  `json:"objectedAt,omitempty" metadata:",optional"`
+	ObjectionReason string  `json:"objectionReason,omitempty" metadata:",optional"`
 }
 
 type MinorHeir struct {
@@ -230,11 +230,11 @@ type DisputeRecord struct {
 	DisputedBy      string `json:"disputedByHash"`
 	DisputeType     string `json:"disputeType"`  // ShareDispute | RightToInherit | OmittedHeir | WillValidity
 	FiledAt         string `json:"filedAt"`
-	ECourtsCaseNo   string `json:"eCourtsCaseNo,omitempty"`
-	NyayaAIBriefCID string `json:"nyayaAIBriefCid,omitempty"`
+	ECourtsCaseNo   string `json:"eCourtsCaseNo,omitempty" metadata:",optional"`
+	NyayaAIBriefCID string `json:"nyayaAIBriefCid,omitempty" metadata:",optional"`
 	Status          string `json:"status"`       // FILED | HEARING | RESOLVED
-	ResolvedAt      string `json:"resolvedAt,omitempty"`
-	CourtOrderCID   string `json:"courtOrderCid,omitempty"`
+	ResolvedAt      string `json:"resolvedAt,omitempty" metadata:",optional"`
+	CourtOrderCID   string `json:"courtOrderCid,omitempty" metadata:",optional"`
 }
 
 // ─── Smart Contract ────────────────────────────────────────────────────────
