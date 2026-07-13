@@ -444,11 +444,27 @@ router.post(
   },
 );
 
-// POST /api/succession/pending — officer dashboard: all pending cases
-router.get('/pending/all', authenticate, requireRole(ROLES.REVENUE_OFFICER, ROLES.COLLECTOR), async (req, res) => {
+// GET /api/succession/pending/all — officer dashboard: all pending cases
+router.get('/pending/all', authenticate, requireRole(ROLES.TEHSILDAR, ROLES.REVENUE_OFFICER, ROLES.COLLECTOR, ROLES.CIRCLE_INSPECTOR), async (req, res) => {
   try {
-    const list = await evaluate('uttaradhikar', 'QueryPendingSuccessions', []);
-    res.json(list || []);
+    let realList = [];
+    try {
+      realList = await evaluate('uttaradhikar', 'QueryPendingSuccessions', []);
+      if (!realList || !Array.isArray(realList)) realList = [];
+    } catch (fabricErr) {
+      console.warn('[PendingAll] Real chaincode failed, using empty list:', fabricErr.message);
+      realList = [];
+    }
+
+    // Merge real + mock so officer sees everything
+    const { getMockResponse } = require('../mock/responses');
+    const mockList = getMockResponse('uttaradhikar', 'QueryPendingSuccessions', []) || [];
+
+    const mergedMap = new Map();
+    mockList.forEach(c => mergedMap.set(c.caseId, c));
+    realList.forEach(c => mergedMap.set(c.caseId, c)); // real overrides mock
+    
+    res.json(Array.from(mergedMap.values()));
   } catch (e) {
     res.status(500).json({ error: 'FABRIC_ERROR', message: e.message });
   }

@@ -21,6 +21,19 @@ import {
 import clsx from 'clsx';
 import { format } from 'date-fns';
 
+// Display helper — never show raw hash or raw digits to the user
+const maskAadhaar = (val?: string | null): string => {
+  if (!val) return 'XXXX-XXXX-XXXX';
+  // If it's a sha256 hash, show generic mask
+  if (val.startsWith('sha256:')) return 'XXXX-XXXX-XXXX';
+  // If it's 12 raw digits, mask first 8
+  const digits = val.replace(/\D/g, '');
+  if (digits.length === 12) return `XXXX-XXXX-${digits.slice(8)}`;
+  // Already masked or unknown format
+  return 'XXXX-XXXX-XXXX';
+};
+
+
 const FamilyTree = dynamic(
   () => import('@/components/dashboard/FamilyTree'),
   {
@@ -600,7 +613,7 @@ export default function SuccessionPage() {
                     </div>
                     <div>
                       <div className="text-xs text-gray-500 mb-0.5">Aadhaar (Masked)</div>
-                      <div className="font-semibold text-gray-800 font-mono">{crsExtraction?.aadhaarHash}</div>
+                      <div className="font-semibold text-gray-800 font-mono">{maskAadhaar(crsExtraction?.aadhaarHash)}</div>
                     </div>
                     <div>
                       <div className="text-xs text-gray-500 mb-0.5">Linked Land Parcel</div>
