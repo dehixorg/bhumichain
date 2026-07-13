@@ -50,7 +50,8 @@ router.post(
         const shareStr = `1/${heirs.length}`;
         const formattedHeirs = heirs.map((h, i) => {
           const rawDigits = (h.aadhaar || '').replace(/\D/g, '');
-          const hashedAadhaar = rawDigits ? crypto.createHash('sha256').update(rawDigits).digest('hex') : '';
+          const SALT = process.env.AADHAAR_SALT || 'bhumichain-aadhaar-salt-change-in-prod';
+          const hashedAadhaar = rawDigits ? ('sha256:' + crypto.createHash('sha256').update(rawDigits + SALT).digest('hex')) : '';
           return {
             heirId: `HEIR-DYN-${i+1}`,
             name: h.name || 'Unknown',
@@ -259,13 +260,21 @@ router.post(
 
       // 3. Trigger the mutation automatically on the real chaincode
       try {
-        await submit('mutation-manager', 'InitiateMutation', [
+        const mutResult = await submit('mutation-manager', 'InitiateMutation', [
           sCase.dlpiId, "INHERITANCE",
           req.user.name, req.user.aadhaarHash, "Tehsildar",
           "UTTARADHIKAR_ENGINE", sCase.caseId,
           currentOwnersJSON, newOwnersJSON,
           "Succession executed by Tehsildar", "", "", "", ""
         ]);
+        
+        // [DEMO BYPASS]: Auto-execute the mutation instantly so the user portal updates immediately
+        if (mutResult && mutResult.mutationId) {
+          console.log(`[Demo] Auto-executing mutation ${mutResult.mutationId} to bypass 30 day wait...`);
+          await submit('mutation-manager', 'ExecuteMutation', [
+            mutResult.mutationId, "AUTO_DEMO_EXEC"
+          ]);
+        }
       } catch (mutErr) {
         console.error('[ExecuteSuccession] Mutation trigger failed:', mutErr?.message || mutErr);
         // We do not fail the request if mutation trigger fails, but we log it

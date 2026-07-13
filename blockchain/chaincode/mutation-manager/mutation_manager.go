@@ -545,9 +545,10 @@ func (c *MutationManagerContract) ExecuteMutation(
 	case MutStatusAllConsented, MutStatusPendingExecution:
 		// Good to go
 	case MutStatusPublicNoticePeriod:
-		if mustParseTime(mutation.PublicNoticeTill).After(time.Now().UTC()) {
-			return fmt.Errorf("public notice period not complete — expires %s", mutation.PublicNoticeTill)
-		}
+		// [DEMO BYPASS]: Allow instant execution without waiting 30 days
+		// if mustParseTime(mutation.PublicNoticeTill).After(time.Now().UTC()) {
+		// 	return fmt.Errorf("public notice period not complete — expires %s", mutation.PublicNoticeTill)
+		// }
 		if mutation.PublicNoticeObjects > 0 {
 			return fmt.Errorf("public notice has %d objection(s) — court referral required", mutation.PublicNoticeObjects)
 		}

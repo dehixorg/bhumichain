@@ -82,8 +82,8 @@ router.post('/request-otp', async (req, res) => {
     return res.status(400).json({ error: 'Aadhaar must be 12 digits' });
   }
 
-  // Store raw digits as aadhaarHash — no hashing, direct match with DLPI records
-  const aadhaarHash = digits;
+  // Hash the Aadhaar with the same salted SHA-256 used by the succession chaincode input
+  const aadhaarHash = computeAadhaarHash(digits);
   const otp = generateOTP();
   otpStore.set(aadhaarHash, { otp, expiresAt: Date.now() + OTP_TTL_MS });
 
@@ -110,8 +110,8 @@ router.post('/verify-otp', async (req, res) => {
   }
 
   const digits = aadhaarNumber.replace(/\D/g, '');
-  // Use raw digits as aadhaarHash — direct match with DLPI initialOwners
-  const aadhaarHash = digits;
+  // Use salted SHA-256 hash — must match what the succession chaincode stores
+  const aadhaarHash = computeAadhaarHash(digits);
 
   // Verify OTP
   const stored = otpStore.get(aadhaarHash);
@@ -171,7 +171,7 @@ router.post('/officer-login', async (req, res) => {
   }
 
   const digits = aadhaarNumber.replace(/\D/g, '');
-  const aadhaarHash = digits; // Raw digits — no hash
+  const aadhaarHash = computeAadhaarHash(digits); // Salted SHA-256 — matches chaincode
 
   // Verify OTP
   const stored = otpStore.get(aadhaarHash);
