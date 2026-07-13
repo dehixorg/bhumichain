@@ -104,8 +104,11 @@ router.post(
         
         result = await submit('uttaradhikar', 'InitiateSuccessionByDeathCert', argsArray);
         
-        // If the real chaincode succeeds but doesn't return a caseId, it breaks the flow.
-        // Force the mock response in this case.
+        // Chaincode returns the caseId as a raw string, not a JSON object!
+        if (typeof result === 'string' && result.startsWith('SUC-')) {
+          result = { caseId: result };
+        }
+        
         if (!result || !result.caseId) {
           throw new Error('Real chaincode succeeded but returned no caseId');
         }
@@ -137,6 +140,9 @@ router.post(
             await submit('dlpi', 'CreateDLPI', [JSON.stringify(seedPayload)]);
             console.log('[Demo] Seeding complete. Retrying InitiateSuccession...');
             result = await submit('uttaradhikar', 'InitiateSuccessionByDeathCert', argsArray);
+            if (typeof result === 'string' && result.startsWith('SUC-')) {
+              result = { caseId: result };
+            }
             if (!result || !result.caseId) {
               throw new Error('Real chaincode succeeded but returned no caseId');
             }
