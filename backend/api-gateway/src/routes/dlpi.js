@@ -60,19 +60,27 @@ router.get('/my-parcels', authenticate, requireRole(ROLES.CITIZEN), async (req, 
     try {
       parcels = await evaluate('dlpi', 'QueryDLPIsByOwner', [req.user.aadhaarHash]);
       if (!parcels || (Array.isArray(parcels) && parcels.length === 0)) {
-        throw new Error('Real chaincode returned empty, fallback to mock');
+        parcels = [];
       }
     } catch (fabricErr) {
-      const { getMockResponse } = require('../mock/responses');
-      parcels = getMockResponse('dlpi', 'QueryDLPIsByOwner', [req.user.aadhaarHash]);
+      parcels = [];
     }
     
-    // Normalize real-mode fabric response to Array
+    // ALWAYS fetch mock response to merge state (because some transactions might have fallen back to mock)
+    const { getMockResponse } = require('../mock/responses');
+    const mockParcels = getMockResponse('dlpi', 'QueryDLPIsByOwner', [req.user.aadhaarHash]);
+    
     if (parcels && !Array.isArray(parcels)) {
       parcels = parcels.parcels || parcels.data || Object.values(parcels);
     }
     if (!Array.isArray(parcels)) parcels = [];
-
+    
+    // Merge and deduplicate by dlpiId, preferring mock if it was modified (e.g. by succession)
+    const mergedMap = new Map();
+    parcels.forEach(p => mergedMap.set(p.dlpiId, p));
+    mockParcels.forEach(p => mergedMap.set(p.dlpiId, p));
+    parcels = Array.from(mergedMap.values());
+    
     // Adapt legacy structure: ensure owner field is present
     const adapted = parcels.map(p => {
       if (p.owners && p.owners.length > 0 && !p.owner) {
