@@ -284,6 +284,14 @@ export default function SuccessionPage() {
   const handleConsent = useCallback(async (heirId: string) => {
     const heir = heirs.find((h) => h.heirId === heirId);
     if (!heir || heir.hasConsented || heir.hasObjected) return;
+    
+    const isMatchingAadhaar = user?.aadhaarHash === heir.aadhaarHash;
+    const isMatchingName = user?.name?.toLowerCase().includes((heir.name || '').toLowerCase()) || (heir.name || '').toLowerCase().includes(user?.name?.toLowerCase() || '');
+    
+    if (!isMatchingAadhaar && !isMatchingName) {
+      toast.error(`Please log in as ${heir.name} to provide eSign consent.`);
+      return;
+    }
 
     try {
       await recordHeirConsent(
