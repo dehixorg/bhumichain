@@ -792,6 +792,17 @@ module.exports = {
         try {
           if (args.length >= 10 && args[9]) {
             heirs = JSON.parse(args[9]);
+            if (heirs.length > 0) {
+              const fraction = `1/${heirs.length}`;
+              const decimal = 1.0 / heirs.length;
+              heirs = heirs.map(h => ({
+                ...h,
+                share: fraction,
+                finalShare: fraction,
+                shareDecimal: decimal,
+                finalShareDec: decimal
+              }));
+            }
           }
         } catch (e) {}
         const newCase = {
