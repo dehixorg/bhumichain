@@ -109,10 +109,41 @@ router.post(
           throw new Error('Real chaincode succeeded but returned no caseId');
         }
       } catch (fabricErr) {
-        console.warn('[Succession] Real chaincode failed (or missing caseId), falling back to mock response', fabricErr.message);
+        console.warn('[Succession] Real chaincode failed. Full Error:', fabricErr.message, fabricErr.details);
+        
+        const detailsStr = fabricErr.details ? JSON.stringify(fabricErr.details) : '';
+        if ((fabricErr.message && fabricErr.message.includes('DLPI') && fabricErr.message.includes('not found')) || 
+            (detailsStr.includes('DLPI') && detailsStr.includes('not found'))) {
+          console.warn('[Demo] DLPI not found. Auto-seeding DLPI-UP-DAD-00100 to fix fresh blockchain state...');
+          try {
+            const seedPayload = {
+              dlpiId: 'DLPI-UP-DAD-00100',
+              surveyNumber: '100', khasraNo: '100',
+              tehsil: 'Dadri', tehsilCode: 'DAD',
+              district: 'Gautam Buddha Nagar', state: 'Uttar Pradesh',
+              landType: 'Residential', landTypeDescription: 'Irrigated double-crop',
+              areaHectares: 2.5, isTribal: false, scheduleVArea: false,
+              initialOwners: [{
+                aadhaarHash: deceasedAadhaarHash || 'sha256:owner1ramesh3f8e2d1c7b4a09f6e5d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9', name: deceasedName || 'Ramesh Kumar',
+                share: '1/1', shareDecimal: 1.0, ownerSince: new Date().toISOString(),
+                isVerified: true
+              }],
+              ownershipType: 'SOLE',
+              latitude: 28.5355, longitude: 77.3910,
+              circleRateINR: 5000000, ipfsCID: 'QmYwAPJzv5CZ1zoZ5G4vV3H927918v5H927918v5H92791',
+              sourceType: 'MANUAL'
+            };
+            await submit('dlpi', 'CreateDLPI', [JSON.stringify(seedPayload)]);
+            console.log('[Demo] Seeding complete. Retrying InitiateSuccession...');
+            result = await submit('uttaradhikar', 'InitiateSuccessionByDeathCert', argsArray);
+            if (!result || !result.caseId) {
+              throw new Error('Real chaincode succeeded but returned no caseId');
+            }
+          } catch (seedErr) {
+            console.warn('[Succession] Auto-seed or retry failed. Falling back to mock.', seedErr.message);
+          }
+        }
       }
-
-      // ALWAYS update mock state to prevent UI queue inconsistencies
       const { getMockResponse } = require('../mock/responses');
       const argsArray = [
         dlpiId, familyId, deceasedName, deceasedAadhaarHash,
