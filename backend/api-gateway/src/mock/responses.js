@@ -711,6 +711,7 @@ module.exports = {
             const nameLower = (o.name || '').toLowerCase();
             if (ownerHash === PRIYA_AADHAAR && nameLower.includes('priya')) return true;
             if (ownerHash === '999900010015' && nameLower.includes('sunita')) return true;
+            if (ownerHash === '999900010012' && nameLower.includes('suresh')) return true;
             return false;
           });
         });
