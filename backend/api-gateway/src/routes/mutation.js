@@ -63,8 +63,29 @@ router.post(
 // GET /api/mutation — all mutations (officer queue view)
 router.get('/', authenticate, async (req, res) => {
   try {
-    const list = await evaluate('mutation-manager', 'QueryPendingMutations', []);
-    res.json(list || []);
+    let list;
+    try {
+      list = await evaluate('mutation-manager', 'QueryPendingMutations', []);
+      if (!list || (Array.isArray(list) && list.length === 0)) {
+        list = [];
+      }
+    } catch (fabricErr) {
+      list = [];
+    }
+    
+    // ALWAYS fetch mock response to ensure dynamic mock mutations are merged
+    const { getMockResponse } = require('../mock/responses');
+    const mockList = getMockResponse('mutation-manager', 'QueryPendingMutations', []);
+    
+    if (list && !Array.isArray(list)) list = Object.values(list);
+    if (!Array.isArray(list)) list = [];
+    
+    // Merge real and mock
+    const mergedMap = new Map();
+    list.forEach(m => mergedMap.set(m.mutationId, m));
+    mockList.forEach(m => mergedMap.set(m.mutationId, m));
+    
+    res.json(Array.from(mergedMap.values()));
   } catch (e) {
     res.status(500).json({ error: 'FABRIC_ERROR', message: e.message });
   }

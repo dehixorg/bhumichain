@@ -775,8 +775,13 @@ module.exports = {
         return DEMO_MUTATION;
       case 'mutation-manager::GetMutationsByDLPI':
         return DEMO_MUTATION_LIST.filter(m => m.dlpiId === args[0]);
-      case 'mutation-manager::GetAllMutations':
-        return DEMO_MUTATION_LIST;
+      case 'mutation-manager::QueryPendingMutations':
+      case 'mutation-manager::GetAllMutations': {
+        const fs = require('fs');
+        let dMuts = [];
+        try { dMuts = JSON.parse(fs.readFileSync('/tmp/bhumichain_dynamic_mutations.json')); } catch(e) {}
+        return [...DEMO_MUTATION_LIST, ...dMuts];
+      }
       case 'mutation-manager::RecordOwnerAlertDelivery':
         return { mutationId: args[0], channel: args[1], deliveredAt: args[2], recorded: true };
       case 'mutation-manager::RecordOwnerConsent':
@@ -914,6 +919,34 @@ module.exports = {
             }));
             parcel.claimStatus = 'VERIFIED';
           }
+          
+          // Auto-generate a mutation for this succession
+          const mutId = `MUT-${sc.dlpiId}-${Date.now().toString(16)}`;
+          const newMut = {
+            mutationId: mutId,
+            dlpiId: sc.dlpiId,
+            mutationType: 'Virasat (Inheritance)',
+            mutationTypeCode: 'Inheritance',
+            officerName: 'Amit Saxena (Auto)',
+            officerHash: 'tehsildar-hash',
+            officerRank: 'Tehsildar',
+            currentOwnerName: sc.deceasedName,
+            newOwnerName: sc.heirs.map(h => h.name).join(', '),
+            status: 'ALERT_SENT',
+            slaMet: true,
+            requiresPublicNotice: true,
+            publicNoticePeriodDays: 30,
+            objectionDeadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+            initiatedAt: new Date().toISOString(),
+            timeline: [
+              { step: 'INITIATED', label: 'Mutation Initiated', actor: 'System (Auto)', at: new Date().toISOString(), done: true },
+              { step: 'ALERT_SENT', label: 'Owner Alerted', actor: 'BhumiChain', at: new Date().toISOString(), done: true }
+            ]
+          };
+          let dMuts = [];
+          try { dMuts = JSON.parse(fs.readFileSync('/tmp/bhumichain_dynamic_mutations.json')); } catch(e) {}
+          dMuts.push(newMut);
+          fs.writeFileSync('/tmp/bhumichain_dynamic_mutations.json', JSON.stringify(dMuts));
         }
         return { caseId: args[0], status: 'EXECUTED', executedAt: new Date().toISOString(), txHash: `0xsuc-exec-${Date.now()}` };
       }
