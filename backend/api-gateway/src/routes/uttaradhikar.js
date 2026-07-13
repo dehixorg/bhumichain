@@ -1,6 +1,7 @@
 'use strict';
 
 const { Router } = require('express');
+const crypto = require('crypto');
 const { body, param, validationResult } = require('express-validator');
 const axios = require('axios');
 const { submit, evaluate } = require('../services/fabric');
@@ -47,16 +48,20 @@ router.post(
         // Compute equal shares based on the dynamic heirs
         const shareDec = 1.0 / heirs.length;
         const shareStr = `1/${heirs.length}`;
-        const formattedHeirs = heirs.map((h, i) => ({
-          heirId: `HEIR-DYN-${i+1}`,
-          name: h.name || 'Unknown',
-          aadhaarHash: (h.aadhaar || '').replace(/\D/g, ''), // Store normalized raw digits (strip dashes/spaces)
-          relation: 'Legal Heir', gender: 'Unknown', dob: '1990-01-01',
-          isAlive: true, isAdult: true, isNri: false,
-          share: shareStr, shareDecimal: shareDec,
-          legalBasis: 'Hindu Succession Act 1956/2005',
-          hasConsented: false, hasObjected: false,
-        }));
+        const formattedHeirs = heirs.map((h, i) => {
+          const rawDigits = (h.aadhaar || '').replace(/\D/g, '');
+          const hashedAadhaar = rawDigits ? crypto.createHash('sha256').update(rawDigits).digest('hex') : '';
+          return {
+            heirId: `HEIR-DYN-${i+1}`,
+            name: h.name || 'Unknown',
+            aadhaarHash: hashedAadhaar,
+            relation: 'Legal Heir', gender: 'Unknown', dob: '1990-01-01',
+            isAlive: true, isAdult: true, isNri: false,
+            share: shareStr, shareDecimal: shareDec,
+            legalBasis: 'Hindu Succession Act 1956/2005',
+            hasConsented: false, hasObjected: false,
+          };
+        });
         
         aiResult = {
           applicableLaw: 'Hindu Succession Act 1956/2005',
