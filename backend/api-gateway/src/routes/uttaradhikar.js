@@ -56,9 +56,10 @@ router.post(
             name: h.name || 'Unknown',
             aadhaarHash: hashedAadhaar,
             relation: 'Legal Heir', gender: 'Unknown', dob: '1990-01-01',
-            isAlive: true, isAdult: true, isNri: false,
-            share: shareStr, shareDecimal: shareDec,
+            isAlive: true, isAdult: true, isNri: false, isMinor: false,
             legalBasis: 'Hindu Succession Act 1956/2005',
+            legalShare: shareStr, legalShareDec: shareDec,
+            finalShare: shareStr, finalShareDec: shareDec,
             hasConsented: false, hasObjected: false,
           };
         });
