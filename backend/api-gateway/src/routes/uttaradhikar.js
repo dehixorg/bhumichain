@@ -105,21 +105,18 @@ router.post(
         }
       } catch (fabricErr) {
         console.warn('[Succession] Real chaincode failed (or missing caseId), falling back to mock response', fabricErr.message);
-        const { getMockResponse } = require('../mock/responses');
-        
-        const argsArray = [
-          dlpiId, familyId, deceasedName, deceasedAadhaarHash,
-          dateOfDeath, deathCertCID, crsRegistrationNo,
-          'Hindu',
-          aiResult.applicableLaw,
-          aiResult.heirs,
-          aiResult.minorHeirs || '[]',
-          aiResult.aiComputationCID,
-          String(aiResult.aiConfidenceScore),
-        ];
-        
-        result = getMockResponse('uttaradhikar', 'InitiateSuccessionByDeathCert', argsArray);
       }
+
+      // ALWAYS update mock state to prevent UI queue inconsistencies
+      const { getMockResponse } = require('../mock/responses');
+      const argsArray = [
+        dlpiId, familyId, deceasedName, deceasedAadhaarHash,
+        dateOfDeath, deathCertCID, crsRegistrationNo, 'Hindu',
+        aiResult.applicableLaw, aiResult.heirs, aiResult.minorHeirs || '[]',
+        aiResult.aiComputationCID, String(aiResult.aiConfidenceScore)
+      ];
+      const mockResult = getMockResponse('uttaradhikar', 'InitiateSuccessionByDeathCert', argsArray);
+      if (!result) result = mockResult;
 
       broadcast('SuccessionInitiated', {
         caseId: result.caseId,
@@ -220,9 +217,11 @@ router.post(
         result = await submit('uttaradhikar', 'ExecuteSuccession', [req.params.caseId]);
       } catch (fabricErr) {
         console.error('[ExecuteSuccession] Real chaincode failed:', fabricErr?.message || fabricErr);
-        const { getMockResponse } = require('../mock/responses');
-        result = getMockResponse('uttaradhikar', 'ExecuteSuccession', [req.params.caseId]);
       }
+      // ALWAYS update mock state to prevent UI queue inconsistencies if queries fall back to mock
+      const { getMockResponse } = require('../mock/responses');
+      const mockResult = getMockResponse('uttaradhikar', 'ExecuteSuccession', [req.params.caseId]);
+      if (!result) result = mockResult;
       
       broadcast('SuccessionExecuted', {
         caseId: req.params.caseId,
@@ -299,11 +298,14 @@ router.post(
           throw new Error('Real chaincode succeeded but returned no status');
         }
       } catch (fabricErr) {
-        const { getMockResponse } = require('../mock/responses');
-        result = getMockResponse('uttaradhikar', 'RecordHeirConsent', [
-          req.params.caseId, req.body.heirAadhaarHash, req.body.eSignTxHash
-        ]);
+        // failed
       }
+      // ALWAYS update mock state to prevent UI queue inconsistencies
+      const { getMockResponse } = require('../mock/responses');
+      const mockResult = getMockResponse('uttaradhikar', 'RecordHeirConsent', [
+        req.params.caseId, req.body.heirAadhaarHash, req.body.eSignTxHash
+      ]);
+      if (!result) result = mockResult;
       broadcast('HeirConsentRecorded', {
         caseId: req.params.caseId,
         heirAadhaarHash: req.body.heirAadhaarHash,
