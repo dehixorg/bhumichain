@@ -14,7 +14,7 @@ ADMIN_MSP="$NETWORK_DIR/crypto-config/peerOrganizations/revenuedept.bhumichain.i
 
 export CORE_PEER_TLS_ENABLED=true
 export CORE_PEER_LOCALMSPID=RevenueDeptMSP
-export CORE_PEER_ADDRESS=localhost:7051
+export CORE_PEER_ADDRESS=peer0.revenuedept.bhumichain.in:7051
 export CORE_PEER_MSPCONFIGPATH="$ADMIN_MSP"
 export CORE_PEER_TLS_ROOTCERT_FILE="$PEER0_TLS_CA"
 
@@ -50,7 +50,7 @@ peer lifecycle chaincode approveformyorg \
   --package-id "$CC_PACKAGE_ID" \
   --sequence "$SEQUENCE" \
   --tls --cafile "$ORDERER_CA" \
-  -o "localhost:7050"
+  -o "orderer.bhumichain.in:7050"
 
 peer lifecycle chaincode commit \
   --channelID "$CHANNEL" \
@@ -58,8 +58,8 @@ peer lifecycle chaincode commit \
   --version "$VERSION" \
   --sequence "$SEQUENCE" \
   --tls --cafile "$ORDERER_CA" \
-  -o "localhost:7050" \
-  --peerAddresses localhost:7051 --tlsRootCertFiles "$PEER0_TLS_CA"
+  -o "orderer.bhumichain.in:7050" \
+  --peerAddresses peer0.revenuedept.bhumichain.in:7051 --tlsRootCertFiles "$PEER0_TLS_CA"
 
 echo "========================================"
 echo " Upgrade Successful!"
