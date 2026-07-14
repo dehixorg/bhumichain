@@ -1,52 +1,49 @@
 #!/bin/bash
-set -e
+set -euo pipefail
 
 NETWORK_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-CHAINCODE_BASE=/opt/gopath/src/github.com/hyperledger/fabric/peer/chaincode
+export FABRIC_CFG_PATH=$HOME/fabric-samples/config
+export PATH=$HOME/fabric-samples/bin:$PATH
+
 CHANNEL=land-registry
 ORDERER=orderer.bhumichain.in:7050
-ORDERER_CA=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/ordererOrganizations/bhumichain.in/orderers/orderer.bhumichain.in/msp/tlscacerts/tlsca.bhumichain.in-cert.pem
 
-# Detect if peer1 is running
-PEER1_RUNNING=false
-if docker ps --format '{{.Names}}' | grep -q 'peer1.revenuedept.bhumichain.in'; then
-  PEER1_RUNNING=true
-fi
+ORDERER_CA="$NETWORK_DIR/crypto-config/ordererOrganizations/bhumichain.in/orderers/orderer.bhumichain.in/msp/tlscacerts/tlsca.bhumichain.in-cert.pem"
+PEER0_TLS_CA="$NETWORK_DIR/crypto-config/peerOrganizations/revenuedept.bhumichain.in/peers/peer0.revenuedept.bhumichain.in/tls/ca.crt"
+ADMIN_MSP="$NETWORK_DIR/crypto-config/peerOrganizations/revenuedept.bhumichain.in/users/Admin@revenuedept.bhumichain.in/msp"
+
+export CORE_PEER_TLS_ENABLED=true
+export CORE_PEER_LOCALMSPID=RevenueDeptMSP
+export CORE_PEER_ADDRESS=peer0.revenuedept.bhumichain.in:7051
+export CORE_PEER_MSPCONFIGPATH="$ADMIN_MSP"
+export CORE_PEER_TLS_ROOTCERT_FILE="$PEER0_TLS_CA"
 
 NAME="dlpi"
-VERSION=${1:-"3.0"}
-SEQUENCE=${2:-3}
-CC_SRC_PATH="$CHAINCODE_BASE/$NAME"
+VERSION=${1:-"2.0"}
+SEQUENCE=${2:-2}
+CC_SRC_PATH="$NETWORK_DIR/../../blockchain/chaincode/$NAME"
 
 echo "========================================"
-echo " Upgrading Chaincode: $NAME to v$VERSION (Sequence $SEQUENCE)"
+echo " Upgrading Chaincode: $NAME to v$VERSION (Sequence $SEQUENCE) [NATIVE MODE]"
 echo "========================================"
 
-echo "  [1/5] Packaging..."
-docker exec fabric-network-cli-1 peer lifecycle chaincode package "/tmp/${NAME}.tar.gz" \
+echo "  [1/4] Packaging..."
+peer lifecycle chaincode package "/tmp/${NAME}.tar.gz" \
   --path "$CC_SRC_PATH" \
   --lang golang \
   --label "${NAME}_${VERSION}"
 
-echo "  [2/5] Installing on peer0..."
-docker exec fabric-network-cli-1 peer lifecycle chaincode install "/tmp/${NAME}.tar.gz" || true
+echo "  [2/4] Installing on peer0..."
+peer lifecycle chaincode install "/tmp/${NAME}.tar.gz" || true
 
-if [ "$PEER1_RUNNING" = "true" ]; then
-  echo "  [2/5] Installing on peer1..."
-  docker exec \
-    -e CORE_PEER_ADDRESS=peer1.revenuedept.bhumichain.in:9051 \
-    -e CORE_PEER_TLS_ROOTCERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/revenuedept.bhumichain.in/peers/peer1.revenuedept.bhumichain.in/tls/ca.crt \
-    fabric-network-cli-1 peer lifecycle chaincode install "/tmp/${NAME}.tar.gz" || true
-fi
-
-echo "  [3/5] Getting package ID..."
-CC_PACKAGE_ID=$(docker exec fabric-network-cli-1 peer lifecycle chaincode queryinstalled \
+echo "  [3/4] Getting package ID..."
+CC_PACKAGE_ID=$(peer lifecycle chaincode queryinstalled \
   --output json | \
   python3 -c "import sys,json; ccs=json.load(sys.stdin)['installed_chaincodes']; print([c['package_id'] for c in ccs if c['label']=='${NAME}_${VERSION}'][0])")
 echo "  Package ID: $CC_PACKAGE_ID"
 
-echo "  [4/5] Approving for RevenueDeptMSP..."
-docker exec fabric-network-cli-1 peer lifecycle chaincode approveformyorg \
+echo "  [4/4] Approving and Committing..."
+peer lifecycle chaincode approveformyorg \
   --channelID "$CHANNEL" \
   --name "$NAME" \
   --version "$VERSION" \
@@ -55,21 +52,15 @@ docker exec fabric-network-cli-1 peer lifecycle chaincode approveformyorg \
   --tls --cafile "$ORDERER_CA" \
   -o "$ORDERER"
 
-echo "  [5/5] Committing to channel..."
-PEER_ARGS="--peerAddresses peer0.revenuedept.bhumichain.in:7051 --tlsRootCertFiles /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/revenuedept.bhumichain.in/peers/peer0.revenuedept.bhumichain.in/tls/ca.crt"
-if [ "$PEER1_RUNNING" = "true" ]; then
-  PEER_ARGS="$PEER_ARGS --peerAddresses peer1.revenuedept.bhumichain.in:9051 --tlsRootCertFiles /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/revenuedept.bhumichain.in/peers/peer1.revenuedept.bhumichain.in/tls/ca.crt"
-fi
-
-docker exec fabric-network-cli-1 peer lifecycle chaincode commit \
+peer lifecycle chaincode commit \
   --channelID "$CHANNEL" \
   --name "$NAME" \
   --version "$VERSION" \
   --sequence "$SEQUENCE" \
   --tls --cafile "$ORDERER_CA" \
   -o "$ORDERER" \
-  $PEER_ARGS
+  --peerAddresses peer0.revenuedept.bhumichain.in:7051 --tlsRootCertFiles "$PEER0_TLS_CA"
 
 echo "========================================"
-echo " Upgrade Successful!"
+echo " Upgrade Successful: $NAME v$VERSION"
 echo "========================================"
