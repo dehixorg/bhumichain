@@ -13,14 +13,14 @@ interface Props {
 }
 
 export default function AadhaarInput({ value, onChange, disabled, error, placeholder }: Props) {
-  const [show, setShow] = useState(false);
+  const [show, setShow] = useState(true);
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     const digits = e.target.value.replace(/\D/g, '').slice(0, 12);
     onChange(digits);
   }
 
-  // Display: XXXX-XXXX-1234 (mask all but last 4 when hidden)
+  // Display: 1234-5678-9012 (or XXXX-XXXX-1234 when toggled hidden)
   function displayValue(): string {
     if (!value) return '';
     const digits = value.padEnd(12, ' ');
@@ -40,7 +40,7 @@ export default function AadhaarInput({ value, onChange, disabled, error, placeho
         value={displayValue()}
         onChange={handleChange}
         disabled={disabled}
-        placeholder={placeholder || 'XXXX-XXXX-XXXX'}
+        placeholder={placeholder || '1234-5678-9012'}
         className={clsx(
           'w-full pr-10 px-4 py-3 rounded-xl border-2 bg-white text-gray-900',
           'font-mono text-base tracking-widest placeholder-gray-400',

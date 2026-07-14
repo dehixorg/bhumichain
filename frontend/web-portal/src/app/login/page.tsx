@@ -86,7 +86,7 @@ export default function LoginPage() {
   }
 
   async function handleVerifyOTP() {
-    if (otp.replace(/\D/g, '').length !== 6) { setError('Enter the complete 6-digit OTP'); return; }
+    if (otp.replace(/\D/g, '').length < 5) { setError('Enter valid OTP (12356 or 123456)'); return; }
     setError(''); setLoading(true);
     try {
       const user = tab === 'citizen'
@@ -392,11 +392,16 @@ export default function LoginPage() {
                         </>
                       ) : (
                         <>
-                          <p className="text-xs text-gray-500">OTP sent to <span className="font-bold text-gray-800">{maskedPhone}</span></p>
+                          <p className="text-xs text-gray-500">
+                            OTP sent to <span className="font-bold text-gray-800">{maskedPhone}</span>
+                            <span className="block mt-1 font-bold text-green-700 bg-green-50 px-2 py-1 rounded border border-green-200">
+                              Demo OTP: 12356 or 123456
+                            </span>
+                          </p>
                           <OTPInput value={otp} onChange={setOtp} disabled={loading} error={!!error} />
                           <button
                             onClick={handleVerifyOTP}
-                            disabled={loading || otp.length < 6}
+                            disabled={loading || otp.length < 5}
                             className="w-full flex items-center justify-center gap-2 py-3.5 bg-[#138808] hover:bg-[#0f6b06] disabled:opacity-50 text-white rounded-xl text-sm font-bold transition-all shadow-sm"
                           >
                             {loading

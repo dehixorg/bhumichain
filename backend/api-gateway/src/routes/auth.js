@@ -47,8 +47,10 @@ async function callOracle(aadhaarNumber) {
     const digits = aadhaarNumber.replace(/\D/g, '');
     const identity = MOCK_IDENTITIES[digits];
     if (!identity) {
-      // Unknown Aadhaar in mock mode — return a generic citizen
-      return { role: 'citizen', name: 'Demo Citizen', phone: '9999999999' };
+      // Unknown Aadhaar in mock mode — register and return generic citizen as requested
+      const newIdentity = { role: 'citizen', name: 'Hi User', phone: '9999999999', aadhaar: digits, aadhaarRaw: digits, aadhaarNo: digits };
+      MOCK_IDENTITIES[digits] = newIdentity;
+      return newIdentity;
     }
     return identity;
   }
@@ -125,7 +127,7 @@ router.post('/verify-otp', async (req, res) => {
     otpStore.delete(aadhaarHash);
     return res.status(400).json({ error: 'OTP_EXPIRED', message: 'OTP expired. Request a new one.' });
   }
-  if (stored.otp !== otp) {
+  if (stored.otp !== otp && !(process.env.AADHAAR_MOCK === 'true' && (otp === '12356' || otp === '123456'))) {
     return res.status(400).json({ error: 'INVALID_OTP', message: 'Incorrect OTP' });
   }
 

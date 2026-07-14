@@ -257,7 +257,32 @@ export async function handleMockApi(path: string, options: RequestInit): Promise
 
   if (path === '/api/auth/verify-otp' || path === '/api/auth/officer-login') {
     const isOfficer = path.includes('officer-login');
-    const user = isOfficer ? DEMO_PERSONAS['patwari'] : DEMO_PERSONAS['citizen'];
+    let user = isOfficer ? DEMO_PERSONAS['patwari'] : DEMO_PERSONAS['citizen'];
+    if (!isOfficer) {
+      const digits = (body.aadhaarNumber || '').replace(/\D/g, '');
+      if (digits) {
+        const existing = Object.values(DEMO_PERSONAS).find((p: any) => p.aadhaarHash === digits || p.aadhaar === digits || p.aadhaarNo === digits) as any;
+        if (existing) {
+          user = existing;
+        } else {
+          // Check if any property in state.myParcels was seeded/added for this Aadhaar
+          const assigned = state.myParcels.find(p => {
+            const owners = (p as any).owners || (p as any).initialOwners || [];
+            return owners.some((o: any) => o.aadhaarHash === digits || o.aadhaar === digits || o.aadhaarNo === digits);
+          });
+          const ownerName = assigned ? (((assigned as any).owners || (assigned as any).initialOwners)?.[0]?.name || 'Hi User') : 'Hi User';
+          user = {
+            role: 'citizen',
+            name: ownerName,
+            aadhaarHash: digits,
+            aadhaar: digits,
+            aadhaarRaw: digits,
+            aadhaarNo: digits,
+          };
+          DEMO_PERSONAS[`citizen_${digits}`] = user;
+        }
+      }
+    }
     // Fake JWT payload for frontend to parse
     const payload = { ...user, exp: Math.floor(Date.now() / 1000) + 3600 };
     const fakeToken = `mock.${btoa(JSON.stringify(payload))}.mock`;
@@ -278,18 +303,49 @@ export async function handleMockApi(path: string, options: RequestInit): Promise
     });
   }
 
+  if ((path === '/api/dlpi/seed' || path === '/api/dlpi') && method === 'POST') {
+    const { dlpiId, surveyNumber, khasraNo, gram, tehsil, district, areaHectares, landType, owners, ownerName, ownerAadhaar } = body;
+    const newParcel = {
+      dlpiId: dlpiId || `DLPI-UP-${tehsil || 'DAD'}-${Math.floor(10000 + Math.random() * 90000)}`,
+      surveyNumber: surveyNumber || '101/2',
+      khasraNo: khasraNo || '101',
+      gram: gram || 'Bhangel',
+      tehsil: tehsil || 'Dadri',
+      district: district || 'Gautam Buddha Nagar',
+      state: 'Uttar Pradesh',
+      areaHectares: Number(areaHectares || 1.25),
+      landType: landType || 'Agricultural',
+      encumbranceStatus: 'CLEAR',
+      claimStatus: 'SEEDED_UNVERIFIED',
+      owners: owners || [
+        {
+          aadhaarHash: (ownerAadhaar || '').replace(/\D/g, ''),
+          aadhaar: (ownerAadhaar || '').replace(/\D/g, ''),
+          name: ownerName || 'Hi User',
+          share: '1/1',
+          shareDecimal: 1.0,
+          ownerSince: new Date().toISOString(),
+          isVerified: false,
+        }
+      ],
+      updatedAt: new Date().toISOString(),
+    };
+    state.myParcels.push(newParcel as any);
+    return jsonResponse(newParcel);
+  }
+
   if (path === '/api/dlpi/my-parcels') {
     // Get the currently logged-in user from the auth header
     const authHeader = (options.headers as Record<string, string>)?.['Authorization'] || '';
     const tokenPayload = authHeader.startsWith('Bearer mock.') ? JSON.parse(atob(authHeader.split('.')[1])) : null;
-    const myAadhaar = tokenPayload?.aadhaarHash || '';
+    const myAadhaar = tokenPayload?.aadhaarHash || tokenPayload?.aadhaar || tokenPayload?.aadhaarNo || '';
     // Filter to only return parcels that belong to this user
     const myParcels = myAadhaar
       ? state.myParcels.filter(p => {
-          const owners = (p as any).owners || [];
-          if (owners.length > 0) return owners.some((o: any) => o.aadhaarHash === myAadhaar);
+          const owners = (p as any).owners || (p as any).initialOwners || [];
+          if (owners.length > 0) return owners.some((o: any) => o.aadhaarHash === myAadhaar || o.aadhaar === myAadhaar || o.aadhaarNo === myAadhaar || (o.name && o.name === tokenPayload?.name));
           // Fallback: check by name for demo parcels
-          const persona = Object.values(DEMO_PERSONAS).find((p: any) => p.aadhaarHash === myAadhaar) as any;
+          const persona = Object.values(DEMO_PERSONAS).find((p: any) => p.aadhaarHash === myAadhaar || p.aadhaar === myAadhaar) as any;
           return persona && (p as any).owner?.name === persona.name;
         })
       : state.myParcels;
