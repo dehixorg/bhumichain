@@ -564,6 +564,15 @@ func (c *DLPIContract) SetTransferLock(ctx contractapi.TransactionContextInterfa
 	if err != nil {
 		return err
 	}
+	// ACID RULE: Only officially verified parcels can be sold
+	// Patwari must have uploaded and Tehsildar must have approved before any transfer
+	if dlpi.ClaimStatus != "OWNER_VERIFIED" {
+		return fmt.Errorf(
+			"PARCEL_NOT_VERIFIED: Parcel %s has status '%s'. "+
+				"Only OWNER_VERIFIED parcels can be transferred. "+
+				"The Patwari must upload the land record and obtain SRO + Tehsildar approval first.",
+			dlpiId, dlpi.ClaimStatus)
+	}
 	if dlpi.TransferLock != nil && dlpi.TransferLock.IsLocked {
 		return fmt.Errorf("PARCEL_LOCKED: %s already locked by %s, expires %s",
 			dlpiId, dlpi.TransferLock.LockedBy, dlpi.TransferLock.ExpiresAt)
@@ -704,6 +713,21 @@ func (c *DLPIContract) InitiateSuccession(ctx contractapi.TransactionContextInte
 	dlpi, err := c.GetDLPI(ctx, dlpiId)
 	if err != nil {
 		return err
+	}
+
+	// ACID RULE: Only verified parcels can have succession initiated
+	if dlpi.ClaimStatus != "OWNER_VERIFIED" {
+		return fmt.Errorf(
+			"PARCEL_NOT_VERIFIED: Parcel %s has status '%s'. "+
+				"Succession can only be initiated on OWNER_VERIFIED parcels. "+
+				"Patwari must register the land record first.",
+			dlpiId, dlpi.ClaimStatus)
+	}
+	if dlpi.SuccessionStatus == "SUCCESSION_PENDING" {
+		return fmt.Errorf("SUCCESSION_ALREADY_PENDING: An active succession case already exists for parcel %s", dlpiId)
+	}
+	if dlpi.TransferLock != nil && dlpi.TransferLock.IsLocked {
+		return fmt.Errorf("TRANSFER_BLOCKED: Parcel %s is locked for a pending sale — resolve transfer first", dlpiId)
 	}
 
 	var heirs []Heir

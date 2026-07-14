@@ -217,6 +217,54 @@ func (c *PropertyTransferContract) InitiateTransfer(
 		proposal.Status = StatusInitiated
 	}
 
+	// ── ACID PRE-CHECK: Verify DLPI exists and each seller is a current on-chain owner ──
+	// This prevents transfers on parcels that haven't gone through Patwari registration
+	dlpiQueryArgs := [][]byte{[]byte("GetDLPI"), []byte(dlpiId)}
+	dlpiResp := ctx.GetStub().InvokeChaincode("dlpi", dlpiQueryArgs, "")
+	if dlpiResp.Status != 200 {
+		return "", fmt.Errorf(
+			"PARCEL_NOT_FOUND: Parcel %s does not exist on the blockchain. "+
+				"A Patwari must upload and register the land record before any transfers can occur. "+
+				"Error: %s", dlpiId, dlpiResp.Message)
+	}
+	// Check that the DLPI is OWNER_VERIFIED (SetTransferLock also checks, but we check early
+	// so the error message is clearer to the caller)
+	type dlpiStatusCheck struct {
+		ClaimStatus string `json:"claimStatus"`
+	}
+	var dlpiStatus dlpiStatusCheck
+	if err := json.Unmarshal(dlpiResp.Payload, &dlpiStatus); err == nil {
+		if dlpiStatus.ClaimStatus != "OWNER_VERIFIED" {
+			return "", fmt.Errorf(
+				"PARCEL_NOT_VERIFIED: Parcel %s has status '%s'. "+
+					"Only parcels with status OWNER_VERIFIED can be transferred. "+
+					"Please complete Patwari upload → SRO approval → Tehsildar approval first.",
+				dlpiId, dlpiStatus.ClaimStatus)
+		}
+	}
+
+	// Verify each seller is a current owner
+	type dlpiOwners struct {
+		Owners []struct {
+			AadhaarHash string `json:"aadhaarHash"`
+		} `json:"owners"`
+	}
+	var dlpiWithOwners dlpiOwners
+	if err := json.Unmarshal(dlpiResp.Payload, &dlpiWithOwners); err == nil {
+		ownerSet := make(map[string]bool)
+		for _, o := range dlpiWithOwners.Owners {
+			ownerSet[o.AadhaarHash] = true
+		}
+		for _, seller := range sellers {
+			if !ownerSet[seller.AadhaarHash] {
+				return "", fmt.Errorf(
+					"OWNERSHIP_DENIED: Seller %s (%s) is not a registered owner of parcel %s on the blockchain. "+
+						"Only the actual current owners listed in the land record can sell this property.",
+					seller.Name, seller.AadhaarHash, dlpiId)
+			}
+		}
+	}
+
 	if err := c.saveProposal(ctx, &proposal); err != nil {
 		return "", err
 	}

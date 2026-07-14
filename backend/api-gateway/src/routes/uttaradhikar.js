@@ -43,6 +43,36 @@ router.post(
         dateOfDeath, deathCertCID, crsRegistrationNo, heirs
       } = req.body;
 
+      // ── ACID PRE-FLIGHT: Verify parcel is OWNER_VERIFIED and deceased was an on-chain owner ──
+      try {
+        const dlpi = await evaluate('dlpi', 'GetDLPI', [dlpiId]);
+        if (!dlpi) {
+          return res.status(404).json({
+            error: 'PARCEL_NOT_FOUND',
+            message: `Parcel ${dlpiId} does not exist on the blockchain. A Patwari must register the land record first before succession can be initiated.`,
+          });
+        }
+        if (dlpi.claimStatus !== 'OWNER_VERIFIED') {
+          return res.status(403).json({
+            error: 'PARCEL_NOT_VERIFIED',
+            message: `Parcel ${dlpiId} has status '${dlpi.claimStatus}'. Succession can only be initiated on OWNER_VERIFIED parcels. Complete Patwari upload → SRO approval → Tehsildar approval first.`,
+          });
+        }
+        const isOwner = (dlpi.owners || []).some(o => o.aadhaarHash === deceasedAadhaarHash);
+        if (!isOwner) {
+          return res.status(403).json({
+            error: 'DECEASED_NOT_OWNER',
+            message: `The deceased (${deceasedAadhaarHash}) is not a registered owner of parcel ${dlpiId}. Succession can only be initiated by the actual on-chain owner's legal heir.`,
+          });
+        }
+      } catch (preFlightErr) {
+        if (preFlightErr.status === 403 || preFlightErr.status === 404) throw preFlightErr;
+        return res.status(503).json({
+          error: 'BLOCKCHAIN_UNAVAILABLE',
+          message: `Cannot verify parcel ownership — blockchain query failed: ${preFlightErr.message}`,
+        });
+      }
+
       let aiResult = null;
       if (heirs && Array.isArray(heirs) && heirs.length > 0) {
         // Compute equal shares based on the dynamic heirs
@@ -91,18 +121,18 @@ router.post(
       }
 
       let result;
+      const argsArray = [
+        dlpiId, familyId, deceasedName, deceasedAadhaarHash,
+        dateOfDeath, deathCertCID, crsRegistrationNo,
+        'Hindu',
+        aiResult.applicableLaw,
+        aiResult.heirs,
+        aiResult.minorHeirs || '[]',
+        aiResult.aiComputationCID,
+        String(aiResult.aiConfidenceScore),
+      ];
+
       try {
-        const argsArray = [
-          dlpiId, familyId, deceasedName, deceasedAadhaarHash,
-          dateOfDeath, deathCertCID, crsRegistrationNo,
-          'Hindu', // default religion to Hindu
-          aiResult.applicableLaw,
-          aiResult.heirs,
-          aiResult.minorHeirs || '[]',
-          aiResult.aiComputationCID,
-          String(aiResult.aiConfidenceScore),
-        ];
-        
         result = await submit('uttaradhikar', 'InitiateSuccessionByDeathCert', argsArray);
         
         // Chaincode returns the caseId as a raw string, not a JSON object!
@@ -114,53 +144,14 @@ router.post(
           throw new Error('Real chaincode succeeded but returned no caseId');
         }
       } catch (fabricErr) {
-        console.warn('[Succession] Real chaincode failed. Full Error:', fabricErr.message, fabricErr.details);
-        
-        const detailsStr = fabricErr.details ? JSON.stringify(fabricErr.details) : '';
-        if ((fabricErr.message && fabricErr.message.includes('DLPI') && fabricErr.message.includes('not found')) || 
-            (detailsStr.includes('DLPI') && detailsStr.includes('not found'))) {
-          console.warn('[Demo] DLPI not found. Auto-seeding DLPI-UP-DAD-00100 to fix fresh blockchain state...');
-          try {
-            const seedPayload = {
-              dlpiId: 'DLPI-UP-DAD-00100',
-              surveyNumber: '100', khasraNo: '100',
-              tehsil: 'Dadri', tehsilCode: 'DAD',
-              district: 'Gautam Buddha Nagar', state: 'Uttar Pradesh',
-              landType: 'Residential', landTypeDescription: 'Irrigated double-crop',
-              areaHectares: 2.5, isTribal: false, scheduleVArea: false,
-              initialOwners: [{
-                aadhaarHash: deceasedAadhaarHash || 'sha256:owner1ramesh3f8e2d1c7b4a09f6e5d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9', name: deceasedName || 'Ramesh Kumar',
-                share: '1/1', shareDecimal: 1.0, ownerSince: new Date().toISOString(),
-                isVerified: true
-              }],
-              ownershipType: 'SOLE',
-              latitude: 28.5355, longitude: 77.3910,
-              circleRateINR: 5000000, ipfsCID: 'QmYwAPJzv5CZ1zoZ5G4vV3H927918v5H927918v5H92791',
-              sourceType: 'MANUAL'
-            };
-            await submit('dlpi', 'CreateDLPI', [JSON.stringify(seedPayload)]);
-            console.log('[Demo] Seeding complete. Retrying InitiateSuccession...');
-            result = await submit('uttaradhikar', 'InitiateSuccessionByDeathCert', argsArray);
-            if (typeof result === 'string' && result.startsWith('SUC-')) {
-              result = { caseId: result };
-            }
-            if (!result || !result.caseId) {
-              throw new Error('Real chaincode succeeded but returned no caseId');
-            }
-          } catch (seedErr) {
-            console.warn('[Succession] Auto-seed or retry failed. Falling back to mock.', seedErr.message);
-          }
-        }
+        // Real blockchain failed — surface the actual error, no auto-seed fallback
+        console.error('[Succession] Real chaincode failed:', fabricErr.message, fabricErr.details);
+        return res.status(500).json({
+          error: 'CHAINCODE_ERROR',
+          message: fabricErr.message,
+          details: fabricErr.details || null,
+        });
       }
-      const { getMockResponse } = require('../mock/responses');
-      const argsArray = [
-        dlpiId, familyId, deceasedName, deceasedAadhaarHash,
-        dateOfDeath, deathCertCID, crsRegistrationNo, 'Hindu',
-        aiResult.applicableLaw, aiResult.heirs, aiResult.minorHeirs || '[]',
-        aiResult.aiComputationCID, String(aiResult.aiConfidenceScore)
-      ];
-      const mockResult = getMockResponse('uttaradhikar', 'InitiateSuccessionByDeathCert', argsArray);
-      if (!result) result = mockResult;
 
       broadcast('SuccessionInitiated', {
         caseId: result.caseId,

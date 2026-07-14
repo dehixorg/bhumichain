@@ -35,6 +35,38 @@ router.post(
       const tribalCertHash = req.body.tribalCertHash || '';
       const tribalCommunity = req.body.tribalCommunity || '';
 
+      // ── ACID PRE-FLIGHT: Verify parcel is OWNER_VERIFIED and seller is on-chain owner ──
+      try {
+        const dlpi = await evaluate('dlpi', 'GetDLPI', [dlpiId]);
+        if (!dlpi) {
+          return res.status(404).json({
+            error: 'PARCEL_NOT_FOUND',
+            message: `Parcel ${dlpiId} does not exist on the blockchain. A Patwari must register the land record first.`,
+          });
+        }
+        if (dlpi.claimStatus !== 'OWNER_VERIFIED') {
+          return res.status(403).json({
+            error: 'PARCEL_NOT_VERIFIED',
+            message: `Parcel ${dlpiId} is not yet OWNER_VERIFIED (current status: ${dlpi.claimStatus}). Complete Patwari upload → SRO approval → Tehsildar approval first.`,
+          });
+        }
+        const isOwner = (dlpi.owners || []).some(o => o.aadhaarHash === sellerAadhaarHash);
+        if (!isOwner) {
+          return res.status(403).json({
+            error: 'OWNERSHIP_DENIED',
+            message: `Seller (${sellerAadhaarHash}) is not a registered owner of parcel ${dlpiId}. Only the actual on-chain owner can initiate a sale.`,
+          });
+        }
+      } catch (preFlightErr) {
+        if (preFlightErr.status === 403 || preFlightErr.status === 404) throw preFlightErr;
+        // If the DLPI chaincode itself fails, block the transfer — do not fall back
+        return res.status(503).json({
+          error: 'BLOCKCHAIN_UNAVAILABLE',
+          message: `Cannot verify parcel ownership — blockchain query failed: ${preFlightErr.message}`,
+        });
+      }
+
+
       // Step 1: TribalGuard pre-check
       let tribalCheck;
       try {
@@ -54,43 +86,6 @@ router.post(
         }
       }
 
-      // Step 1.5: Always release any existing lock on the parcel in demo mode
-      // to ensure retries/refreshes don't get blocked by the blockchain's 24h safety lock.
-      try {
-        console.log('[Demo] Clearing any existing parcel lock...');
-        await submit('dlpi', 'ReleaseTransferLock', [dlpiId]);
-      } catch (lockErr) {
-        console.warn('[Demo] Note: Lock release skipped or failed (likely not locked yet):', lockErr.message);
-      }
-
-      // Step 1.6: Reset demo parcel state if the owner has changed (already sold in a previous demo run)
-      // so the demo is infinitely repeatable.
-      try {
-        const currentDLPI = await evaluate('dlpi', 'GetDLPI', [dlpiId]);
-        if (currentDLPI && currentDLPI.owners) {
-          const hasSeller = currentDLPI.owners.some(o => o.aadhaarHash === sellerAadhaarHash);
-          if (!hasSeller) {
-            console.log('[Demo] Resetting parcel owner back to demo seller...');
-            const currentOwnerHashes = currentDLPI.owners.map(o => o.aadhaarHash);
-            const resetBuyerPayload = [{
-              aadhaarHash: sellerAadhaarHash,
-              name: 'Ankur Singh (Legal Heir, 1/3 share)',
-              share: '1/1',
-              shareDecimal: 1.0,
-              isVerified: true
-            }];
-            await submit('dlpi', 'UpdateOwners', [
-              dlpiId,
-              JSON.stringify(currentOwnerHashes),
-              JSON.stringify(resetBuyerPayload),
-              'DemoReset', 'System', 'demo-system', 'RESET-001', 'QmReset', 'Reset demo parcel'
-            ]);
-            console.log('[Demo] Parcel owner reset complete!');
-          }
-        }
-      } catch (err) {
-        console.warn('[Demo] Note: Could not verify/reset parcel owners:', err.message);
-      }
 
       if (tribalCheck.decision === 'HARD_REJECTED') {
         broadcast('TribalTransferHardRejected', tribalCheck, dlpiId);
@@ -133,41 +128,7 @@ router.post(
           String(oracleValueINR),
         ]);
       } catch (e) {
-        const detailsStr = e.details ? JSON.stringify(e.details) : '';
-        if ((e.message && e.message.includes('LOCK_FAILED') && e.message.includes('not found')) || 
-            (detailsStr.includes('LOCK_FAILED') && detailsStr.includes('not found'))) {
-          console.warn('[Demo] DLPI not found. Auto-seeding DLPI-UP-DAD-00100 to fix fresh blockchain state...');
-          const seedPayload = {
-            dlpiId: 'DLPI-UP-DAD-00100',
-            surveyNumber: '100', khasraNo: '100',
-            tehsil: 'Dadri', tehsilCode: 'DAD',
-            district: 'Gautam Buddha Nagar', state: 'Uttar Pradesh',
-            landType: 'Residential', landTypeDescription: 'Irrigated double-crop',
-            areaHectares: 2.5, isTribal: false, scheduleVArea: false,
-            initialOwners: [{
-              aadhaarHash: sellerAadhaarHash, name: 'Amit Saxena',
-              share: '1/1', shareDecimal: 1.0, ownerSince: new Date().toISOString(),
-              isVerified: true
-            }],
-            ownershipType: 'SOLE',
-            latitude: 28.5355, longitude: 77.3910,
-            circleRateINR: 5000000, ipfsCID: 'QmYwAPJzv5CZ1zoZ5G4vV3H927918v5H927918v5H92791',
-            sourceType: 'MANUAL'
-          };
-          await submit('dlpi', 'CreateDLPI', [JSON.stringify(seedPayload)]);
-          
-          console.log('[Demo] Seeding complete. Retrying InitiateTransfer...');
-          transferId = await submit('property-transfer', 'InitiateTransfer', [
-            dlpiId, 'FULL_SALE',
-            sellersJSON, buyersJSON,
-            req.user.aadhaarHash || 'demo-officer',
-            preemptionJSON,
-            String(declaredValueINR),
-            String(oracleValueINR),
-          ]);
-        } else {
-          throw e;
-        }
+        throw e;
       }
 
       if (transferId) {
