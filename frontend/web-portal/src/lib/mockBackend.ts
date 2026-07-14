@@ -195,13 +195,17 @@ const DEMO_PERSONAS: Record<string, any> = {
     role: 'citizen', name: 'Rakesh Agarwal',
     aadhaarHash: '999900010009', // raw Aadhaar — no hashing
   },
+  suresh_yadav: {
+    role: 'citizen', name: 'Suresh Yadav',
+    aadhaarHash: '999900010012', // raw Aadhaar — no hashing
+  },
   citizen_heir1: {
     role: 'citizen', name: 'Suresh Yadav',
     aadhaarHash: '999900010012', // raw Aadhaar — no hashing
   },
   citizen_heir2: {
-    role: 'citizen', name: 'Meena Devi',
-    aadhaarHash: '999900010013', // raw Aadhaar — no hashing
+    role: 'citizen', name: 'Sunita Kumar',
+    aadhaarHash: '999900010015', // raw Aadhaar — no hashing
   },
 };
 
