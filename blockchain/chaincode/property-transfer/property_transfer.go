@@ -8,6 +8,31 @@ import (
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
 )
 
+func matchAadhaar(a, b string) bool {
+	if a == "" || b == "" {
+		return false
+	}
+	if a == b {
+		return true
+	}
+	aDigits := ""
+	for _, ch := range a {
+		if ch >= '0' && ch <= '9' {
+			aDigits += string(ch)
+		}
+	}
+	bDigits := ""
+	for _, ch := range b {
+		if ch >= '0' && ch <= '9' {
+			bDigits += string(ch)
+		}
+	}
+	if len(aDigits) >= 12 && len(bDigits) >= 12 && aDigits == bDigits {
+		return true
+	}
+	return false
+}
+
 // ─── Transfer Types ───────────────────────────────────────────────────────────
 //
 // FULL_SALE:   ALL current owners sell together → one or more buyers take 100% of parcel.
@@ -251,12 +276,15 @@ func (c *PropertyTransferContract) InitiateTransfer(
 	}
 	var dlpiWithOwners dlpiOwners
 	if err := json.Unmarshal(dlpiResp.Payload, &dlpiWithOwners); err == nil {
-		ownerSet := make(map[string]bool)
-		for _, o := range dlpiWithOwners.Owners {
-			ownerSet[o.AadhaarHash] = true
-		}
 		for _, seller := range sellers {
-			if !ownerSet[seller.AadhaarHash] {
+			isOwner := false
+			for _, o := range dlpiWithOwners.Owners {
+				if matchAadhaar(o.AadhaarHash, seller.AadhaarHash) {
+					isOwner = true
+					break
+				}
+			}
+			if !isOwner {
 				return "", fmt.Errorf(
 					"OWNERSHIP_DENIED: Seller %s (%s) is not a registered owner of parcel %s on the blockchain. "+
 						"Only the actual current owners listed in the land record can sell this property.",
@@ -358,7 +386,7 @@ func (c *PropertyTransferContract) ExercisePreemption(
 	// Share and price remain the same as the original sale
 	isCoOwner := false
 	for _, h := range proposal.Preemption.CoOwnerHashes {
-		if h == coOwnerAadhaarHash {
+		if matchAadhaar(h, coOwnerAadhaarHash) {
 			isCoOwner = true
 			break
 		}
@@ -453,7 +481,7 @@ func (c *PropertyTransferContract) RecordConsent(
 	switch partyRole {
 	case "SELLER":
 		for i, s := range proposal.Sellers {
-			if s.AadhaarHash == aadhaarHash {
+			if matchAadhaar(s.AadhaarHash, aadhaarHash) {
 				proposal.Sellers[i].HasConsented = true
 				proposal.Sellers[i].ConsentedAt = now
 				proposal.Sellers[i].ESignTxHash = eSignTxHash
@@ -463,7 +491,7 @@ func (c *PropertyTransferContract) RecordConsent(
 		}
 	case "BUYER":
 		for i, b := range proposal.Buyers {
-			if b.AadhaarHash == aadhaarHash {
+			if matchAadhaar(b.AadhaarHash, aadhaarHash) {
 				proposal.Buyers[i].HasConsented = true
 				proposal.Buyers[i].ConsentedAt = now
 				proposal.Buyers[i].ESignTxHash = eSignTxHash

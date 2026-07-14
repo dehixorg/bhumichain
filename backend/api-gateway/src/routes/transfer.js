@@ -3,12 +3,31 @@
 const { Router } = require('express');
 const { body, param, validationResult } = require('express-validator');
 const axios = require('axios');
+const crypto = require('crypto');
 const { submit, evaluate } = require('../services/fabric');
 const { broadcast } = require('../services/websocket');
 const { authenticate, requireRole, ROLES } = require('../middleware/auth');
 
 const router = Router();
 const ORACLE_URL = () => process.env.ORACLE_SERVICE_URL || 'http://localhost:8001';
+
+function matchAadhaar(stored, input) {
+  if (!stored || !input) return false;
+  if (stored === input) return true;
+  const sDigits = String(stored).replace(/\D/g, '');
+  const iDigits = String(input).replace(/\D/g, '');
+  if (sDigits && sDigits.length >= 12 && sDigits === iDigits) return true;
+  const salt = process.env.AADHAAR_SALT || 'bhumichain-aadhaar-salt-change-in-prod';
+  if (iDigits && iDigits.length >= 12) {
+    const computed = 'sha256:' + crypto.createHash('sha256').update(iDigits + salt).digest('hex');
+    if (stored === computed || stored === computed.slice(7)) return true;
+  }
+  if (sDigits && sDigits.length >= 12) {
+    const computed = 'sha256:' + crypto.createHash('sha256').update(sDigits + salt).digest('hex');
+    if (input === computed || input === computed.slice(7)) return true;
+  }
+  return false;
+}
 
 const validate = (req, res, next) => {
   const errs = validationResult(req);
@@ -23,14 +42,21 @@ router.post(
   authenticate,
   requireRole(ROLES.SRO, ROLES.TEHSILDAR, ROLES.CITIZEN),
   body('dlpiId').matches(/^DLPI-[A-Z]{2}-[A-Z]{3}-[A-Z0-9]+$/),
-  body('sellerAadhaarHash').matches(/^sha256:[a-z0-9]+$/),
+  body('sellerAadhaarHash').optional().trim(),
+  body('sellerAadhaar').optional().trim(),
   body('buyerName').notEmpty().trim(),
-  body('buyerAadhaarHash').matches(/^sha256:[a-z0-9]+$/),
+  body('buyerAadhaarHash').optional().trim(),
+  body('buyerAadhaar').optional().trim(),
   body('declaredValueINR').isInt({ min: 1 }),
   validate,
   async (req, res) => {
     try {
-      const { dlpiId, sellerAadhaarHash, buyerName, buyerAadhaarHash, declaredValueINR } = req.body;
+      const { dlpiId, buyerName, declaredValueINR } = req.body;
+      const sellerAadhaarHash = req.body.sellerAadhaarHash || req.body.sellerAadhaar || req.body.sellerAadhaarNo || '';
+      const buyerAadhaarHash = req.body.buyerAadhaarHash || req.body.buyerAadhaar || req.body.buyerAadhaarNo || '';
+      if (!sellerAadhaarHash || !buyerAadhaarHash) {
+        return res.status(400).json({ error: 'VALIDATION_ERROR', message: 'sellerAadhaarHash (or sellerAadhaar) and buyerAadhaarHash (or buyerAadhaar) are required.' });
+      }
       const isTribalBuyer = req.body.isTribalBuyer || false;
       const tribalCertHash = req.body.tribalCertHash || '';
       const tribalCommunity = req.body.tribalCommunity || '';
@@ -50,7 +76,7 @@ router.post(
             message: `Parcel ${dlpiId} is not yet OWNER_VERIFIED (current status: ${dlpi.claimStatus}). Complete Patwari upload → SRO approval → Tehsildar approval first.`,
           });
         }
-        const isOwner = (dlpi.owners || []).some(o => o.aadhaarHash === sellerAadhaarHash);
+        const isOwner = (dlpi.owners || []).some(o => matchAadhaar(o.aadhaarHash || o.aadhaar || o.aadhaarRaw, sellerAadhaarHash));
         if (!isOwner) {
           return res.status(403).json({
             error: 'OWNERSHIP_DENIED',
@@ -239,12 +265,17 @@ router.post(
   '/:transferId/consent',
   authenticate,
   body('partyType').isIn(['SELLER', 'BUYER']),
-  body('aadhaarHash').matches(/^sha256:[a-z0-9]+$/),
+  body('aadhaarHash').optional().trim(),
+  body('aadhaar').optional().trim(),
   body('eSignTxHash').notEmpty(),
   validate,
   async (req, res) => {
     try {
-      const { partyType, aadhaarHash, eSignTxHash } = req.body;
+      const { partyType, eSignTxHash } = req.body;
+      const aadhaarHash = req.body.aadhaarHash || req.body.aadhaar || req.body.aadhaarNo || '';
+      if (!aadhaarHash) {
+        return res.status(400).json({ error: 'VALIDATION_ERROR', message: 'aadhaarHash (or aadhaar) is required.' });
+      }
       const result = await submit('property-transfer', 'RecordConsent', [
         req.params.transferId, partyType, aadhaarHash, eSignTxHash,
       ]);

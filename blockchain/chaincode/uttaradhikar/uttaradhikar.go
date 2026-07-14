@@ -8,6 +8,31 @@ import (
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
 )
 
+func matchAadhaar(a, b string) bool {
+	if a == "" || b == "" {
+		return false
+	}
+	if a == b {
+		return true
+	}
+	aDigits := ""
+	for _, ch := range a {
+		if ch >= '0' && ch <= '9' {
+			aDigits += string(ch)
+		}
+	}
+	bDigits := ""
+	for _, ch := range b {
+		if ch >= '0' && ch <= '9' {
+			bDigits += string(ch)
+		}
+	}
+	if len(aDigits) >= 12 && len(bDigits) >= 12 && aDigits == bDigits {
+		return true
+	}
+	return false
+}
+
 // ─── Uttaradhikar Engine — Complete Inheritance Module ────────────────────
 //
 // Three inheritance trigger scenarios:
@@ -832,7 +857,7 @@ func (c *UttaradhikarContract) RecordHeirNotification(
 	allNotified := true
 	found := false
 	for i, h := range sCase.Heirs {
-		if h.AadhaarHash == heirAadhaarHash {
+		if matchAadhaar(h.AadhaarHash, heirAadhaarHash) {
 			sCase.Heirs[i].NotifiedAt = deliveredAt
 			sCase.Heirs[i].NotifyChannel = channel
 			found = true
@@ -870,7 +895,7 @@ func (c *UttaradhikarContract) RecordHeirConsent(
 	now := time.Now().UTC().Format(time.RFC3339)
 	found := false
 	for i, h := range sCase.Heirs {
-		if h.AadhaarHash == heirAadhaarHash {
+		if matchAadhaar(h.AadhaarHash, heirAadhaarHash) {
 			if h.HasObjected {
 				return fmt.Errorf("heir %s already objected — cannot consent after objecting", h.Name)
 			}
@@ -909,7 +934,7 @@ func (c *UttaradhikarContract) RecordHeirObjection(
 	now := time.Now().UTC().Format(time.RFC3339)
 	heirName := ""
 	for i, h := range sCase.Heirs {
-		if h.AadhaarHash == heirAadhaarHash {
+		if matchAadhaar(h.AadhaarHash, heirAadhaarHash) {
 			if h.HasConsented {
 				return fmt.Errorf("heir %s already consented — cannot object after consenting", h.Name)
 			}

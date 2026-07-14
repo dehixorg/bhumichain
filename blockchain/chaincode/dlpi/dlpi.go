@@ -8,6 +8,31 @@ import (
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
 )
 
+func matchAadhaar(a, b string) bool {
+	if a == "" || b == "" {
+		return false
+	}
+	if a == b {
+		return true
+	}
+	aDigits := ""
+	for _, ch := range a {
+		if ch >= '0' && ch <= '9' {
+			aDigits += string(ch)
+		}
+	}
+	bDigits := ""
+	for _, ch := range b {
+		if ch >= '0' && ch <= '9' {
+			bDigits += string(ch)
+		}
+	}
+	if len(aDigits) >= 12 && len(bDigits) >= 12 && aDigits == bDigits {
+		return true
+	}
+	return false
+}
+
 // ─── Core Data Structures ─────────────────────────────────────────────────────
 
 // CoOwner represents one owner's stake in a parcel.
@@ -239,7 +264,7 @@ func (c *DLPIContract) TransferFrom(ctx contractapi.TransactionContextInterface,
 	}
 	found := false
 	for i, o := range dlpi.Owners {
-		if o.AadhaarHash == fromAadhaarHash {
+		if matchAadhaar(o.AadhaarHash, fromAadhaarHash) {
 			// Update the owner to the new buyer
 			dlpi.Owners[i].AadhaarHash = toAadhaarHash
 			dlpi.Owners[i].Name = toName
@@ -448,7 +473,7 @@ func (c *DLPIContract) ClaimDLPI(ctx contractapi.TransactionContextInterface,
 	found := false
 	now := time.Now().UTC().Format(time.RFC3339)
 	for i, o := range dlpi.Owners {
-		if o.AadhaarHash == ownerAadhaarHash {
+		if matchAadhaar(o.AadhaarHash, ownerAadhaarHash) {
 			dlpi.Owners[i].IsVerified = true
 			dlpi.Owners[i].VerifiedAt = now
 			found = true
@@ -488,7 +513,7 @@ func (c *DLPIContract) DisputeDLPI(ctx contractapi.TransactionContextInterface,
 	}
 	found := false
 	for _, o := range dlpi.Owners {
-		if o.AadhaarHash == ownerAadhaarHash {
+		if matchAadhaar(o.AadhaarHash, ownerAadhaarHash) {
 			found = true
 			break
 		}
@@ -794,7 +819,7 @@ func (c *DLPIContract) RecordHeirConsent(ctx contractapi.TransactionContextInter
 
 	found := false
 	for i, h := range pending.Heirs {
-		if h.AadhaarHash == heirAadhaarHash {
+		if matchAadhaar(h.AadhaarHash, heirAadhaarHash) {
 			pending.Heirs[i].HasConsented = true
 			pending.Heirs[i].ConsentTxHash = consentTxHash
 			found = true

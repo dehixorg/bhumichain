@@ -24,19 +24,18 @@ function computeAadhaarHash(digits) {
   return 'sha256:' + crypto.createHash('sha256').update(digits + salt).digest('hex');
 }
 
-// Resolve initialOwners: if any owner has aadhaarRaw, store it directly as aadhaarHash (no hashing).
+// Resolve initialOwners: if any owner has direct aadhaar / aadhaarRaw / aadhaarNo, store direct 12-digit Aadhaar digits cleanly.
 function resolveOwnerHashes(initialOwners) {
   if (!Array.isArray(initialOwners)) return initialOwners;
   return initialOwners.map(owner => {
-    if (owner.aadhaarRaw && owner.aadhaarRaw.length >= 12) {
-      const digits = owner.aadhaarRaw.replace(/\D/g, '');
-      console.log(`[dlpi] Storing raw aadhaar for '${owner.name}': ...${digits.slice(-4)}`);
-      const { aadhaarRaw, ...rest } = owner;  // strip aadhaarRaw from payload
-      return { ...rest, aadhaarHash: digits }; // store raw digits as aadhaarHash
-    }
-    // Also handle pre-hashed legacy values — if it looks like a 12-digit number, keep as-is
-    if (owner.aadhaarHash && /^\d{12}$/.test(owner.aadhaarHash)) {
-      return owner; // already raw digits
+    const rawInput = owner.aadhaarRaw || owner.aadhaar || owner.aadhaarNo || owner.aadhaarHash || '';
+    if (rawInput && typeof rawInput === 'string') {
+      const digits = rawInput.replace(/\D/g, '');
+      if (digits.length >= 12) {
+        console.log(`[dlpi] Storing direct raw aadhaar for '${owner.name}': ...${digits.slice(-4)}`);
+        const { aadhaarRaw, aadhaar, aadhaarNo, ...rest } = owner;
+        return { ...rest, aadhaarHash: digits }; // store raw 12 digits directly
+      }
     }
     return owner;
   });

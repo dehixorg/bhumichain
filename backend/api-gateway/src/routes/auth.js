@@ -57,11 +57,14 @@ async function callOracle(aadhaarNumber) {
   return data;
 }
 
-function buildOfficerJWT(identity, aadhaarHash) {
+function buildOfficerJWT(identity, aadhaarHash, digits) {
   return {
     role:             identity.role,
     name:             identity.name,
     aadhaarHash,
+    aadhaar:          digits || undefined,
+    aadhaarRaw:       digits || undefined,
+    aadhaarNo:        digits || undefined,
     jurisdictionCode: identity.jurisdictionCode,
     tehsilCode:       identity.tehsilCode       || undefined,
     circleCode:       identity.circleCode       || undefined,
@@ -144,10 +147,11 @@ router.post('/verify-otp', async (req, res) => {
     });
   }
 
-  const token = mintToken({ role: 'citizen', name: identity.name, aadhaarHash });
+  const citizenPayload = { role: 'citizen', name: identity.name, aadhaarHash, aadhaar: digits, aadhaarRaw: digits, aadhaarNo: digits };
+  const token = mintToken(citizenPayload);
   return res.json({
     token,
-    user: { role: 'citizen', name: identity.name, aadhaarHash },
+    user: citizenPayload,
     redirectTo: '/my-parcels',
   });
 });
@@ -200,7 +204,7 @@ router.post('/officer-login', async (req, res) => {
     return res.status(403).json({ error: 'NOT_AN_OFFICER', message: 'Aadhaar does not belong to a registered officer' });
   }
 
-  const payload = buildOfficerJWT(identity, aadhaarHash);
+  const payload = buildOfficerJWT(identity, aadhaarHash, digits);
   const token = mintToken(payload);
 
   return res.json({
