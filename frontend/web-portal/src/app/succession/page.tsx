@@ -8,7 +8,8 @@ import MutationAlert from '@/components/modals/MutationAlert';
 import { useWebSocket } from '@/hooks/useWebSocket';
 import {
   getDemoToken, initiateSuccession, recordHeirConsent,
-  getSuccessionCase, verifyCRS, getMyPendingSuccessions
+  getSuccessionCase, verifyCRS, getMyPendingSuccessions,
+  addInheritorNomination, getInheritorNominations, approveInheritorNomination, executeSuccession
 } from '@/lib/api';
 import { setToken, getUser, type JWTUser } from '@/lib/auth';
 import type { SuccessionCase, SuccessionHeir } from '@/types';
@@ -133,6 +134,12 @@ export default function SuccessionPage() {
   const [crsExtraction, setCrsExtraction] = useState<any>(null);
   const [dynamicHeirs, setDynamicHeirs] = useState([{ name: '', aadhaar: '' }]);
   const [myPendingCases, setMyPendingCases] = useState<SuccessionCase[]>([]);
+  const [nominations, setNominations] = useState<any[]>([]);
+  const [nomDlpiId, setNomDlpiId] = useState('DLPI-UP-DAD-00100');
+  const [nomInheritorName, setNomInheritorName] = useState('');
+  const [nomInheritorAadhaar, setNomInheritorAadhaar] = useState('');
+  const [isNomSubmitting, setIsNomSubmitting] = useState(false);
+  const [isExecuting, setIsExecuting] = useState(false);
 
   const addHeir = () => setDynamicHeirs([...dynamicHeirs, { name: '', aadhaar: '' }]);
   const removeHeir = (idx: number) => setDynamicHeirs(dynamicHeirs.filter((_, i) => i !== idx));
@@ -142,17 +149,71 @@ export default function SuccessionPage() {
     setDynamicHeirs(newHeirs);
   };
 
+  const handleAddNomination = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const digits = nomInheritorAadhaar.replace(/\D/g, '');
+    if (!nomInheritorName.trim()) {
+      toast.error('Please enter the Inheritor Name.');
+      return;
+    }
+    if (digits.length !== 12) {
+      toast.error('Inheritor Aadhaar Number must be exactly 12 digits.');
+      return;
+    }
+    setIsNomSubmitting(true);
+    try {
+      const res = await addInheritorNomination({
+        dlpiId: nomDlpiId,
+        inheritorName: nomInheritorName.trim(),
+        inheritorAadhaarNumber: digits,
+      });
+      toast.success(`Inheritor Nominee submitted for Tehsildar Approval (${res.nomination?.nominationId || 'NOM-SUCCESS'})!`);
+      const allNoms = await getInheritorNominations();
+      setNominations(allNoms || []);
+      setNomInheritorName('');
+      setNomInheritorAadhaar('');
+    } catch (err: any) {
+      toast.error('Failed to add nomination: ' + (err?.response?.data?.message || err?.message || 'Unknown error'));
+    } finally {
+      setIsNomSubmitting(false);
+    }
+  };
+
+  const handleApproveNomination = async (nomId: string) => {
+    try {
+      await approveInheritorNomination(nomId);
+      toast.success('Tehsildar Approved! Registered Inheritor role is now active on the network.');
+      const allNoms = await getInheritorNominations();
+      setNominations(allNoms || []);
+    } catch (err: any) {
+      toast.error('Approval failed: ' + (err?.response?.data?.message || err?.message || 'Unknown error'));
+    }
+  };
+
+  const handleExecuteTehsildar = async (caseId: string) => {
+    setIsExecuting(true);
+    try {
+      const res = await executeSuccession(caseId);
+      toast.success('🎉 Property successfully Auto-Transferred to the Registered Inheritor!');
+      if (res.mutatedParcel) {
+        toast('Look in /my-parcels (My Land Holdings) — the title is now directly under the Inheritor!', { duration: 6000 });
+      }
+      setStage('all_consented');
+    } catch (err: any) {
+      toast.error('Execution Failed: ' + (err?.response?.data?.message || err?.message || 'Unknown error'));
+    } finally {
+      setIsExecuting(false);
+    }
+  };
+
   const { triggerMock, on: onWs } = useWebSocket(DEMO_DLPI);
-  // Store the original citizen token before any oracle override
   const citizenTokenRef = React.useRef<string | null>(null);
 
-  // Acquire oracle token temporarily — but RESTORE citizen session after
   useEffect(() => {
     setUser(getUser());
-    // Save the current citizen token before acquiring oracle token
     citizenTokenRef.current = typeof window !== 'undefined' ? localStorage.getItem('bhumichain_token') : null;
-    // Load pending successions using the CITIZEN's token (before oracle override)
     getMyPendingSuccessions().then(setMyPendingCases).catch(() => {});
+    getInheritorNominations().then(setNominations).catch(() => {});
   }, []);
 
   // Live WebSocket events
@@ -181,6 +242,13 @@ export default function SuccessionPage() {
   const handleUploadCRS = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    const approvedNom = nominations.find(n => n.status === 'APPROVED');
+    const myAadhaarDigits = (user?.aadhaarNumber || user?.aadhaarHash || user?.aadhaar || '').replace(/\D/g, '');
+    if (approvedNom && myAadhaarDigits && myAadhaarDigits !== approvedNom.inheritorAadhaarNumber) {
+      toast.error(`🚫 Access Blocked: Only the Tehsildar-approved Registered Inheritor (${approvedNom.inheritorName} — Aadhaar ending in ${approvedNom.inheritorAadhaarNumber.slice(8)}) is authorized to upload the death certificate and claim property ${approvedNom.dlpiId}.`);
+      return;
+    }
 
     setStage('scanning_crs');
     setCrsAiSteps(CRS_AI_STEPS_LABELS.map(label => ({ label, done: false })));
@@ -241,6 +309,13 @@ export default function SuccessionPage() {
   // ── Step 2: Run CoparcenaryMapper AI ─────────────────────────────────────
 
   const handleRunAI = async () => {
+    const approvedNom = nominations.find(n => n.status === 'APPROVED');
+    const myAadhaarDigits = (user?.aadhaarNumber || user?.aadhaarHash || user?.aadhaar || '').replace(/\D/g, '');
+    if (approvedNom && myAadhaarDigits && myAadhaarDigits !== approvedNom.inheritorAadhaarNumber) {
+      toast.error(`🚫 Access Blocked: Only the Tehsildar-approved Registered Inheritor (${approvedNom.inheritorName} — Aadhaar ending in ${approvedNom.inheritorAadhaarNumber.slice(8)}) is authorized to initiate succession for property ${approvedNom.dlpiId}.`);
+      return;
+    }
+
     setStage('ai_computing');
     setAiSteps(AI_STEPS.map((label) => ({ label, done: false })));
 
@@ -401,6 +476,136 @@ export default function SuccessionPage() {
 
           {/* ── Left column: main flow ──────────────────────────────────── */}
           <div className="flex-1 min-w-0 space-y-5">
+
+            {/* Registered Inheritor Active Role Banner */}
+            {(() => {
+              const myRoleNom = nominations.find(n => n.status === 'APPROVED' && (n.inheritorAadhaarNumber === (user?.aadhaarNumber || user?.aadhaarHash || user?.aadhaar)?.replace(/\D/g, '')));
+              if (!myRoleNom) return null;
+              return (
+                <div className="bg-gradient-to-r from-emerald-600 to-teal-700 text-white rounded-xl p-5 shadow-lg border border-emerald-400/30 flex items-start gap-4">
+                  <div className="bg-white/20 p-3 rounded-lg shrink-0">
+                    <CheckCircle className="w-6 h-6 text-emerald-200" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="bg-emerald-800 text-emerald-200 text-xs font-semibold px-2 py-0.5 rounded uppercase tracking-wider">Verified Role Active</span>
+                      <h3 className="font-bold text-lg">Registered Inheritor for {myRoleNom.dlpiId}</h3>
+                    </div>
+                    <p className="text-emerald-100 text-sm mt-1">
+                      You ({myRoleNom.inheritorName} — Aadhaar: XXXX-XXXX-{myRoleNom.inheritorAadhaarNumber.slice(8)}) are explicitly Tehsildar-Approved to claim and auto-transfer this property. Upload the Death Certificate below to initiate Virasat transfer.
+                    </p>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Nominate / Pre-Register Inheritor Setup Panel */}
+            <div className="bg-gradient-to-br from-[#0F4C81] to-[#1e3a8a] text-white rounded-xl shadow-xl p-6 border border-blue-400/30">
+              <div className="flex items-center justify-between border-b border-white/15 pb-4 mb-5">
+                <div className="flex items-center gap-3">
+                  <div className="bg-white/10 p-2.5 rounded-lg border border-white/20">
+                    <Shield className="w-6 h-6 text-blue-200" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold">Nominate / Pre-Register Legal Heir (Virasat Setup)</h3>
+                    <p className="text-xs text-blue-200">Submit an inheritor with exact 12-digit Aadhaar for Tehsildar approval</p>
+                  </div>
+                </div>
+                <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 text-xs font-semibold px-3 py-1 rounded-full">
+                  Tehsildar Workflow
+                </span>
+              </div>
+
+              <form onSubmit={handleAddNomination} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                <div>
+                  <label className="block text-xs font-medium text-blue-200 mb-1">Target Property (DLPI)</label>
+                  <select
+                    value={nomDlpiId}
+                    onChange={(e) => setNomDlpiId(e.target.value)}
+                    className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-white/40"
+                  >
+                    <option value="DLPI-UP-DAD-00100" className="text-gray-900">DLPI-UP-DAD-00100 (Dadri Plot 100)</option>
+                    <option value="DLPI-UP-DAD-00001" className="text-gray-900">DLPI-UP-DAD-00001 (Priya Kumar)</option>
+                    <option value="DLPI-UP-DAD-00003" className="text-gray-900">DLPI-UP-DAD-00003 (Rakesh Agarwal)</option>
+                    <option value="DLPI-UP-DAD-00005" className="text-gray-900">DLPI-UP-DAD-00005 (Meena Devi)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-blue-200 mb-1">Inheritor Full Name</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Ankur Singh"
+                    value={nomInheritorName}
+                    onChange={(e) => setNomInheritorName(e.target.value)}
+                    className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-sm text-white placeholder-blue-300/60 focus:outline-none focus:ring-2 focus:ring-white/40"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-blue-200 mb-1">Inheritor 12-Digit Aadhaar</label>
+                  <input
+                    type="text"
+                    required
+                    maxLength={12}
+                    placeholder="e.g. 999900010099"
+                    value={nomInheritorAadhaar}
+                    onChange={(e) => setNomInheritorAadhaar(e.target.value)}
+                    className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-sm text-white font-mono placeholder-blue-300/60 focus:outline-none focus:ring-2 focus:ring-white/40"
+                  />
+                </div>
+
+                <div>
+                  <button
+                    type="submit"
+                    disabled={isNomSubmitting}
+                    className="w-full bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-white font-semibold py-2 px-4 rounded-lg shadow transition flex items-center justify-center gap-2 text-sm"
+                  >
+                    <CheckCircle className="w-4 h-4" />
+                    {isNomSubmitting ? 'Submitting...' : 'Add Inheritor'}
+                  </button>
+                </div>
+              </form>
+
+              {/* Active & Pending Nominations List */}
+              {nominations.length > 0 && (
+                <div className="mt-5 border-t border-white/15 pt-4">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-blue-200 mb-3">Registered / Pending Nominations on Network</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {nominations.map((nom) => (
+                      <div key={nom.nominationId} className="bg-white/10 border border-white/20 rounded-lg p-3 flex items-center justify-between gap-2">
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold text-sm truncate">{nom.inheritorName}</span>
+                            <span className="text-xs text-blue-200 font-mono shrink-0">({nom.dlpiId})</span>
+                          </div>
+                          <div className="text-xs text-blue-200/80 font-mono mt-0.5">
+                            Aadhaar ending: XXXX-{nom.inheritorAadhaarNumber?.slice(8)}
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 shrink-0">
+                          {nom.status === 'APPROVED' ? (
+                            <span className="bg-emerald-500/30 border border-emerald-400 text-emerald-300 text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1">
+                              <CheckCircle className="w-3.5 h-3.5" /> Approved
+                            </span>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => handleApproveNomination(nom.nominationId)}
+                              className="bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow transition flex items-center gap-1.5"
+                            >
+                              🧑‍⚖️ Tehsildar Approve
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
 
             {myPendingCases.length > 0 && (
               <div className="card border-[#0F4C81] border-2 shadow-lg relative overflow-hidden">
@@ -736,20 +941,55 @@ export default function SuccessionPage() {
                   completedText="All heirs consented — case forwarded to Tehsildar"
                 />
 
-                {/* Tehsildar-approval banner */}
-                {stage === 'pending_tehsildar_approval' && (
-                  <div className="flex items-center gap-4 bg-[#FFFbeb] border border-amber-300 rounded-xl px-5 py-4">
-                    <div className="w-10 h-10 rounded-full bg-[#fde68a] flex items-center justify-center shrink-0">
-                      <Zap className="w-5 h-5 text-amber-600" />
+                {/* Tehsildar-approval banner & Execute Action */}
+                {(stage === 'pending_tehsildar_approval' || stage === 'all_consented' || (caseData && caseData.status?.includes('TEHSILDAR'))) && (
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-4 bg-[#FFFbeb] border border-amber-300 rounded-xl px-5 py-4 shadow-sm">
+                      <div className="w-10 h-10 rounded-full bg-[#fde68a] flex items-center justify-center shrink-0">
+                        <Zap className="w-5 h-5 text-amber-600" />
+                      </div>
+                      <div>
+                        <div className="text-amber-800 font-bold text-sm">Pending Tehsildar Final Commitment</div>
+                        <div className="text-amber-700 text-xs mt-0.5">
+                          CRS Verified · All Heirs Consented · Ready for on-chain mutation & ownership update
+                        </div>
+                      </div>
+                      <CheckCircle className="w-6 h-6 text-amber-600 ml-auto shrink-0" />
                     </div>
-                    <div>
-                      <div className="text-amber-800 font-bold text-sm">Pending Tehsildar Approval</div>
-                      <div className="text-amber-700 text-xs mt-0.5">
-                        Fabric transaction submitted · Forwarded to Tehsildar · 
-                        Awaiting final officer execution to mutate title
+
+                    <div className="bg-gradient-to-r from-slate-900 to-[#0F4C81] text-white rounded-xl p-6 shadow-xl border border-blue-400/30 flex flex-col gap-4">
+                      <div className="flex items-center justify-between border-b border-white/15 pb-3">
+                        <div className="flex items-center gap-3">
+                          <div className="bg-emerald-500/20 p-2.5 rounded-lg border border-emerald-400/30">
+                            <Shield className="w-6 h-6 text-emerald-300" />
+                          </div>
+                          <div>
+                            <h3 className="font-bold text-base">Revenue Officer Final Execution (Tehsildar Commit)</h3>
+                            <p className="text-xs text-blue-200">Performs atomic mutation: removes deceased & sets Registered Inheritor as 100% owner</p>
+                          </div>
+                        </div>
+                        <span className="bg-emerald-500 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+                          Ready to Commit
+                        </span>
+                      </div>
+
+                      <div className="flex flex-col md:flex-row items-center justify-between gap-4 pt-1">
+                        <div className="text-xs text-blue-100 space-y-1">
+                          <div>• <span className="font-semibold text-white">Target Property:</span> {caseData?.dlpiId || nomDlpiId || 'DLPI-UP-DAD-00100'}</div>
+                          <div>• <span className="font-semibold text-white">Verification Status:</span> Death Certificate OCR Verified + Exact Aadhaar Checked</div>
+                        </div>
+
+                        <button
+                          type="button"
+                          disabled={isExecuting}
+                          onClick={() => handleExecuteTehsildar(caseData?.caseId || DEMO_DLPI.dlpiId)}
+                          className="bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-white font-bold py-3 px-6 rounded-xl shadow-lg transition flex items-center gap-2.5 text-sm shrink-0"
+                        >
+                          <CheckCircle className="w-5 h-5" />
+                          {isExecuting ? 'Committing Mutation to Blockchain...' : 'Execute Succession & Auto-Transfer'}
+                        </button>
                       </div>
                     </div>
-                    <CheckCircle className="w-6 h-6 text-amber-600 ml-auto shrink-0" />
                   </div>
                 )}
               </>

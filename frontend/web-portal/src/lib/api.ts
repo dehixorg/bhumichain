@@ -164,6 +164,25 @@ export async function executeSuccession(caseId: string) {
   return res.data;
 }
 
+export async function addInheritorNomination(payload: {
+  dlpiId: string;
+  inheritorName: string;
+  inheritorAadhaarNumber: string;
+}) {
+  const res = await api.post(`/api/succession/add-inheritor`, payload);
+  return res.data;
+}
+
+export async function getInheritorNominations() {
+  const res = await api.get(`/api/succession/nominations`);
+  return res.data;
+}
+
+export async function approveInheritorNomination(nominationId: string) {
+  const res = await api.post(`/api/succession/nomination/${nominationId}/approve`);
+  return res.data;
+}
+
 // ─── Tribal Guard ─────────────────────────────────────────────────────────────
 
 export async function checkTribal(payload: {

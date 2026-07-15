@@ -219,7 +219,8 @@ const DEMO_PERSONAS: Record<string, any> = {
 const state = {
   myParcels: [...DEMO_MY_PARCELS],
   pendingReview: [...DEMO_PENDING_REVIEW],
-  // Shared in-memory succession store — persists across page loads within same browser session
+  // Shared in-memory succession & inheritor store — persists across page loads within same browser session
+  inheritorNominations: [] as any[],
   pendingSuccessions: [] as any[],
   pendingTransfers: [] as any[],
   mutations: [
@@ -269,19 +270,23 @@ export async function handleMockApi(path: string, options: RequestInit): Promise
     if (!isOfficer) {
       const digits = (body.aadhaarNumber || '').replace(/\D/g, '');
       if (digits) {
-        const existing = Object.values(DEMO_PERSONAS).find((p: any) => p.aadhaarHash === digits || p.aadhaar === digits || p.aadhaarNo === digits) as any;
+        const existing = Object.values(DEMO_PERSONAS).find((p: any) => p.aadhaarHash === digits || p.aadhaar === digits || p.aadhaarNo === digits || p.aadhaarNumber === digits) as any;
         if (existing) {
-          user = existing;
+          user = { ...existing, aadhaarNumber: digits, aadhaarHash: digits, aadhaar: digits, aadhaarNo: digits };
         } else {
-          // Check if any property in state.myParcels was seeded/added for this Aadhaar
+          // Check if any property in state.myParcels was seeded/added or nominated for this Aadhaar
           const assigned = state.myParcels.find(p => {
             const owners = (p as any).owners || (p as any).initialOwners || [];
-            return owners.some((o: any) => o.aadhaarHash === digits || o.aadhaar === digits || o.aadhaarNo === digits);
+            if (owners.some((o: any) => o.aadhaarHash === digits || o.aadhaar === digits || o.aadhaarNo === digits || o.aadhaarNumber === digits)) return true;
+            if ((p as any).inheritorNomination && (p as any).inheritorNomination.inheritorAadhaarNumber === digits) return true;
+            return false;
           });
-          const ownerName = assigned ? (((assigned as any).owners || (assigned as any).initialOwners)?.[0]?.name || 'Hi User') : 'Hi User';
+          const nom = state.inheritorNominations.find((n: any) => n.inheritorAadhaarNumber === digits);
+          const ownerName = nom ? nom.inheritorName : (assigned ? (((assigned as any).owners || (assigned as any).initialOwners)?.[0]?.name || (assigned as any).inheritorNomination?.inheritorName || 'Hi User') : 'Hi User');
           user = {
             role: 'citizen',
             name: ownerName,
+            aadhaarNumber: digits,
             aadhaarHash: digits,
             aadhaar: digits,
             aadhaarRaw: digits,
@@ -347,11 +352,12 @@ export async function handleMockApi(path: string, options: RequestInit): Promise
     const authHeader = (options.headers as Record<string, string>)?.['Authorization'] || '';
     const tokenPayload = authHeader.startsWith('Bearer mock.') ? JSON.parse(atob(authHeader.split('.')[1])) : null;
     const myAadhaar = tokenPayload?.aadhaarNumber || tokenPayload?.aadhaarHash || tokenPayload?.aadhaar || tokenPayload?.aadhaarNo || '';
-    // Filter to only return parcels that belong to this user
+    // Filter to only return parcels that belong to this user OR where they are the registered/approved inheritor
     const myParcels = myAadhaar
       ? state.myParcels.filter(p => {
           const owners = (p as any).owners || (p as any).initialOwners || [];
-          if (owners.length > 0) return owners.some((o: any) => o.aadhaarNumber === myAadhaar || o.aadhaarHash === myAadhaar || o.aadhaar === myAadhaar || o.aadhaarNo === myAadhaar || (o.name && o.name === tokenPayload?.name));
+          if (owners.length > 0 && owners.some((o: any) => o.aadhaarNumber === myAadhaar || o.aadhaarHash === myAadhaar || o.aadhaar === myAadhaar || o.aadhaarNo === myAadhaar || (o.name && o.name === tokenPayload?.name))) return true;
+          if ((p as any).inheritorNomination && ((p as any).inheritorNomination.inheritorAadhaarNumber === myAadhaar || (p as any).inheritorNomination.inheritorAadhaar === myAadhaar)) return true;
           // Fallback: check by name for demo parcels
           const persona = Object.values(DEMO_PERSONAS).find((p: any) => p.aadhaarNumber === myAadhaar || p.aadhaarHash === myAadhaar || p.aadhaar === myAadhaar) as any;
           return persona && (p as any).owner?.name === persona.name;
@@ -413,18 +419,87 @@ export async function handleMockApi(path: string, options: RequestInit): Promise
 
   // ── Succession routes ───────────────────────────────────────────────────────
 
+  if (path === '/api/succession/add-inheritor' && method === 'POST') {
+    const { dlpiId, inheritorName, inheritorAadhaarNumber } = body;
+    const cleanDigits = (inheritorAadhaarNumber || '').replace(/\D/g, '');
+    if (!cleanDigits || cleanDigits.length !== 12) {
+      return jsonResponse({ error: 'INVALID_AADHAAR', message: 'Inheritor Aadhaar Number must be exactly 12 digits.' }, 400);
+    }
+    const nominationId = 'NOM-' + dlpiId + '-' + Math.random().toString(36).slice(2, 6).toUpperCase();
+    const nomination = {
+      nominationId,
+      dlpiId,
+      inheritorName,
+      inheritorAadhaarNumber: cleanDigits,
+      status: 'PENDING_TEHSILDAR',
+      nominatedAt: new Date().toISOString(),
+    };
+    state.inheritorNominations.push(nomination);
+
+    const parcel = state.myParcels.find(p => p.dlpiId === dlpiId);
+    if (parcel) {
+      (parcel as any).inheritorNomination = nomination;
+    }
+    return jsonResponse({ success: true, nomination });
+  }
+
+  if (path === '/api/succession/nominations' && method === 'GET') {
+    return jsonResponse(state.inheritorNominations);
+  }
+
+  if (path.match(/^\/api\/succession\/nomination\/[^\/]+\/approve$/) && method === 'POST') {
+    const nomId = path.split('/')[4];
+    const nom = state.inheritorNominations.find((n: any) => n.nominationId === nomId);
+    if (nom) {
+      nom.status = 'APPROVED';
+      nom.approvedAt = new Date().toISOString();
+
+      const parcel = state.myParcels.find(p => p.dlpiId === nom.dlpiId);
+      if (parcel) {
+        (parcel as any).inheritorNomination = nom;
+      }
+
+      DEMO_PERSONAS[`citizen_${nom.inheritorAadhaarNumber}`] = {
+        role: 'citizen',
+        name: nom.inheritorName,
+        aadhaarNumber: nom.inheritorAadhaarNumber,
+        aadhaarHash: nom.inheritorAadhaarNumber,
+        aadhaar: nom.inheritorAadhaarNumber,
+        aadhaarRaw: nom.inheritorAadhaarNumber,
+        aadhaarNo: nom.inheritorAadhaarNumber,
+      };
+    }
+    return jsonResponse({ success: true, nomination: nom });
+  }
+
   if (path === '/api/succession/initiate' && method === 'POST') {
     const { dlpiId, deceasedName, heirs } = body;
+    const parcel = state.myParcels.find(p => p.dlpiId === dlpiId);
+
+    // Strict Check: Only the Tehsildar-approved Registered Inheritor can upload death cert & initiate
+    if (parcel && (parcel as any).inheritorNomination && (parcel as any).inheritorNomination.status === 'APPROVED') {
+      const nom = (parcel as any).inheritorNomination;
+      const authHeader = (options.headers as Record<string, string>)?.['Authorization'] || '';
+      const tokenPayload = authHeader.startsWith('Bearer mock.') ? JSON.parse(atob(authHeader.split('.')[1])) : null;
+      const myAadhaar = (tokenPayload?.aadhaarNumber || tokenPayload?.aadhaarHash || body.callerAadhaar || '').replace(/\D/g, '');
+      if (myAadhaar && myAadhaar !== nom.inheritorAadhaarNumber) {
+        return jsonResponse({
+          error: 'FORBIDDEN_INHERITOR_ONLY',
+          message: `Access Blocked: Only the Tehsildar-approved Registered Inheritor (${nom.inheritorName} — Aadhaar ending in ${nom.inheritorAadhaarNumber.slice(8)}) is authorized to upload the death certificate and claim this property.`
+        }, 403);
+      }
+    }
+
     const caseId = 'SUC-' + dlpiId + '-' + Math.random().toString(36).slice(2, 8);
     const successionCase = {
       caseId,
       dlpiId,
       deceasedName,
-      status: 'AWAITING_CONSENTS',
+      status: 'PENDING_TEHSILDAR_EXECUTION',
       heirs: (heirs || []).map((h: any, i: number) => ({
         heirId: `HEIR-DYN-${i+1}`,
         name: h.name || 'Unknown',
-        aadhaarHash: (h.aadhaar || '').replace(/\D/g, ''), // normalize — store raw digits
+        aadhaarHash: (h.aadhaar || '').replace(/\D/g, ''),
         hasConsented: false,
         hasObjected: false,
         finalShare: `1/${heirs.length}`,
@@ -433,18 +508,16 @@ export async function handleMockApi(path: string, options: RequestInit): Promise
       createdAt: new Date().toISOString(),
     };
     state.pendingSuccessions.push(successionCase);
-    return jsonResponse({ caseId, status: 'AWAITING_CONSENTS', heirs: successionCase.heirs });
+    return jsonResponse({ caseId, status: 'PENDING_TEHSILDAR_EXECUTION', heirs: successionCase.heirs });
   }
 
   if (path === '/api/succession/my-pending' && method === 'GET') {
-    // Parse the logged-in user's Aadhaar from the Bearer mock token
     const authHeader = (options.headers as Record<string, string>)?.['Authorization'] || '';
     const tokenPayload = authHeader.startsWith('Bearer mock.') ? JSON.parse(atob(authHeader.split('.')[1])) : null;
     const myAadhaar = (tokenPayload?.aadhaarNumber || tokenPayload?.aadhaarHash || '').replace(/\D/g, '');
     const pending = state.pendingSuccessions.filter(sc => {
-      if (sc.status !== 'AWAITING_CONSENTS') return false;
       const heir = sc.heirs?.find((h: any) => h.aadhaarHash.replace(/\D/g, '') === myAadhaar);
-      return heir && !heir.hasConsented;
+      return heir || (state.myParcels.some(p => (p as any).inheritorNomination?.inheritorAadhaarNumber === myAadhaar && p.dlpiId === sc.dlpiId));
     });
     return jsonResponse(pending);
   }
@@ -457,9 +530,9 @@ export async function handleMockApi(path: string, options: RequestInit): Promise
       const heir = sc.heirs?.find((h: any) => h.aadhaarHash.replace(/\D/g, '') === (heirAadhaarHash || '').replace(/\D/g, ''));
       if (heir) heir.hasConsented = true;
       const allConsented = sc.heirs?.every((h: any) => h.hasConsented);
-      if (allConsented) sc.status = 'PENDING_TEHSILDAR_APPROVAL';
+      if (allConsented) sc.status = 'PENDING_TEHSILDAR_EXECUTION';
     }
-    return jsonResponse({ caseId, status: sc?.status || 'AWAITING_CONSENTS' });
+    return jsonResponse({ caseId, status: sc?.status || 'PENDING_TEHSILDAR_EXECUTION' });
   }
 
   if (path.match(/^\/api\/succession\/[^\/]+\/execute$/) && method === 'POST') {
@@ -467,27 +540,41 @@ export async function handleMockApi(path: string, options: RequestInit): Promise
     const sc = state.pendingSuccessions.find(c => c.caseId === caseId);
     if (!sc) return jsonResponse({ error: 'CASE_NOT_FOUND' }, 404);
 
-    sc.status = 'COMPLETED';
-
-    // Atomically mutate DLPI property in state.myParcels
     const parcel = state.myParcels.find(p => p.dlpiId === sc.dlpiId);
-    if (parcel && sc.heirs && sc.heirs.length > 0) {
-      const newOwners = sc.heirs.map((h: any) => ({
-        name: h.name || 'Legal Heir',
-        aadhaarNumber: (h.aadhaarHash || '').replace(/\D/g, ''),
-        aadhaarHash: (h.aadhaarHash || '').replace(/\D/g, ''),
-        share: h.finalShare || `1/${sc.heirs.length}`,
-        shareDecimal: h.finalShareDec || (1.0 / sc.heirs.length),
-        ownerSince: new Date().toISOString(),
-        isVerified: true
-      }));
-      (parcel as any).owners = newOwners;
-      (parcel as any).owner = { name: newOwners[0].name, aadhaarNumber: newOwners[0].aadhaarNumber };
-      (parcel as any).ownershipType = newOwners.length > 1 ? 'JOINT' : 'SOLE';
-      (parcel as any).encumbranceStatus = 'CLEAR';
+    if (!parcel) {
+      return jsonResponse({ error: 'PROPERTY_NOT_FOUND', message: 'Deceased owner property not found.' }, 404);
     }
 
-    return jsonResponse(sc);
+    const nom = (parcel as any).inheritorNomination || state.inheritorNominations.find((n: any) => n.dlpiId === sc.dlpiId && n.status === 'APPROVED');
+    const targetHeirs = sc.heirs && sc.heirs.length > 0 ? sc.heirs : (nom ? [{ name: nom.inheritorName, aadhaarHash: nom.inheritorAadhaarNumber, finalShare: '1/1', finalShareDec: 1.0 }] : []);
+
+    if (targetHeirs.length === 0) {
+      return jsonResponse({ error: 'NO_APPROVED_HEIRS', message: 'No registered or approved inheritors found for this property.' }, 400);
+    }
+
+    sc.status = 'COMPLETED';
+
+    // Atomically mutate DLPI property: remove deceased & transfer 100% to approved Inheritor(s)
+    const newOwners = targetHeirs.map((h: any) => ({
+      name: h.name || 'Legal Inheritor',
+      aadhaarNumber: (h.aadhaarHash || '').replace(/\D/g, ''),
+      aadhaarHash: (h.aadhaarHash || '').replace(/\D/g, ''),
+      share: h.finalShare || `1/${targetHeirs.length}`,
+      shareDecimal: h.finalShareDec || (1.0 / targetHeirs.length),
+      ownerSince: new Date().toISOString(),
+      isVerified: true
+    }));
+
+    (parcel as any).owners = newOwners;
+    (parcel as any).owner = { name: newOwners[0].name, aadhaarNumber: newOwners[0].aadhaarNumber };
+    (parcel as any).ownershipType = newOwners.length > 1 ? 'JOINT' : 'SOLE';
+    (parcel as any).encumbranceStatus = 'CLEAR';
+    (parcel as any).claimStatus = 'VERIFIED';
+    if ((parcel as any).inheritorNomination) {
+      (parcel as any).inheritorNomination.status = 'COMPLETED';
+    }
+
+    return jsonResponse({ success: true, caseId, status: 'COMPLETED', mutatedParcel: parcel });
   }
 
   if (path.match(/^\/api\/succession\/[^\/]+$/) && method === 'GET') {

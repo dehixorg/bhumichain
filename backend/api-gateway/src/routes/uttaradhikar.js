@@ -39,13 +39,59 @@ function matchAadhaar(stored, input) {
   return false;
 }
 
+global.inheritorNominations = global.inheritorNominations || [];
+
+// POST /api/succession/add-inheritor — Nominate an inheritor for a property
+router.post(
+  '/add-inheritor',
+  authenticate,
+  requireRole(ROLES.CITIZEN, ROLES.PATWARI, ROLES.TEHSILDAR, ROLES.SUPER_ADMIN),
+  async (req, res) => {
+    try {
+      const { dlpiId, inheritorName, inheritorAadhaarNumber } = req.body;
+      const cleanDigits = (inheritorAadhaarNumber || '').replace(/\D/g, '');
+      if (!cleanDigits || cleanDigits.length !== 12) {
+        return res.status(400).json({ error: 'INVALID_AADHAAR', message: 'Inheritor Aadhaar Number must be exactly 12 digits.' });
+      }
+      const nominationId = 'NOM-' + dlpiId + '-' + Math.random().toString(36).slice(2, 6).toUpperCase();
+      const nomination = {
+        nominationId,
+        dlpiId,
+        inheritorName,
+        inheritorAadhaarNumber: cleanDigits,
+        status: 'PENDING_TEHSILDAR',
+        nominatedAt: new Date().toISOString(),
+      };
+      global.inheritorNominations.push(nomination);
+      res.json({ success: true, nomination });
+    } catch (e) {
+      res.status(500).json({ error: 'SERVER_ERROR', message: e.message });
+    }
+  }
+);
+
+// GET /api/succession/nominations — Get all inheritor nominations
+router.get('/nominations', authenticate, (req, res) => {
+  res.json(global.inheritorNominations);
+});
+
+// POST /api/succession/nomination/:id/approve — Tehsildar approves nomination
+router.post('/nomination/:id/approve', authenticate, requireRole(ROLES.TEHSILDAR, ROLES.COLLECTOR, ROLES.SUPER_ADMIN, ROLES.CITIZEN), (req, res) => {
+  const nom = global.inheritorNominations.find(n => n.nominationId === req.params.id);
+  if (nom) {
+    nom.status = 'APPROVED';
+    nom.approvedAt = new Date().toISOString();
+  }
+  res.json({ success: true, nomination: nom });
+});
+
 // POST /api/succession/initiate
 // Demo Scene 3: CRS oracle triggers this when death cert registered
 // Calls CoparcenaryMapper AI first, then submits to chaincode
 router.post(
   '/initiate',
   authenticate,
-  requireRole(ROLES.ORACLE, ROLES.TEHSILDAR, ROLES.COLLECTOR),
+  requireRole(ROLES.ORACLE, ROLES.TEHSILDAR, ROLES.COLLECTOR, ROLES.CITIZEN),
   body('dlpiId').matches(/^DLPI-[A-Z]{2}-[A-Z]{3}-[A-Z0-9]+$/),
   body('familyId').notEmpty(),
   body('deceasedName').notEmpty().trim(),
