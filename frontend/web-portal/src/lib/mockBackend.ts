@@ -217,31 +217,12 @@ const DEMO_PERSONAS: Record<string, any> = {
 };
 
 const state = {
-  myParcels: [...DEMO_MY_PARCELS],
-  pendingReview: [...DEMO_PENDING_REVIEW],
-  // Shared in-memory succession & inheritor store — persists across page loads within same browser session
+  myParcels: [] as any[],
+  pendingReview: [] as any[],
   inheritorNominations: [] as any[],
   pendingSuccessions: [] as any[],
   pendingTransfers: [] as any[],
-  mutations: [
-    {
-      mutationId:              'MUT-DLPI-UP-DAD-00100-d4e5f6a7',
-      dlpiId:                  'DLPI-UP-DAD-00100',
-      mutationType:            'Virasat (Inheritance)',
-      mutationTypeCode:        'Inheritance',
-      officerName:             'Ramesh Yadav',
-      officerRank:             'Patwari',
-      currentOwnerName:        'Deepak Narayan Singh',
-      newOwnerName:            'Ankur Singh',
-      reason:                  'Death of Deepak Narayan Singh. Son Ankur Singh is primary legal heir.',
-      status:                  'ALERT_SENT',
-      alertSentAt:             '2026-06-10T09:31:04Z',
-      alertElapsedSeconds:     64,
-      slaMet:                  true,
-      requiresPublicNotice:    true,
-      initiatedAt:             '2026-06-10T09:30:00Z',
-    }
-  ]
+  mutations: [] as any[],
 };
 
 export async function handleMockApi(path: string, options: RequestInit): Promise<Response> {
@@ -316,8 +297,25 @@ export async function handleMockApi(path: string, options: RequestInit): Promise
     });
   }
 
+  if (path === '/api/dlpi/clear-history' && method === 'POST') {
+    state.myParcels = [];
+    state.pendingReview = [];
+    state.inheritorNominations = [];
+    state.pendingSuccessions = [];
+    state.pendingTransfers = [];
+    state.mutations = [];
+    return jsonResponse({ success: true, message: 'All land records and history atomic reset completed.' });
+  }
+
+  if (path === '/api/dlpi/reset-demo' && method === 'POST') {
+    state.myParcels = [...DEMO_MY_PARCELS];
+    state.pendingReview = [...DEMO_PENDING_REVIEW];
+    return jsonResponse({ success: true, message: 'Demo parcels restored.' });
+  }
+
   if ((path === '/api/dlpi/seed' || path === '/api/dlpi') && method === 'POST') {
     const { dlpiId, surveyNumber, khasraNo, gram, tehsil, district, areaHectares, landType, owners, ownerName, ownerAadhaar } = body;
+    const cleanAadhaar = (ownerAadhaar || '').replace(/\D/g, '');
     const newParcel = {
       dlpiId: dlpiId || `DLPI-UP-${tehsil || 'DAD'}-${Math.floor(10000 + Math.random() * 90000)}`,
       surveyNumber: surveyNumber || '101/2',
@@ -329,16 +327,17 @@ export async function handleMockApi(path: string, options: RequestInit): Promise
       areaHectares: Number(areaHectares || 1.25),
       landType: landType || 'Agricultural',
       encumbranceStatus: 'CLEAR',
-      claimStatus: 'SEEDED_UNVERIFIED',
+      claimStatus: 'OWNER_VERIFIED',
       owners: owners || [
         {
-          aadhaarHash: (ownerAadhaar || '').replace(/\D/g, ''),
-          aadhaar: (ownerAadhaar || '').replace(/\D/g, ''),
-          name: ownerName || 'Hi User',
+          aadhaarNumber: cleanAadhaar,
+          aadhaarHash: cleanAadhaar,
+          aadhaar: cleanAadhaar,
+          name: ownerName || 'New Atomic Owner',
           share: '1/1',
           shareDecimal: 1.0,
           ownerSince: new Date().toISOString(),
-          isVerified: false,
+          isVerified: true,
         }
       ],
       updatedAt: new Date().toISOString(),

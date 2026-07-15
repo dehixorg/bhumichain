@@ -281,4 +281,19 @@ export async function triggerDemoEvent(key: string) {
   return res.data;
 }
 
+export async function clearAllHistory() {
+  const res = await api.post('/api/dlpi/clear-history');
+  return res.data;
+}
+
+export async function resetDemoRecords() {
+  const res = await api.post('/api/dlpi/reset-demo');
+  return res.data;
+}
+
+export async function seedAtomicParcel(payload: any) {
+  const res = await api.post('/api/dlpi/seed', payload);
+  return res.data;
+}
+
 export default api;
