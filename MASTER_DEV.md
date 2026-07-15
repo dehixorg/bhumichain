@@ -3206,6 +3206,31 @@ GET  /api/dlpi/my-parcels         (citizen — returns all parcels by aadhaarHas
 
 See section 7 (Blockchain Network Setup) for what needs to happen to make the existing chaincode actually run.
 
+### Module 6: Mutation Manager (`Dakhil Kharij` / दाखिल खारिज Engine)
+
+#### What is the Mutation Manager?
+In land administration (such as the UP Revenue Code), a **Mutation (`Dakhil Kharij` / दाखिल खारिज)** is the formal administrative and legal process of transferring ownership title from one person to another in the official Record of Rights (`Khatauni` / `RoR`) after a land transaction occurs (e.g., Sale, Virasat/Succession, Gift, Partition, Court Order, or Auction).
+
+The **Mutation Manager (`mutation-manager.go`)** is BhumiChain's dedicated smart contract and orchestration module responsible for governing the entire lifecycle, officer review hierarchy (`Patwari → Circle Inspector → Tehsildar`), SLA countdowns, and atomic blockchain title execution of land mutations.
+
+#### What are its exact uses & responsibilities?
+1. **Atomic Gatekeeper & Origin Enforcement (`Zero Unauthorized Changes`)**
+   - The Mutation Manager guarantees that no title on the `DLPI` ledger can be altered without passing through a verified state transition.
+   - For example, `INHERITANCE` mutations (`mutationTypeCode: "Inheritance"`) can **only** be created when triggered atomically by the `UTTARADHIKAR_ENGINE` after verified CRS Death Certificate check and 100% legal heir eSign consent. `SALE` mutations can **only** originate post-eSign and SRO verification.
+2. **SLA Timers & Automated Escalation (`No Bureaucratic Delay`)**
+   - Every mutation is assigned a strict statutory timeframe (`alertSentAt`, `alertElapsedSeconds`, `slaMet: true/false`).
+   - If an officer (Patwari or Circle Inspector) fails to process or verify the record within the mandatory SLA, the Mutation Manager raises a high-priority alert and **auto-escalates** the mutation directly to the Tehsildar queue, eliminating manual bribery bottlenecks.
+3. **Mandatory 30-Day Proclamation & Objection Handling (`Public Notice`)**
+   - For non-instant/administrative transfers (`requiresPublicNotice: true`), the Mutation Manager triggers instant SMS proclamations to existing owners (`"Aapki Khasra par mutation shuru hua hai..."`) and opens a 30-day objection window.
+   - If any citizen submits a cryptographically signed objection (`DisputeDLPI`), the Mutation Manager immediately freezes the transfer (`MUTATION_DISPUTED`) until formal Tehsildar hearing and resolution.
+4. **Permanent Audit Trail & Anti-Corruption (`FraudSense AI Integration`)**
+   - Every verification step (physical boundary check, encumbrance check, document verification) is stamped on Hyperledger Fabric with the officer's `aadhaarHash` and exact timestamp.
+   - The Mutation Manager exposes specialized queries (`QueryOfficerMutations`, `QueryBuyerConcentration`) that allow our nightly **FraudSense AI** engine to instantly flag anomalies like *Benami Accumulation*, *Missing Legal Heirs*, or *Off-Hours Midnight Entries*.
+5. **Final Atomic Title Mutation (`DLPI.UpdateOwners()`)**
+   - Once all checks pass and the Revenue Officer (`Tehsildar`) issues the final approval commit, the Mutation Manager executes an atomic ledger update (`UpdateOwners`). The old owner is removed/modified, the new owner (`Aadhaar Hash`, `share`) is recorded, and a new digital `Khatauni` (`RoR`) is minted instantaneously.
+
+---
+
 ### Module 8: NyayaAI — Legal Buddy (POC = API Wrapper)
 
 **Design:** Claude API wrapper with domain-specialized system prompt. No custom ML model, no eCourts DB. See Section 3J for full spec.
