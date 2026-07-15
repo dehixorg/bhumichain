@@ -7,13 +7,13 @@ import {
   MapPin, ArrowRight, CheckCircle, Clock, AlertTriangle,
   FileText, Shield, Search, ArrowUpRight, Download, Send,
   Landmark, Map, FileSignature, HelpCircle, FileCheck,
-  TrendingUp, BellRing, Activity
+  TrendingUp, BellRing, Activity, ArrowLeftRight, X, UserCheck, DollarSign, Edit3
 } from 'lucide-react';
 import clsx from 'clsx';
 import CitizenHeader from '@/components/dashboard/CitizenHeader';
 import CitizenFooter from '@/components/dashboard/CitizenFooter';
 import { getUser, apiFetch, type JWTUser } from '@/lib/auth';
-import { recordHeirConsent } from '@/lib/api';
+import { recordHeirConsent, initiateTransfer, recordConsent, getMyPendingTransfers } from '@/lib/api';
 import toast from 'react-hot-toast';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -31,6 +31,8 @@ interface Parcel {
   successionStatus?: string;
   isTribal?:         boolean;
   isCoparcenary?:    boolean;
+  owners?:           any[];
+  ownershipType?:    string;
   valuation:         { circleRateINR: number };
   updatedAt:         string;
 }
@@ -76,7 +78,15 @@ export default function CitizenDashboard() {
   const [parcels, setParcels] = useState<Parcel[]>([]);
   const [loading, setLoading] = useState(true);
   const [pendingSuccessions, setPendingSuccessions] = useState<any[]>([]);
+  const [pendingTransfers, setPendingTransfers] = useState<any[]>([]);
   const [nyayaQuery, setNyayaQuery] = useState('');
+
+  // Sell Modal State
+  const [sellModalParcel, setSellModalParcel] = useState<Parcel | null>(null);
+  const [sellBuyerName, setSellBuyerName] = useState('');
+  const [sellBuyerAadhaar, setSellBuyerAadhaar] = useState('');
+  const [sellDeclaredVal, setSellDeclaredVal] = useState('4500000');
+  const [sellBusy, setSellBusy] = useState(false);
 
   useEffect(() => {
     const u = getUser();
@@ -93,7 +103,61 @@ export default function CitizenDashboard() {
       .then(r => r.json())
       .then(d => { if (Array.isArray(d)) setPendingSuccessions(d); })
       .catch(e => console.error("Failed to fetch pending successions", e));
+
+    getMyPendingTransfers()
+      .then(d => { if (Array.isArray(d)) setPendingTransfers(d); })
+      .catch(e => console.error("Failed to fetch pending transfers", e));
   }, [router]);
+
+  const handleBuyerESign = async (transferId: string) => {
+    if (!user) return;
+    try {
+      toast.loading('Verifying agreement & providing buyer eSign...', { id: 'buyer-esign' });
+      await new Promise(r => setTimeout(r, 1200));
+      await recordConsent(transferId, {
+        partyType: 'BUYER',
+        aadhaarNumber: ((user as any).aadhaarNumber || user.aadhaarHash || '').replace(/\D/g, ''),
+        eSignTxHash: '0x' + Math.random().toString(16).slice(2)
+      });
+      toast.success('🎉 Purchase Agreement eSigned! Sent to Patwari officer queue.', { id: 'buyer-esign' });
+      setPendingTransfers(prev => prev.filter(t => t.transferId !== transferId));
+    } catch (e: any) {
+      toast.error(e.message || 'Failed to submit eSign', { id: 'buyer-esign' });
+    }
+  };
+
+  const handleInitiateSale = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!sellModalParcel || !user) return;
+    if (!sellBuyerAadhaar || sellBuyerAadhaar.replace(/\D/g, '').length !== 12) {
+      toast.error('Buyer Aadhaar Number must be exact 12 digits.');
+      return;
+    }
+    setSellBusy(true);
+    try {
+      toast.loading('Initiating sale & locking property on-chain...', { id: 'init-sale' });
+      await new Promise(r => setTimeout(r, 1000));
+      await initiateTransfer({
+        dlpiId: sellModalParcel.dlpiId,
+        sellerName: user.name || 'Seller',
+        sellerAadhaarNumber: ((user as any).aadhaarNumber || user.aadhaarHash || '').replace(/\D/g, ''),
+        buyerName: sellBuyerName || 'Buyer',
+        buyerAadhaarNumber: sellBuyerAadhaar.replace(/\D/g, ''),
+        declaredValueINR: Number(sellDeclaredVal) || 4500000,
+      });
+      toast.success(`🎉 Property Sale Initiated! Notification sent to Buyer (${sellBuyerAadhaar}) for eSign.`, { id: 'init-sale' });
+      setSellModalParcel(null);
+      // Refresh parcels list
+      const r = await apiFetch('/api/dlpi/my-parcels');
+      const d = await r.json();
+      if (Array.isArray(d)) setParcels(d);
+    } catch (e: any) {
+      const msg = e.response?.data?.message || e.message || 'Failed to initiate sale';
+      toast.error(msg, { id: 'init-sale' });
+    } finally {
+      setSellBusy(false);
+    }
+  };
 
   // Aggregate stats
   const totalParcels = parcels.length;
@@ -194,12 +258,12 @@ export default function CitizenDashboard() {
           {/* ── Left Column (Main Content) ─────────────────────────────────── */}
           <div className="lg:col-span-2 space-y-10">
             
-            {/* Pending Successions Alert */}
-            {pendingSuccessions.length > 0 && (
+            {/* Pending Actions Alert (Succession & Transfers) */}
+            {(pendingSuccessions.length > 0 || pendingTransfers.length > 0) && (
               <section id="pending-actions" className="mb-8">
                 <div className="flex items-center gap-2 mb-4">
                   <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-                  <h2 className="text-xl font-black text-gray-900 tracking-tight">Action Required</h2>
+                  <h2 className="text-xl font-black text-gray-900 tracking-tight">Action Required ({pendingSuccessions.length + pendingTransfers.length})</h2>
                 </div>
                 <div className="space-y-4">
                   {pendingSuccessions.map((scase: any) => (
@@ -220,6 +284,33 @@ export default function CitizenDashboard() {
                               className="bg-amber-600 hover:bg-amber-700 text-white text-sm font-bold py-2 px-5 rounded-lg shadow-sm transition-colors flex items-center gap-2"
                             >
                               <FileSignature className="w-4 h-4" /> Review &amp; eSign Now
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+
+                  {pendingTransfers.map((t: any) => (
+                    <div key={t.transferId} className="bg-[#eff6ff] border border-blue-300 rounded-2xl p-5 shadow-sm">
+                      <div className="flex items-start gap-4">
+                        <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center shrink-0">
+                          <ArrowLeftRight className="w-6 h-6 text-[#0F4C81]" />
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between">
+                            <h3 className="text-base font-bold text-[#0F4C81]">Property Purchase Offer ({t.dlpiId})</h3>
+                            <span className="text-xs font-bold bg-blue-200 text-[#0F4C81] px-2 py-0.5 rounded">eSign Required</span>
+                          </div>
+                          <p className="text-sm text-blue-900 mt-1">
+                            Seller <span className="font-semibold">{t.sellerName}</span> (Aadhaar: <span className="font-mono">{t.sellerAadhaarNumber}</span>) has initiated a sale of property <span className="font-mono font-bold">{t.dlpiId}</span> to you for declared value <span className="font-bold">₹{Number(t.declaredValueINR || 0).toLocaleString('en-IN')}</span>.
+                          </p>
+                          <div className="mt-4 flex gap-3">
+                            <button
+                              onClick={() => handleBuyerESign(t.transferId)}
+                              className="bg-[#0F4C81] hover:bg-[#0c3d67] text-white text-sm font-bold py-2 px-5 rounded-lg shadow-sm transition-colors flex items-center gap-2"
+                            >
+                              <FileSignature className="w-4 h-4" /> Consent &amp; eSign to Buy
                             </button>
                           </div>
                         </div>
@@ -307,13 +398,26 @@ export default function CitizenDashboard() {
                           </div>
                         </div>
 
-                        <div className="flex gap-3">
-                          <Link href={`/ec/${p.dlpiId}`} className="btn-primary text-xs py-2 px-4 rounded-lg flex-1 text-center justify-center">
+                        <div className="flex flex-wrap gap-2">
+                          <Link href={`/ec/${p.dlpiId}`} className="btn-primary text-xs py-2 px-3 rounded-lg flex-1 text-center justify-center min-w-[100px]">
                             Download RoR
                           </Link>
-                          <Link href={`/map?dlpi=${p.dlpiId}`} className="btn-secondary text-xs py-2 px-4 rounded-lg flex-1 text-center justify-center bg-white">
+                          <Link href={`/map?dlpi=${p.dlpiId}`} className="btn-secondary text-xs py-2 px-3 rounded-lg flex-1 text-center justify-center bg-white min-w-[100px]">
                             <Map className="w-4 h-4 mr-1.5 inline" /> View Map
                           </Link>
+                          {p.encumbranceStatus === 'CLEAR' && !(p as any).transferLocked && (
+                            <button
+                              onClick={() => {
+                                setSellModalParcel(p);
+                                setSellBuyerName('');
+                                setSellBuyerAadhaar('');
+                                setSellDeclaredVal('4500000');
+                              }}
+                              className="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs py-2 px-3 rounded-lg flex items-center justify-center gap-1.5 transition-colors shadow-sm min-w-[100px]"
+                            >
+                              <ArrowLeftRight className="w-3.5 h-3.5" /> Sell Property
+                            </button>
+                          )}
                         </div>
                       </div>
                     );
@@ -451,6 +555,119 @@ export default function CitizenDashboard() {
 
           </div>
         </div>
+
+        {/* Sell Property Modal */}
+        {sellModalParcel && (
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="bg-white rounded-3xl max-w-lg w-full shadow-2xl overflow-hidden border border-gray-200 animate-in fade-in zoom-in-95 duration-200">
+              <div className="bg-[#0F4C81] p-6 text-white flex items-center justify-between">
+                <div>
+                  <h3 className="text-xl font-black">Initiate Property Sale</h3>
+                  <p className="text-xs text-blue-200 mt-0.5">DLPI: {sellModalParcel.dlpiId}</p>
+                </div>
+                <button
+                  onClick={() => setSellModalParcel(null)}
+                  className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <form onSubmit={handleInitiateSale} className="p-6 space-y-5">
+                <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4">
+                  <div className="flex items-center gap-2 text-xs font-bold text-[#0F4C81] uppercase tracking-wider mb-1">
+                    <UserCheck className="w-4 h-4" /> Seller Verification (Strict ownership rule)
+                  </div>
+                  <p className="text-sm text-gray-800 font-medium">
+                    Seller: <span className="font-bold">{user?.name}</span>
+                  </p>
+                  <p className="text-xs text-gray-600 font-mono mt-0.5">
+                    Aadhaar No: <span className="font-bold text-gray-900">{((user as any)?.aadhaarNumber || user?.aadhaarHash || '').replace(/\D/g, '') || '999900010010'}</span>
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                    Buyer Full Name *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={sellBuyerName}
+                    onChange={(e) => setSellBuyerName(e.target.value)}
+                    placeholder="e.g. Rakesh Agarwal"
+                    className="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0F4C81]"
+                  />
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider">
+                      Buyer Aadhaar Number (Exact 12 Digits) *
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSellBuyerName('Rakesh Agarwal');
+                        setSellBuyerAadhaar('999900010009');
+                      }}
+                      className="text-[11px] font-bold text-[#0F4C81] hover:underline"
+                    >
+                      Prefill Demo Buyer (999900010009)
+                    </button>
+                  </div>
+                  <input
+                    type="text"
+                    required
+                    maxLength={12}
+                    value={sellBuyerAadhaar}
+                    onChange={(e) => setSellBuyerAadhaar(e.target.value.replace(/\D/g, ''))}
+                    placeholder="Enter 12-digit buyer Aadhaar number"
+                    className="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 text-sm font-mono text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0F4C81]"
+                  />
+                  <p className="text-[11px] text-gray-500 mt-1">
+                    Instead of hashes, exact 12-digit Aadhaar numbers are used for atomic transfer verification.
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                    Declared Sale Value (INR) *
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-4 top-3.5 text-gray-500 font-bold">₹</span>
+                    <input
+                      type="number"
+                      required
+                      min={100}
+                      value={sellDeclaredVal}
+                      onChange={(e) => setSellDeclaredVal(e.target.value)}
+                      className="w-full bg-gray-50 border border-gray-300 rounded-xl pl-8 pr-4 py-3 text-sm font-bold text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0F4C81]"
+                    />
+                  </div>
+                </div>
+
+                <div className="pt-2 flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setSellModalParcel(null)}
+                    className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold text-sm py-3 rounded-xl transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={sellBusy || sellBuyerAadhaar.length !== 12 || !sellBuyerName}
+                    className="flex-1 bg-amber-600 hover:bg-amber-700 disabled:opacity-50 text-white font-bold text-sm py-3 rounded-xl transition-colors flex items-center justify-center gap-2 shadow-md"
+                  >
+                    <ArrowLeftRight className="w-4 h-4" />
+                    {sellBusy ? 'Initiating...' : 'Initiate Sale'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </main>
 
       <CitizenFooter />
@@ -458,8 +675,6 @@ export default function CitizenDashboard() {
   );
 }
 
-// Minimal stub for Edit3 icon
 function Edit3Icon(props: any) {
   return <Edit3 {...props} />;
 }
-import { Edit3 } from 'lucide-react';

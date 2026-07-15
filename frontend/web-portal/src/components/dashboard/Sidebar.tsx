@@ -45,10 +45,11 @@ const ROLE_LABEL: Record<string, string> = {
   kotwal:           'Kotwal',
 };
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-interface Props {}
+interface Props {
+  demoMode?: boolean;
+}
 
-export default function Sidebar({}: Props) {
+export default function Sidebar({ demoMode }: Props = {}) {
   const pathname = usePathname() ?? '';
   const [user, setUser] = useState<JWTUser | null>(null);
   const fabricMode = process.env.NEXT_PUBLIC_FABRIC_MODE || 'mock';

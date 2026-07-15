@@ -12,7 +12,8 @@ export const DEMO_MY_PARCELS = [
     areaHectares:      0.025,
     encumbranceStatus: 'CLEAR',
     claimStatus:       'VERIFIED',
-    owner:             { name: 'Priya Kumar' },
+    owner:             { name: 'Priya Kumar', aadhaarNumber: '999900010010' },
+    owners:            [{ name: 'Priya Kumar', aadhaarNumber: '999900010010', aadhaarHash: '999900010010', share: '1/1', shareDecimal: 1.0, isVerified: true }],
     location:          { latitude: 28.5706, longitude: 77.5413 },
     valuation:         { circleRateINR: 3750000 },
     txHash:            '0xdemo_priya1_tx',
@@ -31,7 +32,8 @@ export const DEMO_MY_PARCELS = [
     areaHectares:      1.2,
     encumbranceStatus: 'MORTGAGED',
     claimStatus:       'UNDER_REVIEW',
-    owner:             { name: 'Priya Kumar' },
+    owner:             { name: 'Priya Kumar', aadhaarNumber: '999900010010' },
+    owners:            [{ name: 'Priya Kumar', aadhaarNumber: '999900010010', aadhaarHash: '999900010010', share: '1/1', shareDecimal: 1.0, isVerified: true }],
     location:          { latitude: 28.5480, longitude: 77.5620 },
     valuation:         { circleRateINR: 1440000 },
     txHash:            '0xdemo_priya2_tx',
@@ -50,7 +52,8 @@ export const DEMO_MY_PARCELS = [
     areaHectares:      2.4,
     encumbranceStatus: 'CLEAR',
     claimStatus:       'SEEDED_UNVERIFIED',
-    owner:             { name: 'Rakesh Agarwal' },
+    owner:             { name: 'Rakesh Agarwal', aadhaarNumber: '999900010009' },
+    owners:            [{ name: 'Rakesh Agarwal', aadhaarNumber: '999900010009', aadhaarHash: '999900010009', share: '1/1', shareDecimal: 1.0, isVerified: true }],
     location:          { latitude: 28.6010, longitude: 77.4850 },
     valuation:         { circleRateINR: 2880000 },
     txHash:            '0xdemo_arun_tx',
@@ -70,7 +73,8 @@ export const DEMO_MY_PARCELS = [
     encumbranceStatus: 'COURT_INJUNCTION',
     claimStatus:       'DISPUTED',
     disputeNote:       'Boundary encroachment alleged by adjacent plot owner. Civil suit filed in Dadri court (CS/2025/0441).',
-    owner:             { name: 'Suresh Yadav' },
+    owner:             { name: 'Suresh Yadav', aadhaarNumber: '999900010012' },
+    owners:            [{ name: 'Suresh Yadav', aadhaarNumber: '999900010012', aadhaarHash: '999900010012', share: '1/1', shareDecimal: 1.0, isVerified: true }],
     location:          { latitude: 28.5280, longitude: 77.6100 },
     valuation:         { circleRateINR: 4800000 },
     txHash:            '0xdemo_suresh_tx',
@@ -89,7 +93,8 @@ export const DEMO_MY_PARCELS = [
     areaHectares:      0.8,
     encumbranceStatus: 'CLEAR',
     claimStatus:       'CLAIM_SUBMITTED',
-    owner:             { name: 'Meena Devi' },
+    owner:             { name: 'Meena Devi', aadhaarNumber: '999900010005' },
+    owners:            [{ name: 'Meena Devi', aadhaarNumber: '999900010005', aadhaarHash: '999900010005', share: '1/1', shareDecimal: 1.0, isVerified: true }],
     location:          { latitude: 28.5900, longitude: 77.4700 },
     valuation:         { circleRateINR: 720000 },
     txHash:            '0xdemo_meena_tx',
@@ -154,8 +159,10 @@ export const DEMO_DLPI = {
   khasraNo:          '740/100',
   tehsilCode:        'DAD',
   districtCode:      'UP-GBN',
-  ownerName:         'Deepak Narayan Singh',
-  ownerAadhaarHash:  'sha256:a3f8e2d1c7b4a09f6e5d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b3a',
+  ownerName:         'Hi User',
+  owner:             { name: 'Hi User', aadhaarNumber: '111122223333' },
+  owners:            [{ name: 'Hi User', aadhaarNumber: '111122223333', aadhaarHash: '111122223333', share: '1/1', shareDecimal: 1.0, isVerified: true }],
+  ownerAadhaarHash:  '111122223333',
   landType:          'Bhumidhari',
   landTypeDesc:      'Hereditary tenant with full rights',
   areaHectares:      2.4,
@@ -172,40 +179,40 @@ export const DEMO_DLPI = {
 const DEMO_PERSONAS: Record<string, any> = {
   tehsildar: {
     role: 'tehsildar', name: 'Amit Saxena',
-    aadhaarHash: '999900010001', // raw Aadhaar — no hashing
+    aadhaarNumber: '999900010001', aadhaar: '999900010001', aadhaarHash: '999900010001',
     jurisdictionCode: 'GBN-DAD', tehsilCode: 'DAD',
   },
   circle_inspector: {
     role: 'circle_inspector', name: 'Rajesh Verma',
-    aadhaarHash: '999900010002', // raw Aadhaar — no hashing
+    aadhaarNumber: '999900010002', aadhaar: '999900010002', aadhaarHash: '999900010002',
     jurisdictionCode: 'GBN-DAD', circleCode: 'DAD-C1',
     patwariCodes: ['DAD-P1', 'DAD-P2', 'DAD-P3'], tehsilCode: 'DAD',
   },
   patwari: {
     role: 'patwari', name: 'Vijay Singh',
-    aadhaarHash: '999900010003', // raw Aadhaar — no hashing
+    aadhaarNumber: '999900010003', aadhaar: '999900010003', aadhaarHash: '999900010003',
     jurisdictionCode: 'GBN-DAD', patwariCode: 'DAD-P1',
     villageCodes: ['DAD-001', 'DAD-002', 'DAD-003'], tehsilCode: 'DAD',
   },
   citizen: {
     role: 'citizen', name: 'Priya Kumar',
-    aadhaarHash: '999900010010', // raw Aadhaar — no hashing
+    aadhaarNumber: '999900010010', aadhaar: '999900010010', aadhaarHash: '999900010010',
   },
   citizen_buyer: {
     role: 'citizen', name: 'Rakesh Agarwal',
-    aadhaarHash: '999900010009', // raw Aadhaar — no hashing
+    aadhaarNumber: '999900010009', aadhaar: '999900010009', aadhaarHash: '999900010009',
   },
   suresh_yadav: {
     role: 'citizen', name: 'Suresh Yadav',
-    aadhaarHash: '999900010012', // raw Aadhaar — no hashing
+    aadhaarNumber: '999900010012', aadhaar: '999900010012', aadhaarHash: '999900010012',
   },
   citizen_heir1: {
     role: 'citizen', name: 'Suresh Yadav',
-    aadhaarHash: '999900010012', // raw Aadhaar — no hashing
+    aadhaarNumber: '999900010012', aadhaar: '999900010012', aadhaarHash: '999900010012',
   },
   citizen_heir2: {
     role: 'citizen', name: 'Sunita Kumar',
-    aadhaarHash: '999900010015', // raw Aadhaar — no hashing
+    aadhaarNumber: '999900010015', aadhaar: '999900010015', aadhaarHash: '999900010015',
   },
 };
 
@@ -214,6 +221,7 @@ const state = {
   pendingReview: [...DEMO_PENDING_REVIEW],
   // Shared in-memory succession store — persists across page loads within same browser session
   pendingSuccessions: [] as any[],
+  pendingTransfers: [] as any[],
   mutations: [
     {
       mutationId:              'MUT-DLPI-UP-DAD-00100-d4e5f6a7',
@@ -338,14 +346,14 @@ export async function handleMockApi(path: string, options: RequestInit): Promise
     // Get the currently logged-in user from the auth header
     const authHeader = (options.headers as Record<string, string>)?.['Authorization'] || '';
     const tokenPayload = authHeader.startsWith('Bearer mock.') ? JSON.parse(atob(authHeader.split('.')[1])) : null;
-    const myAadhaar = tokenPayload?.aadhaarHash || tokenPayload?.aadhaar || tokenPayload?.aadhaarNo || '';
+    const myAadhaar = tokenPayload?.aadhaarNumber || tokenPayload?.aadhaarHash || tokenPayload?.aadhaar || tokenPayload?.aadhaarNo || '';
     // Filter to only return parcels that belong to this user
     const myParcels = myAadhaar
       ? state.myParcels.filter(p => {
           const owners = (p as any).owners || (p as any).initialOwners || [];
-          if (owners.length > 0) return owners.some((o: any) => o.aadhaarHash === myAadhaar || o.aadhaar === myAadhaar || o.aadhaarNo === myAadhaar || (o.name && o.name === tokenPayload?.name));
+          if (owners.length > 0) return owners.some((o: any) => o.aadhaarNumber === myAadhaar || o.aadhaarHash === myAadhaar || o.aadhaar === myAadhaar || o.aadhaarNo === myAadhaar || (o.name && o.name === tokenPayload?.name));
           // Fallback: check by name for demo parcels
-          const persona = Object.values(DEMO_PERSONAS).find((p: any) => p.aadhaarHash === myAadhaar || p.aadhaar === myAadhaar) as any;
+          const persona = Object.values(DEMO_PERSONAS).find((p: any) => p.aadhaarNumber === myAadhaar || p.aadhaarHash === myAadhaar || p.aadhaar === myAadhaar) as any;
           return persona && (p as any).owner?.name === persona.name;
         })
       : state.myParcels;
@@ -432,8 +440,7 @@ export async function handleMockApi(path: string, options: RequestInit): Promise
     // Parse the logged-in user's Aadhaar from the Bearer mock token
     const authHeader = (options.headers as Record<string, string>)?.['Authorization'] || '';
     const tokenPayload = authHeader.startsWith('Bearer mock.') ? JSON.parse(atob(authHeader.split('.')[1])) : null;
-    const myAadhaar = (tokenPayload?.aadhaarHash || '').replace(/\D/g, '');
-    console.log('[MOCK my-pending] My Aadhaar:', myAadhaar, 'All cases:', state.pendingSuccessions.length);
+    const myAadhaar = (tokenPayload?.aadhaarNumber || tokenPayload?.aadhaarHash || '').replace(/\D/g, '');
     const pending = state.pendingSuccessions.filter(sc => {
       if (sc.status !== 'AWAITING_CONSENTS') return false;
       const heir = sc.heirs?.find((h: any) => h.aadhaarHash.replace(/\D/g, '') === myAadhaar);
@@ -455,11 +462,218 @@ export async function handleMockApi(path: string, options: RequestInit): Promise
     return jsonResponse({ caseId, status: sc?.status || 'AWAITING_CONSENTS' });
   }
 
+  if (path.match(/^\/api\/succession\/[^\/]+\/execute$/) && method === 'POST') {
+    const caseId = path.split('/')[3];
+    const sc = state.pendingSuccessions.find(c => c.caseId === caseId);
+    if (!sc) return jsonResponse({ error: 'CASE_NOT_FOUND' }, 404);
+
+    sc.status = 'COMPLETED';
+
+    // Atomically mutate DLPI property in state.myParcels
+    const parcel = state.myParcels.find(p => p.dlpiId === sc.dlpiId);
+    if (parcel && sc.heirs && sc.heirs.length > 0) {
+      const newOwners = sc.heirs.map((h: any) => ({
+        name: h.name || 'Legal Heir',
+        aadhaarNumber: (h.aadhaarHash || '').replace(/\D/g, ''),
+        aadhaarHash: (h.aadhaarHash || '').replace(/\D/g, ''),
+        share: h.finalShare || `1/${sc.heirs.length}`,
+        shareDecimal: h.finalShareDec || (1.0 / sc.heirs.length),
+        ownerSince: new Date().toISOString(),
+        isVerified: true
+      }));
+      (parcel as any).owners = newOwners;
+      (parcel as any).owner = { name: newOwners[0].name, aadhaarNumber: newOwners[0].aadhaarNumber };
+      (parcel as any).ownershipType = newOwners.length > 1 ? 'JOINT' : 'SOLE';
+      (parcel as any).encumbranceStatus = 'CLEAR';
+    }
+
+    return jsonResponse(sc);
+  }
+
   if (path.match(/^\/api\/succession\/[^\/]+$/) && method === 'GET') {
     const caseId = path.split('/')[3];
     const sc = state.pendingSuccessions.find(c => c.caseId === caseId);
     if (sc) return jsonResponse(sc);
     return jsonResponse({ error: 'CASE_NOT_FOUND' }, 404);
+  }
+
+  // ── Property Transfer (Real & Atomic with Aadhaar Numbers) ──────────────────
+
+  if (path === '/api/transfer/initiate' && method === 'POST') {
+    const { dlpiId, buyerName, declaredValueINR } = body;
+    const sellerAadhaarNumber = (body.sellerAadhaarNumber || body.sellerAadhaar || body.sellerAadhaarHash || '').replace(/\D/g, '');
+    const buyerAadhaarNumber = (body.buyerAadhaarNumber || body.buyerAadhaar || body.buyerAadhaarHash || '').replace(/\D/g, '');
+
+    if (!sellerAadhaarNumber || !buyerAadhaarNumber) {
+      return jsonResponse({ error: 'VALIDATION_ERROR', message: 'Seller Aadhaar Number and Buyer Aadhaar Number (exact 12 digits) are required.' }, 400);
+    }
+
+    // Verify seller ownership ("make sure seller must have property before sell")
+    const parcel = state.myParcels.find(p => p.dlpiId === dlpiId);
+    if (!parcel) {
+      return jsonResponse({ error: 'PARCEL_NOT_FOUND', message: `Property ${dlpiId} not found on the blockchain.` }, 404);
+    }
+
+    const owners = (parcel as any).owners || [];
+    const isOwner = owners.some((o: any) => {
+      const oNum = (o.aadhaarNumber || o.aadhaarHash || o.aadhaar || '').replace(/\D/g, '');
+      return oNum === sellerAadhaarNumber || (o.name && o.name === body.sellerName);
+    });
+
+    if (!isOwner) {
+      return jsonResponse({
+        error: 'OWNERSHIP_DENIED',
+        message: `Seller (Aadhaar: ${sellerAadhaarNumber}) is not the registered owner of property ${dlpiId}. Only the verified owner can initiate a sale.`
+      }, 403);
+    }
+
+    if ((parcel as any).transferLocked || (parcel as any).encumbranceStatus === 'UNDER_TRANSFER') {
+      return jsonResponse({ error: 'TRANSFER_LOCKED', message: `Property ${dlpiId} is already locked for an ongoing transfer or dispute.` }, 403);
+    }
+
+    // Lock property during atomic transfer
+    (parcel as any).transferLocked = true;
+    (parcel as any).encumbranceStatus = 'UNDER_TRANSFER';
+
+    const transferId = 'TRF-' + dlpiId + '-' + Math.random().toString(36).slice(2, 6).toUpperCase();
+    const sellerName = (parcel as any).owner?.name || owners[0]?.name || body.sellerName || 'Seller';
+
+    const newTransfer = {
+      transferId,
+      dlpiId,
+      sellerName,
+      sellerAadhaarNumber,
+      buyerName: buyerName || 'Buyer',
+      buyerAadhaarNumber,
+      declaredValueINR: Number(declaredValueINR || 0),
+      status: 'PENDING_BUYER_CONSENT', // notification sent to buyer
+      initiatedAt: new Date().toISOString(),
+      sellers: [{ name: sellerName, aadhaarNumber: sellerAadhaarNumber }],
+      buyers: [{ name: buyerName || 'Buyer', aadhaarNumber: buyerAadhaarNumber }],
+      history: [
+        { action: 'INITIATED', actor: sellerName, timestamp: new Date().toISOString(), status: 'PENDING_BUYER_CONSENT', note: `Property sale initiated at ₹${declaredValueINR}` }
+      ]
+    };
+
+    state.pendingTransfers.push(newTransfer);
+    return jsonResponse(newTransfer, 201);
+  }
+
+  if (path === '/api/transfer/my-pending' && method === 'GET') {
+    const authHeader = (options.headers as Record<string, string>)?.['Authorization'] || '';
+    const tokenPayload = authHeader.startsWith('Bearer mock.') ? JSON.parse(atob(authHeader.split('.')[1])) : null;
+    const myAadhaar = (tokenPayload?.aadhaarNumber || tokenPayload?.aadhaarHash || tokenPayload?.aadhaar || '').replace(/\D/g, '');
+    const myName = tokenPayload?.name || '';
+
+    // Return transfers waiting for this buyer's eSign
+    const pendingBuyer = state.pendingTransfers.filter(t => {
+      if (t.status !== 'PENDING_BUYER_CONSENT') return false;
+      return t.buyerAadhaarNumber === myAadhaar || (myName && t.buyerName === myName);
+    });
+    return jsonResponse(pendingBuyer);
+  }
+
+  if (path === '/api/transfer/pending/all' && method === 'GET') {
+    // Return all non-completed transfers for officer dashboard queue
+    return jsonResponse(state.pendingTransfers.filter(t => t.status !== 'COMPLETED' && t.status !== 'REJECTED'));
+  }
+
+  if (path.match(/^\/api\/transfer\/[^\/]+\/consent$/) && method === 'POST') {
+    const transferId = path.split('/')[3];
+    const { partyType } = body;
+    const transfer = state.pendingTransfers.find(t => t.transferId === transferId);
+    if (!transfer) return jsonResponse({ error: 'TRANSFER_NOT_FOUND' }, 404);
+
+    if (partyType === 'BUYER' || !partyType) {
+      transfer.status = 'PENDING_PATWARI_APPROVAL'; // Moves to Patwari
+      transfer.history.push({
+        action: 'BUYER_ESIGNED',
+        actor: transfer.buyerName,
+        timestamp: new Date().toISOString(),
+        status: 'PENDING_PATWARI_APPROVAL',
+        note: 'Buyer consented and eSigned purchase agreement.'
+      });
+    }
+    return jsonResponse(transfer);
+  }
+
+  if (path.match(/^\/api\/transfer\/[^\/]+\/approve\/patwari$/) && method === 'POST') {
+    const transferId = path.split('/')[3];
+    const transfer = state.pendingTransfers.find(t => t.transferId === transferId);
+    if (!transfer) return jsonResponse({ error: 'TRANSFER_NOT_FOUND' }, 404);
+
+    transfer.status = 'PENDING_KANUNGO_APPROVAL'; // Moves to Kanungo
+    transfer.history.push({
+      action: 'PATWARI_APPROVED',
+      actor: 'Patwari (Officer)',
+      timestamp: new Date().toISOString(),
+      status: 'PENDING_KANUNGO_APPROVAL',
+      note: 'Patwari verified land records and physical boundaries.'
+    });
+    return jsonResponse(transfer);
+  }
+
+  if ((path.match(/^\/api\/transfer\/[^\/]+\/approve\/ci$/) || path.match(/^\/api\/transfer\/[^\/]+\/approve\/kanungo$/)) && method === 'POST') {
+    const transferId = path.split('/')[3];
+    const transfer = state.pendingTransfers.find(t => t.transferId === transferId);
+    if (!transfer) return jsonResponse({ error: 'TRANSFER_NOT_FOUND' }, 404);
+
+    transfer.status = 'PENDING_TEHSILDAR_APPROVAL'; // Moves to Tehsildar
+    transfer.history.push({
+      action: 'KANUNGO_APPROVED',
+      actor: 'Kanungo / CI (Officer)',
+      timestamp: new Date().toISOString(),
+      status: 'PENDING_TEHSILDAR_APPROVAL',
+      note: 'Kanungo secondary verification completed.'
+    });
+    return jsonResponse(transfer);
+  }
+
+  if ((path.match(/^\/api\/transfer\/[^\/]+\/approve\/tehsildar$/) || path.match(/^\/api\/transfer\/[^\/]+\/approve\/sro$/)) && method === 'POST') {
+    const transferId = path.split('/')[3];
+    const transfer = state.pendingTransfers.find(t => t.transferId === transferId);
+    if (!transfer) return jsonResponse({ error: 'TRANSFER_NOT_FOUND' }, 404);
+
+    // ATOMIC TRANSFER OF PROPERTY OWNERSHIP
+    const parcel = state.myParcels.find(p => p.dlpiId === transfer.dlpiId);
+    if (parcel) {
+      (parcel as any).owner = { name: transfer.buyerName, aadhaarNumber: transfer.buyerAadhaarNumber };
+      (parcel as any).owners = [{
+        name: transfer.buyerName,
+        aadhaarNumber: transfer.buyerAadhaarNumber,
+        aadhaarHash: transfer.buyerAadhaarNumber,
+        share: '1/1',
+        shareDecimal: 1.0,
+        ownerSince: new Date().toISOString(),
+        isVerified: true
+      }];
+      (parcel as any).encumbranceStatus = 'CLEAR';
+      (parcel as any).transferLocked = false;
+      (parcel as any).updatedAt = new Date().toISOString();
+    }
+
+    transfer.status = 'COMPLETED';
+    transfer.history.push({
+      action: 'TEHSILDAR_EXECUTED',
+      actor: 'Tehsildar (Magistrate)',
+      timestamp: new Date().toISOString(),
+      status: 'COMPLETED',
+      note: `Atomic mutation complete. Ownership transferred to ${transfer.buyerName}.`
+    });
+    return jsonResponse(transfer);
+  }
+
+  if (path.match(/^\/api\/transfer\/[^\/]+\/history$/) && method === 'GET') {
+    const transferId = path.split('/')[3];
+    const transfer = state.pendingTransfers.find(t => t.transferId === transferId);
+    return jsonResponse(transfer?.history || []);
+  }
+
+  if (path.match(/^\/api\/transfer\/[^\/]+$/) && method === 'GET') {
+    const transferId = path.split('/')[3];
+    const transfer = state.pendingTransfers.find(t => t.transferId === transferId);
+    if (!transfer) return jsonResponse({ error: 'TRANSFER_NOT_FOUND' }, 404);
+    return jsonResponse(transfer);
   }
 
   return jsonResponse({ error: 'MOCK_NOT_FOUND', message: 'Mock route not implemented' }, 404);

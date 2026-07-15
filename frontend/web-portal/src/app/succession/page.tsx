@@ -117,7 +117,8 @@ type Stage =
   | 'ai_computing'
   | 'heirs_identified'
   | 'awaiting_consents'
-  | 'all_consented';
+  | 'all_consented'
+  | 'pending_tehsildar_approval';
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
@@ -363,7 +364,8 @@ export default function SuccessionPage() {
   const hearsVisible =
     stage === 'heirs_identified' ||
     stage === 'awaiting_consents' ||
-    stage === 'all_consented';
+    stage === 'all_consented' ||
+    stage === 'pending_tehsildar_approval';
 
   return (
     <div className="flex h-screen overflow-hidden bg-[#F8FAFC]">
@@ -846,7 +848,7 @@ export default function SuccessionPage() {
 
 const STAGE_ORDER: Stage[] = [
   'idle', 'scanning_crs', 'crs_verified', 'ai_computing',
-  'heirs_identified', 'awaiting_consents', 'all_consented',
+  'heirs_identified', 'awaiting_consents', 'all_consented', 'pending_tehsildar_approval',
 ];
 
 function StageBar({ stage }: { stage: Stage }) {

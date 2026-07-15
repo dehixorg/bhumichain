@@ -41,7 +41,7 @@ interface ComplianceResult {
 
 const DEMO_BUYER = {
   name:        'Rakesh Agarwal',
-  aadhaarHash: 'sha256:10427ae0c95ed6f2f509b61953567d1e9a6d729836efd4a7f66a220ef5a09716',
+  aadhaarHash: '999900010009',
   declaredINR: 4_800_000,
 };
 
@@ -275,11 +275,12 @@ export default function TransferWizard({ dlpiId, sellerName, sellerAadhaarHash, 
               />
             </div>
             <div>
-              <label className="text-xs text-gray-400 mb-1 block">Buyer Aadhaar Hash (SHA-256)</label>
+              <label className="text-xs text-gray-400 mb-1 block">Buyer Aadhaar Number (Exact 12 Digits)</label>
               <input
                 value={buyerHash}
-                onChange={(e) => setBuyerHash(e.target.value)}
-                placeholder="sha256:..."
+                onChange={(e) => setBuyerHash(e.target.value.replace(/\D/g, ''))}
+                placeholder="999900010009"
+                maxLength={12}
                 className="input w-full font-mono text-xs"
               />
             </div>

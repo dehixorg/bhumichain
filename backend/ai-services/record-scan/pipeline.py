@@ -31,6 +31,72 @@ from khatauni_schema import (
 )
 from mock_responses import MOCK_RESPONSES, DEMO_CLEAR
 
+# ─── English-Only Sanitizer (Strict translation/cleansing of Devanagari) ──────
+def _ensure_english_only(obj: any) -> any:
+    if isinstance(obj, str):
+        if any('\u0900' <= c <= '\u097F' for c in obj):
+            replacements = {
+                '[अस्पष्ट — फटा हुआ]': '[Illegible — Torn Document]',
+                '[अस्पष्ट]': '[Illegible]',
+                'अस्पष्ट': 'Illegible',
+                'फटा हुआ': 'Torn Document',
+                'पूर्ण': 'Full (1/1)',
+                'बैंक नाम अपठनीय': 'Bank Name Damaged/Illegible',
+                'अपठनीय': 'Illegible',
+                'खतौनी': 'Khatauni',
+                'खाता संख्या': 'Khata No.',
+                'खाता': 'Khata',
+                'खसरा': 'Khasra',
+                'ग्राम': 'Village',
+                'तहसील': 'Tehsil',
+                'जिला': 'District',
+                'ज़िला': 'District',
+                'उत्तर प्रदेश': 'Uttar Pradesh',
+                'पति': 'Husband',
+                'पिता': 'Father',
+                'गेहूं': 'Wheat',
+                'धान': 'Paddy',
+                'रबी': 'Rabi',
+                'खरीफ': 'Kharif',
+                'भूमि': 'Land',
+                'प्रकार': 'Type',
+                'संक्रमणशील': 'Transferable',
+                'असंक्रमणशील': 'Non-transferable',
+                'सीरदार': 'Sirdar',
+                'भूमिका': 'Role',
+                'बंजर': 'Barren Land',
+                'आबादी': 'Abadi',
+                'बाग': 'Orchard',
+                'सिंचित': 'Irrigated',
+                'असिंचित': 'Unirrigated',
+                'नहर': 'Canal',
+                'नलकूप': 'Tubewell',
+                'कुआं': 'Well',
+                'तलाब': 'Pond',
+                'रास्ता': 'Path/Road',
+                'सातबारा': 'Satbara (7/12)',
+                'उतारा': 'Extract',
+            }
+            res = obj
+            for k, val in replacements.items():
+                res = res.replace(k, val)
+            cleaned = []
+            for char in res:
+                if '\u0900' <= char <= '\u097F':
+                    continue
+                cleaned.append(char)
+            return "".join(cleaned).strip() or "[English Translation / Transliterated Value]"
+        return obj
+    elif isinstance(obj, dict):
+        return {k: _ensure_english_only(val) for k, val in obj.items()}
+    elif isinstance(obj, list):
+        return [_ensure_english_only(val) for val in obj]
+    elif hasattr(obj, 'model_dump') or hasattr(obj, 'dict'):
+        d = obj.model_dump() if hasattr(obj, 'model_dump') else obj.dict()
+        cleansed_dict = _ensure_english_only(d)
+        return type(obj).model_validate(cleansed_dict) if hasattr(type(obj), 'model_validate') else type(obj)(**cleansed_dict)
+    return obj
+
 # ─── DynamoDB client ──────────────────────────────────────────────────────────
 
 DB_FILE = os.path.join(os.path.dirname(__file__), "scans_db.json")
@@ -120,7 +186,7 @@ def retrieve_scan(scan_id: str) -> Optional[ScanResult]:
                 data['ownerAadhaarHash'] = item.get('ownerAadhaarHash')
                 data['patwariName'] = item.get('patwariName')
                 data['patwariHash'] = item.get('patwariHash')
-                return ScanResult(**data)
+                return _ensure_english_only(ScanResult(**data))
         except Exception as e:
             print(f"[DynamoDB] get_item failed: {e}")
             
@@ -133,7 +199,7 @@ def retrieve_scan(scan_id: str) -> Optional[ScanResult]:
         data['ownerAadhaarHash'] = item.get('ownerAadhaarHash')
         data['patwariName'] = item.get('patwariName')
         data['patwariHash'] = item.get('patwariHash')
-        return ScanResult(**data)
+        return _ensure_english_only(ScanResult(**data))
     return None
 
 
@@ -214,7 +280,7 @@ def query_scans_by_status(status: str) -> list[ScanResult]:
                 data['ownerAadhaarHash'] = item.get('ownerAadhaarHash')
                 data['patwariName'] = item.get('patwariName')
                 data['patwariHash'] = item.get('patwariHash')
-                results.append(ScanResult(**data))
+                results.append(_ensure_english_only(ScanResult(**data)))
             return results
         except Exception as e:
             print(f"[DynamoDB] query_scans_by_status failed: {e}")
@@ -229,7 +295,7 @@ def query_scans_by_status(status: str) -> list[ScanResult]:
             data['ownerAadhaarHash'] = item.get('ownerAadhaarHash')
             data['patwariName'] = item.get('patwariName')
             data['patwariHash'] = item.get('patwariHash')
-            results.append(ScanResult(**data))
+            results.append(_ensure_english_only(ScanResult(**data)))
     return results
 
 
@@ -449,10 +515,11 @@ JSON schema to populate:
 }
 
 Rules:
-- If OCR text is in Hindi (Devanagari), translate field values to English.
-- If a field cannot be found, use null (not empty string).
+- STRICT ENGLISH ONLY: All extracted field values, names, locations, crop details, signatures, and encumbrance notes MUST BE strictly in English (Latin characters only).
+- If any OCR text is in Hindi (Devanagari), Marathi, or another Indian language, translate or transliterate every single word directly into English. Never return Devanagari or non-ASCII script anywhere.
+- If a field cannot be found or is illegible, use "[Illegible]" or null (never Devanagari).
 - Set requiresManualReview=true if ocrConfidence < 0.75 or any important field is missing.
-- flaggedFields should list keys that were hard to read or uncertain.
+- flaggedFields should list keys that were hard to read or uncertain (in English).
 - areaHectares must be a number (convert bigha: 1 bigha = 0.2529 ha in UP).
 
 OCR TEXT:
@@ -653,6 +720,7 @@ async def scan_document(
             "ipfsCID":    _mock_ipfs_pin(content),
         })
         await _simulate_steps(result.processingSteps)
+        result = _ensure_english_only(result)
         stored = _persist_scan(result)
         return result.model_copy(update={"storedInDynamoDB": stored})
 
@@ -701,6 +769,7 @@ async def scan_document(
     # Step 4: Build result
     elapsed_ms = int((time.monotonic() - start) * 1000)
     result = _build_result(filename, len(content), ipfs_cid, extraction, elapsed_ms, steps)
+    result = _ensure_english_only(result)
     stored = _persist_scan(result)
     return result.model_copy(update={"storedInDynamoDB": stored})
 

@@ -15,6 +15,7 @@ export interface JWTUser {
   role: string;
   name: string;
   aadhaarHash: string;
+  aadhaarId?: string;
   jurisdictionCode?: string;
   tehsilCode?: string;
   circleCode?: string;

@@ -366,7 +366,8 @@ export default function MutationDetailPage() {
       <AppHeader />
       <div className="flex flex-1 overflow-hidden">
         <Sidebar />
-      <main className="flex-1 flex items-center justify-center"><div className="text-gray-500 animate-pulse">Loading mutation…</div></main>
+        <main className="flex-1 flex items-center justify-center"><div className="text-gray-500 animate-pulse">Loading mutation…</div></main>
+      </div>
     </div>
   );
 
@@ -382,8 +383,9 @@ export default function MutationDetailPage() {
     </div>
   );
 
-  const status = STATUS_CONFIG[mutation.status] ?? STATUS_CONFIG['ALERT_SENT'];
-  const StatusIcon = status.icon;
+  const mut = mutation!;
+  const statusInfo = STATUS_CONFIG[mut.status] ?? STATUS_CONFIG['ALERT_SENT'];
+  const StatusIcon = statusInfo.icon;
 
   return (
     <div className="flex h-screen bg-[#F8FAFC] overflow-hidden">
@@ -392,7 +394,7 @@ export default function MutationDetailPage() {
       {showESign && (
         <ESignModal
           action={showESign}
-          dlpiId={mutation.dlpiId}
+          dlpiId={mut.dlpiId}
           onSuccess={showESign === 'consent' ? handleConsent : handleExecute}
           onCancel={() => setShowESign(null)}
         />
@@ -439,27 +441,27 @@ export default function MutationDetailPage() {
               <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm space-y-4">
                 <div className="flex items-start justify-between">
                   <div>
-                    <div className="font-mono text-[#0F4C81] text-xs font-semibold">{mutation.mutationId}</div>
-                    <div className="text-xl font-bold text-gray-900 mt-1">{mutation.mutationType}</div>
-                    <div className="text-gray-400 text-sm mt-0.5">on <span className="font-mono text-[#0F4C81]">{mutation.dlpiId}</span></div>
+                    <div className="font-mono text-[#0F4C81] text-xs font-semibold">{mut.mutationId}</div>
+                    <div className="text-xl font-bold text-gray-900 mt-1">{mut.mutationType}</div>
+                    <div className="text-gray-400 text-sm mt-0.5">on <span className="font-mono text-[#0F4C81]">{mut.dlpiId}</span></div>
                   </div>
                   <span className={clsx(
                     'flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-sm font-semibold',
-                    status.bg, status.color,
+                    statusInfo.bg, statusInfo.color,
                   )}>
                     <StatusIcon className="w-4 h-4" />
-                    {status.label}
+                    {statusInfo.label}
                   </span>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3 text-xs">
                   {[
-                    ['Current Owner', mutation.currentOwnerName],
-                    ['New Owner',     mutation.newOwnerName],
-                    ['Initiated by',  `${mutation.officerName} (${mutation.officerRank})`],
-                    ['Initiated at',  new Date(mutation.initiatedAt).toLocaleString('en-IN')],
-                    ['SLA (60s)',     mutation.slaMet ? `✓ Met (${mutation.alertElapsedSeconds}s)` : `✗ Missed (${mutation.alertElapsedSeconds}s)`],
-                    ['Public Notice', mutation.requiresPublicNotice ? `${mutation.publicNoticePeriodDays}-day notice` : 'Not required'],
+                    ['Current Owner', mut.currentOwnerName],
+                    ['New Owner',     mut.newOwnerName],
+                    ['Initiated by',  `${mut.officerName} (${mut.officerRank})`],
+                    ['Initiated at',  new Date(mut.initiatedAt).toLocaleString('en-IN')],
+                    ['SLA (60s)',     mut.slaMet ? `✓ Met (${mut.alertElapsedSeconds}s)` : `✗ Missed (${mut.alertElapsedSeconds}s)`],
+                    ['Public Notice', mut.requiresPublicNotice ? `${mut.publicNoticePeriodDays}-day notice` : 'Not required'],
                   ].map(([label, value]) => (
                     <div key={label} className="bg-[#F8FAFC] rounded-xl px-3 py-2.5">
                       <div className="text-gray-500 mb-0.5">{label}</div>
@@ -470,12 +472,12 @@ export default function MutationDetailPage() {
 
                 <div className="bg-[#F8FAFC] rounded-xl p-3">
                   <div className="text-xs text-gray-500 mb-1">Reason / Basis</div>
-                  <p className="text-sm text-gray-600">{mutation.reason}</p>
+                  <p className="text-sm text-gray-600">{mut.reason}</p>
                 </div>
 
                 <div className="flex items-center gap-2 p-2.5 rounded-xl bg-[#F8FAFC] border border-gray-200 text-xs text-gray-400">
                   <FileText className="w-3.5 h-3.5 text-[#0F4C81]" />
-                  Supporting doc CID: <span className="font-mono text-gray-600">{mutation.supportingCID}</span>
+                  Supporting doc CID: <span className="font-mono text-gray-600">{mut.supportingCID}</span>
                 </div>
               </div>
 
@@ -483,7 +485,7 @@ export default function MutationDetailPage() {
               <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm space-y-4">
                 <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Mutation Timeline</div>
                 <div className="space-y-3">
-                  {mutation.timeline.map((step, i) => (
+                  {mut.timeline.map((step, i) => (
                     <div key={i} className="flex items-start gap-3">
                       <div className={clsx(
                         'w-7 h-7 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5',
@@ -508,14 +510,14 @@ export default function MutationDetailPage() {
               </div>
 
               {/* Telegram alerts */}
-              <TelegramPanel mutationAlerts={mutation.telegramAlerts} botUrl={BOT_URL} />
+              <TelegramPanel mutationAlerts={mut.telegramAlerts} botUrl={BOT_URL} />
             </div>
 
             {/* Right column (1/3) */}
             <div className="space-y-4">
 
               {/* Objection window */}
-              {daysLeft !== null && mutation.status === 'ALERT_SENT' && (
+              {daysLeft !== null && mut.status === 'ALERT_SENT' && (
                 <div className={clsx(
                   'card text-center space-y-2 border',
                   daysLeft <= 5 ? 'border-red-700 bg-red-900/10' : 'border-orange-700 bg-orange-900/10',
@@ -523,7 +525,7 @@ export default function MutationDetailPage() {
                   <Clock className={clsx('w-8 h-8 mx-auto', daysLeft <= 5 ? 'text-red-400' : 'text-saffron-400')} />
                   <div className={clsx('text-3xl font-bold', daysLeft <= 5 ? 'text-red-400' : 'text-saffron-400')}>{daysLeft}d</div>
                   <div className="text-xs text-gray-400">objection window remaining</div>
-                  <div className="text-xs text-gray-600">Deadline: {mutation.objectionDeadline ? new Date(mutation.objectionDeadline).toLocaleDateString('en-IN') : '—'}</div>
+                  <div className="text-xs text-gray-600">Deadline: {mut.objectionDeadline ? new Date(mut.objectionDeadline).toLocaleDateString('en-IN') : '—'}</div>
                 </div>
               )}
 
@@ -584,26 +586,26 @@ export default function MutationDetailPage() {
               {isFinished && (
                 <div className={clsx(
                   'card text-center space-y-2',
-                  (mutation.status === 'EXECUTED' || actionDone === 'EXECUTED') ? 'border-green-700 bg-green-900/10' :
-                  (mutation.status === 'OBJECTION_FILED' || actionDone === 'OBJECTION_FILED') ? 'border-red-700 bg-red-900/10' :
+                  (mut.status === 'EXECUTED' || actionDone === 'EXECUTED') ? 'border-green-700 bg-green-900/10' :
+                  (mut.status === 'OBJECTION_FILED' || actionDone === 'OBJECTION_FILED') ? 'border-red-700 bg-red-900/10' :
                   'border-blue-700 bg-blue-900/10',
                 )}>
                   <CheckCircle className="w-8 h-8 mx-auto text-green-400" />
-                  <div className="font-semibold text-gray-700">{(actionDone || mutation.status).replace('_', ' ')}</div>
-                  {mutation.executedTxHash && (
-                    <div className="text-xs font-mono text-gray-500 break-all">{mutation.executedTxHash}</div>
+                  <div className="font-semibold text-gray-700">{(actionDone || mut.status).replace('_', ' ')}</div>
+                  {mut.executedTxHash && (
+                    <div className="text-xs font-mono text-gray-500 break-all">{mut.executedTxHash}</div>
                   )}
                 </div>
               )}
 
               {/* Quick links */}
               <Link
-                href={`/claim/${mutation.dlpiId}`}
+                href={`/claim/${mut.dlpiId}`}
                 className="flex items-center justify-between p-3 rounded-xl bg-white border border-gray-200 hover:border-gray-600 transition-colors text-sm text-gray-400 hover:text-gray-700"
               >
                 <div className="flex items-center gap-2">
                   <ArrowLeftRight className="w-4 h-4 text-[#0F4C81]" />
-                  View Parcel {mutation.dlpiId}
+                  View Parcel {mut.dlpiId}
                 </div>
                 <ChevronRight className="w-4 h-4" />
               </Link>
@@ -612,6 +614,5 @@ export default function MutationDetailPage() {
         </div>
       </main>
     </div>
-  </div>
-    );
+  );
 }

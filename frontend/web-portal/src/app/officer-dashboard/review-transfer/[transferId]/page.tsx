@@ -90,18 +90,18 @@ export default function ReviewTransferPage() {
   let canApprove = false;
   let actionLabel = 'Approve';
   
-  if (user?.role === 'patwari' && transfer.status === 'STAMP_DUTY_PAID') {
-    canApprove = scanCID !== null; // Patwari MUST scan deed first
-    actionLabel = 'Approve (Patwari)';
-  } else if (user?.role === 'circle_inspector' && transfer.status === 'PATWARI_APPROVED') {
+  if (user?.role === 'patwari' && (transfer.status === 'STAMP_DUTY_PAID' || transfer.status === 'PENDING_PATWARI_APPROVAL' || transfer.status === 'PENDING_BUYER_CONSENT')) {
     canApprove = true;
-    actionLabel = 'Approve (CI)';
-  } else if (user?.role === 'sro' && transfer.status === 'CI_APPROVED') {
+    actionLabel = 'Approve & Forward to Kanungo (Patwari)';
+  } else if ((user?.role === 'circle_inspector' || user?.role === 'kanungo') && (transfer.status === 'PATWARI_APPROVED' || transfer.status === 'PENDING_KANUNGO_APPROVAL')) {
+    canApprove = true;
+    actionLabel = 'Verify & Forward to Tehsildar (Kanungo / CI)';
+  } else if (user?.role === 'sro' && (transfer.status === 'CI_APPROVED' || transfer.status === 'PENDING_TEHSILDAR_APPROVAL' || transfer.status === 'PENDING_KANUNGO_APPROVAL')) {
     canApprove = true;
     actionLabel = 'Execute Deed (SRO)';
-  } else if (user?.role === 'tehsildar' && transfer.status === 'CI_APPROVED') {
+  } else if (user?.role === 'tehsildar' && (transfer.status === 'CI_APPROVED' || transfer.status === 'PENDING_TEHSILDAR_APPROVAL' || transfer.status === 'PENDING_KANUNGO_APPROVAL' || transfer.status === 'PATWARI_APPROVED')) {
     canApprove = true;
-    actionLabel = 'Finalize & Mutate (Tehsildar)';
+    actionLabel = 'Finalize Mutation & Atomic Transfer (Tehsildar)';
   }
 
   return (

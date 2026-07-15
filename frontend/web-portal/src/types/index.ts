@@ -57,6 +57,8 @@ export interface Parcel {
   scheduleVArea: boolean;
   encumbranceStatus: EncumbranceStatus;
   owner: ParcelOwner;
+  owners?: ParcelOwner[];
+  ownershipType?: string;
   coparcenary?: Coparcenary;
   location: ParcelLocation;
   valuation?: { circleRateINR: number; estimatedValueINR: number };

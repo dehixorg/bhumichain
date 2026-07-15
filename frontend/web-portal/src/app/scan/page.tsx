@@ -59,9 +59,9 @@ export default function ScanPage() {
               </div>
               <ol className="space-y-3 text-xs text-gray-500">
                 {[
-                  ['Upload', 'Drop UP Khatauni (खतौनी) image or PDF — any year'],
-                  ['OCR', 'Azure Document Intelligence reads Devanagari + tabular Khatauni format'],
-                  ['NER', 'LayoutLM extracts khata no., khasra, area, bhumi prakar, khatedar'],
+                  ['Upload', 'Drop UP Khatauni Land Record image or PDF — any year'],
+                  ['OCR', 'Azure Document Intelligence reads tabular Khatauni format and translates to English'],
+                  ['NER', 'LayoutLM extracts khata no., khasra, area, bhumi prakar, khatedar in English'],
                   ['Validate', 'Cross-checks vs Bhulekh UP portal (bhulekh.up.gov.in)'],
                   ['DynamoDB', 'Scan job persisted to AWS DynamoDB (testArpit, ap-south-1)'],
                   ['Approve', 'Patwari reviews → DLPI created on Hyperledger Fabric ledger'],

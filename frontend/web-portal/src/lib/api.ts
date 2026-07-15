@@ -44,22 +44,42 @@ export async function getParcelHistory(dlpiId: string) {
 
 export async function initiateTransfer(payload: {
   dlpiId: string;
-  sellerAadhaarHash: string;
+  sellerName?: string;
+  sellerAadhaarNumber?: string;
+  sellerAadhaarHash?: string;
   buyerName: string;
-  buyerAadhaarHash: string;
+  buyerAadhaarNumber?: string;
+  buyerAadhaarHash?: string;
   declaredValueINR: number;
   isTribalBuyer?: boolean;
 }): Promise<Transfer & { tribalCheck?: TribalCheckResult }> {
-  const res = await api.post('/api/transfer/initiate', payload);
+  const res = await api.post('/api/transfer/initiate', {
+    ...payload,
+    sellerAadhaarNumber: payload.sellerAadhaarNumber || payload.sellerAadhaarHash,
+    buyerAadhaarNumber: payload.buyerAadhaarNumber || payload.buyerAadhaarHash,
+  });
   return res.data;
+}
+
+export async function getMyPendingTransfers(): Promise<any[]> {
+  try {
+    const res = await api.get('/api/transfer/my-pending');
+    return res.data;
+  } catch (e) {
+    return [];
+  }
 }
 
 export async function recordConsent(transferId: string, payload: {
   partyType: 'SELLER' | 'BUYER';
-  aadhaarHash: string;
+  aadhaarNumber?: string;
+  aadhaarHash?: string;
   eSignTxHash: string;
 }) {
-  const res = await api.post(`/api/transfer/${transferId}/consent`, payload);
+  const res = await api.post(`/api/transfer/${transferId}/consent`, {
+    ...payload,
+    aadhaarNumber: payload.aadhaarNumber || payload.aadhaarHash
+  });
   return res.data;
 }
 

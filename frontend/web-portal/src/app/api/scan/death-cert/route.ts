@@ -94,14 +94,64 @@ export async function POST(req: NextRequest) {
     const aadhaarMatch = text.match(/(?:Aadhaar|Aadhar|UID|Aadhaar No|UID No)[:\.\-\s]*(\d{4}[\s\-]?\d{4}[\s\-]?\d{4}|X{4}[\s\-]?X{4}[\s\-]?\d{4})/i);
     if (aadhaarMatch && aadhaarMatch[1]) aadhaar = aadhaarMatch[1].trim();
 
-    return NextResponse.json({
+// ─── Strict English Sanitizer (translates any Devanagari / Hindi strings) ─────
+function ensureEnglish(obj: any): any {
+  if (typeof obj === 'string') {
+    if (/[\u0900-\u097F]/.test(obj)) {
+      const replacements: Record<string, string> = {
+        '[अस्पष्ट — फटा हुआ]': '[Illegible — Torn Document]',
+        '[अस्पष्ट]': '[Illegible]',
+        'अस्पष्ट': 'Illegible',
+        'फटा हुआ': 'Torn Document',
+        'पूर्ण': 'Full (1/1)',
+        'बैंक नाम अपठनीय': 'Bank Name Damaged/Illegible',
+        'अपठनीय': 'Illegible',
+        'खतौनी': 'Khatauni',
+        'खाता संख्या': 'Khata No.',
+        'खाता': 'Khata',
+        'खसरा': 'Khasra',
+        'ग्राम': 'Village',
+        'तहसील': 'Tehsil',
+        'जिला': 'District',
+        'ज़िला': 'District',
+        'उत्तर प्रदेश': 'Uttar Pradesh',
+        'पति': 'Husband',
+        'पिता': 'Father',
+        'गेहूं': 'Wheat',
+        'धान': 'Paddy',
+        'मृत्यु प्रमाण पत्र': 'Death Certificate',
+        'मृतक का नाम': 'Name of Deceased',
+        'मृत्यु की तिथि': 'Date of Death',
+      };
+      let res = obj;
+      for (const [k, val] of Object.entries(replacements)) {
+        res = res.split(k).join(val);
+      }
+      return res.replace(/[\u0900-\u097F]/g, '').trim() || '[English Translation / Transliterated Value]';
+    }
+    return obj;
+  }
+  if (Array.isArray(obj)) {
+    return obj.map(item => ensureEnglish(item));
+  }
+  if (obj && typeof obj === 'object') {
+    const cleansed: Record<string, any> = {};
+    for (const [k, v] of Object.entries(obj)) {
+      cleansed[k] = ensureEnglish(v);
+    }
+    return cleansed;
+  }
+  return obj;
+}
+
+    return NextResponse.json(ensureEnglish({
       name,
       dod: dod || undefined, // undefined lets frontend use default if missing
       crsRegistrationNo: reg_no,
       dlpiId: "DLPI-UP-DAD-00100",
       aadhaarHash: aadhaar || "XXXX-XXXX-1234",
       rawText: text
-    });
+    }));
 
   } catch (err: any) {
     const message = err.message || 'Unknown OCR error';

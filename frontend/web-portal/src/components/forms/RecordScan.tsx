@@ -98,6 +98,73 @@ export default function RecordScan({ onDlpiCreated, mode = 'genesis', onScanComp
   const [dragOver, setDragOver] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
+// ─── Strict English Sanitizer (translates any Devanagari / Hindi strings) ─────
+function ensureEnglish(obj: any): any {
+  if (typeof obj === 'string') {
+    if (/[\u0900-\u097F]/.test(obj)) {
+      const replacements: Record<string, string> = {
+        '[अस्पष्ट — फटा हुआ]': '[Illegible — Torn Document]',
+        '[अस्पष्ट]': '[Illegible]',
+        'अस्पष्ट': 'Illegible',
+        'फटा हुआ': 'Torn Document',
+        'पूर्ण': 'Full (1/1)',
+        'बैंक नाम अपठनीय': 'Bank Name Damaged/Illegible',
+        'अपठनीय': 'Illegible',
+        'खतौनी': 'Khatauni',
+        'खाता संख्या': 'Khata No.',
+        'खाता': 'Khata',
+        'खसरा': 'Khasra',
+        'ग्राम': 'Village',
+        'तहसील': 'Tehsil',
+        'जिला': 'District',
+        'ज़िला': 'District',
+        'उत्तर प्रदेश': 'Uttar Pradesh',
+        'पति': 'Husband',
+        'पिता': 'Father',
+        'गेहूं': 'Wheat',
+        'धान': 'Paddy',
+        'रबी': 'Rabi',
+        'खरीफ': 'Kharif',
+        'भूमि': 'Land',
+        'प्रकार': 'Type',
+        'संक्रमणशील': 'Transferable',
+        'असंक्रमणशील': 'Non-transferable',
+        'सीरदार': 'Sirdar',
+        'भूमिका': 'Role',
+        'बंजर': 'Barren Land',
+        'आबादी': 'Abadi',
+        'बाग': 'Orchard',
+        'सिंचित': 'Irrigated',
+        'असिंचित': 'Unirrigated',
+        'नहर': 'Canal',
+        'नलकूप': 'Tubewell',
+        'कुआं': 'Well',
+        'तलाब': 'Pond',
+        'रास्ता': 'Path/Road',
+        'सातबारा': 'Satbara (7/12)',
+        'उतारा': 'Extract',
+      };
+      let res = obj;
+      for (const [k, val] of Object.entries(replacements)) {
+        res = res.split(k).join(val);
+      }
+      return res.replace(/[\u0900-\u097F]/g, '').trim() || '[English Translation / Transliterated Value]';
+    }
+    return obj;
+  }
+  if (Array.isArray(obj)) {
+    return obj.map(item => ensureEnglish(item));
+  }
+  if (obj && typeof obj === 'object') {
+    const cleansed: Record<string, any> = {};
+    for (const [k, v] of Object.entries(obj)) {
+      cleansed[k] = ensureEnglish(v);
+    }
+    return cleansed;
+  }
+  return obj;
+}
+
   // ── Scan ─────────────────────────────────────────────────────────────────
 
   const runScan = useCallback(async (file: File, demoVariant?: string) => {
@@ -130,7 +197,8 @@ export default function RecordScan({ onDlpiCreated, mode = 'genesis', onScanComp
         const err = await res.json().catch(() => ({}));
         throw new Error(err.detail || `Scan failed: ${res.status}`);
       }
-      const data: ScanResult = await res.json();
+      const rawData: ScanResult = await res.json();
+      const data: ScanResult = ensureEnglish(rawData);
       setSteps(data.processingSteps.length ? data.processingSteps : STEP_LABELS.map(s => ({ ...s, status: 'done' as const })));
       setResult(data);
       setDlpiId(data.suggestedDlpiId);
@@ -266,7 +334,7 @@ export default function RecordScan({ onDlpiCreated, mode = 'genesis', onScanComp
       <div>
         <h1 className="text-xl font-bold text-gray-900">RecordScan AI</h1>
         <p className="text-gray-500 text-sm mt-1">
-          Upload a UP Khatauni (खतौनी) → Azure OCR + LayoutLM NER → DLPI on Hyperledger Fabric
+          Upload a UP Khatauni Land Record → Azure OCR + LayoutLM NER → DLPI on Hyperledger Fabric
         </p>
       </div>
 
