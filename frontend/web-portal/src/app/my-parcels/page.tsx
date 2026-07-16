@@ -8,13 +8,13 @@ import {
   FileText, Shield, Search, ArrowUpRight, Download, Send,
   Landmark, Map, FileSignature, HelpCircle, FileCheck,
   TrendingUp, BellRing, Activity, ArrowLeftRight, X, UserCheck, DollarSign, Edit3,
-  Plus, RotateCcw, Trash2
+  Plus
 } from 'lucide-react';
 import clsx from 'clsx';
 import CitizenHeader from '@/components/dashboard/CitizenHeader';
 import CitizenFooter from '@/components/dashboard/CitizenFooter';
 import { getUser, apiFetch, type JWTUser, formatMaskedAadhaar, formatLastLogin } from '@/lib/auth';
-import { recordHeirConsent, initiateTransfer, recordConsent, getMyPendingTransfers, clearAllHistory, resetDemoRecords } from '@/lib/api';
+import { recordHeirConsent, initiateTransfer, recordConsent, getMyPendingTransfers } from '@/lib/api';
 import toast from 'react-hot-toast';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -88,33 +88,6 @@ export default function CitizenDashboard() {
   const [sellBuyerAadhaar, setSellBuyerAadhaar] = useState('');
   const [sellDeclaredVal, setSellDeclaredVal] = useState('4500000');
   const [sellBusy, setSellBusy] = useState(false);
-
-  const handleClearHistory = async () => {
-    if (!window.confirm('Are you sure you want to clear all history and land records across the atomic network right now?')) return;
-    try {
-      toast.loading('Wiping all records atomically...', { id: 'clear-hist' });
-      await clearAllHistory();
-      setParcels([]);
-      setPendingSuccessions([]);
-      setPendingTransfers([]);
-      toast.success('🧹 All history cleared! You are now starting with clean atomic records.', { id: 'clear-hist' });
-    } catch (e: any) {
-      toast.error('Reset failed: ' + e.message, { id: 'clear-hist' });
-    }
-  };
-
-  const handleRestoreDemo = async () => {
-    try {
-      toast.loading('Restoring default demo parcels...', { id: 'restore-demo' });
-      await resetDemoRecords();
-      const r = await apiFetch('/api/dlpi/my-parcels');
-      const d = await r.json();
-      if (Array.isArray(d)) setParcels(d);
-      toast.success('🔄 Demo records restored successfully!', { id: 'restore-demo' });
-    } catch (e: any) {
-      toast.error('Restore failed: ' + e.message, { id: 'restore-demo' });
-    }
-  };
 
   useEffect(() => {
     const u = getUser();
@@ -360,25 +333,6 @@ export default function CitizenDashboard() {
                   <p className="text-xs text-gray-500 mt-0.5">Records are atomic & verified on-chain against your exact Aadhaar</p>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={handleClearHistory}
-                    className="bg-rose-500 hover:bg-rose-600 text-white text-xs font-bold px-3 py-2 rounded-xl shadow transition flex items-center gap-1"
-                    title="Clear all records across the network"
-                  >
-                    <Trash2 className="w-4 h-4" /> Clear All History
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={handleRestoreDemo}
-                    className="bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-300 text-xs font-bold px-3 py-2 rounded-xl transition flex items-center gap-1"
-                    title="Restore default Dadri demo parcels"
-                  >
-                    <RotateCcw className="w-3.5 h-3.5" /> Restore Demo
-                  </button>
-                </div>
               </div>
 
               {loading ? (
