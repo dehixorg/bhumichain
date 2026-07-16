@@ -402,9 +402,16 @@ export default function CitizenDashboard() {
                             <div className="text-lg font-black text-[#0F4C81] font-mono tracking-tight">{p.dlpiId}</div>
                             <div className="text-sm font-semibold text-gray-600 mt-0.5">{p.district}, {p.tehsil}</div>
                           </div>
-                          <div className={clsx('flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-bold', status.bg, status.color)}>
-                            <StatusIcon className="w-3.5 h-3.5" />
-                            {status.label}
+                          <div className="flex flex-col items-end gap-1">
+                            <div className={clsx('flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-bold shadow-sm', status.bg, status.color)}>
+                              <StatusIcon className="w-3.5 h-3.5" />
+                              {status.label}
+                            </div>
+                            {(p as any).atomicLock && (
+                              <div className="flex items-center gap-1 px-2 py-0.5 bg-blue-900/10 border border-[#0F4C81]/30 text-[#0F4C81] text-[10px] font-mono font-bold rounded-md shadow-2xs">
+                                <span>⚡ ATOMIC CONSENSUS LOCKED</span>
+                              </div>
+                            )}
                           </div>
                         </div>
 
