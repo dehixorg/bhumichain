@@ -216,13 +216,46 @@ const DEMO_PERSONAS: Record<string, any> = {
   },
 };
 
+const DEMO_MUTATIONS = [
+  {
+    mutationId: 'MUT-2026-001',
+    dlpiId: 'DLPI-UP-DAD-00100',
+    mutationType: 'Virasat (Inheritance)',
+    officerName: 'Vijay Singh - Patwari',
+    currentOwnerName: 'Deceased Ramesh Kumar',
+    newOwnerName: 'Priya Kumar (Daughter - 1/1)',
+    status: 'ALERT_SENT',
+    initiatedAt: new Date(Date.now() - 2 * 86400000).toISOString(),
+    objectionDeadline: new Date(Date.now() + 28 * 86400000).toISOString(),
+    slaMet: true,
+    requiresPublicNotice: true,
+    supportingDoc: 'Death Certificate (CRS-2026-889)',
+    notes: 'Virasat claim verified under UP Revenue Code Sec 33. 30-day proclamation active.'
+  },
+  {
+    mutationId: 'MUT-2026-002',
+    dlpiId: 'DLPI-UP-DAD-00002',
+    mutationType: 'Bikri (Sale)',
+    officerName: 'Rajesh Verma - Circle Inspector',
+    currentOwnerName: 'Arun Kumar',
+    newOwnerName: 'Suresh Sharma',
+    status: 'CONSENT_GIVEN',
+    initiatedAt: new Date(Date.now() - 10 * 86400000).toISOString(),
+    objectionDeadline: new Date(Date.now() + 20 * 86400000).toISOString(),
+    slaMet: true,
+    requiresPublicNotice: true,
+    supportingDoc: 'Registered Sale Deed (SRO Dadri #4412)',
+    notes: 'Both seller and buyer eSigned consent via Aadhaar OTP. Pending Tehsildar final execution.'
+  }
+];
+
 const state = {
   myParcels: [] as any[],
   pendingReview: [] as any[],
   inheritorNominations: [] as any[],
   pendingSuccessions: [] as any[],
   pendingTransfers: [] as any[],
-  mutations: [] as any[],
+  mutations: [...DEMO_MUTATIONS] as any[],
 };
 
 export async function handleMockApi(path: string, options: RequestInit): Promise<Response> {
@@ -310,7 +343,8 @@ export async function handleMockApi(path: string, options: RequestInit): Promise
   if (path === '/api/dlpi/reset-demo' && method === 'POST') {
     state.myParcels = [...DEMO_MY_PARCELS];
     state.pendingReview = [...DEMO_PENDING_REVIEW];
-    return jsonResponse({ success: true, message: 'Demo parcels restored.' });
+    state.mutations = [...DEMO_MUTATIONS];
+    return jsonResponse({ success: true, message: 'Demo parcels and mutations restored.' });
   }
 
   if ((path === '/api/dlpi/seed' || path === '/api/dlpi') && method === 'POST') {
@@ -408,12 +442,70 @@ export async function handleMockApi(path: string, options: RequestInit): Promise
     return jsonResponse({ dlpiId, claimStatus: 'VERIFIED' });
   }
 
-  if (path === '/api/mutation') {
+  if (path === '/api/mutation/initiate' && method === 'POST') {
+    const { dlpiId, mutationType, officerName, newOwnerName, reason, supportingCID } = body;
+    const newMut = {
+      mutationId: 'MUT-2026-' + Math.floor(100 + Math.random() * 900),
+      dlpiId: dlpiId || 'DLPI-UP-DAD-00100',
+      mutationType: mutationType || 'Administrative Correction',
+      officerName: officerName || 'Vijay Singh - Patwari',
+      currentOwnerName: 'Deceased Ramesh Kumar',
+      newOwnerName: newOwnerName || 'New Owner',
+      status: 'ALERT_SENT',
+      initiatedAt: new Date().toISOString(),
+      objectionDeadline: new Date(Date.now() + 30 * 86400000).toISOString(),
+      slaMet: true,
+      requiresPublicNotice: true,
+      supportingDoc: supportingCID || 'Govt Order / Application',
+      notes: reason || 'Mutation initiated under UP Revenue Code.'
+    };
+    state.mutations.unshift(newMut);
+    return jsonResponse(newMut, 201);
+  }
+
+  if (path === '/api/mutation' && method === 'GET') {
     return jsonResponse(state.mutations);
   }
 
-  if (path.match(/^\/api\/mutation\/[^\/]+$/)) {
-    return jsonResponse(state.mutations[0]);
+  if (path.match(/^\/api\/mutation\/[^\/]+\/consent$/) && method === 'POST') {
+    const mutId = path.split('/')[3];
+    const m = state.mutations.find(mut => mut.mutationId === mutId);
+    if (m) m.status = 'CONSENT_GIVEN';
+    return jsonResponse({ success: true, mutation: m || state.mutations[0] });
+  }
+
+  if (path.match(/^\/api\/mutation\/[^\/]+\/objection$/) && method === 'POST') {
+    const mutId = path.split('/')[3];
+    const m = state.mutations.find(mut => mut.mutationId === mutId);
+    if (m) m.status = 'OBJECTION_FILED';
+    return jsonResponse({ success: true, mutation: m || state.mutations[0] });
+  }
+
+  if (path.match(/^\/api\/mutation\/[^\/]+\/execute$/) && method === 'POST') {
+    const mutId = path.split('/')[3];
+    const m = state.mutations.find(mut => mut.mutationId === mutId) || state.mutations[0];
+    if (m) {
+      m.status = 'EXECUTED';
+      const parcel = state.myParcels.find(p => p.dlpiId === m.dlpiId);
+      if (parcel) {
+        parcel.owners = [{
+          name: m.newOwnerName.split('(')[0].trim(),
+          aadhaarNumber: '999900010010',
+          share: '1/1',
+          shareDecimal: 1.0,
+          ownerSince: new Date().toISOString(),
+          isVerified: true
+        }];
+        parcel.claimStatus = 'OWNER_VERIFIED';
+      }
+    }
+    return jsonResponse({ success: true, mutation: m });
+  }
+
+  if (path.match(/^\/api\/mutation\/[^\/]+$/) && method === 'GET') {
+    const mutId = path.split('/')[3];
+    const found = state.mutations.find(mut => mut.mutationId === mutId) || state.mutations[0];
+    return jsonResponse(found);
   }
 
   // ── Succession routes ───────────────────────────────────────────────────────
