@@ -116,10 +116,6 @@ router.get(
   requireRole(...CAN_APPROVE_MUTATION, ROLES.PATWARI),
   async (req, res) => {
     try {
-      const fs = require('fs');
-      if (fs.existsSync('/tmp/bhumichain_history_cleared.json')) {
-        return res.json([]);
-      }
       let status = '';
       if (req.user.role === ROLES.CIRCLE_INSPECTOR) {
         status = 'SCAN_PENDING_SRO';
