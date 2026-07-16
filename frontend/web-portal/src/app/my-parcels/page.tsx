@@ -14,7 +14,7 @@ import clsx from 'clsx';
 import CitizenHeader from '@/components/dashboard/CitizenHeader';
 import CitizenFooter from '@/components/dashboard/CitizenFooter';
 import { getUser, apiFetch, type JWTUser } from '@/lib/auth';
-import { recordHeirConsent, initiateTransfer, recordConsent, getMyPendingTransfers, clearAllHistory, resetDemoRecords, seedAtomicParcel } from '@/lib/api';
+import { recordHeirConsent, initiateTransfer, recordConsent, getMyPendingTransfers, clearAllHistory, resetDemoRecords } from '@/lib/api';
 import toast from 'react-hot-toast';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -89,15 +89,6 @@ export default function CitizenDashboard() {
   const [sellDeclaredVal, setSellDeclaredVal] = useState('4500000');
   const [sellBusy, setSellBusy] = useState(false);
 
-  // Seed Atomic Parcel & Clear History State
-  const [showSeedModal, setShowSeedModal] = useState(false);
-  const [seedDlpiId, setSeedDlpiId] = useState('DLPI-UP-DAD-88102');
-  const [seedKhata, setSeedKhata] = useState('501');
-  const [seedKhasra, setSeedKhasra] = useState('1440/501');
-  const [seedArea, setSeedArea] = useState('1.5');
-  const [seedLandType, setSeedLandType] = useState('Bhumidhari');
-  const [seedBusy, setSeedBusy] = useState(false);
-
   const handleClearHistory = async () => {
     if (!window.confirm('Are you sure you want to clear all history and land records across the atomic network right now?')) return;
     try {
@@ -122,36 +113,6 @@ export default function CitizenDashboard() {
       toast.success('🔄 Demo records restored successfully!', { id: 'restore-demo' });
     } catch (e: any) {
       toast.error('Restore failed: ' + e.message, { id: 'restore-demo' });
-    }
-  };
-
-  const handleSeedParcel = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!user) return;
-    setSeedBusy(true);
-    try {
-      toast.loading('Seeding atomic land record on blockchain...', { id: 'seed-parcel' });
-      await seedAtomicParcel({
-        dlpiId: seedDlpiId.trim(),
-        khataNo: seedKhata.trim(),
-        khasraNo: seedKhasra.trim(),
-        gram: 'Dadri Central',
-        tehsil: 'Dadri',
-        district: 'Gautam Buddha Nagar',
-        areaHectares: Number(seedArea) || 1.0,
-        landType: seedLandType,
-        ownerName: user.name || 'Atomic Citizen',
-        ownerAadhaar: ((user as any).aadhaarNumber || user.aadhaarHash || '').replace(/\D/g, ''),
-      });
-      toast.success(`🎉 Atomic Record ${seedDlpiId} Seeded & Verified under your Aadhaar!`, { id: 'seed-parcel' });
-      setShowSeedModal(false);
-      const r = await apiFetch('/api/dlpi/my-parcels');
-      const d = await r.json();
-      if (Array.isArray(d)) setParcels(d);
-    } catch (e: any) {
-      toast.error('Failed to seed parcel: ' + e.message, { id: 'seed-parcel' });
-    } finally {
-      setSeedBusy(false);
     }
   };
 
@@ -402,14 +363,6 @@ export default function CitizenDashboard() {
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
-                    onClick={() => setShowSeedModal(true)}
-                    className="bg-[#0F4C81] hover:bg-[#0c3d67] text-white text-xs font-bold px-3.5 py-2 rounded-xl shadow transition flex items-center gap-1.5"
-                  >
-                    <Plus className="w-4 h-4" /> Seed / Create Atomic Parcel
-                  </button>
-
-                  <button
-                    type="button"
                     onClick={handleClearHistory}
                     className="bg-rose-500 hover:bg-rose-600 text-white text-xs font-bold px-3 py-2 rounded-xl shadow transition flex items-center gap-1"
                     title="Clear all records across the network"
@@ -435,16 +388,13 @@ export default function CitizenDashboard() {
               ) : parcels.length === 0 ? (
                 <div className="bg-white border border-gray-200 rounded-2xl p-10 text-center shadow-sm">
                   <Database className="w-12 h-12 text-[#0F4C81] mx-auto mb-3 opacity-80" />
-                  <p className="text-gray-900 font-bold text-lg">Clean Atomic Slate — No Records Found</p>
+                  <p className="text-gray-900 font-bold text-lg">Clean Atomic Slate — No Verified Records Found</p>
                   <p className="text-gray-500 text-sm mt-1 max-w-md mx-auto">
-                    All previous land history has been cleared. You are currently logged in with clean atomic records. Click below to create your initial verified land parcel!
+                    Under statutory registry rules, citizens cannot self-create land titles. New records or digitized Khataunis only appear here after <span className="font-bold text-[#0F4C81]">Tehsildar (`Revenue Judge`) verification and approval</span>.
                   </p>
-                  <button
-                    onClick={() => setShowSeedModal(true)}
-                    className="mt-5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-6 rounded-xl shadow-md transition inline-flex items-center gap-2 text-sm"
-                  >
-                    <Plus className="w-4 h-4" /> Create First Atomic Land Record
-                  </button>
+                  <div className="mt-5 inline-flex items-center gap-2 px-4 py-2 bg-blue-50 border border-blue-200 text-[#0F4C81] text-xs font-bold rounded-xl">
+                    <Shield className="w-4 h-4 text-blue-600" /> Statutory Zero-Trust Title Verification Active
+                  </div>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -773,119 +723,6 @@ export default function CitizenDashboard() {
               </form>
             </div>
           </div>
-        )}
-
-        {showSeedModal && (
-          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-            <div className="bg-white rounded-3xl border border-gray-200 p-6 sm:p-8 max-w-lg w-full shadow-2xl relative animate-in fade-in zoom-in-95 duration-200">
-              <button
-                type="button"
-                onClick={() => setShowSeedModal(false)}
-                className="absolute top-6 right-6 text-gray-400 hover:text-gray-600 p-1 rounded-full bg-gray-100 transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
-
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-12 h-12 rounded-2xl bg-[#0F4C81]/10 flex items-center justify-center text-[#0F4C81] font-black text-xl">
-                  +
-                </div>
-                <div>
-                  <h3 className="text-lg font-black text-gray-900 leading-tight">Create & Seed Atomic Land Record</h3>
-                  <p className="text-xs text-gray-500">Record will be verified directly under Aadhaar {((user as any)?.aadhaarNumber || user?.aadhaarHash || '').replace(/\D/g, '') || 'XXXX'}</p>
-                </div>
-              </div>
-
-              <form onSubmit={handleSeedParcel} className="space-y-4">
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
-                    DLPI ID *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={seedDlpiId}
-                    onChange={(e) => setSeedDlpiId(e.target.value)}
-                    className="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-2.5 text-sm font-mono font-bold text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0F4C81]"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
-                      Khata No *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={seedKhata}
-                      onChange={(e) => setSeedKhata(e.target.value)}
-                      className="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-2.5 text-sm font-bold text-gray-900"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
-                      Khasra / Plot *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={seedKhasra}
-                      onChange={(e) => setSeedKhasra(e.target.value)}
-                      className="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-2.5 text-sm font-bold text-gray-900"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
-                      Area (Hectares) *
-                    </label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      required
-                      value={seedArea}
-                      onChange={(e) => setSeedArea(e.target.value)}
-                      className="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-2.5 text-sm font-bold text-gray-900"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
-                      Tenure / Type *
-                    </label>
-                    <select
-                      value={seedLandType}
-                      onChange={(e) => setSeedLandType(e.target.value)}
-                      className="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-2.5 text-sm font-bold text-gray-900"
-                    >
-                      <option value="Bhumidhari">Bhumidhari (Full Rights)</option>
-                      <option value="Residential">Residential Abadi</option>
-                      <option value="Sirdar">Sirdar / Limited</option>
-                      <option value="Commercial">Commercial Plot</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="pt-3 flex gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setShowSeedModal(false)}
-                    className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold text-sm py-3 rounded-xl transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={seedBusy || !seedDlpiId}
-                    className="flex-1 bg-[#0F4C81] hover:bg-[#0c3d67] disabled:opacity-50 text-white font-bold text-sm py-3 rounded-xl transition-colors flex items-center justify-center gap-2 shadow-md"
-                  >
-                    <Database className="w-4 h-4" />
-                    {seedBusy ? 'Seeding on Chain...' : 'Create & Verify Record'}
-                  </button>
-                </div>
-              </form>
             </div>
           </div>
         )}
