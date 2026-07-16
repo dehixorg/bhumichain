@@ -143,9 +143,17 @@ router.get('/my-parcels', authenticate, requireRole(ROLES.CITIZEN), async (req, 
       finalParcels = finalParcels.filter(p => !DEMO_IDS.includes(p.dlpiId) || p.scanId);
     }
     
-    // Adapt legacy structure: ensure owner field is present
+    // Adapt legacy structure and override ownership with any atomic mutation claims/transfers
     let atomicClaims = {};
     try { atomicClaims = JSON.parse(fs.readFileSync('/tmp/bhumichain_atomic_claims.json', 'utf8')); } catch(e) {}
+
+    let seededParcels = [];
+    try { seededParcels = JSON.parse(fs.readFileSync('/tmp/bhumichain_seeded_parcels.json', 'utf8')); } catch(e) {}
+    if (Array.isArray(seededParcels)) {
+      seededParcels.forEach(sp => {
+        if (!mergedMap.has(sp.dlpiId)) finalParcels.push(sp);
+      });
+    }
 
     const adapted = finalParcels.map(p => {
       if (p.owners && p.owners.length > 0 && !p.owner) {
@@ -158,11 +166,31 @@ router.get('/my-parcels', authenticate, requireRole(ROLES.CITIZEN), async (req, 
         p.owners = p.initialOwners;
         p.owner = { name: p.initialOwners[0].name, aadhaarHash: p.initialOwners[0].aadhaarHash };
       }
+      // Override with latest mutation / atomic claim transfer
       if (atomicClaims[p.dlpiId]) {
-        p.claimStatus = 'OWNER_VERIFIED';
-        p.atomicLock = atomicClaims[p.dlpiId];
+        const claim = atomicClaims[p.dlpiId];
+        p.claimStatus = claim.status === 'MUTATED_AND_TRANSFERRED' ? 'VERIFIED' : 'OWNER_VERIFIED';
+        p.atomicLock = claim;
+        p.ownerName = claim.claimedBy || p.ownerName;
+        p.owner = { name: claim.claimedBy || p.owner?.name, aadhaarHash: claim.aadhaarHash || p.owner?.aadhaarHash };
+        p.owners = [{ name: claim.claimedBy || p.owner?.name, aadhaarHash: claim.aadhaarHash || p.owner?.aadhaarHash }];
       }
       return p;
+    }).filter(p => {
+      // Strictly verify current ownership against logged in citizen
+      const oHash = p.owner?.aadhaarHash || '';
+      const oName = (p.owner?.name || p.ownerName || '').toLowerCase();
+      const ownersList = p.owners || [];
+
+      if (oHash && (oHash === userHash || oHash === userRaw)) return true;
+      if (userName && oName && (oName.includes(userName) || userName.includes(oName))) return true;
+      if (ownersList.some(o => (o.aadhaarHash && (o.aadhaarHash === userHash || o.aadhaarHash === userRaw)) || ((o.name || '').toLowerCase().includes(userName)))) return true;
+
+      // Demo citizen fallbacks for initial seeded data
+      if (userRaw === '999900010010' && oName.includes('priya')) return true;
+      if (userRaw === '999900010015' && oName.includes('sunita')) return true;
+      if (userRaw === '999900010012' && oName.includes('suresh')) return true;
+      return false;
     });
 
     res.json(adapted);

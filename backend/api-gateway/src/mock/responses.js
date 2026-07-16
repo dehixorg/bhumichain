@@ -724,10 +724,25 @@ module.exports = {
         let isCleared = false;
         try { if (fs.existsSync('/tmp/bhumichain_history_cleared.json')) isCleared = true; } catch(e) {}
         let seededParcels = [];
-        try { seededParcels = JSON.parse(fs.readFileSync('/tmp/bhumichain_seeded_parcels.json')); } catch(e) {}
+        try { seededParcels = JSON.parse(fs.readFileSync('/tmp/bhumichain_seeded_parcels.json', 'utf8')); } catch(e) {}
+        
+        let atomicClaims = {};
+        try { atomicClaims = JSON.parse(fs.readFileSync('/tmp/bhumichain_atomic_claims.json', 'utf8')); } catch(e) {}
 
-        const demoParcels = (ownerHash === PRIYA_AADHAAR && !isCleared) ? DEMO_MY_PARCELS.filter(p => !myScans.find(s => s.dlpiId === p.dlpiId)) : [];
-        return demoParcels.concat(myScans).concat(seededParcels);
+        const mySeeded = Array.isArray(seededParcels) ? seededParcels.filter(p => {
+          if (atomicClaims[p.dlpiId]) {
+            const claim = atomicClaims[p.dlpiId];
+            return (claim.aadhaarHash && (claim.aadhaarHash === ownerHash || claim.aadhaarHash === userRaw)) ||
+                   ((claim.claimedBy || '').toLowerCase().includes(userName) && userName.length > 1);
+          }
+          const ownersList = p.owners || [];
+          return ownersList.some(o => (o.aadhaarHash && (o.aadhaarHash === ownerHash || o.aadhaarHash === userRaw)) || ((o.name || '').toLowerCase().includes(userName) && userName.length > 1)) ||
+                 (userRaw === '999900010010' && (p.ownerName || '').toLowerCase().includes('priya')) ||
+                 (userRaw === '999900010015' && (p.ownerName || '').toLowerCase().includes('sunita'));
+        }) : [];
+
+        const demoParcels = (ownerHash === PRIYA_AADHAAR && !isCleared) ? DEMO_MY_PARCELS.filter(p => !myScans.find(s => s.dlpiId === p.dlpiId) && !atomicClaims[p.dlpiId]) : [];
+        return demoParcels.concat(myScans).concat(mySeeded);
       }
 
       case 'dlpi::GetPendingReview': {
