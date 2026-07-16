@@ -74,6 +74,17 @@ function daysPending(dateStr: string): number {
   return Math.floor((Date.now() - new Date(dateStr).getTime()) / 86400000);
 }
 
+function formatSubmittedDate(dateStr?: string): string {
+  if (!dateStr) return '--';
+  try {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return '--';
+    return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+  } catch {
+    return '--';
+  }
+}
+
 function formatArea(ha?: number): string {
   if (ha === undefined || ha === null || isNaN(ha)) return 'N/A';
   if (ha < 0.1) return `${(ha * 10000).toFixed(0)} sq.m`;
@@ -161,10 +172,10 @@ function QueueRow({ item, userRole, fetchQueue }: { item: QueueItem; userRole: s
         </span>
       </td>
 
-      {/* Age */}
-      <td className="px-4 py-3 text-sm">
-        <span className={clsx('font-medium', days >= 7 ? 'text-red-600' : 'text-gray-700')}>
-          {days}d
+      {/* Date */}
+      <td className="px-4 py-3 text-sm" suppressHydrationWarning>
+        <span className="font-medium text-gray-700">
+          {formatSubmittedDate(item.submittedAt)}
         </span>
         {item.priority === 'URGENT' && (
           <span className="ml-2 px-1.5 py-0.5 bg-red-50 border border-red-200 text-red-600 text-xs rounded-full font-semibold">
@@ -421,7 +432,7 @@ export default function OfficerDashboardPage() {
                     <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">DLPI / Owner</th>
                     <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Khasra / Land</th>
                     <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Age</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Date</th>
                     <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Flags</th>
                     <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Action</th>
                   </tr>
