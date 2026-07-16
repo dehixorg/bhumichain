@@ -53,10 +53,17 @@ export async function initiateTransfer(payload: {
   declaredValueINR: number;
   isTribalBuyer?: boolean;
 }): Promise<Transfer & { tribalCheck?: TribalCheckResult }> {
+  const sellerNum = (payload.sellerAadhaarNumber || payload.sellerAadhaarHash || '').replace(/\D/g, '') || payload.sellerAadhaarHash || '';
+  const buyerNum = (payload.buyerAadhaarNumber || payload.buyerAadhaarHash || '').replace(/\D/g, '') || payload.buyerAadhaarHash || '';
   const res = await api.post('/api/transfer/initiate', {
     ...payload,
-    sellerAadhaarNumber: payload.sellerAadhaarNumber || payload.sellerAadhaarHash,
-    buyerAadhaarNumber: payload.buyerAadhaarNumber || payload.buyerAadhaarHash,
+    // Send under all field names so backend accepts regardless of field name used
+    sellerAadhaarNumber: sellerNum,
+    sellerAadhaar: sellerNum,
+    sellerAadhaarHash: sellerNum,
+    buyerAadhaarNumber: buyerNum,
+    buyerAadhaar: buyerNum,
+    buyerAadhaarHash: buyerNum,
   });
   return res.data;
 }
@@ -76,9 +83,12 @@ export async function recordConsent(transferId: string, payload: {
   aadhaarHash?: string;
   eSignTxHash: string;
 }) {
+  const aadhaarNum = ((payload.aadhaarNumber || payload.aadhaarHash || '').replace(/\D/g, '') || payload.aadhaarHash || '');
   const res = await api.post(`/api/transfer/${transferId}/consent`, {
     ...payload,
-    aadhaarNumber: payload.aadhaarNumber || payload.aadhaarHash
+    aadhaarNumber: aadhaarNum,
+    aadhaar: aadhaarNum,
+    aadhaarHash: aadhaarNum,
   });
   return res.data;
 }

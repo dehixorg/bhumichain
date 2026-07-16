@@ -44,18 +44,33 @@ router.post(
   body('dlpiId').matches(/^DLPI-[A-Z0-9-]+$/),
   body('sellerAadhaarHash').optional().trim(),
   body('sellerAadhaar').optional().trim(),
+  body('sellerAadhaarNumber').optional().trim(),
   body('buyerName').notEmpty().trim(),
   body('buyerAadhaarHash').optional().trim(),
   body('buyerAadhaar').optional().trim(),
+  body('buyerAadhaarNumber').optional().trim(),
   body('declaredValueINR').isInt({ min: 1 }),
   validate,
   async (req, res) => {
     try {
       const { dlpiId, buyerName, declaredValueINR } = req.body;
-      const sellerAadhaarHash = req.body.sellerAadhaarHash || req.body.sellerAadhaar || req.body.sellerAadhaarNo || '';
-      const buyerAadhaarHash = req.body.buyerAadhaarHash || req.body.buyerAadhaar || req.body.buyerAadhaarNo || '';
+      // Accept raw Aadhaar numbers from frontend — extract digits only
+      const sellerAadhaarHash = (
+        req.body.sellerAadhaarNumber || req.body.sellerAadhaarHash ||
+        req.body.sellerAadhaar || req.body.sellerAadhaarNo ||
+        req.user.aadhaarNumber || req.user.aadhaarHash || ''
+      ).toString().replace(/\D/g, '') || (
+        req.body.sellerAadhaarHash || req.body.sellerAadhaar || req.body.sellerAadhaarNo ||
+        req.user.aadhaarHash || ''
+      );
+      const buyerAadhaarHash = (
+        req.body.buyerAadhaarNumber || req.body.buyerAadhaarHash ||
+        req.body.buyerAadhaar || req.body.buyerAadhaarNo || ''
+      ).toString().replace(/\D/g, '') || (
+        req.body.buyerAadhaarHash || req.body.buyerAadhaar || req.body.buyerAadhaarNo || ''
+      );
       if (!sellerAadhaarHash || !buyerAadhaarHash) {
-        return res.status(400).json({ error: 'VALIDATION_ERROR', message: 'sellerAadhaarHash (or sellerAadhaar) and buyerAadhaarHash (or buyerAadhaar) are required.' });
+        return res.status(400).json({ error: 'VALIDATION_ERROR', message: 'Seller and Buyer Aadhaar numbers are required.' });
       }
       const isTribalBuyer = req.body.isTribalBuyer || false;
       const tribalCertHash = req.body.tribalCertHash || '';
@@ -220,8 +235,11 @@ router.get(
   requireRole(ROLES.CITIZEN),
   async (req, res) => {
     try {
-      const userHash = req.user.aadhaarHash || '';
-      const userRaw = req.user.aadhaar || req.user.aadhaarRaw || req.user.aadhaarNo || '';
+      // Support raw Aadhaar numbers — extract digits from all possible user token fields
+      const userRawNumber = (
+        req.user.aadhaarNumber || req.user.aadhaar || req.user.aadhaarRaw || req.user.aadhaarNo || req.user.aadhaarHash || ''
+      ).toString().replace(/\D/g, '');
+      const userHash = req.user.aadhaarHash || userRawNumber;
       const userName = (req.user.name || '').toLowerCase();
 
       let onChainTransfers = [];
@@ -243,12 +261,16 @@ router.get(
       mockTransfers.forEach(t => mergedMap.set(t.transferId, t));
 
       const myTransfers = Array.from(mergedMap.values()).filter(t => {
-        const sHash = t.sellerAadhaarHash || '';
-        const bHash = t.buyerAadhaarHash || '';
+        // Normalize stored Aadhaar to digits for comparison
+        const sDigits = (t.sellerAadhaarHash || '').toString().replace(/\D/g, '');
+        const bDigits = (t.buyerAadhaarHash || '').toString().replace(/\D/g, '');
         const bName = (t.buyerName || '').toLowerCase();
-        if (sHash && (sHash === userHash || sHash === userRaw)) return true;
-        if (bHash && (bHash === userHash || bHash === userRaw)) return true;
+        const sName = (t.sellerName || '').toLowerCase();
+        if (userRawNumber && sDigits && sDigits === userRawNumber) return true;
+        if (userRawNumber && bDigits && bDigits === userRawNumber) return true;
+        if (userHash && (t.sellerAadhaarHash === userHash || t.buyerAadhaarHash === userHash)) return true;
         if (userName && bName && (bName.includes(userName) || userName.includes(bName))) return true;
+        if (userName && sName && (sName.includes(userName) || userName.includes(sName))) return true;
         return false;
       });
 

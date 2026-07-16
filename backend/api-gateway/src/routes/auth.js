@@ -64,6 +64,7 @@ function buildOfficerJWT(identity, aadhaarHash, digits) {
     role:             identity.role,
     name:             identity.name,
     aadhaarHash,
+    aadhaarNumber:    digits || undefined,
     aadhaar:          digits || undefined,
     aadhaarRaw:       digits || undefined,
     aadhaarNo:        digits || undefined,
@@ -149,7 +150,7 @@ router.post('/verify-otp', async (req, res) => {
     });
   }
 
-  const citizenPayload = { role: 'citizen', name: identity.name, aadhaarHash, aadhaar: digits, aadhaarRaw: digits, aadhaarNo: digits };
+  const citizenPayload = { role: 'citizen', name: identity.name, aadhaarHash, aadhaarNumber: digits, aadhaar: digits, aadhaarRaw: digits, aadhaarNo: digits };
   const token = mintToken(citizenPayload);
   return res.json({
     token,
