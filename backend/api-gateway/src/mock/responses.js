@@ -679,8 +679,10 @@ module.exports = {
       case 'dlpi::QueryDLPIsByOwner':
       case 'dlpi::GetMyParcels': {
         const fs = require('fs');
-        const ownerHash = args[0]; // now raw Aadhaar digits
-        const PRIYA_AADHAAR = '999900010010'; // Priya Kumar raw aadhaar
+        const ownerHash = args[0] || '';
+        const userRaw   = args[1] || '';
+        const userName  = (args[2] || '').toLowerCase();
+        const PRIYA_AADHAAR = '999900010010';
         
         let dynamicScans = [...MOCK_SCANS];
         // Read executed mock cases to persist property mutations across restarts
@@ -702,16 +704,19 @@ module.exports = {
           });
         } catch(e) {}
 
-        // Filter dynamicScans to only include parcels where this citizen is an owner
+        // Filter dynamicScans to include parcels where this citizen is an owner
         const myScans = dynamicScans.filter(s => {
-          if (!s.initialOwners || !Array.isArray(s.initialOwners)) return false;
-          return s.initialOwners.some(o => {
-            if (o.aadhaarHash === ownerHash) return true;
-            // Robust fallback for demo: if they typed the wrong aadhaar during succession initiation
-            const nameLower = (o.name || '').toLowerCase();
-            if (ownerHash === PRIYA_AADHAAR && nameLower.includes('priya')) return true;
-            if (ownerHash === '999900010015' && nameLower.includes('sunita')) return true;
-            if (ownerHash === '999900010012' && nameLower.includes('suresh')) return true;
+          const ownersList = s.initialOwners || s.owners || [];
+          if (!Array.isArray(ownersList) || ownersList.length === 0) return false;
+          return ownersList.some(o => {
+            const oHash = o.aadhaarHash || '';
+            const oName = (o.name || '').toLowerCase();
+            if (oHash && (oHash === ownerHash || oHash === userRaw)) return true;
+            if (userName && oName && (oName.includes(userName) || userName.includes(oName))) return true;
+            if (userRaw === '999900010010' && oName.includes('priya')) return true;
+            if (userRaw === '999900010015' && oName.includes('sunita')) return true;
+            if (userRaw === '999900010012' && oName.includes('suresh')) return true;
+            if (ownerHash === '999900010012' && oName.includes('suresh')) return true;
             return false;
           });
         });
@@ -721,7 +726,6 @@ module.exports = {
         let seededParcels = [];
         try { seededParcels = JSON.parse(fs.readFileSync('/tmp/bhumichain_seeded_parcels.json')); } catch(e) {}
 
-        // Also include DEMO_MY_PARCELS for Priya Kumar (demo persona) unless cleared, plus seeded parcels
         const demoParcels = (ownerHash === PRIYA_AADHAAR && !isCleared) ? DEMO_MY_PARCELS.filter(p => !myScans.find(s => s.dlpiId === p.dlpiId)) : [];
         return demoParcels.concat(myScans).concat(seededParcels);
       }
