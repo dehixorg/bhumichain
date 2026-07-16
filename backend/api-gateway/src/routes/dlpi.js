@@ -707,6 +707,8 @@ router.post('/clear-history', authenticate, async (req, res) => {
     try { fs.unlinkSync('/tmp/bhumichain_mock_cases.json'); } catch(e) {}
     try { fs.unlinkSync('/tmp/bhumichain_dynamic_mutations.json'); } catch(e) {}
     try { fs.unlinkSync('/tmp/bhumichain_seeded_parcels.json'); } catch(e) {}
+    try { fs.unlinkSync('/tmp/bhumichain_dynamic_transfers.json'); } catch(e) {}
+    try { fs.unlinkSync('/tmp/bhumichain_dynamic_successions.json'); } catch(e) {}
     res.json({ success: true, message: 'All land records and history atomic reset completed.' });
   } catch (e) {
     res.status(500).json({ error: 'RESET_ERROR', message: e.message });
@@ -721,6 +723,8 @@ router.post('/reset-demo', authenticate, async (req, res) => {
     try { fs.unlinkSync('/tmp/bhumichain_mock_cases.json'); } catch(e) {}
     try { fs.unlinkSync('/tmp/bhumichain_dynamic_mutations.json'); } catch(e) {}
     try { fs.unlinkSync('/tmp/bhumichain_seeded_parcels.json'); } catch(e) {}
+    try { fs.unlinkSync('/tmp/bhumichain_dynamic_transfers.json'); } catch(e) {}
+    try { fs.unlinkSync('/tmp/bhumichain_dynamic_successions.json'); } catch(e) {}
     res.json({ success: true, message: 'Demo parcels and mutations restored.' });
   } catch (e) {
     res.status(500).json({ error: 'RESET_ERROR', message: e.message });

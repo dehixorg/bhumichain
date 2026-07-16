@@ -235,6 +235,8 @@ router.get(
   requireRole(ROLES.PATWARI, ROLES.CIRCLE_INSPECTOR, ROLES.SRO, ROLES.TEHSILDAR),
   async (req, res) => {
     try {
+      const fs = require('fs');
+      if (fs.existsSync('/tmp/bhumichain_history_cleared.json')) return res.json([]);
       let transfers = await evaluate('property-transfer', 'QueryPendingTransfers', []);
       if (typeof transfers === 'string') {
         try { transfers = JSON.parse(transfers); } catch (e) {}

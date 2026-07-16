@@ -777,8 +777,12 @@ module.exports = {
         return { transferId: args[0], newTitleCID: args[1], status: 'EXECUTED', txHash: `0xfabric-tx-transfer-${Date.now()}`, executedAt: new Date().toISOString() };
       case 'property-transfer::RejectTransfer':
         return { transferId: args[0], reason: args[1], status: 'REJECTED', rejectedAt: new Date().toISOString() };
-      case 'property-transfer::GetAllTransfers':
+      case 'property-transfer::QueryPendingTransfers':
+      case 'property-transfer::GetAllTransfers': {
+        const fs = require('fs');
+        if (fs.existsSync('/tmp/bhumichain_history_cleared.json')) return [];
         return [DEMO_TRANSFER];
+      }
       case 'mutation-manager::InitiateMutation':
         return { mutationId: DEMO_MUTATION.mutationId, status: 'ALERT_SENT', alertSentAt: new Date().toISOString(), slaMet: true };
       case 'mutation-manager::GetMutation':
@@ -864,6 +868,7 @@ module.exports = {
       }
       case 'uttaradhikar::QueryPendingSuccessions': {
         const fs = require('fs');
+        if (fs.existsSync('/tmp/bhumichain_history_cleared.json')) return [];
         let cases = [];
         try { cases = JSON.parse(fs.readFileSync('/tmp/bhumichain_mock_cases.json')); } catch(e) {}
         return cases.filter(c => c.status === 'PENDING_TEHSILDAR');
