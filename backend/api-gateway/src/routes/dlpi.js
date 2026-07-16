@@ -55,6 +55,12 @@ const dlpiParam = param('dlpiId').matches(/^DLPI-([A-Z]{2}-[A-Z]{3}-[A-Z0-9]+|\d
 // GET /api/dlpi/my-parcels — citizen's own parcels
 router.get('/my-parcels', authenticate, requireRole(ROLES.CITIZEN), async (req, res) => {
   try {
+    const fs = require('fs');
+    if (fs.existsSync('/tmp/bhumichain_history_cleared.json')) {
+      let seeded = [];
+      try { seeded = JSON.parse(fs.readFileSync('/tmp/bhumichain_seeded_parcels.json')); } catch(e) {}
+      return res.json(seeded);
+    }
     let parcels;
     try {
       parcels = await evaluate('dlpi', 'QueryDLPIsByOwner', [req.user.aadhaarHash]);
@@ -110,6 +116,10 @@ router.get(
   requireRole(...CAN_APPROVE_MUTATION, ROLES.PATWARI),
   async (req, res) => {
     try {
+      const fs = require('fs');
+      if (fs.existsSync('/tmp/bhumichain_history_cleared.json')) {
+        return res.json([]);
+      }
       let status = '';
       if (req.user.role === ROLES.CIRCLE_INSPECTOR) {
         status = 'SCAN_PENDING_SRO';
@@ -696,6 +706,7 @@ router.post('/clear-history', authenticate, async (req, res) => {
     try { fs.writeFileSync('/tmp/bhumichain_history_cleared.json', JSON.stringify({ clearedAt: new Date().toISOString() })); } catch(e) {}
     try { fs.unlinkSync('/tmp/bhumichain_mock_cases.json'); } catch(e) {}
     try { fs.unlinkSync('/tmp/bhumichain_dynamic_mutations.json'); } catch(e) {}
+    try { fs.unlinkSync('/tmp/bhumichain_seeded_parcels.json'); } catch(e) {}
     res.json({ success: true, message: 'All land records and history atomic reset completed.' });
   } catch (e) {
     res.status(500).json({ error: 'RESET_ERROR', message: e.message });
@@ -709,6 +720,7 @@ router.post('/reset-demo', authenticate, async (req, res) => {
     try { fs.unlinkSync('/tmp/bhumichain_history_cleared.json'); } catch(e) {}
     try { fs.unlinkSync('/tmp/bhumichain_mock_cases.json'); } catch(e) {}
     try { fs.unlinkSync('/tmp/bhumichain_dynamic_mutations.json'); } catch(e) {}
+    try { fs.unlinkSync('/tmp/bhumichain_seeded_parcels.json'); } catch(e) {}
     res.json({ success: true, message: 'Demo parcels and mutations restored.' });
   } catch (e) {
     res.status(500).json({ error: 'RESET_ERROR', message: e.message });

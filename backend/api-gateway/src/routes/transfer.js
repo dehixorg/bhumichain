@@ -442,6 +442,8 @@ router.post(
 // GET /api/transfer/my-pending — returns transfers pending buyer consent
 router.get('/my-pending', authenticate, requireRole(ROLES.CITIZEN), async (req, res) => {
   try {
+    const fs = require('fs');
+    if (fs.existsSync('/tmp/bhumichain_history_cleared.json')) return res.json([]);
     const all = await evaluate('property-transfer', 'QueryPendingTransfers', []);
     const userDigits = (req.user.aadhaarNumber || req.user.aadhaar || req.user.aadhaarHash || '').replace(/\D/g, '');
     const userHash = req.user.aadhaarHash || '';

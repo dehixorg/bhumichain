@@ -239,6 +239,8 @@ router.post(
 // GET /api/succession/my-pending — returns cases awaiting consent from logged-in heir
 router.get('/my-pending', authenticate, requireRole(ROLES.CITIZEN), async (req, res) => {
   try {
+    const fs = require('fs');
+    if (fs.existsSync('/tmp/bhumichain_history_cleared.json')) return res.json([]);
     let cases;
     try {
       cases = await evaluate('uttaradhikar', 'GetMyPendingSuccessions', [req.user.aadhaarHash]);

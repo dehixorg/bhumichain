@@ -63,6 +63,12 @@ router.post(
 // GET /api/mutation — all mutations (officer queue view)
 router.get('/', authenticate, async (req, res) => {
   try {
+    const fs = require('fs');
+    if (fs.existsSync('/tmp/bhumichain_history_cleared.json')) {
+      let dMuts = [];
+      try { dMuts = JSON.parse(fs.readFileSync('/tmp/bhumichain_dynamic_mutations.json')); } catch(e) {}
+      return res.json(dMuts);
+    }
     let list;
     try {
       list = await evaluate('mutation-manager', 'QueryPendingMutations', []);
