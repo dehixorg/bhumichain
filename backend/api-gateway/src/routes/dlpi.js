@@ -692,6 +692,10 @@ router.post(
 // POST /api/dlpi/clear-history
 router.post('/clear-history', authenticate, async (req, res) => {
   try {
+    const fs = require('fs');
+    try { fs.writeFileSync('/tmp/bhumichain_history_cleared.json', JSON.stringify({ clearedAt: new Date().toISOString() })); } catch(e) {}
+    try { fs.unlinkSync('/tmp/bhumichain_mock_cases.json'); } catch(e) {}
+    try { fs.unlinkSync('/tmp/bhumichain_dynamic_mutations.json'); } catch(e) {}
     res.json({ success: true, message: 'All land records and history atomic reset completed.' });
   } catch (e) {
     res.status(500).json({ error: 'RESET_ERROR', message: e.message });
@@ -701,6 +705,10 @@ router.post('/clear-history', authenticate, async (req, res) => {
 // POST /api/dlpi/reset-demo
 router.post('/reset-demo', authenticate, async (req, res) => {
   try {
+    const fs = require('fs');
+    try { fs.unlinkSync('/tmp/bhumichain_history_cleared.json'); } catch(e) {}
+    try { fs.unlinkSync('/tmp/bhumichain_mock_cases.json'); } catch(e) {}
+    try { fs.unlinkSync('/tmp/bhumichain_dynamic_mutations.json'); } catch(e) {}
     res.json({ success: true, message: 'Demo parcels and mutations restored.' });
   } catch (e) {
     res.status(500).json({ error: 'RESET_ERROR', message: e.message });
@@ -710,6 +718,7 @@ router.post('/reset-demo', authenticate, async (req, res) => {
 // POST /api/dlpi/seed
 router.post('/seed', authenticate, async (req, res) => {
   try {
+    const fs = require('fs');
     const { dlpiId, surveyNumber, khasraNo, gram, tehsil, district, areaHectares, landType, owners, ownerName, ownerAadhaar } = req.body;
     const cleanAadhaar = (ownerAadhaar || req.user?.aadhaarNumber || '999900010010').replace(/\D/g, '');
     const dlpiPayload = {
@@ -743,6 +752,13 @@ router.post('/seed', authenticate, async (req, res) => {
     } catch (fabricErr) {
       console.warn('[dlpi] Fabric CreateDLPI during seed fallback:', fabricErr.message);
     }
+    // Record seeded parcel in dynamic list even if cleared
+    try {
+      let seeded = [];
+      try { seeded = JSON.parse(fs.readFileSync('/tmp/bhumichain_seeded_parcels.json')); } catch(e) {}
+      seeded.push(dlpiPayload);
+      fs.writeFileSync('/tmp/bhumichain_seeded_parcels.json', JSON.stringify(seeded));
+    } catch(e) {}
     res.json(dlpiPayload);
   } catch (e) {
     res.status(500).json({ error: 'SEED_ERROR', message: e.message });

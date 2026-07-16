@@ -715,13 +715,23 @@ module.exports = {
             return false;
           });
         });
-        // Also include DEMO_MY_PARCELS for Priya Kumar (demo persona), but deduplicate
-        const demoParcels = ownerHash === PRIYA_AADHAAR ? DEMO_MY_PARCELS.filter(p => !myScans.find(s => s.dlpiId === p.dlpiId)) : [];
-        return demoParcels.concat(myScans);
+        // Check if atomic clear history was triggered
+        let isCleared = false;
+        try { if (fs.existsSync('/tmp/bhumichain_history_cleared.json')) isCleared = true; } catch(e) {}
+        let seededParcels = [];
+        try { seededParcels = JSON.parse(fs.readFileSync('/tmp/bhumichain_seeded_parcels.json')); } catch(e) {}
+
+        // Also include DEMO_MY_PARCELS for Priya Kumar (demo persona) unless cleared, plus seeded parcels
+        const demoParcels = (ownerHash === PRIYA_AADHAAR && !isCleared) ? DEMO_MY_PARCELS.filter(p => !myScans.find(s => s.dlpiId === p.dlpiId)) : [];
+        return demoParcels.concat(myScans).concat(seededParcels);
       }
 
-      case 'dlpi::GetPendingReview':
-        return DEMO_PENDING_REVIEW;
+      case 'dlpi::GetPendingReview': {
+        const fs = require('fs');
+        let isCleared = false;
+        try { if (fs.existsSync('/tmp/bhumichain_history_cleared.json')) isCleared = true; } catch(e) {}
+        return isCleared ? [] : DEMO_PENDING_REVIEW;
+      }
 
       // ── DLPI writes ─────────────────────────────────────────────────────────
       case 'dlpi::BulkSeed':
@@ -778,9 +788,12 @@ module.exports = {
       case 'mutation-manager::QueryPendingMutations':
       case 'mutation-manager::GetAllMutations': {
         const fs = require('fs');
+        let isCleared = false;
+        try { if (fs.existsSync('/tmp/bhumichain_history_cleared.json')) isCleared = true; } catch(e) {}
         let dMuts = [];
         try { dMuts = JSON.parse(fs.readFileSync('/tmp/bhumichain_dynamic_mutations.json')); } catch(e) {}
-        return [...DEMO_MUTATION_LIST, ...dMuts];
+        const initial = isCleared ? [] : DEMO_MUTATION_LIST;
+        return [...initial, ...dMuts];
       }
       case 'mutation-manager::RecordOwnerAlertDelivery':
         return { mutationId: args[0], channel: args[1], deliveredAt: args[2], recorded: true };
