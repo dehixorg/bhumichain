@@ -49,10 +49,10 @@ export default function ReviewTransferPage() {
         toast('Patwari approving...');
         await approveTransferByPatwari(transferId);
         toast.success('Patwari Approved');
-      } else if (user?.role === 'circle_inspector') {
-        toast('CI approving...');
+      } else if (user?.role === 'circle_inspector' || user?.role === 'kanungo') {
+        toast('CI / Kanungo approving...');
         await approveTransferByCI(transferId);
-        toast.success('CI Approved');
+        toast.success('CI / Kanungo Approved');
       } else if (user?.role === 'sro') {
         toast('SRO executing...');
         await approveTransferBySRO(transferId, 'QmTitleDeedNew' + Date.now());
@@ -90,16 +90,16 @@ export default function ReviewTransferPage() {
   let canApprove = false;
   let actionLabel = 'Approve';
   
-  if (user?.role === 'patwari' && (transfer.status === 'STAMP_DUTY_PAID' || transfer.status === 'PENDING_PATWARI_APPROVAL' || transfer.status === 'PENDING_BUYER_CONSENT')) {
+  if (user?.role === 'patwari' && ['INITIATED', 'AWAITING_CONSENT', 'CONSENT_RECORDED', 'PENDING_PATWARI_VERIFICATION', 'STAMP_DUTY_PAID', 'PENDING_PATWARI_APPROVAL', 'PENDING_BUYER_CONSENT'].includes(transfer.status)) {
     canApprove = true;
     actionLabel = 'Approve & Forward to Kanungo (Patwari)';
-  } else if ((user?.role === 'circle_inspector' || user?.role === 'kanungo') && (transfer.status === 'PATWARI_APPROVED' || transfer.status === 'PENDING_KANUNGO_APPROVAL')) {
+  } else if ((user?.role === 'circle_inspector' || user?.role === 'kanungo') && ['PATWARI_APPROVED', 'PENDING_KANUNGO_APPROVAL', 'PENDING_CI_APPROVAL'].includes(transfer.status)) {
     canApprove = true;
     actionLabel = 'Verify & Forward to Tehsildar (Kanungo / CI)';
-  } else if (user?.role === 'sro' && (transfer.status === 'CI_APPROVED' || transfer.status === 'PENDING_TEHSILDAR_APPROVAL' || transfer.status === 'PENDING_KANUNGO_APPROVAL')) {
+  } else if (user?.role === 'sro' && ['CI_APPROVED', 'PENDING_SRO_EXECUTION', 'PENDING_TEHSILDAR_APPROVAL', 'PENDING_KANUNGO_APPROVAL'].includes(transfer.status)) {
     canApprove = true;
     actionLabel = 'Execute Deed (SRO)';
-  } else if (user?.role === 'tehsildar' && (transfer.status === 'CI_APPROVED' || transfer.status === 'PENDING_TEHSILDAR_APPROVAL' || transfer.status === 'PENDING_KANUNGO_APPROVAL' || transfer.status === 'PATWARI_APPROVED')) {
+  } else if (user?.role === 'tehsildar' && ['CI_APPROVED', 'PENDING_SRO_EXECUTION', 'PENDING_TEHSILDAR_APPROVAL', 'PENDING_KANUNGO_APPROVAL', 'PATWARI_APPROVED', 'PENDING_CI_APPROVAL', 'PENDING_PATWARI_VERIFICATION'].includes(transfer.status)) {
     canApprove = true;
     actionLabel = 'Finalize Mutation & Atomic Transfer (Tehsildar)';
   }

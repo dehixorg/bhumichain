@@ -6,6 +6,7 @@ const ROLES = {
   CITIZEN:          'citizen',
   PATWARI:          'patwari',
   CIRCLE_INSPECTOR: 'circle_inspector',
+  KANUNGO:          'kanungo',
   TEHSILDAR:        'tehsildar',
   KOTWAL:           'kotwal',
   // Production roles — wired but not demoed
@@ -17,9 +18,9 @@ const ROLES = {
   SUPER_ADMIN:      'super_admin',
 };
 
-const OFFICER_ROLES = ['patwari', 'circle_inspector', 'tehsildar', 'kotwal', 'sro', 'collector', 'super_admin'];
+const OFFICER_ROLES = ['patwari', 'circle_inspector', 'kanungo', 'tehsildar', 'kotwal', 'sro', 'collector', 'super_admin'];
 const CAN_CREATE_DLPI    = ['patwari', 'tehsildar', 'collector', 'super_admin'];
-const CAN_APPROVE_MUTATION = ['circle_inspector', 'tehsildar', 'collector', 'super_admin'];
+const CAN_APPROVE_MUTATION = ['circle_inspector', 'kanungo', 'tehsildar', 'collector', 'super_admin'];
 
 function authenticate(req, res, next) {
   const header = req.headers.authorization;

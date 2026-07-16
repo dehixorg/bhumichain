@@ -296,18 +296,28 @@ router.get(
   authenticate,
   async (req, res) => {
     try {
-      let transfer = await evaluate('property-transfer', 'GetTransferProposal', [req.params.transferId]);
-      if (typeof transfer === 'string') {
-        try { transfer = JSON.parse(transfer); } catch (e) {}
+      let transfer = null;
+      try {
+        const chainRes = await evaluate('property-transfer', 'GetTransferProposal', [req.params.transferId]);
+        if (typeof chainRes === 'string') transfer = JSON.parse(chainRes);
+        else transfer = chainRes;
+      } catch (e) {}
+
+      // Fallback to mock atomic disk if not found on-chain
+      if (!transfer) {
+        try {
+          const fs = require('fs');
+          const mockTransfers = JSON.parse(fs.readFileSync('/tmp/bhumichain_mock_transfers.json', 'utf8'));
+          if (Array.isArray(mockTransfers)) {
+            transfer = mockTransfers.find(t => t.transferId === req.params.transferId) || null;
+          }
+        } catch(e) {}
       }
+
       if (!transfer) return res.status(404).json({ error: 'TRANSFER_NOT_FOUND' });
       res.json(transfer);
     } catch (e) {
-      const details = e.details ? ` - Details: ${JSON.stringify(e.details)}` : '';
-      if (e.message && e.message.includes('not found')) {
-        return res.status(404).json({ error: 'TRANSFER_NOT_FOUND' });
-      }
-      res.status(500).json({ error: 'FABRIC_ERROR', message: e.message + details });
+      res.status(500).json({ error: 'FABRIC_ERROR', message: e.message });
     }
   },
 );
@@ -318,14 +328,31 @@ router.get(
   authenticate,
   async (req, res) => {
     try {
-      let history = await evaluate('property-transfer', 'GetTransferHistory', [req.params.transferId]);
-      if (typeof history === 'string') {
-        try { history = JSON.parse(history); } catch (e) {}
+      let history = null;
+      try {
+        const chainRes = await evaluate('property-transfer', 'GetTransferHistory', [req.params.transferId]);
+        if (typeof chainRes === 'string') history = JSON.parse(chainRes);
+        else history = chainRes;
+      } catch(e) {}
+
+      // Fallback: reconstruct history from mock transfer status
+      if (!history || !Array.isArray(history) || history.length === 0) {
+        try {
+          const fs = require('fs');
+          const mockTransfers = JSON.parse(fs.readFileSync('/tmp/bhumichain_mock_transfers.json', 'utf8'));
+          const t = Array.isArray(mockTransfers) ? mockTransfers.find(x => x.transferId === req.params.transferId) : null;
+          if (t) {
+            history = [{ status: t.status, timestamp: t.updatedAt || t.initiatedAt, officerHash: t.sellerAadhaarHash || '' }];
+            if (t.initiatedAt && t.initiatedAt !== t.updatedAt) {
+              history.push({ status: 'INITIATED', timestamp: t.initiatedAt, officerHash: t.sellerAadhaarHash || '' });
+            }
+          }
+        } catch(e) {}
       }
+
       res.json(history || []);
     } catch (e) {
-      const details = e.details ? ` - Details: ${JSON.stringify(e.details)}` : '';
-      res.status(500).json({ error: 'FABRIC_ERROR', message: e.message + details });
+      res.json([]);
     }
   },
 );
@@ -334,7 +361,7 @@ router.get(
 router.get(
   '/pending/all',
   authenticate,
-  requireRole(ROLES.PATWARI, ROLES.CIRCLE_INSPECTOR, ROLES.SRO, ROLES.TEHSILDAR),
+  requireRole(ROLES.PATWARI, ROLES.CIRCLE_INSPECTOR, ROLES.KANUNGO, ROLES.SRO, ROLES.TEHSILDAR, ROLES.SUPER_ADMIN),
   async (req, res) => {
     try {
       let transfers = [];
@@ -460,7 +487,7 @@ router.post(
 router.post(
   '/:transferId/approve/patwari',
   authenticate,
-  requireRole(ROLES.PATWARI, ROLES.TEHSILDAR),
+  requireRole(ROLES.PATWARI, ROLES.TEHSILDAR, ROLES.SUPER_ADMIN),
   async (req, res) => {
     try {
       let result = { success: true, status: 'PENDING_CI_APPROVAL' };
@@ -492,7 +519,7 @@ router.post(
 router.post(
   '/:transferId/approve/ci',
   authenticate,
-  requireRole(ROLES.CIRCLE_INSPECTOR, ROLES.TEHSILDAR),
+  requireRole(ROLES.CIRCLE_INSPECTOR, ROLES.KANUNGO, ROLES.TEHSILDAR, ROLES.SUPER_ADMIN),
   async (req, res) => {
     try {
       let result = { success: true, status: 'PENDING_SRO_EXECUTION' };
@@ -524,7 +551,7 @@ router.post(
 router.post(
   '/:transferId/approve/sro',
   authenticate,
-  requireRole(ROLES.SRO, ROLES.TEHSILDAR),
+  requireRole(ROLES.SRO, ROLES.TEHSILDAR, ROLES.SUPER_ADMIN),
   async (req, res) => {
     try {
       const newTitleCID = req.body.newTitleCID || 'QmAtomicMutationTitleDeedCID' + Date.now();
@@ -557,7 +584,7 @@ router.post(
 router.post(
   '/:transferId/approve/tehsildar',
   authenticate,
-  requireRole(ROLES.TEHSILDAR),
+  requireRole(ROLES.TEHSILDAR, ROLES.SUPER_ADMIN),
   async (req, res) => {
     try {
       let result = { success: true, status: 'COMPLETED' };
