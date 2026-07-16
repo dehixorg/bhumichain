@@ -48,7 +48,7 @@ const validate = (req, res, next) => {
   next();
 };
 
-const dlpiParam = param('dlpiId').matches(/^DLPI-([A-Z]{2}-[A-Z]{3}-[A-Z0-9]+|\d+)$/);
+const dlpiParam = param('dlpiId').matches(/^DLPI-[A-Z0-9-]+$/);
 
 // ── Static routes (must come before /:dlpiId) ─────────────────────────────────
 
@@ -255,7 +255,7 @@ router.post(
       )(req, res, next);
     });
   },
-  body('dlpiId').matches(/^DLPI-([A-Z]{2}-[A-Z]{3}-[A-Z0-9]+|\d+)$/),
+  body('dlpiId').matches(/^DLPI-[A-Z0-9-]+$/),
   validate,
   async (req, res) => {
     try {
@@ -281,7 +281,7 @@ router.post(
     ROLES.PATWARI, ROLES.CITIZEN,
     ROLES.CIRCLE_INSPECTOR, ROLES.TEHSILDAR, ROLES.COLLECTOR, ROLES.SUPER_ADMIN
   ),
-  body('dlpiId').matches(/^DLPI-([A-Z]{2}-[A-Z]{3}-[A-Z0-9]+|\d+)$/),
+  body('dlpiId').matches(/^DLPI-[A-Z0-9-]+$/),
   validate,
   async (req, res) => {
     try {
@@ -304,7 +304,7 @@ router.post(
   authenticate,
   requireRole(ROLES.TEHSILDAR, ROLES.COLLECTOR, ROLES.SUPER_ADMIN),
   body('parcels').isArray({ min: 1, max: 500 }),
-  body('parcels.*.dlpiId').matches(/^DLPI-[A-Z]{2}-[A-Z]{3}-[A-Z0-9]+$/),
+  body('parcels.*.dlpiId').matches(/^DLPI-[A-Z0-9-]+$/),
   validate,
   async (req, res) => {
     try {
@@ -675,7 +675,7 @@ router.post(
   '/',
   authenticate,
   requireRole(...CAN_CREATE_DLPI),
-  body('dlpiId').matches(/^DLPI-[A-Z]{2}-[A-Z]{3}-[A-Z0-9]+$/),
+  body('dlpiId').matches(/^DLPI-[A-Z0-9-]+$/),
   body('ownerName').notEmpty().trim(),
   body('ownerAadhaarHash').matches(/^sha256:[a-f0-9]{64}$/),
   body('landType').isIn(['Bhumidhari', 'Sirdar', 'Residential', 'Commercial', 'Tribal_FRA', 'Govt_Reserved']),

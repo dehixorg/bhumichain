@@ -24,7 +24,7 @@ router.post(
   '/initiate',
   authenticate,
   requireRole(ROLES.CIRCLE_OFFICER, ROLES.REVENUE_OFFICER, ROLES.COLLECTOR),
-  body('dlpiId').matches(/^DLPI-[A-Z]{2}-[A-Z]{3}-[A-Z0-9]+$/),
+  body('dlpiId').matches(/^DLPI-[A-Z0-9-]+$/),
   body('mutationType').isIn(MUTATION_TYPES),
   body('officerName').notEmpty().trim(),
   body('officerHash').matches(/^sha256:[a-f0-9]{64}$/),

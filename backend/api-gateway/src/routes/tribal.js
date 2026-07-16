@@ -20,7 +20,7 @@ router.post(
   '/register',
   authenticate,
   requireRole(ROLES.NALSA, ROLES.COLLECTOR),
-  body('dlpiId').matches(/^DLPI-[A-Z]{2}-[A-Z]{3}-[A-Z0-9]+$/),
+  body('dlpiId').matches(/^DLPI-[A-Z0-9-]+$/),
   body('scheduleType').isIn(['V', 'VI', 'FRA_PATTA', 'PVTG']),
   body('gazettedOn').isISO8601(),
   body('districtName').notEmpty(),
@@ -57,7 +57,7 @@ router.post(
 router.post(
   '/check',
   authenticate,
-  body('dlpiId').matches(/^DLPI-[A-Z]{2}-[A-Z]{3}-[A-Z0-9]+$/),
+  body('dlpiId').matches(/^DLPI-[A-Z0-9-]+$/),
   body('buyerName').notEmpty().trim(),
   body('buyerAadhaarHash').matches(/^sha256:[a-f0-9]{64}$/),
   validate,

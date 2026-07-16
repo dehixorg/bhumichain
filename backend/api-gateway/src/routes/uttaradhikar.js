@@ -92,7 +92,7 @@ router.post(
   '/initiate',
   authenticate,
   requireRole(ROLES.ORACLE, ROLES.TEHSILDAR, ROLES.COLLECTOR, ROLES.CITIZEN),
-  body('dlpiId').matches(/^DLPI-[A-Z]{2}-[A-Z]{3}-[A-Z0-9]+$/),
+  body('dlpiId').matches(/^DLPI-[A-Z0-9-]+$/),
   body('familyId').notEmpty(),
   body('deceasedName').notEmpty().trim(),
   body('deceasedAadhaarHash').optional().trim(),

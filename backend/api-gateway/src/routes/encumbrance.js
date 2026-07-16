@@ -21,7 +21,7 @@ router.post(
   '/mortgage',
   authenticate,
   requireRole(ROLES.BANK),
-  body('dlpiId').matches(/^DLPI-[A-Z]{2}-[A-Z]{3}-[A-Z0-9]+$/),
+  body('dlpiId').matches(/^DLPI-[A-Z0-9-]+$/),
   body('bankName').notEmpty(),
   body('bankBranch').notEmpty(),
   body('loanAccountHashedNo').notEmpty(),
@@ -67,7 +67,7 @@ router.post(
   '/injunction',
   authenticate,
   requireRole(ROLES.COLLECTOR, ROLES.REVENUE_OFFICER),
-  body('dlpiId').matches(/^DLPI-[A-Z]{2}-[A-Z]{3}-[A-Z0-9]+$/),
+  body('dlpiId').matches(/^DLPI-[A-Z0-9-]+$/),
   body('courtName').notEmpty(),
   body('caseNumber').notEmpty(),
   body('injunctionDate').isISO8601(),
@@ -97,7 +97,7 @@ router.post(
   '/it-attachment',
   authenticate,
   requireRole(ROLES.COLLECTOR),
-  body('dlpiId').matches(/^DLPI-[A-Z]{2}-[A-Z]{3}-[A-Z0-9]+$/),
+  body('dlpiId').matches(/^DLPI-[A-Z0-9-]+$/),
   body('itAssessmentYear').matches(/^\d{4}-\d{2}$/),
   body('panHash').notEmpty(),
   body('itDemandAmountINR').isInt({ min: 1 }),
@@ -143,7 +143,7 @@ router.post(
 router.get(
   '/ec/:dlpiId',
   authenticate,
-  param('dlpiId').matches(/^DLPI-[A-Z]{2}-[A-Z]{3}-[A-Z0-9]+$/),
+  param('dlpiId').matches(/^DLPI-[A-Z0-9-]+$/),
   validate,
   async (req, res) => {
     try {

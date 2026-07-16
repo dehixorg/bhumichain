@@ -41,7 +41,7 @@ router.post(
   '/initiate',
   authenticate,
   requireRole(ROLES.SRO, ROLES.TEHSILDAR, ROLES.CITIZEN),
-  body('dlpiId').matches(/^DLPI-[A-Z]{2}-[A-Z]{3}-[A-Z0-9]+$/),
+  body('dlpiId').matches(/^DLPI-[A-Z0-9-]+$/),
   body('sellerAadhaarHash').optional().trim(),
   body('sellerAadhaar').optional().trim(),
   body('buyerName').notEmpty().trim(),
