@@ -16,6 +16,9 @@ export interface JWTUser {
   name: string;
   aadhaarHash: string;
   aadhaarId?: string;
+  aadhaarNumber?: string;
+  aadhaar?: string;
+  aadhaarNo?: string;
   jurisdictionCode?: string;
   tehsilCode?: string;
   circleCode?: string;
@@ -35,10 +38,37 @@ export function getToken(): string | null {
 
 export function setToken(token: string): void {
   localStorage.setItem(TOKEN_KEY, token);
+  try { localStorage.setItem('bhumichain_last_login', new Date().toISOString()); } catch(e) {}
 }
 
 export function clearToken(): void {
   localStorage.removeItem(TOKEN_KEY);
+}
+
+export function formatMaskedAadhaar(user: any): string {
+  if (!user) return 'XXXX-XXXX-XXXX';
+  const rawDigits = (user.aadhaarNumber || user.aadhaar || user.aadhaarNo || user.aadhaarId || user.aadhaarHash || '').replace(/\D/g, '');
+  if (rawDigits.length >= 4) {
+    const last4 = rawDigits.slice(-4);
+    return `XXXX-XXXX-${last4}`;
+  }
+  return 'XXXX-XXXX-XXXX';
+}
+
+export function formatLastLogin(): string {
+  if (typeof window === 'undefined') return 'Today, 10:24 AM';
+  try {
+    const stored = localStorage.getItem('bhumichain_last_login');
+    if (stored) {
+      const dt = new Date(stored);
+      if (!isNaN(dt.getTime())) {
+        return dt.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) + ', ' + dt.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+      }
+    }
+  } catch(e) {}
+  const now = new Date();
+  try { localStorage.setItem('bhumichain_last_login', now.toISOString()); } catch(e) {}
+  return now.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) + ', ' + now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
 }
 
 // ─── User decoding ────────────────────────────────────────────────────────────

@@ -13,7 +13,7 @@ import {
 import clsx from 'clsx';
 import CitizenHeader from '@/components/dashboard/CitizenHeader';
 import CitizenFooter from '@/components/dashboard/CitizenFooter';
-import { getUser, apiFetch, type JWTUser } from '@/lib/auth';
+import { getUser, apiFetch, type JWTUser, formatMaskedAadhaar, formatLastLogin } from '@/lib/auth';
 import { recordHeirConsent, initiateTransfer, recordConsent, getMyPendingTransfers, clearAllHistory, resetDemoRecords } from '@/lib/api';
 import toast from 'react-hot-toast';
 
@@ -240,9 +240,9 @@ export default function CitizenDashboard() {
               <div className="flex items-center gap-4 text-xs font-semibold text-gray-500 mt-4">
                 <div className="flex items-center gap-1.5"><MapPin className="w-4 h-4 text-gray-400" /> Uttar Pradesh</div>
                 <div className="w-1 h-1 rounded-full bg-gray-300" />
-                <div>ID: {user.aadhaarId || 'xxxx-xxxx-xxxx'}</div>
+                <div>ID: {formatMaskedAadhaar(user)}</div>
                 <div className="w-1 h-1 rounded-full bg-gray-300" />
-                <div>Last Login: Today, 10:24 AM</div>
+                <div>Last Login: {formatLastLogin()}</div>
               </div>
             </div>
             

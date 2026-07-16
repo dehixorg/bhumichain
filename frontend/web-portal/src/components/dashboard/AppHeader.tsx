@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Bell, User, LogOut, ChevronDown, Globe } from 'lucide-react';
-import { getUser, logout, type JWTUser } from '@/lib/auth';
+import { getUser, logout, type JWTUser, formatMaskedAadhaar } from '@/lib/auth';
 import clsx from 'clsx';
 
 export default function CitizenHeader() {
@@ -27,76 +27,85 @@ export default function CitizenHeader() {
 
   return (
     <header className={clsx(
-      'sticky top-0 z-50 bg-white transition-all duration-200',
-      scrolled ? 'shadow-md border-b-transparent' : 'border-b border-gray-200 shadow-sm'
+      'sticky top-0 z-50 transition-all duration-200 bg-white/95 backdrop-blur-md border-b border-gray-200',
+      scrolled && 'shadow-sm'
     )}>
-      {/* Top micro-header for accessibility / language */}
-      <div className="bg-gray-50 border-b border-gray-200 py-1.5 px-6 sm:px-10 flex justify-between items-center text-[11px] font-medium text-gray-500">
-        <div className="flex items-center gap-4">
-          <span className="hidden sm:inline">Government of India (भारत सरकार)</span>
-          <span className="hidden sm:inline">·</span>
+      {/* Govt Top Strip */}
+      <div className="bg-[#0F4C81] text-white text-[11px] font-medium py-1 px-4 sm:px-8 flex justify-between items-center tracking-wide">
+        <div className="flex items-center gap-2">
+          <span className="font-bold">Government of India (भारत सरकार)</span>
+          <span className="opacity-40">|</span>
           <span>Ministry of Rural Development</span>
         </div>
         <div className="flex items-center gap-4">
-          <button className="hover:text-gray-900 transition-colors">Skip to main content</button>
-          <div className="h-3 w-px bg-gray-300" />
-          <button className="flex items-center gap-1 hover:text-gray-900 transition-colors">
-            <Globe className="w-3.5 h-3.5" />
-            English (India) <ChevronDown className="w-3 h-3" />
+          <button className="hover:underline flex items-center gap-1">Skip to main content</button>
+          <span className="opacity-40">|</span>
+          <button className="flex items-center gap-1 hover:text-orange-300 font-semibold">
+            <Globe className="w-3 h-3" /> English (India)
           </button>
         </div>
       </div>
 
-      {/* Main Header */}
-      <div className="max-w-[1400px] mx-auto px-6 sm:px-10 h-20 grid grid-cols-3 items-center gap-6">
-        {/* Left: Emblems & Logo */}
-        <div className="flex items-center gap-4">
-          <img
-            src="/Government_of_India_logo.svg.webp"
-            alt="Emblem of India"
-            className="h-14 w-auto object-contain"
-            onError={(e) => { e.currentTarget.style.display = 'none'; }}
-          />
-          <div className="h-10 w-px bg-gray-200 hidden sm:block" />
-          <Link href="/my-parcels" className="flex items-center gap-3 group">
-            <div className="w-10 h-10 rounded-xl bg-[#0F4C81] flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
-              <span className="text-white font-black text-lg leading-none mt-0.5">भू</span>
-            </div>
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-8 h-16 flex items-center justify-between">
+        {/* Logo Section */}
+        <Link href="/" className="flex items-center gap-3 group">
+          <div className="flex items-center gap-2.5 pr-3 border-r border-gray-300">
+            <img 
+              src="/emblem-dark.png" 
+              alt="National Emblem of India" 
+              className="h-10 w-auto object-contain"
+              onError={(e) => {
+                e.currentTarget.style.display = 'none';
+              }}
+            />
             <div className="flex flex-col">
-              <span className="text-xl font-black text-[#0F4C81] tracking-tight leading-none">BhumiChain</span>
-              <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1 leading-none">National Land Registry</span>
+              <span className="text-[10px] font-bold text-gray-800 leading-none tracking-tight">भारत सरकार</span>
+              <span className="text-[9px] font-extrabold text-[#0F4C81] leading-tight tracking-wider uppercase">GOVERNMENT<br/>OF INDIA</span>
             </div>
-          </Link>
-        </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-[#0F4C81] text-white flex items-center justify-center font-black text-base shadow-sm group-hover:bg-[#0c3d67] transition-colors">
+              भू
+            </div>
+            <div>
+              <span className="text-lg font-black text-gray-900 tracking-tight block leading-none">
+                Bhumi<span className="text-[#0F4C81]">Chain</span>
+              </span>
+              <span className="text-[9px] font-bold text-gray-500 uppercase tracking-widest block leading-none mt-0.5">
+                NATIONAL LAND REGISTRY
+              </span>
+            </div>
+          </div>
+        </Link>
 
-        {/* Centre: empty spacer for grid centering */}
-        <div />
-
-        {/* Right: Digital India & User Auth */}
-        <div className="flex items-center justify-end gap-4">
-          {!digitalIndiaError && (
-            <div className="hidden lg:block">
-              <img
-                src="/Digital-India-Color.svg"
-                alt="Digital India"
-                className="h-11 w-auto object-contain"
+        {/* Right Nav / User Profile */}
+        <div className="flex items-center gap-4">
+          {/* Digital India Logo */}
+          <div className="hidden sm:flex items-center border-r border-gray-200 pr-4">
+            {!digitalIndiaError ? (
+              <img 
+                src="https://www.digitalindia.gov.in/writereaddata/files/di-logo.png" 
+                alt="Digital India" 
+                className="h-8 w-auto object-contain"
                 onError={() => setDigitalIndiaError(true)}
               />
-            </div>
-          )}
-          
-          <div className="h-8 w-px bg-gray-200 hidden sm:block" />
+            ) : (
+              <div className="flex items-center gap-1.5 px-2.5 py-1 bg-gradient-to-r from-orange-50 via-white to-green-50 border border-gray-200 rounded-md">
+                <div className="w-2 h-2 rounded-full bg-[#FF9933]" />
+                <span className="text-[10px] font-black tracking-wider text-[#0F4C81]">DIGITAL INDIA</span>
+                <div className="w-2 h-2 rounded-full bg-[#138808]" />
+              </div>
+            )}
+          </div>
 
-          {/* Notifications */}
-          <button className="relative p-2 text-gray-500 hover:text-[#0F4C81] hover:bg-gray-50 rounded-full transition-colors">
+          <button className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full relative transition">
             <Bell className="w-5 h-5" />
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 border border-white rounded-full"></span>
+            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-orange-500 rounded-full ring-2 ring-white" />
           </button>
 
-          {/* User Profile */}
           {user ? (
             <div className="relative group">
-              <button className="flex items-center gap-3 pl-2 pr-4 py-1.5 border border-gray-200 rounded-full hover:border-gray-300 hover:shadow-sm transition-all bg-gray-50">
+              <button className="flex items-center gap-2.5 pl-2 pr-3 py-1.5 rounded-full border border-gray-200 hover:border-gray-300 bg-gray-50/50 transition">
                 <div className="w-7 h-7 rounded-full bg-[#0F4C81] flex items-center justify-center text-white text-xs font-bold shadow-inner">
                   {user.name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
                 </div>
@@ -111,7 +120,7 @@ export default function CitizenHeader() {
               <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-xl shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all transform origin-top-right scale-95 group-hover:scale-100">
                 <div className="p-3 border-b border-gray-100">
                   <p className="text-sm font-bold text-gray-900 truncate">{user.name}</p>
-                  <p className="text-xs text-gray-500 truncate">{user.aadhaarId || 'xxxx-xxxx-xxxx'}</p>
+                  <p className="text-xs text-gray-500 truncate">{formatMaskedAadhaar(user)}</p>
                 </div>
                 <div className="p-1.5">
                   <Link href="/my-parcels" className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-[#0F4C81] rounded-lg">

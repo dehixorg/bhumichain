@@ -3,6 +3,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import dynamic from 'next/dynamic';
+import { formatLastLogin, formatMaskedAadhaar } from '@/lib/auth';
 
 const MapPreview = dynamic(() => import('./MapPreview'), {
   ssr: false,
@@ -109,7 +110,7 @@ export default function DashboardPage() {
           
           <div className="text-right">
             <p className="text-sm text-gray-500 font-medium">Last Login</p>
-            <p className="text-base font-bold text-gray-900">09 July 2026, 10:45 AM</p>
+            <p className="text-base font-bold text-gray-900">{formatLastLogin()}</p>
             <p className="text-xs text-gray-500 mt-1">IP: 103.119.xxx.xx</p>
           </div>
         </div>

@@ -22,15 +22,11 @@ import {
 import clsx from 'clsx';
 import { format } from 'date-fns';
 
-// Display helper — never show raw hash or raw digits to the user
+// Display helper — never show raw hash or raw digits without last 4 digits
 const maskAadhaar = (val?: string | null): string => {
   if (!val) return 'XXXX-XXXX-XXXX';
-  // If it's a sha256 hash, show generic mask
-  if (val.startsWith('sha256:')) return 'XXXX-XXXX-XXXX';
-  // If it's 12 raw digits, mask first 8
   const digits = val.replace(/\D/g, '');
-  if (digits.length === 12) return `XXXX-XXXX-${digits.slice(8)}`;
-  // Already masked or unknown format
+  if (digits.length >= 4) return `XXXX-XXXX-${digits.slice(-4)}`;
   return 'XXXX-XXXX-XXXX';
 };
 
