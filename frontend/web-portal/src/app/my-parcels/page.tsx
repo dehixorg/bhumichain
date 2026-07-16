@@ -723,8 +723,6 @@ export default function CitizenDashboard() {
               </form>
             </div>
           </div>
-            </div>
-          </div>
         )}
       </main>
 

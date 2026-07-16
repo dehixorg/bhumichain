@@ -244,7 +244,7 @@ export default function SuccessionPage() {
     if (!file) return;
 
     const approvedNom = nominations.find(n => n.status === 'APPROVED');
-    const myAadhaarDigits = (user?.aadhaarNumber || user?.aadhaarHash || user?.aadhaar || '').replace(/\D/g, '');
+    const myAadhaarDigits = ((user as any)?.aadhaarNumber || user?.aadhaarHash || (user as any)?.aadhaar || '').replace(/\D/g, '');
     if (approvedNom && myAadhaarDigits && myAadhaarDigits !== approvedNom.inheritorAadhaarNumber) {
       toast.error(`🚫 Access Blocked: Only the Tehsildar-approved Registered Inheritor (${approvedNom.inheritorName} — Aadhaar ending in ${approvedNom.inheritorAadhaarNumber.slice(8)}) is authorized to upload the death certificate and claim property ${approvedNom.dlpiId}.`);
       return;
@@ -310,7 +310,7 @@ export default function SuccessionPage() {
 
   const handleRunAI = async () => {
     const approvedNom = nominations.find(n => n.status === 'APPROVED');
-    const myAadhaarDigits = (user?.aadhaarNumber || user?.aadhaarHash || user?.aadhaar || '').replace(/\D/g, '');
+    const myAadhaarDigits = ((user as any)?.aadhaarNumber || user?.aadhaarHash || (user as any)?.aadhaar || '').replace(/\D/g, '');
     if (approvedNom && myAadhaarDigits && myAadhaarDigits !== approvedNom.inheritorAadhaarNumber) {
       toast.error(`🚫 Access Blocked: Only the Tehsildar-approved Registered Inheritor (${approvedNom.inheritorName} — Aadhaar ending in ${approvedNom.inheritorAadhaarNumber.slice(8)}) is authorized to initiate succession for property ${approvedNom.dlpiId}.`);
       return;
@@ -479,7 +479,7 @@ export default function SuccessionPage() {
 
             {/* Registered Inheritor Active Role Banner */}
             {(() => {
-              const myRoleNom = nominations.find(n => n.status === 'APPROVED' && (n.inheritorAadhaarNumber === (user?.aadhaarNumber || user?.aadhaarHash || user?.aadhaar)?.replace(/\D/g, '')));
+              const myRoleNom = nominations.find(n => n.status === 'APPROVED' && (n.inheritorAadhaarNumber === ((user as any)?.aadhaarNumber || user?.aadhaarHash || (user as any)?.aadhaar)?.replace(/\D/g, '')));
               if (!myRoleNom) return null;
               return (
                 <div className="bg-gradient-to-r from-emerald-600 to-teal-700 text-white rounded-xl p-5 shadow-lg border border-emerald-400/30 flex items-start gap-4">
@@ -982,7 +982,7 @@ export default function SuccessionPage() {
                         <button
                           type="button"
                           disabled={isExecuting}
-                          onClick={() => handleExecuteTehsildar(caseData?.caseId || DEMO_DLPI.dlpiId)}
+                          onClick={() => handleExecuteTehsildar(caseData?.caseId || DEMO_DLPI)}
                           className="bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-white font-bold py-3 px-6 rounded-xl shadow-lg transition flex items-center gap-2.5 text-sm shrink-0"
                         >
                           <CheckCircle className="w-5 h-5" />
