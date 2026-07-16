@@ -110,7 +110,7 @@ export default function DashboardPage() {
           
           <div className="text-right">
             <p className="text-sm text-gray-500 font-medium">Last Login</p>
-            <p className="text-base font-bold text-gray-900">{formatLastLogin()}</p>
+            <p className="text-base font-bold text-gray-900" suppressHydrationWarning>{formatLastLogin()}</p>
             <p className="text-xs text-gray-500 mt-1">IP: 103.119.xxx.xx</p>
           </div>
         </div>

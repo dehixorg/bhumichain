@@ -95,6 +95,7 @@ const JANGANANA_ANOMALIES = [
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function AnalyticsPage() {
+  const [mounted, setMounted] = useState(false);
   const [metrics, setMetrics] = useState<Metrics>(BASE_METRICS);
   const [feed, setFeed]       = useState<FeedItem[]>(SEED_FEED);
   const [liveCount, setLiveCount] = useState(0);
@@ -102,6 +103,7 @@ export default function AnalyticsPage() {
   const { on: onWs } = useWebSocket();
 
   useEffect(() => {
+    setMounted(true);
     getDemoToken('revenue_officer', 'Analytics Officer').catch(() => {});
   }, []);
 
@@ -252,8 +254,8 @@ export default function AnalyticsPage() {
                         <div className="text-xs text-gray-600 font-mono truncate">{item.dlpiId}</div>
                         <div className="text-xs text-gray-600">{item.actor}</div>
                       </div>
-                      <div className="text-xs text-gray-700 shrink-0 font-mono">
-                        {item.ts.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+                      <div className="text-xs text-gray-700 shrink-0 font-mono" suppressHydrationWarning>
+                        {mounted ? item.ts.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : '--:--'}
                       </div>
                     </div>
                   ))}

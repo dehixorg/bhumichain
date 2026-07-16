@@ -215,7 +215,7 @@ export default function CitizenDashboard() {
                 <div className="w-1 h-1 rounded-full bg-gray-300" />
                 <div>ID: {formatMaskedAadhaar(user)}</div>
                 <div className="w-1 h-1 rounded-full bg-gray-300" />
-                <div>Last Login: {formatLastLogin()}</div>
+                <div suppressHydrationWarning>Last Login: {formatLastLogin()}</div>
               </div>
             </div>
             
