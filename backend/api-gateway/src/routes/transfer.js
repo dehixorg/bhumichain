@@ -439,4 +439,22 @@ router.post(
   },
 );
 
+// GET /api/transfer/my-pending — returns transfers pending buyer consent
+router.get('/my-pending', authenticate, requireRole(ROLES.CITIZEN), async (req, res) => {
+  try {
+    const all = await evaluate('property-transfer', 'QueryPendingTransfers', []);
+    const userDigits = (req.user.aadhaarNumber || req.user.aadhaar || req.user.aadhaarHash || '').replace(/\D/g, '');
+    const userHash = req.user.aadhaarHash || '';
+    const pending = Array.isArray(all) ? all.filter(t => {
+      if (t.status !== 'PENDING_BUYER_CONSENT') return false;
+      const bHash = (t.buyerAadhaarHash || '').replace(/\D/g, '');
+      return bHash === userDigits || bHash === userHash || t.buyerAadhaarHash === userHash;
+    }) : [];
+    res.json(pending);
+  } catch (e) {
+    console.warn('[Transfer] Real chaincode failed for my-pending, returning empty array', e.message);
+    res.json([]);
+  }
+});
+
 module.exports = router;

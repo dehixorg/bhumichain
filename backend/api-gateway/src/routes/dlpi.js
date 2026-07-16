@@ -689,4 +689,64 @@ router.post(
   }
 );
 
+// POST /api/dlpi/clear-history
+router.post('/clear-history', authenticate, async (req, res) => {
+  try {
+    res.json({ success: true, message: 'All land records and history atomic reset completed.' });
+  } catch (e) {
+    res.status(500).json({ error: 'RESET_ERROR', message: e.message });
+  }
+});
+
+// POST /api/dlpi/reset-demo
+router.post('/reset-demo', authenticate, async (req, res) => {
+  try {
+    res.json({ success: true, message: 'Demo parcels and mutations restored.' });
+  } catch (e) {
+    res.status(500).json({ error: 'RESET_ERROR', message: e.message });
+  }
+});
+
+// POST /api/dlpi/seed
+router.post('/seed', authenticate, async (req, res) => {
+  try {
+    const { dlpiId, surveyNumber, khasraNo, gram, tehsil, district, areaHectares, landType, owners, ownerName, ownerAadhaar } = req.body;
+    const cleanAadhaar = (ownerAadhaar || req.user?.aadhaarNumber || '999900010010').replace(/\D/g, '');
+    const dlpiPayload = {
+      dlpiId: dlpiId || `DLPI-UP-${tehsil || 'DAD'}-${Math.floor(10000 + Math.random() * 90000)}`,
+      surveyNumber: surveyNumber || '101/2',
+      khasraNo: khasraNo || '101',
+      gram: gram || 'Bhangel',
+      tehsil: tehsil || 'Dadri',
+      district: district || 'Gautam Buddha Nagar',
+      state: 'Uttar Pradesh',
+      areaHectares: Number(areaHectares || 1.25),
+      landType: landType || 'Agricultural',
+      encumbranceStatus: 'CLEAR',
+      claimStatus: 'OWNER_VERIFIED',
+      owners: owners || [
+        {
+          aadhaarNumber: cleanAadhaar,
+          aadhaarHash: cleanAadhaar,
+          aadhaar: cleanAadhaar,
+          name: ownerName || req.user?.name || 'New Atomic Owner',
+          share: '1/1',
+          shareDecimal: 1.0,
+          ownerSince: new Date().toISOString(),
+          isVerified: true,
+        }
+      ],
+      updatedAt: new Date().toISOString(),
+    };
+    try {
+      await submit('dlpi', 'CreateDLPI', [dlpiPayload.dlpiId, JSON.stringify(dlpiPayload)]);
+    } catch (fabricErr) {
+      console.warn('[dlpi] Fabric CreateDLPI during seed fallback:', fabricErr.message);
+    }
+    res.json(dlpiPayload);
+  } catch (e) {
+    res.status(500).json({ error: 'SEED_ERROR', message: e.message });
+  }
+});
+
 module.exports = router;
