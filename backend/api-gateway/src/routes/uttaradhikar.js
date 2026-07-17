@@ -144,6 +144,12 @@ router.post(
             message: `Parcel ${dlpiId} does not exist on the blockchain. A Patwari must register the land record first before succession can be initiated.`,
           });
         }
+        if (dlpi.claimStatus === 'TRANSFERRED' || dlpi.claimStatus === 'MUTATED_AND_TRANSFERRED') {
+          return res.status(403).json({
+            error: 'PROPERTY_ALREADY_TRANSFERRED',
+            message: `Succession Rejected! Parcel ${dlpiId} has already been transferred/sold by the living owner prior to completion (` + dlpi.claimStatus + `). A property transferred during the owner's lifetime is no longer part of their estate and cannot be claimed by legal heirs even upon death certificate upload.`,
+          });
+        }
         if (dlpi.claimStatus !== 'OWNER_VERIFIED') {
           return res.status(403).json({
             error: 'PARCEL_NOT_VERIFIED',
@@ -153,8 +159,8 @@ router.post(
         const isOwner = (dlpi.owners || []).some(o => matchAadhaar(o.aadhaarHash || o.aadhaar || o.aadhaarRaw, deceasedAadhaarHash));
         if (!isOwner) {
           return res.status(403).json({
-            error: 'DECEASED_NOT_OWNER',
-            message: `The deceased (${deceasedAadhaarHash}) is not a registered owner of parcel ${dlpiId}. Succession can only be initiated by the actual on-chain owner's legal heir.`,
+            error: 'DECEASED_NOT_CURRENT_OWNER',
+            message: `Succession Rejected! The deceased (${deceasedAadhaarHash}) is not the current registered owner of parcel ${dlpiId}. If the property was transferred or sold prior to death, it cannot be inherited via Virasat.`,
           });
         }
       } catch (preFlightErr) {
@@ -368,6 +374,32 @@ router.post(
 
       // 2. Format data for the Mutation Manager
       const sCase = result;
+
+      // ── ACID TITLE CHECK BEFORE MUTATION EXECUTION ──
+      try {
+        const dlpi = await evaluate('dlpi', 'GetDLPI', [sCase.dlpiId]);
+        if (dlpi) {
+          if (dlpi.claimStatus === 'TRANSFERRED' || dlpi.claimStatus === 'MUTATED_AND_TRANSFERRED') {
+            return res.status(403).json({
+              error: 'PROPERTY_ALREADY_TRANSFERRED',
+              message: `Execution Aborted! Parcel ${sCase.dlpiId} has already been transferred to a new buyer (` + dlpi.claimStatus + `). A living owner's property transfer overrides any pending heir nomination or succession claim.`
+            });
+          }
+          const deceasedHash = sCase.deceasedHash || sCase.deceasedAadhaarHash || '';
+          if (deceasedHash && (dlpi.owners || []).length > 0) {
+            const stillOwner = (dlpi.owners || []).some(o => matchAadhaar(o.aadhaarHash || o.aadhaar || o.aadhaarRaw, deceasedHash));
+            if (!stillOwner) {
+              return res.status(403).json({
+                error: 'DECEASED_NO_LONGER_OWNER',
+                message: `Execution Aborted! The deceased (${deceasedHash}) is no longer the registered owner of parcel ${sCase.dlpiId}. The property title has already transferred.`
+              });
+            }
+          }
+        }
+      } catch (preExecErr) {
+        if (preExecErr.status === 403) throw preExecErr;
+      }
+
       const currentOwnersJSON = JSON.stringify([{ aadhaarHash: sCase.deceasedHash || sCase.deceasedAadhaarHash || '' }]);
       const heirs = sCase.heirs || [];
       const newOwnersJSON = JSON.stringify(heirs.map(h => ({
