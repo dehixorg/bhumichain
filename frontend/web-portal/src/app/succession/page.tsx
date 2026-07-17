@@ -148,9 +148,11 @@ export default function SuccessionPage() {
     } catch (err: any) { toast.error('Approval failed: ' + (err?.message || 'Unknown')); }
   };
 
-  const approvedNoms = nominations.filter(n => n.status === 'APPROVED');
-  const pendingNoms = nominations.filter(n => n.status !== 'APPROVED');
+  const parcelNominations = nominations.filter(n => !selectedDlpiId || n.dlpiId === selectedDlpiId);
+  const approvedNoms = parcelNominations.filter(n => n.status === 'APPROVED');
+  const pendingNoms = parcelNominations.filter(n => n.status !== 'APPROVED');
   const isTehsildar = user?.role === 'tehsildar' || user?.role === 'collector';
+  const step2List = isTehsildar ? nominations : parcelNominations;
 
   // Step 3 handlers
   const handleUploadCRS = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -482,15 +484,15 @@ export default function SuccessionPage() {
                       </button>
                     </form>
                   </div>
-                  {nominations.length > 0 && (
+                  {parcelNominations.length > 0 && (
                     <div className="card">
                       <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-100">
                         <LayoutList className="w-4 h-4 text-[#0F4C81]" />
-                        <span className="font-semibold text-gray-800 text-sm">Submitted Nominations</span>
-                        <span className="ml-auto text-xs text-gray-400">{nominations.length}</span>
+                        <span className="font-semibold text-gray-800 text-sm">Submitted Nominations ({selectedDlpiId})</span>
+                        <span className="ml-auto text-xs text-gray-400">{parcelNominations.length}</span>
                       </div>
                       <div className="space-y-2">
-                        {nominations.map(n => (
+                        {parcelNominations.map(n => (
                           <div key={n.nominationId} className="flex items-center justify-between gap-2 p-3 bg-gray-50 rounded-lg border border-gray-100">
                             <div className="min-w-0">
                               <div className="font-semibold text-sm text-gray-800">{n.inheritorName}</div>
@@ -537,7 +539,7 @@ export default function SuccessionPage() {
                       </div>
                       {isTehsildar && <span className="ml-auto bg-purple-100 text-purple-700 text-xs font-bold px-2.5 py-1 rounded-full border border-purple-200">🏛 Tehsildar View</span>}
                     </div>
-                    {nominations.length === 0 ? (
+                    {step2List.length === 0 ? (
                       <div className="text-center py-10 text-gray-400">
                         <AlertTriangle className="w-8 h-8 mx-auto mb-2 opacity-40" />
                         <p className="text-sm">No nominations found.</p>
@@ -545,7 +547,7 @@ export default function SuccessionPage() {
                       </div>
                     ) : (
                       <div className="space-y-3">
-                        {nominations.map(n => (
+                        {step2List.map(n => (
                           <div key={n.nominationId} className={clsx('flex flex-col sm:flex-row items-start sm:items-center gap-3 p-4 rounded-xl border transition-all', n.status === 'APPROVED' ? 'bg-emerald-50 border-emerald-200' : 'bg-gray-50 border-gray-200')}>
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2">
