@@ -620,18 +620,39 @@ router.post(
           };
           fs.writeFileSync('/tmp/bhumichain_atomic_claims.json', JSON.stringify(claims, null, 2));
 
-          if (fs.existsSync('/tmp/bhumichain_seeded_parcels.json')) {
-            let seeded = JSON.parse(fs.readFileSync('/tmp/bhumichain_seeded_parcels.json', 'utf8'));
-            if (Array.isArray(seeded)) {
-              seeded = seeded.map(p => p.dlpiId === transferObj.dlpiId ? {
+          let seeded = [];
+          try { seeded = JSON.parse(fs.readFileSync('/tmp/bhumichain_seeded_parcels.json', 'utf8')); } catch(e) {}
+          if (!Array.isArray(seeded)) seeded = [];
+          let foundInSeeded = false;
+          seeded = seeded.map(p => {
+            if (p.dlpiId === transferObj.dlpiId) {
+              foundInSeeded = true;
+              return {
                 ...p,
                 claimStatus: 'OWNER_VERIFIED',
                 ownerName: transferObj.buyerName,
                 owners: [{ name: transferObj.buyerName, aadhaarHash: transferObj.buyerAadhaarHash }]
-              } : p);
-              fs.writeFileSync('/tmp/bhumichain_seeded_parcels.json', JSON.stringify(seeded, null, 2));
+              };
             }
+            return p;
+          });
+          if (!foundInSeeded) {
+            seeded.push({
+              dlpiId: transferObj.dlpiId,
+              khataNo: '102',
+              khasraNo: '1200/102',
+              gram: 'Gharbara',
+              tehsil: 'Dadri',
+              district: 'Gautam Buddha Nagar',
+              areaHectares: 1.2,
+              encumbranceStatus: 'CLEAR',
+              landType: 'Bhumidhari',
+              claimStatus: 'OWNER_VERIFIED',
+              ownerName: transferObj.buyerName,
+              owners: [{ name: transferObj.buyerName, aadhaarHash: transferObj.buyerAadhaarHash }]
+            });
           }
+          fs.writeFileSync('/tmp/bhumichain_seeded_parcels.json', JSON.stringify(seeded, null, 2));
         }
       } catch(e) {}
 

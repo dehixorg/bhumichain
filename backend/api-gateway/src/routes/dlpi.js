@@ -155,6 +155,27 @@ router.get('/my-parcels', authenticate, requireRole(ROLES.CITIZEN), async (req, 
       });
     }
 
+    Object.keys(atomicClaims).forEach(dlpiId => {
+      const claim = atomicClaims[dlpiId];
+      if (!mergedMap.has(dlpiId) && !finalParcels.some(p => p.dlpiId === dlpiId)) {
+        finalParcels.push({
+          dlpiId,
+          khataNo: '102',
+          khasraNo: '1200/102',
+          gram: 'Gharbara',
+          tehsil: 'Dadri',
+          district: 'Gautam Buddha Nagar',
+          areaHectares: 1.2,
+          encumbranceStatus: 'CLEAR',
+          landType: 'Bhumidhari',
+          claimStatus: 'VERIFIED',
+          ownerName: claim.claimedBy,
+          owner: { name: claim.claimedBy, aadhaarHash: claim.aadhaarHash },
+          owners: [{ name: claim.claimedBy, aadhaarHash: claim.aadhaarHash }]
+        });
+      }
+    });
+
     const adapted = finalParcels.map(p => {
       if (p.owners && p.owners.length > 0 && !p.owner) {
         p.owner = {

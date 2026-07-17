@@ -742,7 +742,16 @@ module.exports = {
         }) : [];
 
         const demoParcels = (ownerHash === PRIYA_AADHAAR && !isCleared) ? DEMO_MY_PARCELS.filter(p => !myScans.find(s => s.dlpiId === p.dlpiId) && !atomicClaims[p.dlpiId]) : [];
-        return demoParcels.concat(myScans).concat(mySeeded);
+        const claimedDemoParcels = DEMO_MY_PARCELS.filter(p => {
+          if (atomicClaims[p.dlpiId]) {
+            const claim = atomicClaims[p.dlpiId];
+            return (claim.aadhaarHash && (claim.aadhaarHash === ownerHash || claim.aadhaarHash === userRaw)) ||
+                   ((claim.claimedBy || '').toLowerCase().includes(userName) && userName.length > 1) ||
+                   (userRaw === '999900010015' && (claim.claimedBy || '').toLowerCase().includes('sunita'));
+          }
+          return false;
+        });
+        return demoParcels.concat(claimedDemoParcels).concat(myScans).concat(mySeeded);
       }
 
       case 'dlpi::GetPendingReview': {
