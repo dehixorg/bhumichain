@@ -784,8 +784,26 @@ module.exports = {
           consentSeller: false, consentBuyer: false, initiatedAt: new Date().toISOString(),
           ...DEMO_TRANSFER,
         };
-      case 'property-transfer::GetTransfer':
+      case 'property-transfer::GetTransferProposal':
+      case 'property-transfer::GetTransfer': {
+        try {
+          const fs = require('fs');
+          const mockT = JSON.parse(fs.readFileSync('/tmp/bhumichain_mock_transfers.json', 'utf8'));
+          if (Array.isArray(mockT)) {
+            const found = mockT.find(t => t.transferId === args[0]);
+            if (found) return { ...DEMO_TRANSFER, ...found };
+          }
+        } catch(e) {}
         return DEMO_TRANSFER;
+      }
+      case 'property-transfer::ApproveByPatwari':
+        return { success: true, status: 'PENDING_CI_APPROVAL' };
+      case 'property-transfer::ApproveByCI':
+        return { success: true, status: 'PENDING_SRO_EXECUTION' };
+      case 'property-transfer::ApproveBySRO':
+        return { success: true, status: 'PENDING_TEHSILDAR_APPROVAL' };
+      case 'property-transfer::ApproveByTehsildar':
+        return { success: true, status: 'COMPLETED' };
       case 'property-transfer::RecordConsent':
         return { transferId: args[0], partyType: args[1], consentedAt: new Date().toISOString(), status: 'CONSENT_RECORDED' };
       case 'property-transfer::RecordFraudScore':

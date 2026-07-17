@@ -303,16 +303,17 @@ router.get(
         else transfer = chainRes;
       } catch (e) {}
 
-      // Fallback to mock atomic disk if not found on-chain
-      if (!transfer) {
-        try {
-          const fs = require('fs');
-          const mockTransfers = JSON.parse(fs.readFileSync('/tmp/bhumichain_mock_transfers.json', 'utf8'));
-          if (Array.isArray(mockTransfers)) {
-            transfer = mockTransfers.find(t => t.transferId === req.params.transferId) || null;
+      // Always check and merge with mock atomic disk if present
+      try {
+        const fs = require('fs');
+        const mockTransfers = JSON.parse(fs.readFileSync('/tmp/bhumichain_mock_transfers.json', 'utf8'));
+        if (Array.isArray(mockTransfers)) {
+          const mockT = mockTransfers.find(t => t.transferId === req.params.transferId);
+          if (mockT) {
+            transfer = transfer ? { ...transfer, ...mockT } : mockT;
           }
-        } catch(e) {}
-      }
+        }
+      } catch(e) {}
 
       if (!transfer) return res.status(404).json({ error: 'TRANSFER_NOT_FOUND' });
       res.json(transfer);
