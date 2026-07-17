@@ -80,8 +80,15 @@ export default function SuccessionPage() {
   // Step 6
   const [isExecuting, setIsExecuting] = useState(false);
   const [executionResult, setExecutionResult] = useState<any>(null);
+  const [frontendError, setFrontendError] = useState('');
 
   const { triggerMock } = useWebSocket(DEMO_DLPI);
+
+  const parcelNominations = nominations.filter(n => !selectedDlpiId || n.dlpiId === selectedDlpiId);
+  const approvedNoms = parcelNominations.filter(n => n.status === 'APPROVED');
+  const pendingNoms = parcelNominations.filter(n => n.status !== 'APPROVED');
+  const isTehsildar = user?.role === 'tehsildar' || user?.role === 'collector';
+  const step2List = isTehsildar ? nominations : parcelNominations;
 
   useEffect(() => {
     const u = getUser(); setUser(u);
@@ -141,6 +148,7 @@ export default function SuccessionPage() {
 
   const handleSubmitHeirs = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFrontendError('');
     const valid = heirRows.filter(h => h.name.trim() && h.aadhaar.replace(/\D/g, '').length === 12);
     if (!selectedDlpiId) { toast.error('Select a property first.'); return; }
     if (!valid.length) { toast.error('Add at least one heir with a valid 12-digit Aadhaar.'); return; }
@@ -154,26 +162,29 @@ export default function SuccessionPage() {
       const nomArr = Array.isArray(noms) ? noms : (Array.isArray(noms?.nominations) ? noms.nominations : []);
       setNominations(nomArr);
       setStep('tehsildar_approval');
-    } catch (err: any) { toast.error('Failed: ' + (err?.message || 'Unknown')); }
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.response?.data?.error || err?.message || 'Unknown error submitting heirs';
+      setFrontendError(`[Step 1 Error] ${msg}`);
+      toast.error('Failed: ' + msg);
+    }
     finally { setIsSubmittingHeirs(false); }
   };
 
   // Step 2 handlers
   const approveNomination = async (id: string) => {
+    setFrontendError('');
     try {
       await approveInheritorNomination(id);
       toast.success('Tehsildar Approved! Heir can now upload documents.');
       const noms = await getInheritorNominations();
       const nomArr = Array.isArray(noms) ? noms : (Array.isArray(noms?.nominations) ? noms.nominations : []);
       setNominations(nomArr);
-    } catch (err: any) { toast.error('Approval failed: ' + (err?.message || 'Unknown')); }
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.response?.data?.error || err?.message || 'Unknown approval error';
+      setFrontendError(`[Step 2 Error] ${msg}`);
+      toast.error('Approval failed: ' + msg);
+    }
   };
-
-  const parcelNominations = nominations.filter(n => !selectedDlpiId || n.dlpiId === selectedDlpiId);
-  const approvedNoms = parcelNominations.filter(n => n.status === 'APPROVED');
-  const pendingNoms = parcelNominations.filter(n => n.status !== 'APPROVED');
-  const isTehsildar = user?.role === 'tehsildar' || user?.role === 'collector';
-  const step2List = isTehsildar ? nominations : parcelNominations;
 
   // Step 3 handlers
   const handleUploadCRS = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -228,7 +239,9 @@ export default function SuccessionPage() {
       triggerMock('scene3_mutation_alert');
       toast.success('Case created! eSign requests sent to all heirs.');
       setStep('esign_heirs');
-    } catch {
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.response?.data?.error || err?.message || 'Unknown initiation error';
+      setFrontendError(`[Step 4 Error] ${msg}`);
       const ct = citizenTokenRef.current; if (ct) setToken(ct);
       setHeirs(approvedNoms.map((n, i) => ({
         heirId: `HEIR-DYN-${i+1}`, name: n.inheritorName, aadhaarHash: n.inheritorAadhaarNumber,
@@ -237,7 +250,7 @@ export default function SuccessionPage() {
         share: `1/${approvedNoms.length}`, shareDecimal: 1/approvedNoms.length,
         hasConsented: false, hasObjected: false,
       })));
-      toast('Offline mode — eSigns recorded locally', { icon: 'ℹ️' });
+      toast.error('Initiation API Error: ' + msg);
       setStep('esign_heirs');
     } finally { setIsInitiating(false); }
   };
@@ -271,17 +284,20 @@ export default function SuccessionPage() {
   // Step 6 handler
   const handleExecuteBlockchain = async () => {
     setIsExecuting(true);
+    setFrontendError('');
     try {
       const result = await executeSuccession(caseData?.caseId || DEMO_DLPI);
       setExecutionResult(result);
       toast.success("🎉 Land divided on blockchain!");
       triggerMock('scene3_auto_mutation');
-    } catch {
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.response?.data?.error || err?.message || 'Unknown blockchain execution error';
+      setFrontendError(`[Step 6 Error] ${msg}`);
       setExecutionResult({
         status: 'AUTO_MUTATED', dlpiId: crsExtraction?.dlpiId || selectedDlpiId || DEMO_DLPI,
         heirs: heirs.map(h => ({ name: h.name, share: h.share || `1/${heirs.length}`, aadhaarHash: h.aadhaarHash })),
       });
-      toast.success('🎉 Land division recorded on-chain (demo mode).');
+      toast.error('Blockchain error: ' + msg);
     } finally { setIsExecuting(false); }
   };
 
@@ -337,6 +353,20 @@ export default function SuccessionPage() {
           {/* Main + Right panel */}
           <div className="flex-1 flex gap-6 p-6 overflow-y-auto">
             <div className="flex-1 min-w-0 space-y-5">
+              {frontendError && (
+                <div className="flex items-center justify-between gap-3 p-4 rounded-xl bg-red-50 border-2 border-red-500 text-red-900 shadow-md animate-bounce-once">
+                  <div className="flex items-center gap-3">
+                    <AlertTriangle className="w-6 h-6 text-red-600 shrink-0" />
+                    <div>
+                      <div className="font-bold text-sm">Exact Frontend / API Error:</div>
+                      <div className="text-xs font-mono mt-0.5 break-all">{frontendError}</div>
+                    </div>
+                  </div>
+                  <button onClick={() => setFrontendError('')} className="p-1.5 hover:bg-red-100 rounded-lg text-red-700 transition-colors">
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
               {/* ─── SUCCESSION DUAL-OPTION MODE BAR ─── */}
               {(step === 'add_heir' || step === 'upload_document') && (
                 <div className="bg-white rounded-2xl p-6 border border-gray-200/80 shadow-md">

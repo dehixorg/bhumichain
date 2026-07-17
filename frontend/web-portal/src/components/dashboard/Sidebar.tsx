@@ -57,7 +57,7 @@ export default function Sidebar({ demoMode }: Props = {}) {
   useEffect(() => { setUser(getUser()); }, []);
 
   const nav = user && isOfficer() ? NAV_OFFICER : NAV_CITIZEN;
-  const initials = user?.name?.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase() || 'U';
+  const initials = user?.name?.split(' ').filter(Boolean).map(w => w[0]).slice(0, 2).join('').toUpperCase() || 'U';
 
   return (
     <aside className="w-[220px] shrink-0 bg-white border-r border-gray-200 flex flex-col h-screen custom-scrollbar">

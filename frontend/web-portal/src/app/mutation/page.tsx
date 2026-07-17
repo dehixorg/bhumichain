@@ -55,22 +55,24 @@ function daysLeft(deadline: string | null): number | null {
 // ── Row ───────────────────────────────────────────────────────────────────────
 
 function MutationRow({ m, isCitizen }: { m: Mutation; isCitizen: boolean }) {
+  if (!m) return null;
   const status  = STATUS_CONFIG[m.status] ?? STATUS_CONFIG['ALERT_SENT'];
-  const Icon    = status.icon;
+  const Icon    = status?.icon || Send;
   const left    = daysLeft(m.objectionDeadline);
-  const typeKey = m.mutationType.replace('Virasat (', '').replace('Bikri (', '').replace(')', '');
+  const mutType = m.mutationType || 'Inheritance';
+  const typeKey = mutType.replace('Virasat (', '').replace('Bikri (', '').replace(')', '');
 
   return (
     <tr className="border-b border-gray-200 hover:bg-white/50 transition-colors">
       <td className="px-4 py-3">
-        <div className="font-mono text-[#0F4C81] text-xs font-semibold">{m.mutationId}</div>
-        <div className="text-gray-500 text-xs mt-0.5 font-mono">{m.dlpiId}</div>
+        <div className="font-mono text-[#0F4C81] text-xs font-semibold">{m.mutationId || 'MUT-UNKNOWN'}</div>
+        <div className="text-gray-500 text-xs mt-0.5 font-mono">{m.dlpiId || 'DLPI-UNKNOWN'}</div>
       </td>
       <td className="px-4 py-3">
         <div className={clsx('text-sm font-semibold', MUTATION_TYPE_COLOR[typeKey] ?? 'text-gray-600')}>
-          {m.mutationType}
+          {mutType}
         </div>
-        <div className="text-gray-500 text-xs">by {m.officerName}</div>
+        <div className="text-gray-500 text-xs">by {m.officerName || 'System'}</div>
       </td>
       <td className="px-4 py-3 text-sm">
         <div className="text-gray-700">{m.currentOwnerName}</div>
