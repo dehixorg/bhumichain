@@ -599,11 +599,34 @@ export default function SuccessionPage() {
               {/* STEP 3: UPLOAD DOCUMENT */}
               {step === 'upload_document' && (
                 <div className="space-y-5">
+                  <div className="bg-white rounded-2xl p-5 border border-gray-200 shadow-sm">
+                    <label className="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wider">
+                      🏛️ Select Land Parcel to Claim via Virasat (For which you are an Approved Inheritor)
+                    </label>
+                    {loadingParcels ? (
+                      <div className="flex items-center gap-2 text-gray-500 text-sm py-2"><Loader2 className="w-4 h-4 animate-spin text-[#0F4C81]" /> Loading your land holdings…</div>
+                    ) : (
+                      <select
+                        value={selectedDlpiId}
+                        onChange={e => setSelectedDlpiId(e.target.value)}
+                        className="w-full bg-gray-50 border border-gray-300 rounded-xl px-3.5 py-2.5 text-sm font-semibold text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0F4C81]/40 focus:bg-white transition-all"
+                      >
+                        {myParcels.map(p => {
+                          const isApprovedForParcel = nominations.some(n => n.dlpiId === p.dlpiId && n.status === 'APPROVED');
+                          return (
+                            <option key={p.dlpiId} value={p.dlpiId} className="text-gray-900 font-medium">
+                              {p.label} {isApprovedForParcel ? '— (Tehsildar Approved ✓)' : ''}
+                            </option>
+                          );
+                        })}
+                      </select>
+                    )}
+                  </div>
                   {approvedNoms.length > 0 && (
                     <div className="bg-emerald-900/80 border border-emerald-500/30 rounded-xl p-4 flex items-center gap-3">
                       <CheckCircle className="w-5 h-5 text-emerald-300 shrink-0" />
                       <div className="text-sm text-emerald-200">
-                        <strong className="text-white">Approved Heirs:</strong> {approvedNoms.map(n => n.inheritorName).join(', ')} — may upload death certificate for <strong>{approvedNoms[0]?.dlpiId}</strong>
+                        <strong className="text-white">Approved Heirs:</strong> {approvedNoms.map(n => n.inheritorName).join(', ')} — may upload death certificate for <strong>{selectedDlpiId || approvedNoms[0]?.dlpiId}</strong>
                       </div>
                     </div>
                   )}
