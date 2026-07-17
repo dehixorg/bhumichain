@@ -688,18 +688,32 @@ module.exports = {
         // Read executed mock cases to persist property mutations across restarts
         try {
           const cases = JSON.parse(fs.readFileSync('/tmp/bhumichain_mock_cases.json'));
-          cases.filter(c => c.status === 'EXECUTED').forEach(sc => {
-            if (!dynamicScans.find(s => s.dlpiId === sc.dlpiId)) {
-               const parcel = JSON.parse(JSON.stringify(DEMO_DLPI));
-               parcel.dlpiId = sc.dlpiId;
-               parcel.initialOwners = sc.heirs.map(h => ({
-                 name: h.name,
-                 aadhaarHash: h.aadhaarHash,
-                 share: h.share || h.finalShare,
-                 shareDecimal: h.shareDecimal || h.finalShareDec
-               }));
-               parcel.claimStatus = 'VERIFIED';
-               dynamicScans.push(parcel);
+          cases.filter(c => c.status === 'EXECUTED' || c.status === 'AUTO_MUTATED' || c.status === 'COMPLETED' || c.status === 'TEHSILDAR_APPROVED').forEach(sc => {
+            if (sc && sc.heirs) {
+              if (!dynamicScans.find(s => s.dlpiId === sc.dlpiId)) {
+                 const parcel = JSON.parse(JSON.stringify(DEMO_DLPI));
+                 parcel.dlpiId = sc.dlpiId;
+                 parcel.initialOwners = sc.heirs.map(h => ({
+                   name: h.name,
+                   aadhaarHash: h.aadhaarHash || h.aadhaar || '',
+                   aadhaar: h.aadhaar || h.aadhaarHash || '',
+                   share: h.share || h.finalShare || `1/${sc.heirs.length}`,
+                   shareDecimal: h.shareDecimal || h.finalShareDec || (1.0 / sc.heirs.length)
+                 }));
+                 parcel.claimStatus = 'VERIFIED';
+                 dynamicScans.push(parcel);
+              } else {
+                 const existing = dynamicScans.find(s => s.dlpiId === sc.dlpiId);
+                 if (existing) {
+                   existing.initialOwners = sc.heirs.map(h => ({
+                     name: h.name,
+                     aadhaarHash: h.aadhaarHash || h.aadhaar || '',
+                     aadhaar: h.aadhaar || h.aadhaarHash || '',
+                     share: h.share || h.finalShare || `1/${sc.heirs.length}`,
+                     shareDecimal: h.shareDecimal || h.finalShareDec || (1.0 / sc.heirs.length)
+                   }));
+                 }
+              }
             }
           });
         } catch(e) {}
@@ -710,8 +724,10 @@ module.exports = {
           if (!Array.isArray(ownersList) || ownersList.length === 0) return false;
           return ownersList.some(o => {
             const oHash = o.aadhaarHash || '';
+            const oRaw  = o.aadhaar || '';
             const oName = (o.name || '').toLowerCase();
             if (oHash && (oHash === ownerHash || oHash === userRaw)) return true;
+            if (oRaw && (oRaw === ownerHash || oRaw === userRaw)) return true;
             if (userName && oName && (oName.includes(userName) || userName.includes(oName))) return true;
             if (userRaw === '999900010010' && oName.includes('priya')) return true;
             if (userRaw === '999900010015' && oName.includes('sunita')) return true;
@@ -732,11 +748,14 @@ module.exports = {
         const mySeeded = Array.isArray(seededParcels) ? seededParcels.filter(p => {
           if (atomicClaims[p.dlpiId]) {
             const claim = atomicClaims[p.dlpiId];
-            return (claim.aadhaarHash && (claim.aadhaarHash === ownerHash || claim.aadhaarHash === userRaw)) ||
+            if (claim.heirs && Array.isArray(claim.heirs)) {
+              return claim.heirs.some(h => (h.aadhaarHash && (h.aadhaarHash === ownerHash || h.aadhaarHash === userRaw)) || (h.aadhaar && (h.aadhaar === ownerHash || h.aadhaar === userRaw)) || ((h.name || '').toLowerCase().includes(userName) && userName.length > 1));
+            }
+            return (claim.aadhaarHash && (claim.aadhaarHash.includes(ownerHash) || claim.aadhaarHash.includes(userRaw))) ||
                    ((claim.claimedBy || '').toLowerCase().includes(userName) && userName.length > 1);
           }
           const ownersList = p.owners || [];
-          return ownersList.some(o => (o.aadhaarHash && (o.aadhaarHash === ownerHash || o.aadhaarHash === userRaw)) || ((o.name || '').toLowerCase().includes(userName) && userName.length > 1)) ||
+          return ownersList.some(o => (o.aadhaarHash && (o.aadhaarHash === ownerHash || o.aadhaarHash === userRaw)) || (o.aadhaar && (o.aadhaar === ownerHash || o.aadhaar === userRaw)) || ((o.name || '').toLowerCase().includes(userName) && userName.length > 1)) ||
                  (userRaw === '999900010010' && (p.ownerName || '').toLowerCase().includes('priya')) ||
                  (userRaw === '999900010015' && (p.ownerName || '').toLowerCase().includes('sunita'));
         }) : [];
@@ -745,13 +764,34 @@ module.exports = {
         const claimedDemoParcels = DEMO_MY_PARCELS.filter(p => {
           if (atomicClaims[p.dlpiId]) {
             const claim = atomicClaims[p.dlpiId];
-            return (claim.aadhaarHash && (claim.aadhaarHash === ownerHash || claim.aadhaarHash === userRaw)) ||
+            if (claim.heirs && Array.isArray(claim.heirs)) {
+              return claim.heirs.some(h => (h.aadhaarHash && (h.aadhaarHash === ownerHash || h.aadhaarHash === userRaw)) || (h.aadhaar && (h.aadhaar === ownerHash || h.aadhaar === userRaw)) || ((h.name || '').toLowerCase().includes(userName) && userName.length > 1));
+            }
+            return (claim.aadhaarHash && (claim.aadhaarHash.includes(ownerHash) || claim.aadhaarHash.includes(userRaw))) ||
                    ((claim.claimedBy || '').toLowerCase().includes(userName) && userName.length > 1) ||
                    (userRaw === '999900010015' && (claim.claimedBy || '').toLowerCase().includes('sunita'));
           }
           return false;
         });
-        return demoParcels.concat(claimedDemoParcels).concat(myScans).concat(mySeeded);
+
+        // Also check if any succession case directly matched this heir and executed
+        let myExecutedCasesParcels = [];
+        try {
+          const mCases = JSON.parse(fs.readFileSync('/tmp/bhumichain_mock_cases.json', 'utf8')) || [];
+          mCases.filter(c => (c.status === 'EXECUTED' || c.status === 'AUTO_MUTATED' || c.status === 'COMPLETED' || c.status === 'TEHSILDAR_APPROVED') && c.heirs && c.heirs.some(h => (h.aadhaarHash && (h.aadhaarHash === ownerHash || h.aadhaarHash === userRaw)) || (h.aadhaar && (h.aadhaar === ownerHash || h.aadhaar === userRaw)) || ((h.name || '').toLowerCase().includes(userName) && userName.length > 1))).forEach(sc => {
+            if (!demoParcels.find(p => p.dlpiId === sc.dlpiId) && !claimedDemoParcels.find(p => p.dlpiId === sc.dlpiId) && !myScans.find(p => p.dlpiId === sc.dlpiId) && !mySeeded.find(p => p.dlpiId === sc.dlpiId)) {
+              myExecutedCasesParcels.push({
+                ...DEMO_DLPI,
+                dlpiId: sc.dlpiId,
+                claimStatus: 'OWNER_VERIFIED',
+                ownerName: sc.heirs.map(h => `${h.name} (${h.share || 'Heir'})`).join(', '),
+                owners: sc.heirs
+              });
+            }
+          });
+        } catch(e) {}
+
+        return demoParcels.concat(claimedDemoParcels).concat(myScans).concat(mySeeded).concat(myExecutedCasesParcels);
       }
 
       case 'dlpi::GetPendingReview': {
@@ -929,7 +969,7 @@ module.exports = {
           const bCases = JSON.parse(fs.readFileSync('/tmp/bhumichain_succession_cases.json'));
           cases = [...cases, ...Object.values(bCases || {})];
         } catch(e) {}
-        return cases.filter(c => ['HEIR_CONSENT_PENDING', 'PENDING_TEHSILDAR_APPROVAL', 'ALL_CONSENTED', 'PENDING_TEHSILDAR'].includes(c.status));
+        return cases.filter(c => c && ['AWAITING_CONSENTS', 'HEIR_CONSENT_PENDING', 'PENDING_TEHSILDAR_APPROVAL', 'ALL_CONSENTED', 'PENDING_TEHSILDAR', 'SUCCESSION_PENDING_TEHSILDAR', 'COURT_REFERRED'].includes(c.status));
       }
       case 'uttaradhikar::GetMyPendingSuccessions': {
         const myHash = args[0];
@@ -957,10 +997,10 @@ module.exports = {
         const fs = require('fs');
         let cases = [];
         try { cases = JSON.parse(fs.readFileSync('/tmp/bhumichain_mock_cases.json')); } catch(e) {}
-        const sc = cases.find(c => c.caseId === args[0]);
+        const sc = cases.find(c => c && c.caseId === args[0]);
         let returnedStatus = 'CONSENT_RECORDED';
         if (sc && sc.heirs) {
-          const heir = sc.heirs.find(h => h.aadhaarHash === args[1]);
+          const heir = sc.heirs.find(h => h.aadhaarHash === args[1] || h.aadhaar === args[1] || (args[1] && (String(args[1]).replace(/\D/g, '') === String(h.aadhaar || h.aadhaarHash).replace(/\D/g, ''))));
           if (heir) {
             heir.hasConsented = true;
             heir.consentedAt = new Date().toISOString();
@@ -970,7 +1010,7 @@ module.exports = {
             sc.status = 'PENDING_TEHSILDAR';
             returnedStatus = 'PENDING_TEHSILDAR_APPROVAL';
           }
-          fs.writeFileSync('/tmp/bhumichain_mock_cases.json', JSON.stringify(cases));
+          fs.writeFileSync('/tmp/bhumichain_mock_cases.json', JSON.stringify(cases, null, 2));
         }
         return { caseId: args[0], heirAadhaarHash: args[1], eSignTxHash: args[2], consentedAt: new Date().toISOString(), status: returnedStatus };
       }

@@ -590,6 +590,7 @@ export default function OfficerDashboardPage() {
                       <th className="px-4 py-2.5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Case ID</th>
                       <th className="px-4 py-2.5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Deceased Name</th>
                       <th className="px-4 py-2.5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Parcel DLPI</th>
+                      <th className="px-4 py-2.5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
                       <th className="px-4 py-2.5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Action</th>
                     </tr>
                   </thead>
@@ -597,24 +598,32 @@ export default function OfficerDashboardPage() {
                     {successionsQueue.map(item => (
                       <tr key={item.caseId} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
                         <td className="px-4 py-3 font-mono text-[#0F4C81] text-xs font-semibold">{item.caseId}</td>
-                        <td className="px-4 py-3 text-gray-900 text-sm font-semibold">{item.deceasedName}</td>
+                        <td className="px-4 py-3 text-gray-900 text-sm font-semibold">{item.deceasedName || item.deceasedHash || 'Deceased Owner'}</td>
                         <td className="px-4 py-3 text-gray-900 font-mono text-sm">{item.dlpiId}</td>
                         <td className="px-4 py-3">
-                           {user?.role === 'tehsildar' && (
+                          <span className={clsx(
+                            'px-2.5 py-1 text-xs font-semibold rounded-full',
+                            item.status === 'PENDING_TEHSILDAR' || item.status === 'PENDING_TEHSILDAR_APPROVAL' || item.status === 'SUCCESSION_PENDING_TEHSILDAR' ? 'bg-[#138808]/10 text-[#138808] border border-[#138808]/20' : 'bg-amber-50 text-amber-700 border border-amber-200'
+                          )}>
+                            {item.status === 'PENDING_TEHSILDAR' || item.status === 'PENDING_TEHSILDAR_APPROVAL' || item.status === 'SUCCESSION_PENDING_TEHSILDAR' ? 'Pending Tehsildar Final Approval' : (item.status || 'Awaiting Consents')}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                           {(user?.role === 'tehsildar' || user?.role === 'revenue_officer' || user?.role === 'collector' || user?.role === 'circle_inspector' || user?.role !== 'citizen') && (
                              <button
                                onClick={async () => {
                                  try {
                                    await executeSuccession(item.caseId);
-                                   toast.success('Succession Executed');
+                                   toast.success('Succession Executed & Mutated Successfully!');
                                    fetchQueue();
                                  } catch (e: any) {
-                                   toast.error('Failed to execute succession: ' + e.message);
+                                   toast.error('Failed to execute succession: ' + (e?.message || e));
                                  }
                                }}
-                               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors bg-[#138808] hover:bg-[#0e6306] text-white"
+                               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors bg-[#138808] hover:bg-[#0e6306] text-white shadow-sm"
                              >
-                               Execute
                                <CheckCircle className="w-3 h-3" />
+                               Execute Virasat
                              </button>
                            )}
                         </td>

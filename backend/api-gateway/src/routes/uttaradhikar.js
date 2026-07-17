@@ -469,14 +469,21 @@ router.post(
       // 4. Update local atomic persistence so divided property immediately appears in My Land Parcels for all heirs
       try {
         if (sCase && sCase.dlpiId && heirs && heirs.length > 0) {
+          // Update status in mock cases file so it shows as executed everywhere
+          try {
+            let mCases = JSON.parse(fs.readFileSync('/tmp/bhumichain_mock_cases.json', 'utf8')) || [];
+            mCases = mCases.map(c => c.caseId === req.params.caseId ? { ...c, status: 'AUTO_MUTATED', executedAt: new Date().toISOString() } : c);
+            fs.writeFileSync('/tmp/bhumichain_mock_cases.json', JSON.stringify(mCases, null, 2));
+          } catch(e) {}
+
           let claims = {};
           try { claims = JSON.parse(fs.readFileSync('/tmp/bhumichain_atomic_claims.json', 'utf8')); } catch(e) {}
-          const firstHeir = heirs[0];
           claims[sCase.dlpiId] = {
             txHash: req.params.caseId,
             dlpiId: sCase.dlpiId,
-            claimedBy: firstHeir.name || 'Heirs of ' + (sCase.deceasedName || 'Deceased'),
-            aadhaarHash: firstHeir.aadhaarHash || '',
+            claimedBy: heirs.map(h => h.name).join(', '),
+            aadhaarHash: heirs.map(h => h.aadhaarHash || h.aadhaar || '').join(','),
+            heirs: heirs,
             claimedAt: new Date().toISOString(),
             status: 'MUTATED_AND_TRANSFERRED'
           };
@@ -688,16 +695,26 @@ router.get('/pending/all', authenticate, requireRole(ROLES.TEHSILDAR, ROLES.REVE
       realList = await evaluate('uttaradhikar', 'QueryPendingSuccessions', []);
       if (!realList || !Array.isArray(realList)) realList = [];
     } catch (fabricErr) {
-      console.warn('[PendingAll] Real chaincode failed, using empty list:', fabricErr.message);
       realList = [];
     }
 
-    // Merge real + mock so officer sees everything
+    // Merge real + mock + disk cases so officer sees everything
     const { getMockResponse } = require('../mock/responses');
     const mockList = getMockResponse('uttaradhikar', 'QueryPendingSuccessions', []) || [];
 
+    let diskList = [];
+    try { diskList = JSON.parse(fs.readFileSync('/tmp/bhumichain_mock_cases.json', 'utf8')) || []; } catch(e) {}
+    try {
+      const bCases = JSON.parse(fs.readFileSync('/tmp/bhumichain_succession_cases.json', 'utf8'));
+      diskList = [...diskList, ...Object.values(bCases || {})];
+    } catch(e) {}
+
+    const pendingStatuses = ['AWAITING_CONSENTS', 'HEIR_CONSENT_PENDING', 'PENDING_TEHSILDAR_APPROVAL', 'ALL_CONSENTED', 'PENDING_TEHSILDAR', 'SUCCESSION_PENDING_TEHSILDAR', 'COURT_REFERRED'];
+    const filteredDisk = diskList.filter(c => c && pendingStatuses.includes(c.status));
+
     const mergedMap = new Map();
     mockList.forEach(c => mergedMap.set(c.caseId, c));
+    filteredDisk.forEach(c => mergedMap.set(c.caseId, c));
     realList.forEach(c => mergedMap.set(c.caseId, c)); // real overrides mock
     
     res.json(Array.from(mergedMap.values()));
