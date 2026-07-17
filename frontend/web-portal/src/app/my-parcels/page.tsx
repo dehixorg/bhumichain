@@ -197,9 +197,9 @@ export default function CitizenDashboard() {
   };
 
   // Aggregate stats
-  const totalParcels = parcels.length;
-  const verifiedParcels = parcels.filter(p => p.claimStatus === 'OWNER_VERIFIED' || p.claimStatus === 'VERIFIED').length;
-  const totalArea = parcels.reduce((acc, p) => acc + (p.areaHectares || 0), 0).toFixed(2);
+  const totalParcels = parcels.length || 0;
+  const verifiedParcels = parcels.filter(p => p && (p.claimStatus === 'OWNER_VERIFIED' || p.claimStatus === 'VERIFIED')).length || 0;
+  const totalArea = parcels.reduce((acc, p) => acc + (Number(p?.areaHectares) || 0), 0).toFixed(2);
 
   const handleNyayaSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -422,22 +422,22 @@ export default function CitizenDashboard() {
                           </div>
                           <div>
                             <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Area</div>
-                            <div className="text-sm font-bold text-gray-900">{p.areaHectares.toFixed(4)} Ha</div>
+                            <div className="text-sm font-bold text-gray-900">{Number(p?.areaHectares || 0).toFixed(4)} Ha</div>
                           </div>
                           <div>
                             <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Ownership</div>
                             <div className="text-sm font-bold text-[#0F4C81]">
-                              {p.ownershipType === 'JOINT' || (p.owners && p.owners.length > 1) ? 'Joint' : 'Sole'}
-                              {p.owners && p.owners.length > 0 && p.owners[0].share && (
+                              {p?.ownershipType === 'JOINT' || (p?.owners && p.owners.length > 1) ? 'Joint' : 'Sole'}
+                              {p?.owners && p.owners.length > 0 && p.owners[0]?.share && (
                                 <span className="text-xs text-gray-500 ml-1 font-medium">
                                   ({(() => {
                                     const share = p.owners[0].share;
-                                    if (share.includes('/')) {
+                                    if (typeof share === 'string' && share.includes('/')) {
                                       const [num, den] = share.split('/');
                                       const percent = (parseInt(num) / parseInt(den)) * 100;
                                       return !isNaN(percent) ? `${percent.toFixed(2)}%` : share;
                                     }
-                                    return share;
+                                    return share || '100%';
                                   })()})
                                 </span>
                               )}
