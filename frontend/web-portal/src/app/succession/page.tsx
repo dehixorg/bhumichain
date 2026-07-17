@@ -496,9 +496,21 @@ export default function SuccessionPage() {
                               <div className="font-semibold text-sm text-gray-800">{n.inheritorName}</div>
                               <div className="text-xs text-gray-500 font-mono">{n.dlpiId} · Aadhaar: XXXX-{n.inheritorAadhaarNumber?.slice(8)}</div>
                             </div>
-                            {n.status === 'APPROVED'
-                              ? <span className="flex items-center gap-1 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full"><CheckCircle className="w-3.5 h-3.5" /> Approved</span>
-                              : <span className="text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-full">Pending</span>}
+                            {n.status === 'APPROVED' ? (
+                              <span className="flex items-center gap-1 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full shrink-0"><CheckCircle className="w-3.5 h-3.5" /> Approved</span>
+                            ) : (
+                              <div className="flex items-center gap-2 shrink-0">
+                                <button
+                                  type="button"
+                                  onClick={() => approveNomination(n.nominationId)}
+                                  className="bg-[#0F4C81] hover:bg-[#0a3860] text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-sm flex items-center gap-1.5 transition-colors cursor-pointer"
+                                >
+                                  <BadgeCheck className="w-4 h-4 text-amber-300" />
+                                  Approve (Tehsildar)
+                                </button>
+                                <span className="text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-1 rounded-full hidden sm:inline">Pending</span>
+                              </div>
+                            )}
                           </div>
                         ))}
                       </div>

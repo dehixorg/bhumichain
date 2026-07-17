@@ -283,15 +283,17 @@ export default function OfficerDashboardPage() {
   const [tab, setTab]       = useState<TabKey>('all');
   const [transfersQueue, setTransfersQueue] = useState<any[]>([]);
   const [successionsQueue, setSuccessionsQueue] = useState<any[]>([]);
+  const [nominationsQueue, setNominationsQueue] = useState<any[]>([]);
 
   const fetchQueue = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
-      const [resDlpi, resTransfers, resSuccessions] = await Promise.all([
+      const [resDlpi, resTransfers, resSuccessions, resNominations] = await Promise.all([
         apiFetch('/api/dlpi/pending-review'),
         apiFetch('/api/transfer/pending/all').catch(() => ({ ok: false, json: async () => [] })),
-        apiFetch('/api/succession/pending/all').catch(() => ({ ok: false, json: async () => [] }))
+        apiFetch('/api/succession/pending/all').catch(() => ({ ok: false, json: async () => [] })),
+        apiFetch('/api/succession/nominations').catch(() => ({ ok: false, json: async () => [] }))
       ]);
       
       const dlpiData = await resDlpi.json();
@@ -306,6 +308,11 @@ export default function OfficerDashboardPage() {
       if (resSuccessions.ok) {
         const successionsData = await resSuccessions.json();
         setSuccessionsQueue(successionsData);
+      }
+
+      if (resNominations.ok) {
+        const nominationsData = await resNominations.json();
+        setNominationsQueue(Array.isArray(nominationsData) ? nominationsData.filter((n: any) => n.status !== 'APPROVED') : []);
       }
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Could not load queue');
@@ -467,6 +474,67 @@ export default function OfficerDashboardPage() {
               </div>
             )}
           </div>
+
+          {/* Pending Virasat Heir Nominations Queue */}
+          {nominationsQueue.length > 0 && (
+            <div className="bg-white border border-gray-200 rounded-xl overflow-hidden mt-6 shadow-sm">
+              <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3 bg-amber-500/10">
+                <div className="flex items-center gap-2">
+                  <Users className="w-4 h-4 text-amber-700" />
+                  <h2 className="text-sm font-bold text-gray-900">Pending Virasat Heir Nominations (Option 1)</h2>
+                </div>
+                <span className="text-xs bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded-full">{nominationsQueue.length} Awaiting Approval</span>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-gray-100 bg-gray-50">
+                      <th className="px-4 py-2.5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Nomination ID</th>
+                      <th className="px-4 py-2.5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Parcel DLPI</th>
+                      <th className="px-4 py-2.5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Inheritor Name</th>
+                      <th className="px-4 py-2.5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
+                      <th className="px-4 py-2.5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {nominationsQueue.map((item: any) => (
+                      <tr key={item.nominationId} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                        <td className="px-4 py-3 font-mono text-[#0F4C81] text-xs font-semibold">{item.nominationId}</td>
+                        <td className="px-4 py-3 text-gray-900 font-mono text-sm">{item.dlpiId}</td>
+                        <td className="px-4 py-3 text-gray-900 font-semibold text-sm">
+                          {item.inheritorName}
+                          <div className="text-xs text-gray-400 font-normal">XXXX-{item.inheritorAadhaarNumber?.slice(8)}</div>
+                        </td>
+                        <td className="px-4 py-3 text-xs text-amber-700 font-semibold">{item.status}</td>
+                        <td className="px-4 py-3">
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              try {
+                                const res = await apiFetch(`/api/succession/nomination/${item.nominationId}/approve`, { method: 'POST' });
+                                if (res.ok) {
+                                  toast.success('Heir Nomination Approved!');
+                                  fetchQueue();
+                                } else {
+                                  toast.error('Failed to approve nomination');
+                                }
+                              } catch (e: any) {
+                                toast.error('Error approving: ' + e.message);
+                              }
+                            }}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors bg-[#0F4C81] hover:bg-[#0a3860] text-white cursor-pointer shadow-sm"
+                          >
+                            <CheckCircle className="w-3.5 h-3.5 text-amber-300" />
+                            Approve Heir
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
 
           {/* Pending Transfers Queue */}
           {transfersQueue.length > 0 && (
