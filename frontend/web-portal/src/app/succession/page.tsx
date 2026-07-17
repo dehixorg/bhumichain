@@ -14,7 +14,7 @@ import toast from 'react-hot-toast';
 import {
   Users, Shield, CheckCircle, Zap, FileText, Info, Clock,
   AlertTriangle, Upload, Scan, Database, UserPlus, BadgeCheck,
-  ArrowRight, Loader2, Landmark, LayoutList, X, Plus,
+  ArrowRight, Loader2, Landmark, LayoutList, X, Plus, Lock,
 } from 'lucide-react';
 import clsx from 'clsx';
 import { format } from 'date-fns';
@@ -311,49 +311,57 @@ export default function SuccessionPage() {
           {/* Main + Right panel */}
           <div className="flex-1 flex gap-6 p-6 overflow-y-auto">
             <div className="flex-1 min-w-0 space-y-5">
-              {/* ─── SUCCESSION DUAL-OPTION MODE BAR (ALWAYS ACCESSIBLE AT TOP OF STEP 1 & STEP 3) ─── */}
+              {/* ─── SUCCESSION DUAL-OPTION MODE BAR ─── */}
               {(step === 'add_heir' || step === 'upload_document') && (
-                <div className="bg-white rounded-2xl p-5 border border-gray-200 shadow-md">
-                  <div className="flex items-center justify-between gap-2 mb-3.5 pb-3 border-b border-gray-100">
-                    <div className="flex items-center gap-2">
-                      <div className="bg-[#0F4C81] p-1.5 rounded-lg text-white"><Landmark className="w-4 h-4" /></div>
+                <div className="bg-white rounded-2xl p-6 border border-gray-200/80 shadow-md">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-5 pb-4 border-b border-gray-100">
+                    <div className="flex items-center gap-3">
+                      <div className="bg-[#0F4C81] p-2.5 rounded-xl text-white shadow-sm"><Landmark className="w-5 h-5" /></div>
                       <div>
-                        <h3 className="font-bold text-gray-900 text-sm">Succession & Virasat Flow Selection</h3>
-                        <p className="text-xs text-gray-500">Choose between mandatory heir nomination (Option 1) and death certificate upload (Option 2)</p>
+                        <h2 className="font-extrabold text-gray-900 text-base">Select Virasat (Succession) Action</h2>
+                        <p className="text-xs text-gray-500 mt-0.5">Complete Option 1 first to get Tehsildar verification, which unlocks Option 2 for Death Certificate OCR.</p>
                       </div>
                     </div>
-                    <span className="text-xs font-semibold px-2.5 py-1 bg-blue-50 text-[#0F4C81] rounded-full border border-blue-200/60">
-                      Hindu Succession Act 2005 Compliant
+                    <span className="text-xs font-bold px-3 py-1 bg-blue-50 text-[#0F4C81] rounded-full border border-blue-200/60 shadow-xs shrink-0">
+                      ⚖️ Hindu Succession Act 2005
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
                     {/* OPTION 1: NOMINATE LEGAL HEIRS */}
                     <div
                       onClick={() => setStep('add_heir')}
                       className={clsx(
-                        "p-4 rounded-xl border-2 transition-all cursor-pointer flex flex-col justify-between relative overflow-hidden group shadow-sm",
+                        "p-5 rounded-2xl border-2 transition-all cursor-pointer flex flex-col justify-between shadow-sm relative overflow-hidden group",
                         step === 'add_heir'
-                          ? "bg-gradient-to-br from-[#0F4C81] to-[#1e3a8a] border-[#0F4C81] text-white shadow-lg shadow-blue-900/20"
+                          ? "bg-gradient-to-br from-[#0F4C81] via-[#155a96] to-[#1e3a8a] border-[#0F4C81] text-white shadow-lg ring-2 ring-[#0F4C81]/30"
                           : "bg-gray-50 hover:bg-gray-100/80 border-gray-200 text-gray-800"
                       )}>
-                      <div className="flex items-start justify-between gap-2 mb-2">
-                        <div className="flex items-center gap-2 font-bold text-base">
-                          <UserPlus className={clsx("w-5 h-5 shrink-0", step === 'add_heir' ? "text-amber-300" : "text-[#0F4C81]")} />
-                          <span>Option 1 — Nominate Legal Heirs</span>
+                      <div>
+                        <div className="flex items-center justify-between gap-2 mb-3">
+                          <span className={clsx(
+                            "text-[11px] font-extrabold uppercase px-3 py-1 rounded-full tracking-wider shadow-xs",
+                            step === 'add_heir' ? "bg-amber-400 text-gray-950 font-black" : "bg-[#0F4C81]/15 text-[#0F4C81]"
+                          )}>
+                            ⭐ Option 1 (Mandatory)
+                          </span>
+                          {step === 'add_heir' && (
+                            <span className="flex items-center gap-1 text-xs font-bold text-emerald-300 bg-white/10 px-2.5 py-0.5 rounded-full border border-white/20">
+                              <CheckCircle className="w-3.5 h-3.5" /> Active Form
+                            </span>
+                          )}
                         </div>
-                        <span className={clsx(
-                          "text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full tracking-wider shrink-0",
-                          step === 'add_heir' ? "bg-amber-400 text-gray-950" : "bg-[#0F4C81]/15 text-[#0F4C81]"
-                        )}>
-                          Mandatory First Step
-                        </span>
+                        <div className="flex items-center gap-2.5 font-bold text-base mb-2">
+                          <UserPlus className={clsx("w-5 h-5 shrink-0", step === 'add_heir' ? "text-amber-300" : "text-[#0F4C81]")} />
+                          <span>Nominate Legal Heirs</span>
+                        </div>
+                        <p className={clsx("text-xs leading-relaxed", step === 'add_heir' ? "text-blue-100" : "text-gray-600")}>
+                          Submit full name & 12-digit Aadhaar of all legal heirs for your property. Must be verified & approved by Tehsildar first.
+                        </p>
                       </div>
-                      <p className={clsx("text-xs leading-relaxed mt-1", step === 'add_heir' ? "text-blue-100" : "text-gray-600")}>
-                        Submit full name & 12-digit Aadhaar of each legal heir for your property. Must be approved by Tehsildar before proceeding.
-                      </p>
-                      <div className={clsx("mt-3 flex items-center gap-1.5 text-xs font-bold pt-2 border-t", step === 'add_heir' ? "border-white/20 text-amber-300" : "border-gray-200 text-[#0F4C81]")}>
-                        {step === 'add_heir' ? "✓ Active Form Below" : "Click to Open Heir Nomination →"}
+                      <div className={clsx("mt-4 flex items-center justify-between text-xs font-bold pt-3 border-t", step === 'add_heir' ? "border-white/20 text-amber-300" : "border-gray-200 text-[#0F4C81]")}>
+                        <span>{step === 'add_heir' ? "Filling Form Below ↓" : "Switch to Option 1 →"}</span>
+                        <ArrowRight className="w-4 h-4" />
                       </div>
                     </div>
 
@@ -364,42 +372,48 @@ export default function SuccessionPage() {
                         if (isApprovedHeir) {
                           setStep('upload_document');
                         } else {
-                          toast.error("Option 2 is locked! You must first submit Option 1 (Nominate Legal Heirs) and get Tehsildar approval before you can upload the Death Certificate.");
+                          toast.error("Option 2 is locked! You must first submit Option 1 (Nominate Legal Heirs) and get Tehsildar approval before uploading the Death Certificate.");
                         }
                       }}
                       className={clsx(
-                        "p-4 rounded-xl border-2 transition-all flex flex-col justify-between relative overflow-hidden shadow-sm",
+                        "p-5 rounded-2xl border-2 transition-all flex flex-col justify-between shadow-sm relative overflow-hidden",
                         step === 'upload_document'
-                          ? "bg-gradient-to-br from-emerald-800 to-emerald-950 border-emerald-500 text-white shadow-lg shadow-emerald-900/20 cursor-pointer"
+                          ? "bg-gradient-to-br from-emerald-800 via-emerald-900 to-emerald-950 border-emerald-500 text-white shadow-lg ring-2 ring-emerald-500/30 cursor-pointer"
                           : (approvedNoms.length > 0 || isTehsildar)
-                            ? "bg-emerald-50 hover:bg-emerald-100/80 border-emerald-300 text-emerald-950 cursor-pointer"
-                            : "bg-gray-100 border-gray-300/80 text-gray-400 cursor-not-allowed opacity-80"
+                            ? "bg-emerald-50/80 hover:bg-emerald-100 border-emerald-300 text-emerald-950 cursor-pointer"
+                            : "bg-gray-100/90 border-gray-300/80 text-gray-500 cursor-not-allowed opacity-80"
                       )}>
-                      <div className="flex items-start justify-between gap-2 mb-2">
-                        <div className="flex items-center gap-2 font-bold text-base">
-                          <Upload className={clsx("w-5 h-5 shrink-0", step === 'upload_document' ? "text-emerald-300" : (approvedNoms.length > 0 || isTehsildar) ? "text-emerald-700" : "text-gray-400")} />
-                          <span>Option 2 — Upload Death Cert</span>
-                        </div>
-                        {(approvedNoms.length > 0 || isTehsildar) ? (
+                      <div>
+                        <div className="flex items-center justify-between gap-2 mb-3">
                           <span className={clsx(
-                            "text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full tracking-wider flex items-center gap-1 shrink-0",
-                            step === 'upload_document' ? "bg-emerald-400 text-gray-950" : "bg-emerald-600 text-white"
+                            "text-[11px] font-extrabold uppercase px-3 py-1 rounded-full tracking-wider flex items-center gap-1.5 shadow-xs",
+                            step === 'upload_document' 
+                              ? "bg-emerald-400 text-gray-950 font-black" 
+                              : (approvedNoms.length > 0 || isTehsildar)
+                                ? "bg-emerald-600 text-white font-bold"
+                                : "bg-gray-300 text-gray-700 font-bold"
                           )}>
-                            <CheckCircle className="w-3 h-3" /> Unlocked
+                            {(approvedNoms.length > 0 || isTehsildar) ? <><CheckCircle className="w-3.5 h-3.5" /> Option 2 (Unlocked)</> : <><Lock className="w-3.5 h-3.5" /> Option 2 (Locked)</>}
                           </span>
-                        ) : (
-                          <span className="bg-gray-200 text-gray-600 border border-gray-300 font-bold text-[10px] uppercase px-2.5 py-0.5 rounded-full tracking-wider flex items-center gap-1 shrink-0">
-                            🔒 Locked
-                          </span>
-                        )}
+                          {step === 'upload_document' && (
+                            <span className="flex items-center gap-1 text-xs font-bold text-emerald-300 bg-white/10 px-2.5 py-0.5 rounded-full border border-white/20">
+                              <CheckCircle className="w-3.5 h-3.5" /> Active Form
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2.5 font-bold text-base mb-2">
+                          <Upload className={clsx("w-5 h-5 shrink-0", step === 'upload_document' ? "text-emerald-300" : (approvedNoms.length > 0 || isTehsildar) ? "text-emerald-700" : "text-gray-400")} />
+                          <span>Upload Death Certificate</span>
+                        </div>
+                        <p className={clsx("text-xs leading-relaxed", step === 'upload_document' ? "text-emerald-100" : (approvedNoms.length > 0 || isTehsildar) ? "text-emerald-900/80" : "text-gray-500")}>
+                          {(approvedNoms.length > 0 || isTehsildar)
+                            ? "Tehsildar has verified your heir status! Upload official Death Certificate for AI OCR & equal coparcenary share division."
+                            : "🔒 Requires Tehsildar approval from Option 1 first. Once verified, this card unlocks to allow Death Certificate upload."}
+                        </p>
                       </div>
-                      <p className={clsx("text-xs leading-relaxed mt-1", step === 'upload_document' ? "text-emerald-100" : (approvedNoms.length > 0 || isTehsildar) ? "text-emerald-900/80" : "text-gray-500")}>
-                        {(approvedNoms.length > 0 || isTehsildar)
-                          ? "Your heir nomination is Tehsildar-Approved! Click to upload Death Certificate & run AI OCR to calculate equal shares."
-                          : "🔒 Locked — Only unlocked after Tehsildar reviews and approves your legal heir nomination from Option 1."}
-                      </p>
-                      <div className={clsx("mt-3 flex items-center gap-1.5 text-xs font-bold pt-2 border-t", step === 'upload_document' ? "border-emerald-400/30 text-emerald-300" : (approvedNoms.length > 0 || isTehsildar) ? "border-emerald-200 text-emerald-800" : "border-gray-200 text-gray-400")}>
-                        {step === 'upload_document' ? "✓ Active Form Below" : (approvedNoms.length > 0 || isTehsildar) ? "Click to Open Death Cert Upload →" : "🔒 Requires Tehsildar Approval First"}
+                      <div className={clsx("mt-4 flex items-center justify-between text-xs font-bold pt-3 border-t", step === 'upload_document' ? "border-emerald-400/30 text-emerald-300" : (approvedNoms.length > 0 || isTehsildar) ? "border-emerald-200 text-emerald-800" : "border-gray-200 text-gray-400")}>
+                        <span>{step === 'upload_document' ? "Uploading Form Below ↓" : (approvedNoms.length > 0 || isTehsildar) ? "Switch to Option 2 →" : "🔒 Complete Option 1 First"}</span>
+                        {(approvedNoms.length > 0 || isTehsildar) ? <ArrowRight className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
                       </div>
                     </div>
                   </div>
@@ -409,61 +423,61 @@ export default function SuccessionPage() {
               {/* STEP 1: ADD HEIR */}
               {step === 'add_heir' && (
                 <div className="space-y-5">
-                  <div className="bg-gradient-to-br from-[#0F4C81] to-[#1e3a8a] text-white rounded-xl shadow-xl p-6 border border-blue-400/30">
-                    <div className="flex items-center gap-3 mb-5 pb-4 border-b border-white/15">
-                      <div className="bg-white/15 p-2.5 rounded-lg border border-white/20"><UserPlus className="w-6 h-6 text-blue-200" /></div>
+                  <div className="bg-white rounded-2xl shadow-md p-6 border border-gray-200/80">
+                    <div className="flex items-center gap-3 mb-5 pb-4 border-b border-gray-100">
+                      <div className="bg-[#0F4C81]/10 p-2.5 rounded-xl"><UserPlus className="w-6 h-6 text-[#0F4C81]" /></div>
                       <div>
-                        <h2 className="text-lg font-bold">Step 1 — Nominate Legal Heirs</h2>
-                        <p className="text-xs text-blue-200 mt-0.5">Add each heir's full name and 12-digit Aadhaar. Sent to Tehsildar for approval.</p>
+                        <h2 className="text-lg font-bold text-gray-900">Step 1 — Nominate Legal Heirs</h2>
+                        <p className="text-xs text-gray-500 mt-0.5">Add each heir's full name and 12-digit Aadhaar. Sent to Tehsildar for approval.</p>
                       </div>
-                      <span className="ml-auto bg-amber-500/20 text-amber-300 border border-amber-400/30 text-xs font-semibold px-3 py-1 rounded-full">Tehsildar Workflow</span>
+                      <span className="ml-auto bg-amber-500/15 text-amber-800 border border-amber-400/30 text-xs font-semibold px-3 py-1 rounded-full">Tehsildar Workflow</span>
                     </div>
                     <form onSubmit={handleSubmitHeirs} className="space-y-5">
                       <div>
-                        <label className="block text-xs font-semibold text-blue-200 mb-1.5 uppercase tracking-wider">Select Property (DLPI)</label>
+                        <label className="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wider">Select Property (DLPI)</label>
                         {loadingParcels ? (
-                          <div className="flex items-center gap-2 text-blue-300 text-sm py-2"><Loader2 className="w-4 h-4 animate-spin" /> Loading your land holdings…</div>
+                          <div className="flex items-center gap-2 text-gray-500 text-sm py-2"><Loader2 className="w-4 h-4 animate-spin text-[#0F4C81]" /> Loading your land holdings…</div>
                         ) : (
                           <select value={selectedDlpiId} onChange={e => setSelectedDlpiId(e.target.value)}
-                            className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-white/40">
+                            className="w-full bg-gray-50 border border-gray-300 rounded-xl px-3.5 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0F4C81]/40 focus:bg-white transition-all">
                             {myParcels.map(p => <option key={p.dlpiId} value={p.dlpiId} className="text-gray-900">{p.label}</option>)}
                           </select>
                         )}
                         {myParcels.length === 1 && myParcels[0].dlpiId === DEMO_DLPI && (
-                          <p className="text-xs text-amber-300/80 mt-1.5 flex items-center gap-1"><Info className="w-3.5 h-3.5" /> Showing demo parcel — your actual parcels load when logged in as citizen</p>
+                          <p className="text-xs text-amber-700 mt-1.5 flex items-center gap-1"><Info className="w-3.5 h-3.5 shrink-0" /> Showing demo parcel — your actual parcels load dynamically when logged in</p>
                         )}
                       </div>
                       <div>
-                        <label className="block text-xs font-semibold text-blue-200 mb-2 uppercase tracking-wider">Legal Heirs</label>
+                        <label className="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wider">Legal Heirs</label>
                         <div className="space-y-3">
                           {heirRows.map((heir, idx) => (
-                            <div key={idx} className="flex gap-3 items-end bg-white/10 border border-white/15 rounded-xl p-4">
+                            <div key={idx} className="flex gap-3 items-end bg-gray-50 border border-gray-200 rounded-xl p-4 transition-all">
                               <div className="flex-1">
-                                <label className="block text-xs text-blue-200 mb-1">Full Name</label>
+                                <label className="block text-xs font-semibold text-gray-700 mb-1">Full Name</label>
                                 <input type="text" required placeholder="e.g. Ankur Singh" value={heir.name}
                                   onChange={e => updateHeirRow(idx, 'name', e.target.value)}
-                                  className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-sm text-white placeholder-blue-300/60 focus:outline-none focus:ring-2 focus:ring-white/40" />
+                                  className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#0F4C81]/40 transition-all" />
                               </div>
                               <div className="flex-1">
-                                <label className="block text-xs text-blue-200 mb-1">12-Digit Aadhaar</label>
+                                <label className="block text-xs font-semibold text-gray-700 mb-1">12-Digit Aadhaar</label>
                                 <input type="text" required maxLength={12} placeholder="999900010099" value={heir.aadhaar}
                                   onChange={e => updateHeirRow(idx, 'aadhaar', e.target.value.replace(/\D/g, ''))}
-                                  className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-sm text-white font-mono placeholder-blue-300/60 focus:outline-none focus:ring-2 focus:ring-white/40" />
-                                {heir.aadhaar.length > 0 && heir.aadhaar.length < 12 && <p className="text-xs text-red-300 mt-1">{12 - heir.aadhaar.length} more digits</p>}
-                                {heir.aadhaar.length === 12 && <p className="text-xs text-emerald-300 mt-1 flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Valid</p>}
+                                  className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 font-mono placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#0F4C81]/40 transition-all" />
+                                {heir.aadhaar.length > 0 && heir.aadhaar.length < 12 && <p className="text-xs text-red-600 font-semibold mt-1">{12 - heir.aadhaar.length} more digits</p>}
+                                {heir.aadhaar.length === 12 && <p className="text-xs text-emerald-600 font-bold mt-1 flex items-center gap-1"><CheckCircle className="w-3.5 h-3.5" /> Valid</p>}
                               </div>
                               {heirRows.length > 1 && (
-                                <button type="button" onClick={() => removeHeirRow(idx)} className="p-2 rounded-lg text-red-300 hover:bg-red-400/20 transition-colors mb-0.5"><X className="w-4 h-4" /></button>
+                                <button type="button" onClick={() => removeHeirRow(idx)} className="p-2 rounded-lg text-red-500 hover:bg-red-50 hover:text-red-700 transition-colors mb-0.5"><X className="w-4 h-4" /></button>
                               )}
                             </div>
                           ))}
                         </div>
-                        <button type="button" onClick={addHeirRow} className="mt-3 flex items-center gap-1.5 text-blue-200 hover:text-white text-sm font-semibold transition-colors">
+                        <button type="button" onClick={addHeirRow} className="mt-3 flex items-center gap-1.5 text-[#0F4C81] hover:text-[#0a3860] text-sm font-bold transition-colors">
                           <Plus className="w-4 h-4" /> Add Another Heir
                         </button>
                       </div>
                       <button type="submit" disabled={isSubmittingHeirs}
-                        className="w-full bg-emerald-500 hover:bg-emerald-600 disabled:opacity-60 disabled:cursor-not-allowed text-white font-bold py-3.5 px-6 rounded-xl flex items-center justify-center gap-2.5 shadow-md transition-all">
+                        className="w-full bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed text-white font-bold py-3.5 px-6 rounded-xl flex items-center justify-center gap-2.5 shadow-md transition-all">
                         {isSubmittingHeirs ? <><Loader2 className="w-5 h-5 animate-spin" /> Submitting…</> : <><BadgeCheck className="w-5 h-5" /> Submit Heirs for Tehsildar Approval <ArrowRight className="w-4 h-4" /></>}
                       </button>
                     </form>
