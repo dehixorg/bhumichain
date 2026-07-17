@@ -311,6 +311,100 @@ export default function SuccessionPage() {
           {/* Main + Right panel */}
           <div className="flex-1 flex gap-6 p-6 overflow-y-auto">
             <div className="flex-1 min-w-0 space-y-5">
+              {/* ─── SUCCESSION DUAL-OPTION MODE BAR (ALWAYS ACCESSIBLE AT TOP OF STEP 1 & STEP 3) ─── */}
+              {(step === 'add_heir' || step === 'upload_document') && (
+                <div className="bg-white rounded-2xl p-5 border border-gray-200 shadow-md">
+                  <div className="flex items-center justify-between gap-2 mb-3.5 pb-3 border-b border-gray-100">
+                    <div className="flex items-center gap-2">
+                      <div className="bg-[#0F4C81] p-1.5 rounded-lg text-white"><Landmark className="w-4 h-4" /></div>
+                      <div>
+                        <h3 className="font-bold text-gray-900 text-sm">Succession & Virasat Flow Selection</h3>
+                        <p className="text-xs text-gray-500">Choose between mandatory heir nomination (Option 1) and death certificate upload (Option 2)</p>
+                      </div>
+                    </div>
+                    <span className="text-xs font-semibold px-2.5 py-1 bg-blue-50 text-[#0F4C81] rounded-full border border-blue-200/60">
+                      Hindu Succession Act 2005 Compliant
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* OPTION 1: NOMINATE LEGAL HEIRS */}
+                    <div
+                      onClick={() => setStep('add_heir')}
+                      className={clsx(
+                        "p-4 rounded-xl border-2 transition-all cursor-pointer flex flex-col justify-between relative overflow-hidden group shadow-sm",
+                        step === 'add_heir'
+                          ? "bg-gradient-to-br from-[#0F4C81] to-[#1e3a8a] border-[#0F4C81] text-white shadow-lg shadow-blue-900/20"
+                          : "bg-gray-50 hover:bg-gray-100/80 border-gray-200 text-gray-800"
+                      )}>
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <div className="flex items-center gap-2 font-bold text-base">
+                          <UserPlus className={clsx("w-5 h-5 shrink-0", step === 'add_heir' ? "text-amber-300" : "text-[#0F4C81]")} />
+                          <span>Option 1 — Nominate Legal Heirs</span>
+                        </div>
+                        <span className={clsx(
+                          "text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full tracking-wider shrink-0",
+                          step === 'add_heir' ? "bg-amber-400 text-gray-950" : "bg-[#0F4C81]/15 text-[#0F4C81]"
+                        )}>
+                          Mandatory First Step
+                        </span>
+                      </div>
+                      <p className={clsx("text-xs leading-relaxed mt-1", step === 'add_heir' ? "text-blue-100" : "text-gray-600")}>
+                        Submit full name & 12-digit Aadhaar of each legal heir for your property. Must be approved by Tehsildar before proceeding.
+                      </p>
+                      <div className={clsx("mt-3 flex items-center gap-1.5 text-xs font-bold pt-2 border-t", step === 'add_heir' ? "border-white/20 text-amber-300" : "border-gray-200 text-[#0F4C81]")}>
+                        {step === 'add_heir' ? "✓ Active Form Below" : "Click to Open Heir Nomination →"}
+                      </div>
+                    </div>
+
+                    {/* OPTION 2: UPLOAD DEATH CERTIFICATE */}
+                    <div
+                      onClick={() => {
+                        const isApprovedHeir = approvedNoms.length > 0 || isTehsildar;
+                        if (isApprovedHeir) {
+                          setStep('upload_document');
+                        } else {
+                          toast.error("Option 2 is locked! You must first submit Option 1 (Nominate Legal Heirs) and get Tehsildar approval before you can upload the Death Certificate.");
+                        }
+                      }}
+                      className={clsx(
+                        "p-4 rounded-xl border-2 transition-all flex flex-col justify-between relative overflow-hidden shadow-sm",
+                        step === 'upload_document'
+                          ? "bg-gradient-to-br from-emerald-800 to-emerald-950 border-emerald-500 text-white shadow-lg shadow-emerald-900/20 cursor-pointer"
+                          : (approvedNoms.length > 0 || isTehsildar)
+                            ? "bg-emerald-50 hover:bg-emerald-100/80 border-emerald-300 text-emerald-950 cursor-pointer"
+                            : "bg-gray-100 border-gray-300/80 text-gray-400 cursor-not-allowed opacity-80"
+                      )}>
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <div className="flex items-center gap-2 font-bold text-base">
+                          <Upload className={clsx("w-5 h-5 shrink-0", step === 'upload_document' ? "text-emerald-300" : (approvedNoms.length > 0 || isTehsildar) ? "text-emerald-700" : "text-gray-400")} />
+                          <span>Option 2 — Upload Death Cert</span>
+                        </div>
+                        {(approvedNoms.length > 0 || isTehsildar) ? (
+                          <span className={clsx(
+                            "text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full tracking-wider flex items-center gap-1 shrink-0",
+                            step === 'upload_document' ? "bg-emerald-400 text-gray-950" : "bg-emerald-600 text-white"
+                          )}>
+                            <CheckCircle className="w-3 h-3" /> Unlocked
+                          </span>
+                        ) : (
+                          <span className="bg-gray-200 text-gray-600 border border-gray-300 font-bold text-[10px] uppercase px-2.5 py-0.5 rounded-full tracking-wider flex items-center gap-1 shrink-0">
+                            🔒 Locked
+                          </span>
+                        )}
+                      </div>
+                      <p className={clsx("text-xs leading-relaxed mt-1", step === 'upload_document' ? "text-emerald-100" : (approvedNoms.length > 0 || isTehsildar) ? "text-emerald-900/80" : "text-gray-500")}>
+                        {(approvedNoms.length > 0 || isTehsildar)
+                          ? "Your heir nomination is Tehsildar-Approved! Click to upload Death Certificate & run AI OCR to calculate equal shares."
+                          : "🔒 Locked — Only unlocked after Tehsildar reviews and approves your legal heir nomination from Option 1."}
+                      </p>
+                      <div className={clsx("mt-3 flex items-center gap-1.5 text-xs font-bold pt-2 border-t", step === 'upload_document' ? "border-emerald-400/30 text-emerald-300" : (approvedNoms.length > 0 || isTehsildar) ? "border-emerald-200 text-emerald-800" : "border-gray-200 text-gray-400")}>
+                        {step === 'upload_document' ? "✓ Active Form Below" : (approvedNoms.length > 0 || isTehsildar) ? "Click to Open Death Cert Upload →" : "🔒 Requires Tehsildar Approval First"}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* STEP 1: ADD HEIR */}
               {step === 'add_heir' && (
