@@ -767,15 +767,26 @@ export default function SuccessionPage() {
                       <div className="text-purple-400 text-xs mt-0.5">Shares computed equally. No officer can override daughters' rights.</div>
                     </div>
                   </div>
-                  <div className="card">
-                    <div className="flex items-center gap-3 mb-5 pb-4 border-b border-gray-100">
+                  <div className="card space-y-5">
+                    <div className="flex items-center gap-3 pb-4 border-b border-gray-100">
                       <div className="bg-[#0F4C81]/10 p-2.5 rounded-lg"><Shield className="w-5 h-5 text-[#0F4C81]" /></div>
                       <div>
-                        <h2 className="font-bold text-gray-900">Step 4 — eSign by All Heirs</h2>
-                        <p className="text-xs text-gray-500 mt-0.5">Each heir must digitally consent to their share.</p>
+                        <h2 className="font-bold text-gray-900">Step 4 — eSign by All Heirs (`Requests Sent`)</h2>
+                        <p className="text-xs text-gray-500 mt-0.5">e-Sign verification requests are pending across each inheritor's portal.</p>
                       </div>
                       <div className="ml-auto text-sm font-bold text-[#0F4C81]">{heirs.filter(h => h.hasConsented).length}/{heirs.length} Signed</div>
                     </div>
+
+                    <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl flex items-start gap-3">
+                      <CheckCircle className="w-5 h-5 text-[#0F4C81] shrink-0 mt-0.5" />
+                      <div className="text-xs text-blue-950 leading-relaxed">
+                        <span className="font-bold">📤 Document Uploaded & e-Sign Requests Dispatched to All Inheritors' Home Pages!</span>
+                        <div className="mt-1">
+                          We have verified the Death Certificate and initiated virasat claim <strong className="font-mono">{caseData?.caseId || 'SUC-ACTIVE'}</strong>. Digital verification prompts have been sent directly to the <strong>Home Page (`/my-parcels`)</strong> of every legal co-heir listed below (`Suresh Yadav`, `Priya Kumar`, etc.). Once all co-heirs verify their Aadhaar from their home portal (`or right below if on a shared device`), the case automatically forwards to the <strong>Tehsildar Portal (`/officer-dashboard`)</strong>.
+                        </div>
+                      </div>
+                    </div>
+
                     {heirs.length === 0 && (
                       <div className="text-center py-8 text-gray-400"><Loader2 className="w-7 h-7 mx-auto mb-2 animate-spin opacity-50" /><p className="text-sm">Loading heirs…</p></div>
                     )}
@@ -791,8 +802,12 @@ export default function SuccessionPage() {
                                 {heir.name}
                                 <span className="text-xs bg-blue-100 text-[#0F4C81] px-2 py-0.5 rounded-full font-mono font-semibold">Share: {heir.share || `1/${heirs.length}`}</span>
                               </div>
-                              <div className="text-xs text-gray-500 mt-0.5">{heir.relation || 'Legal Heir'} · HSA 2005 S.6(3) Coparcenary Right</div>
-                              {heir.hasConsented && heir.consentedAt && <div className="text-xs text-emerald-600 font-semibold mt-0.5">✓ eSigned via Aadhaar ({heir.aadhaar ? `XXXX-XXXX-${String(heir.aadhaar).slice(-4)}` : 'Verified'}) at {format(new Date(heir.consentedAt), 'HH:mm, dd MMM')}</div>}
+                              <div className="text-xs text-gray-500 mt-0.5">{heir.relation || 'Legal Heir'} · HSA 2005 S.6(3) Coparcener</div>
+                              {heir.hasConsented && heir.consentedAt ? (
+                                <div className="text-xs text-emerald-600 font-semibold mt-0.5">✓ eSigned via Aadhaar ({heir.aadhaar ? `XXXX-XXXX-${String(heir.aadhaar).slice(-4)}` : 'Verified'}) at {format(new Date(heir.consentedAt), 'HH:mm, dd MMM')}</div>
+                              ) : (
+                                <div className="text-xs font-semibold text-amber-700 mt-0.5">⏳ Request waiting on {heir.name}'s Home Page (`/my-parcels`)</div>
+                              )}
                             </div>
                           </div>
                           <div className="w-full sm:w-auto shrink-0 flex items-center gap-2">
@@ -801,18 +816,21 @@ export default function SuccessionPage() {
                             ) : heir.hasObjected ? (
                               <span className="text-xs font-bold text-red-700 bg-red-100 border border-red-300 px-3.5 py-2 rounded-full">⚖ Objected</span>
                             ) : (
-                              <div className="flex items-center gap-2 w-full sm:w-auto bg-white p-1.5 rounded-lg border border-gray-300 shadow-sm">
-                                <input
-                                  type="text"
-                                  maxLength={12}
-                                  placeholder="12-digit Aadhaar No."
-                                  value={heirAadhaarInputs[heir.heirId] || ''}
-                                  onChange={e => setHeirAadhaarInputs(prev => ({ ...prev, [heir.heirId]: e.target.value.replace(/\D/g, '').slice(0, 12) }))}
-                                  className="px-3 py-1.5 text-xs border border-gray-200 rounded-md w-40 font-mono focus:outline-none focus:ring-1 focus:ring-[#0F4C81]"
-                                />
-                                <button onClick={() => handleConsent(heir.heirId)} className="bg-[#0F4C81] hover:bg-[#0a3860] text-white text-xs font-bold px-3.5 py-1.5 rounded-md shadow flex items-center gap-1.5 transition-colors shrink-0">
-                                  <Shield className="w-3.5 h-3.5" /> Verify & eSign
-                                </button>
+                              <div className="flex flex-col items-end gap-1 w-full sm:w-auto">
+                                <div className="flex items-center gap-2 w-full sm:w-auto bg-white p-1.5 rounded-lg border border-gray-300 shadow-sm">
+                                  <input
+                                    type="text"
+                                    maxLength={12}
+                                    placeholder="12-digit Aadhaar No."
+                                    value={heirAadhaarInputs[heir.heirId] || ''}
+                                    onChange={e => setHeirAadhaarInputs(prev => ({ ...prev, [heir.heirId]: e.target.value.replace(/\D/g, '').slice(0, 12) }))}
+                                    className="px-3 py-1.5 text-xs border border-gray-200 rounded-md w-40 font-mono focus:outline-none focus:ring-1 focus:ring-[#0F4C81]"
+                                  />
+                                  <button onClick={() => handleConsent(heir.heirId)} className="bg-[#0F4C81] hover:bg-[#0a3860] text-white text-xs font-bold px-3.5 py-1.5 rounded-md shadow flex items-center gap-1.5 transition-colors shrink-0">
+                                    <Shield className="w-3.5 h-3.5" /> Verify & eSign
+                                  </button>
+                                </div>
+                                <span className="text-[10px] text-gray-400 font-medium italic">Or eSign via {heir.name}'s Home Page</span>
                               </div>
                             )}
                           </div>

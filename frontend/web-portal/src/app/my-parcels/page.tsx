@@ -86,6 +86,7 @@ export default function CitizenDashboard() {
   const [sellDeclaredVal, setSellDeclaredVal] = useState('4500000');
   const [sellBusy, setSellBusy] = useState(false);
   const [claimingId, setClaimingId] = useState<string | null>(null);
+  const [homeAadhaarInputs, setHomeAadhaarInputs] = useState<Record<string, string>>({});
 
   useEffect(() => {
     const u = getUser();
@@ -204,17 +205,22 @@ export default function CitizenDashboard() {
 
   const handleESign = async (caseId: string) => {
     if (!user) return;
+    const entered = (homeAadhaarInputs[caseId] || '').replace(/\D/g, '');
+    if (!entered || entered.length !== 12) {
+      toast.error(`Please enter your valid 12-digit Aadhaar Number right inside the banner (` + (entered ? `${entered.length} digits entered` : 'field empty') + `) to digitally verify & eSign.`);
+      return;
+    }
     try {
-      toast.loading('Initiating Aadhaar eSign...', { id: 'esign' });
-      await new Promise(r => setTimeout(r, 1500));
+      toast.loading('Verifying identity & executing Aadhaar eSign on-chain...', { id: 'esign' });
+      await new Promise(r => setTimeout(r, 1200));
       await recordHeirConsent(caseId, {
-        heirAadhaarHash: user.aadhaarHash || '',
+        heirAadhaarHash: entered,
         eSignTxHash: '0x' + Math.random().toString(16).slice(2)
       });
-      toast.success('Successfully provided eSign consent!', { id: 'esign' });
+      toast.success('🎉 Successfully eSigned your virasat consent! Case forwarded for Tehsildar verification.', { id: 'esign' });
       setPendingSuccessions(prev => prev.filter(c => c.caseId !== caseId));
-    } catch (err) {
-      toast.error('Failed to provide consent.', { id: 'esign' });
+    } catch (err: any) {
+      toast.error('Failed to provide consent: ' + (err?.message || err), { id: 'esign' });
       console.error(err);
     }
   };
@@ -306,18 +312,34 @@ export default function CitizenDashboard() {
                           <FileSignature className="w-6 h-6 text-amber-600" />
                         </div>
                         <div className="flex-1">
-                          <h3 className="text-base font-bold text-amber-900">Pending Succession eSign</h3>
-                          <p className="text-sm text-amber-800 mt-1">
-                            A succession case has been initiated for Late {scase.deceasedName} (DLPI: {scase.dlpiId}). 
-                            You have been identified as a legal heir. Please review your share and provide your Aadhaar eSign to consent to the mutation.
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                            <h3 className="text-base font-bold text-amber-900">🔔 Virasat e-Sign Request Waiting on Your Home Page</h3>
+                            <span className="px-2.5 py-0.5 bg-amber-200 text-amber-900 rounded-full text-xs font-bold font-mono self-start sm:self-auto">HSA 2005 S.6(3) Coparcener</span>
+                          </div>
+                          <p className="text-sm text-amber-900 mt-1.5 leading-relaxed">
+                            A virasat (succession) claim (`{scase.caseId || 'SUC-ACTIVE'}`) has been initiated for land parcel <strong className="font-mono">{scase.dlpiId}</strong> following the verification & upload of the Death Certificate for Late <strong className="underline">{scase.deceasedName || scase.deceasedHash || 'Deceased Owner'}</strong>.
+                            You are listed as a legal co-heir with equal coparcenary rights (`Share: {scase.share || 'Equal Share'}`). Please enter your 12-digit Aadhaar below to digitally verify & eSign:
                           </p>
-                          <div className="mt-4 flex gap-3">
-                            <button
-                              onClick={() => handleESign(scase.caseId)}
-                              className="bg-amber-600 hover:bg-amber-700 text-white text-sm font-bold py-2 px-5 rounded-lg shadow-sm transition-colors flex items-center gap-2"
-                            >
-                              <FileSignature className="w-4 h-4" /> Review &amp; eSign Now
-                            </button>
+                          <div className="mt-4 flex flex-col lg:flex-row items-stretch lg:items-center gap-3">
+                            <div className="flex items-center gap-2 bg-white p-1.5 rounded-xl border border-amber-300 shadow-sm flex-1 max-w-lg">
+                              <input
+                                type="text"
+                                maxLength={12}
+                                placeholder="Your 12-digit Aadhaar No."
+                                value={homeAadhaarInputs[scase.caseId] || ''}
+                                onChange={e => setHomeAadhaarInputs(prev => ({ ...prev, [scase.caseId]: e.target.value.replace(/\D/g, '').slice(0, 12) }))}
+                                className="px-3 py-2 text-sm border border-gray-200 rounded-lg flex-1 font-mono focus:outline-none focus:ring-2 focus:ring-amber-500"
+                              />
+                              <button
+                                onClick={() => handleESign(scase.caseId)}
+                                className="bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold py-2.5 px-4 rounded-lg shadow-sm transition-colors flex items-center gap-1.5 shrink-0"
+                              >
+                                <Shield className="w-4 h-4" /> Verify & eSign on Home Page
+                              </button>
+                            </div>
+                            <Link href="/succession" className="px-4 py-2.5 bg-amber-100 hover:bg-amber-200 text-amber-900 text-xs font-bold rounded-xl transition-colors flex items-center justify-center gap-1.5 shrink-0">
+                              Open Succession Portal <ArrowRight className="w-3.5 h-3.5" />
+                            </Link>
                           </div>
                         </div>
                       </div>
