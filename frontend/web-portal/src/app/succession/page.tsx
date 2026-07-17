@@ -42,7 +42,8 @@ const DEMO_DLPI = 'DLPI-UP-DAD-00100';
 const DEMO_FAMILY_ID = 'FAM-UP-DAD-00100-001';
 const DEMO_DECEASED = {
   name: 'Ramesh Kumar',
-  aadhaarHash: 'sha256:owner1ramesh3f8e2d1c7b4a09f6e5d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9',
+  aadhaar: '999988887777',
+  aadhaarHash: '999988887777', // Raw 12-digit Aadhaar exactly as entered
   dod: '2026-05-20',
 };
 const DEMO_CRS = { deathCertCID: 'QmDeathCertRameshK2026', crsRegistrationNo: 'CRS-GBN-2026-00891' };
@@ -125,6 +126,7 @@ export default function SuccessionPage() {
       setHeirs(approvedNoms.map((n, i) => ({
         heirId: `HEIR-DYN-${i+1}`,
         name: n.inheritorName,
+        aadhaar: n.inheritorAadhaarNumber,
         aadhaarHash: n.inheritorAadhaarNumber,
         relation: 'Legal Heir',
         gender: 'Unknown',
@@ -203,14 +205,15 @@ export default function SuccessionPage() {
       }
       setCrsExtraction({
         name: data.name || DEMO_DECEASED.name, dod: data.dod || DEMO_DECEASED.dod,
-        aadhaarHash: data.aadhaarHash || 'XXXX-XXXX-1234',
+        aadhaar: data.aadhaar || data.aadhaarHash || DEMO_DECEASED.aadhaar,
+        aadhaarHash: data.aadhaarHash || data.aadhaar || DEMO_DECEASED.aadhaarHash,
         crsRegistrationNo: data.crsRegistrationNo || DEMO_CRS.crsRegistrationNo,
         dlpiId: data.dlpiId || selectedDlpiId || DEMO_DLPI,
       });
       toast.success('Death certificate verified by AI');
     } catch {
       setCrsAiSteps(p => p.map(s => ({ ...s, done: true })));
-      setCrsExtraction({ name: DEMO_DECEASED.name, dod: DEMO_DECEASED.dod, aadhaarHash: 'XXXX-XXXX-1234', crsRegistrationNo: DEMO_CRS.crsRegistrationNo, dlpiId: selectedDlpiId || DEMO_DLPI });
+      setCrsExtraction({ name: DEMO_DECEASED.name, dod: DEMO_DECEASED.dod, aadhaar: DEMO_DECEASED.aadhaar, aadhaarHash: DEMO_DECEASED.aadhaarHash, crsRegistrationNo: DEMO_CRS.crsRegistrationNo, dlpiId: selectedDlpiId || DEMO_DLPI });
       toast('Using demo data — AI service offline', { icon: 'ℹ️' });
     } finally { setIsScanning(false); }
   };
@@ -225,7 +228,7 @@ export default function SuccessionPage() {
       const res = await initiateSuccession({
         dlpiId: crsExtraction.dlpiId || selectedDlpiId || DEMO_DLPI,
         familyId: DEMO_FAMILY_ID, deceasedName: crsExtraction.name || DEMO_DECEASED.name,
-        deceasedAadhaarHash: crsExtraction.aadhaarHash || DEMO_DECEASED.aadhaarHash,
+        deceasedAadhaarHash: crsExtraction.aadhaar || crsExtraction.aadhaarHash || DEMO_DECEASED.aadhaar,
         dateOfDeath: crsExtraction.dod || DEMO_DECEASED.dod,
         deathCertCID: DEMO_CRS.deathCertCID, crsRegistrationNo: crsExtraction.crsRegistrationNo || DEMO_CRS.crsRegistrationNo,
         heirs: approvedNoms.map(n => ({ name: n.inheritorName, aadhaar: n.inheritorAadhaarNumber })),
@@ -235,7 +238,7 @@ export default function SuccessionPage() {
       try { sc = await getSuccessionCase(res.caseId || 'SUC-DEMO'); } catch {}
       const activeHeirs = (res.heirs && Array.isArray(res.heirs) && res.heirs.length > 0) ? res.heirs : (sc?.heirs || []);
       setCaseData(sc || res);
-      setHeirs(activeHeirs.map((h: any, i: number) => ({ ...h, heirId: h.heirId || `HEIR-DYN-${i+1}`, hasConsented: false, hasObjected: false })));
+      setHeirs(activeHeirs.map((h: any, i: number) => ({ ...h, heirId: h.heirId || `HEIR-DYN-${i+1}`, aadhaar: h.aadhaar || h.aadhaarHash || h.inheritorAadhaarNumber, hasConsented: false, hasObjected: false })));
       triggerMock('scene3_mutation_alert');
       toast.success('Case created! eSign requests sent to all heirs.');
       setStep('esign_heirs');
@@ -244,7 +247,7 @@ export default function SuccessionPage() {
       setFrontendError(`[Step 4 Error] ${msg}`);
       const ct = citizenTokenRef.current; if (ct) setToken(ct);
       setHeirs(approvedNoms.map((n, i) => ({
-        heirId: `HEIR-DYN-${i+1}`, name: n.inheritorName, aadhaarHash: n.inheritorAadhaarNumber,
+        heirId: `HEIR-DYN-${i+1}`, name: n.inheritorName, aadhaar: n.inheritorAadhaarNumber, aadhaarHash: n.inheritorAadhaarNumber,
         relation: 'Legal Heir', gender: 'Unknown', dob: '1990-01-01',
         isAlive: true, isAdult: true, isNri: false,
         share: `1/${approvedNoms.length}`, shareDecimal: 1/approvedNoms.length,
@@ -260,7 +263,7 @@ export default function SuccessionPage() {
     if (!heir || heir.hasConsented || heir.hasObjected) return;
     try {
       await recordHeirConsent(caseData?.caseId || DEMO_DLPI, {
-        heirAadhaarHash: heir.aadhaarHash,
+        heirAadhaarHash: heir.aadhaar || heir.aadhaarHash || '123456789012',
         eSignTxHash: '0x' + Array.from({length:40}, () => Math.floor(Math.random()*16).toString(16)).join(''),
       });
     } catch {}

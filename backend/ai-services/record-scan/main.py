@@ -167,7 +167,8 @@ async def scan_death_cert(file: UploadFile = File(...)):
             "dod": dod,
             "crsRegistrationNo": reg_no,
             "dlpiId": "DLPI-UP-DAD-00100", # default fallback
-            "aadhaarHash": "XXXX-XXXX-1234",
+            "aadhaar": "999988887777",
+            "aadhaarHash": "999988887777", # raw Aadhaar
             "rawText": text # for debugging
         }
     except Exception as e:
@@ -178,7 +179,8 @@ async def scan_death_cert(file: UploadFile = File(...)):
             "dod": "2026-05-20",
             "crsRegistrationNo": "CRS-GBN-2026-00891",
             "dlpiId": "DLPI-UP-DAD-00100",
-            "aadhaarHash": "XXXX-XXXX-1234"
+            "aadhaar": "999988887777",
+            "aadhaarHash": "999988887777"
         }
 
 @app.post("/scan/approve")
