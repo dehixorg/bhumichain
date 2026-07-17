@@ -112,6 +112,27 @@ export default function SuccessionPage() {
     getMyPendingSuccessions().catch(() => {});
   }, []);
 
+  // Ensure Step 4/5/6 heirs strictly match the actual approved nominations instead of falling back to 3 demo heirs
+  useEffect(() => {
+    if (approvedNoms.length > 0 && (heirs.length === 0 || heirs.some(h => h.name === 'Ankur Singh' || h.heirId === 'HEIR-001'))) {
+      setHeirs(approvedNoms.map((n, i) => ({
+        heirId: `HEIR-DYN-${i+1}`,
+        name: n.inheritorName,
+        aadhaarHash: n.inheritorAadhaarNumber,
+        relation: 'Legal Heir',
+        gender: 'Unknown',
+        dob: '1990-01-01',
+        isAlive: true,
+        isAdult: true,
+        isNri: false,
+        share: `1/${approvedNoms.length}`,
+        shareDecimal: 1/approvedNoms.length,
+        hasConsented: false,
+        hasObjected: false,
+      })));
+    }
+  }, [approvedNoms, heirs]);
+
   // Step 1 handlers
   const addHeirRow = () => setHeirRows(r => [...r, { name: '', aadhaar: '' }]);
   const removeHeirRow = (i: number) => setHeirRows(r => r.filter((_, x) => x !== i));

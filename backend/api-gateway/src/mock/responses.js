@@ -903,12 +903,20 @@ module.exports = {
         const fs = require('fs');
         let cases = [];
         try { cases = JSON.parse(fs.readFileSync('/tmp/bhumichain_mock_cases.json')); } catch(e) {}
-        return cases.find(c => c.caseId === args[0]) || DEMO_SUCCESSION_CASE;
+        try {
+          const bCases = JSON.parse(fs.readFileSync('/tmp/bhumichain_succession_cases.json'));
+          cases = [...cases, ...Object.values(bCases || {})];
+        } catch(e) {}
+        return cases.find(c => c.caseId === args[0]) || (cases.length > 0 ? cases[cases.length - 1] : DEMO_SUCCESSION_CASE);
       }
       case 'uttaradhikar::GetSuccessionByDLPI': {
         const fs = require('fs');
         let cases = [];
         try { cases = JSON.parse(fs.readFileSync('/tmp/bhumichain_mock_cases.json')); } catch(e) {}
+        try {
+          const bCases = JSON.parse(fs.readFileSync('/tmp/bhumichain_succession_cases.json'));
+          cases = [...cases, ...Object.values(bCases || {})];
+        } catch(e) {}
         const activeCase = cases.find(c => c.dlpiId === args[0]);
         return activeCase ? [activeCase] : [];
       }
@@ -917,18 +925,25 @@ module.exports = {
         if (fs.existsSync('/tmp/bhumichain_history_cleared.json')) return [];
         let cases = [];
         try { cases = JSON.parse(fs.readFileSync('/tmp/bhumichain_mock_cases.json')); } catch(e) {}
-        return cases.filter(c => c.status === 'PENDING_TEHSILDAR');
+        try {
+          const bCases = JSON.parse(fs.readFileSync('/tmp/bhumichain_succession_cases.json'));
+          cases = [...cases, ...Object.values(bCases || {})];
+        } catch(e) {}
+        return cases.filter(c => ['HEIR_CONSENT_PENDING', 'PENDING_TEHSILDAR_APPROVAL', 'ALL_CONSENTED', 'PENDING_TEHSILDAR'].includes(c.status));
       }
       case 'uttaradhikar::GetMyPendingSuccessions': {
         const myHash = args[0];
         const fs = require('fs');
         let cases = [];
         try { cases = JSON.parse(fs.readFileSync('/tmp/bhumichain_mock_cases.json')); } catch(e) {}
+        try {
+          const bCases = JSON.parse(fs.readFileSync('/tmp/bhumichain_succession_cases.json'));
+          cases = [...cases, ...Object.values(bCases || {})];
+        } catch(e) {}
         return cases.filter(c => {
-          if (c.status !== 'AWAITING_CONSENTS') return false;
+          if (!['AWAITING_CONSENTS', 'HEIR_CONSENT_PENDING'].includes(c.status)) return false;
           const me = c.heirs?.find(h => {
             if (h.aadhaarHash === myHash) return true;
-            // Robust fallback for demo: if they typed the wrong aadhaar during succession initiation
             const nameLower = (h.name || '').toLowerCase();
             if (myHash === '999900010010' && nameLower.includes('priya')) return true;
             if (myHash === '999900010015' && nameLower.includes('sunita')) return true;
