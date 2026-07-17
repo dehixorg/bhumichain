@@ -263,6 +263,12 @@ router.post(
         };
       }
 
+      global.successionCases = global.successionCases || {};
+      global.successionCases[result.caseId] = { ...result, aiResult };
+      try {
+        fs.writeFileSync('/tmp/bhumichain_succession_cases.json', JSON.stringify(global.successionCases, null, 2));
+      } catch (e) {}
+
       broadcast('SuccessionInitiated', {
         caseId: result.caseId,
         dlpiId,
@@ -314,8 +320,18 @@ router.get('/pending/all', authenticate, requireRole(ROLES.TEHSILDAR, ROLES.COLL
       cases = getMockResponse('uttaradhikar', 'QueryPendingSuccessions', []);
     }
     
-    const pendingCases = (cases || []).filter(c => ['PENDING_TEHSILDAR_APPROVAL', 'ALL_CONSENTED', 'PENDING_TEHSILDAR'].includes(c.status));
-    res.json(pendingCases);
+    global.successionCases = global.successionCases || {};
+    try {
+      if (fs.existsSync('/tmp/bhumichain_succession_cases.json')) {
+        global.successionCases = Object.assign({}, JSON.parse(fs.readFileSync('/tmp/bhumichain_succession_cases.json', 'utf8')), global.successionCases);
+      }
+    } catch (e) {}
+
+    const allCases = [...(cases || []), ...Object.values(global.successionCases)];
+    const pendingCases = allCases.filter(c => ['HEIR_CONSENT_PENDING', 'PENDING_TEHSILDAR_APPROVAL', 'ALL_CONSENTED', 'PENDING_TEHSILDAR'].includes(c.status));
+    // deduplicate by caseId
+    const uniqueCases = Array.from(new Map(pendingCases.map(c => [c.caseId, c])).values());
+    res.json(uniqueCases);
   } catch (e) {
     res.status(500).json({ error: 'FABRIC_ERROR', message: e.message });
   }
@@ -324,6 +340,17 @@ router.get('/pending/all', authenticate, requireRole(ROLES.TEHSILDAR, ROLES.COLL
 // GET /api/succession/:caseId
 router.get('/:caseId', authenticate, async (req, res) => {
   try {
+    global.successionCases = global.successionCases || {};
+    try {
+      if (fs.existsSync('/tmp/bhumichain_succession_cases.json')) {
+        global.successionCases = Object.assign({}, JSON.parse(fs.readFileSync('/tmp/bhumichain_succession_cases.json', 'utf8')), global.successionCases);
+      }
+    } catch (e) {}
+
+    if (global.successionCases[req.params.caseId]) {
+      return res.json(global.successionCases[req.params.caseId]);
+    }
+
     let sc;
     try {
       sc = await evaluate('uttaradhikar', 'GetSuccessionCase', [req.params.caseId]);

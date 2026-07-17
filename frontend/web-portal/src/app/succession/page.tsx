@@ -199,8 +199,11 @@ export default function SuccessionPage() {
         heirs: approvedNoms.map(n => ({ name: n.inheritorName, aadhaar: n.inheritorAadhaarNumber })),
       });
       if (ct) setToken(ct);
-      const sc = await getSuccessionCase(res.caseId || 'SUC-DEMO');
-      setCaseData(sc); setHeirs(sc.heirs.map(h => ({ ...h, hasConsented: false, hasObjected: false })));
+      let sc = res;
+      try { sc = await getSuccessionCase(res.caseId || 'SUC-DEMO'); } catch {}
+      const activeHeirs = (res.heirs && Array.isArray(res.heirs) && res.heirs.length > 0) ? res.heirs : (sc?.heirs || []);
+      setCaseData(sc || res);
+      setHeirs(activeHeirs.map((h: any, i: number) => ({ ...h, heirId: h.heirId || `HEIR-DYN-${i+1}`, hasConsented: false, hasObjected: false })));
       triggerMock('scene3_mutation_alert');
       toast.success('Case created! eSign requests sent to all heirs.');
       setStep('esign_heirs');
