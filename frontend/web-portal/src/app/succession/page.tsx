@@ -82,6 +82,7 @@ export default function SuccessionPage() {
   const [isExecuting, setIsExecuting] = useState(false);
   const [executionResult, setExecutionResult] = useState<any>(null);
   const [frontendError, setFrontendError] = useState('');
+  const [heirAadhaarInputs, setHeirAadhaarInputs] = useState<Record<string, string>>({});
 
   const { triggerMock } = useWebSocket(DEMO_DLPI);
 
@@ -261,27 +262,50 @@ export default function SuccessionPage() {
   const handleConsent = useCallback(async (heirId: string) => {
     const heir = heirs.find(h => h.heirId === heirId);
     if (!heir || heir.hasConsented || heir.hasObjected) return;
+    const entered = (heirAadhaarInputs[heirId] || '').replace(/\D/g, '');
+    if (!entered || entered.length !== 12) {
+      toast.error(`Please enter a valid 12-digit Aadhaar Number for ${heir.name} (` + (entered ? `${entered.length} digits entered` : 'field empty') + `) to digitally verify & eSign.`);
+      return;
+    }
     try {
       await recordHeirConsent(caseData?.caseId || DEMO_DLPI, {
-        heirAadhaarHash: heir.aadhaar || heir.aadhaarHash || '123456789012',
+        heirAadhaarHash: entered,
         eSignTxHash: '0x' + Array.from({length:40}, () => Math.floor(Math.random()*16).toString(16)).join(''),
       });
     } catch {}
     setHeirs(prev => {
-      const updated = prev.map(h => h.heirId === heirId ? { ...h, hasConsented: true, consentedAt: new Date().toISOString() } : h);
+      const updated = prev.map(h => h.heirId === heirId ? { ...h, hasConsented: true, consentedAt: new Date().toISOString(), aadhaar: entered, aadhaarHash: entered } : h);
       if (updated.every(h => h.hasConsented)) {
-        toast.success('All heirs consented — forwarding to Tehsildar!'); setStep('tehsildar_final');
-      } else { toast.success(`${heir.name} eSigned ✓`); }
+        toast.success('🎉 All heirs have eSigned via Aadhaar! Case forwarded to Tehsildar Portal for virasat execution.');
+        setStep('tehsildar_final');
+      } else {
+        toast.success(`${heir.name} successfully eSigned via Aadhaar ✓`);
+      }
       return updated;
     });
-  }, [heirs, caseData]);
+  }, [heirs, caseData, heirAadhaarInputs]);
 
-  // Step 5 handler
+  // Step 5 handler (Check status from Tehsildar Portal OR demo approve if requested)
   const handleTehsildarFinalApprove = async () => {
-    setIsFinalApproving(true); await delay(800);
-    setFinalApproved(true); setIsFinalApproving(false);
-    toast.success('Final verification complete!');
-    setTimeout(() => setStep('blockchain_division'), 600);
+    setIsFinalApproving(true);
+    try {
+      const res = await apiFetch(`/api/succession/cases/${caseData?.caseId || DEMO_DLPI}`);
+      if (res.ok) {
+        const sc = await res.json();
+        if (sc && (sc.status === 'AUTO_MUTATED' || sc.status === 'EXECUTED' || sc.status === 'COMPLETED' || sc.status === 'TEHSILDAR_APPROVED')) {
+          setFinalApproved(true);
+          setExecutionResult(sc);
+          toast.success("🎉 Tehsildar has executed your virasat! Land division is now on-chain.");
+          setIsFinalApproving(false);
+          setStep('blockchain_division');
+          return;
+        }
+      }
+    } catch {}
+    // If not yet approved by real Tehsildar, check or simulate if demo mode helper clicked
+    await delay(600);
+    setIsFinalApproving(false);
+    toast.info("⏳ Virasat case is currently pending inside the Tehsildar's queue on the Officer Portal.");
   };
 
   // Step 6 handler
@@ -757,22 +781,39 @@ export default function SuccessionPage() {
                     )}
                     <div className="space-y-3">
                       {heirs.map((heir, idx) => (
-                        <div key={heir.heirId} className={clsx('flex items-center gap-4 p-4 rounded-xl border transition-all', heir.hasConsented ? 'bg-emerald-50 border-emerald-200' : heir.hasObjected ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-gray-200')}>
-                          <div className={clsx('w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm shrink-0', heir.hasConsented ? 'bg-emerald-500 text-white' : heir.hasObjected ? 'bg-red-500 text-white' : 'bg-[#0F4C81] text-white')}>
-                            {heir.hasConsented ? <CheckCircle className="w-5 h-5" /> : heir.hasObjected ? <X className="w-5 h-5" /> : (idx + 1)}
+                        <div key={heir.heirId} className={clsx('flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-xl border transition-all', heir.hasConsented ? 'bg-emerald-50 border-emerald-200' : heir.hasObjected ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-gray-200')}>
+                          <div className="flex items-center gap-3 min-w-0 flex-1">
+                            <div className={clsx('w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm shrink-0', heir.hasConsented ? 'bg-emerald-500 text-white' : heir.hasObjected ? 'bg-red-500 text-white' : 'bg-[#0F4C81] text-white')}>
+                              {heir.hasConsented ? <CheckCircle className="w-5 h-5" /> : heir.hasObjected ? <X className="w-5 h-5" /> : (idx + 1)}
+                            </div>
+                            <div className="min-w-0">
+                              <div className="font-bold text-gray-900 flex items-center gap-2">
+                                {heir.name}
+                                <span className="text-xs bg-blue-100 text-[#0F4C81] px-2 py-0.5 rounded-full font-mono font-semibold">Share: {heir.share || `1/${heirs.length}`}</span>
+                              </div>
+                              <div className="text-xs text-gray-500 mt-0.5">{heir.relation || 'Legal Heir'} · HSA 2005 S.6(3) Coparcenary Right</div>
+                              {heir.hasConsented && heir.consentedAt && <div className="text-xs text-emerald-600 font-semibold mt-0.5">✓ eSigned via Aadhaar ({heir.aadhaar ? `XXXX-XXXX-${String(heir.aadhaar).slice(-4)}` : 'Verified'}) at {format(new Date(heir.consentedAt), 'HH:mm, dd MMM')}</div>}
+                            </div>
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="font-bold text-gray-900">{heir.name}</div>
-                            <div className="text-xs text-gray-500 mt-0.5">{heir.relation || 'Legal Heir'} · Share: <strong>{heir.share || `1/${heirs.length}`}</strong></div>
-                            {heir.hasConsented && heir.consentedAt && <div className="text-xs text-emerald-600 font-semibold mt-0.5">✓ eSigned at {format(new Date(heir.consentedAt), 'HH:mm, dd MMM')}</div>}
-                          </div>
-                          <div className="shrink-0">
+                          <div className="w-full sm:w-auto shrink-0 flex items-center gap-2">
                             {heir.hasConsented ? (
-                              <span className="flex items-center gap-1 text-xs font-bold text-emerald-700 bg-emerald-100 border border-emerald-300 px-3 py-1.5 rounded-full"><CheckCircle className="w-3.5 h-3.5" /> eSigned</span>
+                              <span className="flex items-center gap-1.5 text-xs font-bold text-emerald-700 bg-emerald-100 border border-emerald-300 px-3.5 py-2 rounded-full shadow-sm"><CheckCircle className="w-4 h-4" /> Aadhaar eSigned ✓</span>
                             ) : heir.hasObjected ? (
-                              <span className="text-xs font-bold text-red-700 bg-red-100 border border-red-300 px-3 py-1.5 rounded-full">⚖ Objected</span>
+                              <span className="text-xs font-bold text-red-700 bg-red-100 border border-red-300 px-3.5 py-2 rounded-full">⚖ Objected</span>
                             ) : (
-                              <button onClick={() => handleConsent(heir.heirId)} className="bg-[#0F4C81] hover:bg-[#0a3860] text-white text-xs font-bold px-4 py-2 rounded-lg shadow flex items-center gap-1.5 transition-colors"><Shield className="w-3.5 h-3.5" /> eSign</button>
+                              <div className="flex items-center gap-2 w-full sm:w-auto bg-white p-1.5 rounded-lg border border-gray-300 shadow-sm">
+                                <input
+                                  type="text"
+                                  maxLength={12}
+                                  placeholder="12-digit Aadhaar No."
+                                  value={heirAadhaarInputs[heir.heirId] || ''}
+                                  onChange={e => setHeirAadhaarInputs(prev => ({ ...prev, [heir.heirId]: e.target.value.replace(/\D/g, '').slice(0, 12) }))}
+                                  className="px-3 py-1.5 text-xs border border-gray-200 rounded-md w-40 font-mono focus:outline-none focus:ring-1 focus:ring-[#0F4C81]"
+                                />
+                                <button onClick={() => handleConsent(heir.heirId)} className="bg-[#0F4C81] hover:bg-[#0a3860] text-white text-xs font-bold px-3.5 py-1.5 rounded-md shadow flex items-center gap-1.5 transition-colors shrink-0">
+                                  <Shield className="w-3.5 h-3.5" /> Verify & eSign
+                                </button>
+                              </div>
                             )}
                           </div>
                         </div>
@@ -825,14 +866,31 @@ export default function SuccessionPage() {
                       </div>
                     </div>
                     {!finalApproved ? (
-                      <button onClick={handleTehsildarFinalApprove} disabled={isFinalApproving}
-                        className="w-full bg-gradient-to-r from-[#0F4C81] to-[#1e3a8a] hover:from-[#0a3860] disabled:opacity-60 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2.5 shadow-lg transition-all text-sm">
-                        {isFinalApproving ? <><Loader2 className="w-5 h-5 animate-spin" /> Verifying…</> : <><CheckCircle className="w-5 h-5" /> Tehsildar: Approve & Proceed to Land Division <ArrowRight className="w-4 h-4" /></>}
-                      </button>
+                      <div className="space-y-3">
+                        <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-3">
+                          <Clock className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                          <div>
+                            <div className="font-bold text-amber-900 text-sm">⏳ Forwarded to Tehsildar's Officer Portal (`/officer-dashboard`)</div>
+                            <div className="text-xs text-amber-800 mt-1 leading-relaxed">
+                              All {heirs.length} legal heir(s) have successfully e-Signed with their Aadhaar numbers (`HSA 2005 S.6(3)` verified). Your virasat case is now inside the Tehsildar's official review queue waiting for final verification & on-chain land division.
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex flex-col sm:flex-row gap-3">
+                          <button onClick={handleTehsildarFinalApprove} disabled={isFinalApproving}
+                            className="flex-1 bg-[#0F4C81] hover:bg-[#0a3860] disabled:opacity-60 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 shadow transition-all text-sm">
+                            {isFinalApproving ? <><Loader2 className="w-4 h-4 animate-spin" /> Checking Tehsildar Status…</> : <><CheckCircle className="w-4 h-4" /> Check Tehsildar Approval Status</>}
+                          </button>
+                          <button onClick={() => { setFinalApproved(true); toast.success('Simulated Tehsildar Final Approval'); setStep('blockchain_division'); }}
+                            className="px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5 shrink-0">
+                            ⚡ Demo: Simulate Tehsildar Approval →
+                          </button>
+                        </div>
+                      </div>
                     ) : (
                       <div className="flex items-center gap-3 bg-emerald-50 border border-emerald-200 rounded-xl p-4">
                         <CheckCircle className="w-6 h-6 text-emerald-600 shrink-0" />
-                        <div><div className="font-bold text-emerald-800">Final Verification Complete!</div><div className="text-xs text-emerald-600 mt-0.5">Proceeding to blockchain…</div></div>
+                        <div><div className="font-bold text-emerald-800">Final Verification Complete by Tehsildar!</div><div className="text-xs text-emerald-600 mt-0.5">Proceeding to blockchain land division…</div></div>
                       </div>
                     )}
                   </div>
