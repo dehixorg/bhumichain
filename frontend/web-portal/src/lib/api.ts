@@ -1,5 +1,6 @@
 import axios from 'axios';
 import type { Parcel, SuccessionCase, Transfer, TribalCheckResult } from '@/types';
+import { apiFetch } from './auth';
 
 const BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
@@ -10,7 +11,14 @@ api.interceptors.request.use((config) => {
   if (typeof window !== 'undefined') {
     token = localStorage.getItem('bhumichain_token');
   }
-  if (token) config.headers.Authorization = `Bearer ${token}`;
+  if (token) {
+    if (config.headers && typeof config.headers.set === 'function') {
+      config.headers.set('Authorization', `Bearer ${token}`);
+    } else {
+      config.headers = config.headers || {};
+      (config.headers as any)['Authorization'] = `Bearer ${token}`;
+    }
+  }
   return config;
 });
 
@@ -31,13 +39,13 @@ export async function getDemoToken(role: string, name: string): Promise<string> 
 // ─── DLPI ─────────────────────────────────────────────────────────────────────
 
 export async function getParcel(dlpiId: string): Promise<Parcel> {
-  const res = await api.get(`/api/dlpi/${dlpiId}`);
-  return res.data;
+  const res = await apiFetch(`/api/dlpi/${dlpiId}`);
+  return res.json();
 }
 
 export async function getParcelHistory(dlpiId: string) {
-  const res = await api.get(`/api/dlpi/${dlpiId}/history`);
-  return res.data;
+  const res = await apiFetch(`/api/dlpi/${dlpiId}/history`);
+  return res.json();
 }
 
 // ─── Transfer ─────────────────────────────────────────────────────────────────
@@ -55,23 +63,27 @@ export async function initiateTransfer(payload: {
 }): Promise<Transfer & { tribalCheck?: TribalCheckResult }> {
   const sellerNum = (payload.sellerAadhaarNumber || payload.sellerAadhaarHash || '').replace(/\D/g, '') || payload.sellerAadhaarHash || '';
   const buyerNum = (payload.buyerAadhaarNumber || payload.buyerAadhaarHash || '').replace(/\D/g, '') || payload.buyerAadhaarHash || '';
-  const res = await api.post('/api/transfer/initiate', {
-    ...payload,
-    // Send under all field names so backend accepts regardless of field name used
-    sellerAadhaarNumber: sellerNum,
-    sellerAadhaar: sellerNum,
-    sellerAadhaarHash: sellerNum,
-    buyerAadhaarNumber: buyerNum,
-    buyerAadhaar: buyerNum,
-    buyerAadhaarHash: buyerNum,
+  const res = await apiFetch('/api/transfer/initiate', {
+    method: 'POST',
+    body: JSON.stringify({
+      ...payload,
+      sellerAadhaarNumber: sellerNum,
+      sellerAadhaar: sellerNum,
+      sellerAadhaarHash: sellerNum,
+      buyerAadhaarNumber: buyerNum,
+      buyerAadhaar: buyerNum,
+      buyerAadhaarHash: buyerNum,
+    }),
   });
-  return res.data;
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || data.error || 'Failed to initiate transfer');
+  return data;
 }
 
 export async function getMyPendingTransfers(): Promise<any[]> {
   try {
-    const res = await api.get('/api/transfer/my-pending');
-    return res.data;
+    const res = await apiFetch('/api/transfer/my-pending');
+    return await res.json();
   } catch (e) {
     return [];
   }
@@ -84,62 +96,73 @@ export async function recordConsent(transferId: string, payload: {
   eSignTxHash: string;
 }) {
   const aadhaarNum = ((payload.aadhaarNumber || payload.aadhaarHash || '').replace(/\D/g, '') || payload.aadhaarHash || '');
-  const res = await api.post(`/api/transfer/${transferId}/consent`, {
-    ...payload,
-    aadhaarNumber: aadhaarNum,
-    aadhaar: aadhaarNum,
-    aadhaarHash: aadhaarNum,
+  const res = await apiFetch(`/api/transfer/${transferId}/consent`, {
+    method: 'POST',
+    body: JSON.stringify({
+      ...payload,
+      aadhaarNumber: aadhaarNum,
+      aadhaar: aadhaarNum,
+      aadhaarHash: aadhaarNum,
+    }),
   });
-  return res.data;
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || data.error || 'Failed to record consent');
+  return data;
 }
 
 export async function confirmStampDuty(transferId: string, payload: {
   upiRefNo: string;
   saleAgreementCID: string;
 }) {
-  const res = await api.post(`/api/transfer/${transferId}/stamp-duty`, payload);
-  return res.data;
+  const res = await apiFetch(`/api/transfer/${transferId}/stamp-duty`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+  return res.json();
 }
 
 export async function approveTransferByPatwari(transferId: string) {
-  const res = await api.post(`/api/transfer/${transferId}/approve/patwari`);
-  return res.data;
+  const res = await apiFetch(`/api/transfer/${transferId}/approve/patwari`, { method: 'POST' });
+  return res.json();
 }
 
 export async function approveTransferByCI(transferId: string) {
-  const res = await api.post(`/api/transfer/${transferId}/approve/ci`);
-  return res.data;
+  const res = await apiFetch(`/api/transfer/${transferId}/approve/ci`, { method: 'POST' });
+  return res.json();
 }
 
 export async function getTransferHistory(transferId: string) {
   try {
-    const res = await api.get(`/api/transfer/${transferId}/history`);
-    return res.data;
+    const res = await apiFetch(`/api/transfer/${transferId}/history`);
+    return await res.json();
   } catch (e) {
     return [];
   }
 }
 
 export async function approveTransferBySRO(transferId: string, newTitleCID: string) {
-  const res = await api.post(`/api/transfer/${transferId}/approve/sro`, { newTitleCID });
-  return res.data;
+  const res = await apiFetch(`/api/transfer/${transferId}/approve/sro`, {
+    method: 'POST',
+    body: JSON.stringify({ newTitleCID }),
+  });
+  return res.json();
 }
 
 export async function approveTransferByTehsildar(transferId: string) {
-  const res = await api.post(`/api/transfer/${transferId}/approve/tehsildar`);
-  return res.data;
+  const res = await apiFetch(`/api/transfer/${transferId}/approve/tehsildar`, { method: 'POST' });
+  return res.json();
 }
 
 // ─── Succession ───────────────────────────────────────────────────────────────
 
 export async function getSuccessionCase(caseId: string): Promise<SuccessionCase> {
-  const res = await api.get(`/api/succession/${caseId}`);
-  return res.data;
+  const res = await apiFetch(`/api/succession/${caseId}`);
+  return res.json();
 }
 
 export async function getSuccessionByDLPI(dlpiId: string): Promise<SuccessionCase[]> {
-  const res = await api.get(`/api/succession/dlpi/${dlpiId}`);
-  return res.data;
+  const res = await apiFetch(`/api/succession/dlpi/${dlpiId}`);
+  return res.json();
 }
 
 export async function initiateSuccession(payload: {
@@ -152,26 +175,32 @@ export async function initiateSuccession(payload: {
   crsRegistrationNo: string;
   heirs?: { name: string; aadhaar: string }[];
 }) {
-  const res = await api.post(`/api/succession/initiate`, payload);
-  return res.data;
+  const res = await apiFetch(`/api/succession/initiate`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+  return res.json();
 }
 
 export async function recordHeirConsent(caseId: string, payload: {
   heirAadhaarHash: string;
   eSignTxHash: string;
 }) {
-  const res = await api.post(`/api/succession/${caseId}/consent`, payload);
-  return res.data;
+  const res = await apiFetch(`/api/succession/${caseId}/consent`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+  return res.json();
 }
 
 export async function getMyPendingSuccessions() {
-  const res = await api.get(`/api/succession/my-pending`);
-  return res.data;
+  const res = await apiFetch(`/api/succession/my-pending`);
+  return res.json();
 }
 
 export async function executeSuccession(caseId: string) {
-  const res = await api.post(`/api/succession/${caseId}/execute`);
-  return res.data;
+  const res = await apiFetch(`/api/succession/${caseId}/execute`, { method: 'POST' });
+  return res.json();
 }
 
 export async function addInheritorNomination(payload: {
@@ -179,18 +208,21 @@ export async function addInheritorNomination(payload: {
   inheritorName: string;
   inheritorAadhaarNumber: string;
 }) {
-  const res = await api.post(`/api/succession/add-inheritor`, payload);
-  return res.data;
+  const res = await apiFetch(`/api/succession/add-inheritor`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+  return res.json();
 }
 
 export async function getInheritorNominations() {
-  const res = await api.get(`/api/succession/nominations`);
-  return res.data;
+  const res = await apiFetch(`/api/succession/nominations`);
+  return res.json();
 }
 
 export async function approveInheritorNomination(nominationId: string) {
-  const res = await api.post(`/api/succession/nomination/${nominationId}/approve`);
-  return res.data;
+  const res = await apiFetch(`/api/succession/nomination/${nominationId}/approve`, { method: 'POST' });
+  return res.json();
 }
 
 // ─── Tribal Guard ─────────────────────────────────────────────────────────────
@@ -201,27 +233,26 @@ export async function checkTribal(payload: {
   buyerAadhaarHash: string;
   isTribalBuyer?: boolean;
 }): Promise<TribalCheckResult> {
-  try {
-    const res = await api.post('/api/tribal/check', payload);
-    return res.data;
-  } catch (err: unknown) {
-    if (axios.isAxiosError(err) && err.response?.status === 403) {
-      return err.response.data as TribalCheckResult;
-    }
-    throw err;
+  const res = await apiFetch('/api/tribal/check', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+  if (res.status === 403) {
+    return await res.json() as TribalCheckResult;
   }
+  return res.json();
 }
 
 export async function isTribalParcel(dlpiId: string) {
-  const res = await api.get(`/api/tribal/parcel/${dlpiId}`);
-  return res.data;
+  const res = await apiFetch(`/api/tribal/parcel/${dlpiId}`);
+  return res.json();
 }
 
 // ─── Encumbrance Certificate ──────────────────────────────────────────────────
 
 export async function generateEC(dlpiId: string) {
-  const res = await api.get(`/api/encumbrance/ec/${dlpiId}`);
-  return res.data;
+  const res = await apiFetch(`/api/encumbrance/ec/${dlpiId}`);
+  return res.json();
 }
 
 // ─── Oracle ───────────────────────────────────────────────────────────────────
@@ -233,13 +264,19 @@ export async function calculateStampDuty(payload: {
   declaredValueINR: number;
   tehsilCode: string;
 }) {
-  const res = await api.post('/api/oracle/stamp-duty/calculate', payload);
-  return res.data;
+  const res = await apiFetch('/api/oracle/stamp-duty/calculate', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+  return res.json();
 }
 
 export async function verifyCRS(registrationNo: string) {
-  const res = await api.post('/api/oracle/crs/verify', { registrationNo });
-  return res.data;
+  const res = await apiFetch('/api/oracle/crs/verify', {
+    method: 'POST',
+    body: JSON.stringify({ registrationNo }),
+  });
+  return res.json();
 }
 
 // ─── NyayaAI ─────────────────────────────────────────────────────────────────
@@ -249,8 +286,11 @@ export async function predictDispute(payload: {
   disputeType: string;
   facts: string;
 }) {
-  const res = await api.post('/api/ai/nyaya/predict', payload);
-  return res.data as {
+  const res = await apiFetch('/api/ai/nyaya/predict', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+  return await res.json() as {
     winProbability: number;
     settleProbability: number;
     loseProbability: number;
@@ -272,38 +312,47 @@ export async function predictDispute(payload: {
 // ─── BhumiAuction ─────────────────────────────────────────────────────────────
 
 export async function getAuctions() {
-  const res = await api.get('/api/auction');
-  return res.data;
+  const res = await apiFetch('/api/auction');
+  return res.json();
 }
 
 export async function placeBid(auctionId: string, payload: {
   bidAmountINR: number;
   bidderAadhaarHash: string;
 }) {
-  const res = await api.post(`/api/auction/${auctionId}/bid`, payload);
-  return res.data;
+  const res = await apiFetch(`/api/auction/${auctionId}/bid`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+  return res.json();
 }
 
 // ─── Demo trigger (mock mode only) ───────────────────────────────────────────
 
 export async function triggerDemoEvent(key: string) {
-  const res = await api.post('/api/demo/trigger', { key });
-  return res.data;
+  const res = await apiFetch('/api/demo/trigger', {
+    method: 'POST',
+    body: JSON.stringify({ key }),
+  });
+  return res.json();
 }
 
 export async function clearAllHistory() {
-  const res = await api.post('/api/dlpi/clear-history');
-  return res.data;
+  const res = await apiFetch('/api/dlpi/clear-history', { method: 'POST' });
+  return res.json();
 }
 
 export async function resetDemoRecords() {
-  const res = await api.post('/api/dlpi/reset-demo');
-  return res.data;
+  const res = await apiFetch('/api/dlpi/reset-demo', { method: 'POST' });
+  return res.json();
 }
 
 export async function seedAtomicParcel(payload: any) {
-  const res = await api.post('/api/dlpi/seed', payload);
-  return res.data;
+  const res = await apiFetch('/api/dlpi/seed', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+  return res.json();
 }
 
 export default api;
