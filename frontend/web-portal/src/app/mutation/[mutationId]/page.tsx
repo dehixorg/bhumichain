@@ -535,7 +535,7 @@ export default function MutationDetailPage() {
                   <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Your Action</div>
 
                   {actionErr && (
-                    <div className="flex items-center gap-2 p-3 rounded-xl bg-red-900/30 border border-red-700 text-red-300 text-xs">
+                    <div className="flex items-center gap-2 p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs">
                       <AlertTriangle className="w-4 h-4 shrink-0" />
                       {actionErr}
                     </div>
