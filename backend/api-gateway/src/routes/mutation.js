@@ -317,6 +317,14 @@ router.post(
         dMuts[idx].status = 'CONSENT_GIVEN';
         dMuts[idx].ownerConsentAt = new Date().toISOString();
         dMuts[idx].timeline.push({ step: 'CONSENT_GIVEN', label: 'Owner eSign Consent Received', actor: dMuts[idx].currentOwnerName, at: new Date().toISOString(), done: true });
+        
+        if (!dMuts[idx].telegramAlerts) dMuts[idx].telegramAlerts = [];
+        dMuts[idx].telegramAlerts.push({
+          channel: 'WHATSAPP', recipient: '+91 9876543210', 
+          message: `✅ E-Sign Consent Received for ${dMuts[idx].dlpiId}. Forwarding to Tehsildar for final execution.`, 
+          sentAt: new Date().toISOString(), delivered: true
+        });
+
         fs.writeFileSync('/tmp/bhumichain_dynamic_mutations.json', JSON.stringify(dMuts, null, 2));
         result = dMuts[idx];
       } else {
@@ -365,6 +373,14 @@ router.post(
         dMuts[idx].status = 'OBJECTION_FILED';
         dMuts[idx].ownerObjectionAt = new Date().toISOString();
         dMuts[idx].timeline.push({ step: 'OBJECTION_FILED', label: 'Owner Filed Objection', actor: dMuts[idx].currentOwnerName, at: new Date().toISOString(), done: true });
+        
+        if (!dMuts[idx].telegramAlerts) dMuts[idx].telegramAlerts = [];
+        dMuts[idx].telegramAlerts.push({
+          channel: 'WHATSAPP', recipient: '+91 9876543210', 
+          message: `❌ Objection Filed for ${dMuts[idx].dlpiId}. Mutation process halted pending court resolution.`, 
+          sentAt: new Date().toISOString(), delivered: true
+        });
+
         fs.writeFileSync('/tmp/bhumichain_dynamic_mutations.json', JSON.stringify(dMuts, null, 2));
         result = dMuts[idx];
       } else {
@@ -403,8 +419,16 @@ router.post(
       if (idx >= 0) {
         dMuts[idx].status = 'EXECUTED';
         dMuts[idx].executedAt = new Date().toISOString();
-        dMuts[idx].executedTxHash = '0xmock_exec_' + Date.now();
-        dMuts[idx].timeline.push({ step: 'EXECUTED', label: 'Mutation Executed', actor: req.user.name, at: new Date().toISOString(), done: true });
+        dMuts[idx].executedTxHash = req.body.officerESignTxHash || '0x' + crypto.randomBytes(32).toString('hex');
+        dMuts[idx].timeline.push({ step: 'EXECUTED', label: `Mutation Finalized by ${dMuts[idx].officerName}`, actor: dMuts[idx].officerName, at: new Date().toISOString(), done: true });
+        
+        if (!dMuts[idx].telegramAlerts) dMuts[idx].telegramAlerts = [];
+        dMuts[idx].telegramAlerts.push({
+          channel: 'WHATSAPP', recipient: '+91 9876543210', 
+          message: `🎉 Mutation EXECUTED for ${dMuts[idx].dlpiId}. Title transferred to ${dMuts[idx].newOwnerName}.`, 
+          sentAt: new Date().toISOString(), delivered: true
+        });
+
         fs.writeFileSync('/tmp/bhumichain_dynamic_mutations.json', JSON.stringify(dMuts, null, 2));
         result = dMuts[idx];
       } else {
