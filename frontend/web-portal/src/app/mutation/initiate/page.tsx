@@ -88,7 +88,7 @@ export default function InitiateMutationPage() {
         dlpiId: dlpiId.trim(),
         mutationType,
         officerName: user.name || 'Revenue Officer',
-        officerHash: officerHash.startsWith('sha256:') ? officerHash : `sha256:${officerHash}`,
+        officerHash: (officerHash.startsWith('sha256:') ? officerHash : `sha256:${officerHash}`).toLowerCase(),
         officerRank: user.role || 'tehsildar',
         newOwnerName: newOwnerName.trim(),
         newOwnerHash: newOwnerHash.slice(0, 71),
@@ -105,7 +105,11 @@ export default function InitiateMutationPage() {
 
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.message || data.error || 'Failed to initiate mutation');
+        let errorMsg = data.message || data.error;
+        if (data.errors && Array.isArray(data.errors)) {
+          errorMsg = data.errors.map((e: any) => `${e.param}: ${e.msg}`).join(', ');
+        }
+        throw new Error(errorMsg || 'Failed to initiate mutation');
       }
 
       toast.success(
