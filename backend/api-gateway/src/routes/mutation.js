@@ -174,6 +174,15 @@ router.get('/', authenticate, async (req, res) => {
     if (fs.existsSync('/tmp/bhumichain_history_cleared.json')) {
       let dMuts = [];
       try { dMuts = JSON.parse(fs.readFileSync('/tmp/bhumichain_dynamic_mutations.json')); } catch(e) {}
+      if (req.user.role === 'citizen') {
+        const h = req.user.aadhaarHash;
+        dMuts = dMuts.filter(m => 
+          m.currentOwnerHash === h || 
+          m.newOwnerHash === h || 
+          m.currentOwnerName === req.user.name || 
+          m.newOwnerName === req.user.name
+        );
+      }
       return res.json(dMuts);
     }
     let list;
