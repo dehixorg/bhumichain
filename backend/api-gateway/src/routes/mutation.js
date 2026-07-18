@@ -265,7 +265,7 @@ router.post(
 router.post(
   '/:mutationId/consent',
   authenticate,
-  body('ownerAadhaarHash').matches(/^sha256:[a-f0-9]{64}$/),
+  body('ownerAadhaarHash').notEmpty(),
   body('eSignTxHash').notEmpty(),
   validate,
   async (req, res) => {
@@ -285,7 +285,7 @@ router.post(
 router.post(
   '/:mutationId/objection',
   authenticate,
-  body('ownerAadhaarHash').matches(/^sha256:[a-f0-9]{64}$/),
+  body('ownerAadhaarHash').notEmpty(),
   body('objectionReason').notEmpty(),
   body('evidenceCID').notEmpty(),
   validate,
