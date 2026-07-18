@@ -146,6 +146,11 @@ router.get('/my-parcels', authenticate, requireRole(ROLES.CITIZEN), async (req, 
     // Adapt legacy structure and override ownership with any atomic mutation claims/transfers
     let atomicClaims = {};
     try { atomicClaims = JSON.parse(fs.readFileSync('/tmp/bhumichain_atomic_claims.json', 'utf8')); } catch(e) {}
+    
+    // Also read executed dynamic mutations to update DLPI ownership!
+    let dMuts = [];
+    try { dMuts = JSON.parse(fs.readFileSync('/tmp/bhumichain_dynamic_mutations.json', 'utf8')); } catch(e) {}
+    const executedMuts = dMuts.filter(m => m.status === 'EXECUTED');
 
     let seededParcels = [];
     try { seededParcels = JSON.parse(fs.readFileSync('/tmp/bhumichain_seeded_parcels.json', 'utf8')); } catch(e) {}
@@ -195,6 +200,14 @@ router.get('/my-parcels', authenticate, requireRole(ROLES.CITIZEN), async (req, 
         p.ownerName = claim.claimedBy || p.ownerName;
         p.owner = { name: claim.claimedBy || p.owner?.name, aadhaarHash: claim.aadhaarHash || p.owner?.aadhaarHash };
         p.owners = [{ name: claim.claimedBy || p.owner?.name, aadhaarHash: claim.aadhaarHash || p.owner?.aadhaarHash }];
+      }
+      
+      // Override with dynamic mutation executed transfers
+      const execMut = executedMuts.find(m => m.dlpiId === p.dlpiId);
+      if (execMut) {
+        p.ownerName = execMut.newOwnerName;
+        p.owner = { name: execMut.newOwnerName, aadhaarHash: execMut.newOwnerHash };
+        p.owners = [{ name: execMut.newOwnerName, aadhaarHash: execMut.newOwnerHash }];
       }
       return p;
     }).filter(p => {
