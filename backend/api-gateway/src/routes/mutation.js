@@ -362,7 +362,7 @@ router.post(
 router.post(
   '/:mutationId/execute',
   authenticate,
-  requireRole(ROLES.CIRCLE_OFFICER, ROLES.REVENUE_OFFICER),
+  requireRole(ROLES.CIRCLE_INSPECTOR, ROLES.KANUNGO, ROLES.TEHSILDAR, ROLES.COLLECTOR, ROLES.SUPER_ADMIN),
   body('finalDocCID').notEmpty(),
   validate,
   async (req, res) => {
