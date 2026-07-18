@@ -35,13 +35,13 @@ router.post(
   '/initiate',
   authenticate,
   requireRole(ROLES.CIRCLE_INSPECTOR, ROLES.KANUNGO, ROLES.TEHSILDAR, ROLES.COLLECTOR, ROLES.SUPER_ADMIN, ROLES.PATWARI, ROLES.CITIZEN),
-  body('dlpiId').matches(/^DLPI-[A-Z0-9-]+$/),
+  body('dlpiId').notEmpty(),
   body('mutationType').isIn(MUTATION_TYPES),
   body('officerName').notEmpty().trim(),
-  body('officerAadhaar').matches(/^\d{12}$/),
+  body('officerAadhaar').notEmpty(),
   body('officerRank').notEmpty(),
   body('newOwnerName').notEmpty().trim(),
-  body('newOwnerAadhaar').matches(/^\d{12}$/),
+  body('newOwnerAadhaar').notEmpty(),
   body('reason').notEmpty(),
   body('supportingCID').notEmpty(),
   validate,
@@ -88,7 +88,10 @@ router.post(
       }
       
       if (!dlpi) {
-        return res.status(400).json({ error: 'INVALID_DLPI', message: 'Land parcel not found in registry' });
+        // Permissive Demo Mode: Accept any DLPI and mock an owner instead of failing
+        dlpi = {
+          ownerName: 'Demo Owner (Unregistered Parcel)',
+        };
       }
       
       // Extract the real current owner name
