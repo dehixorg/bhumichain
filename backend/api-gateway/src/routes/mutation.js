@@ -10,7 +10,10 @@ const router = Router();
 
 const validate = (req, res, next) => {
   const errs = validationResult(req);
-  if (!errs.isEmpty()) return res.status(400).json({ errors: errs.array() });
+  if (!errs.isEmpty()) {
+    console.error("[VALIDATION FAILED]", req.originalUrl, JSON.stringify(errs.array(), null, 2));
+    return res.status(400).json({ errors: errs.array() });
+  }
   next();
 };
 
@@ -27,10 +30,10 @@ router.post(
   body('dlpiId').matches(/^DLPI-[A-Z0-9-]+$/),
   body('mutationType').isIn(MUTATION_TYPES),
   body('officerName').notEmpty().trim(),
-  body('officerHash').matches(/^sha256:[a-f0-9]{64}$/),
+  body('officerHash').matches(/^sha256:[a-fA-F0-9]{64}$/i),
   body('officerRank').notEmpty(),
   body('newOwnerName').notEmpty().trim(),
-  body('newOwnerHash').matches(/^sha256:[a-f0-9]{64}$/),
+  body('newOwnerHash').matches(/^sha256:[a-fA-F0-9]{64}$/i),
   body('reason').notEmpty(),
   body('supportingCID').notEmpty(),
   validate,
@@ -44,8 +47,8 @@ router.post(
       let result = null;
       try {
         result = await submit('mutation-manager', 'InitiateMutation', [
-          dlpiId, mutationType, officerName, officerHash, officerRank,
-          newOwnerName, newOwnerHash, reason, supportingCID,
+          dlpiId, mutationType, officerName, officerHash.toLowerCase(), officerRank,
+          newOwnerName, newOwnerHash.toLowerCase(), reason, supportingCID,
           courtOrderNo || '', courtOracleHash || '',
         ]);
       } catch (fabricErr) {
