@@ -51,7 +51,7 @@ export default function CitizenHeader() {
         <Link href="/" className="flex items-center gap-3 group">
           <div className="flex items-center gap-2.5 pr-3 border-r border-gray-300">
             <img 
-              src="/emblem-dark.png" 
+              src="/Government_of_India_logo.svg.webp" 
               alt="National Emblem of India" 
               className="h-10 w-auto object-contain"
               onError={(e) => {
