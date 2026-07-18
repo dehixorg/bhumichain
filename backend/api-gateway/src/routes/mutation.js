@@ -98,9 +98,9 @@ router.post(
       const realOwnerName = dlpi.ownerName || (dlpi.owner && dlpi.owner.name) || 'Unknown Owner';
 
       let result = null;
+      const officerHash = computeAadhaarHash(officerAadhaar);
+      const newOwnerHash = computeAadhaarHash(newOwnerAadhaar);
       try {
-        const officerHash = computeAadhaarHash(officerAadhaar);
-        const newOwnerHash = computeAadhaarHash(newOwnerAadhaar);
         result = await submit('mutation-manager', 'InitiateMutation', [
           dlpiId, mutationType, officerName, officerHash, officerRank,
           newOwnerName, newOwnerHash, reason, supportingCID,
