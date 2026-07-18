@@ -119,7 +119,9 @@ router.post(
           officerName,
           officerRank,
           currentOwnerName: realOwnerName,
+          currentOwnerHash: dlpi.ownerHash || 'unknown_hash',
           newOwnerName,
+          newOwnerHash: newOwnerHash || 'unknown_hash',
           reason,
           supportingCID,
           status: 'ALERT_SENT',
@@ -196,7 +198,20 @@ router.get('/', authenticate, async (req, res) => {
     list.forEach(m => mergedMap.set(m.mutationId, m));
     mockList.forEach(m => mergedMap.set(m.mutationId, m));
     
-    res.json(Array.from(mergedMap.values()));
+    let allMuts = Array.from(mergedMap.values());
+    
+    // STRICT FILTER: If citizen, only show mutations matching their Aadhaar Hash OR their exact name
+    if (req.user.role === 'citizen') {
+      const h = req.user.aadhaarHash;
+      allMuts = allMuts.filter(m => 
+        m.currentOwnerHash === h || 
+        m.newOwnerHash === h || 
+        m.currentOwnerName === req.user.name || 
+        m.newOwnerName === req.user.name
+      );
+    }
+    
+    res.json(allMuts);
   } catch (e) {
     res.status(500).json({ error: 'FABRIC_ERROR', message: e.message });
   }
