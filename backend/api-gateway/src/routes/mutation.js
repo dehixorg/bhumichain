@@ -300,6 +300,11 @@ router.post(
       try { dMuts = JSON.parse(fs.readFileSync('/tmp/bhumichain_dynamic_mutations.json', 'utf8')); } catch(e){}
       const idx = dMuts.findIndex(m => m.mutationId === req.params.mutationId);
       if (idx >= 0) {
+        // STRICT AADHAAR VERIFICATION: only the true owner can consent
+        if (dMuts[idx].currentOwnerHash !== req.body.ownerAadhaarHash && dMuts[idx].currentOwnerHash !== 'unknown_hash') {
+          return res.status(403).json({ error: 'AADHAAR_MISMATCH', message: 'The provided Aadhaar identity does not match the legal title holder of this property.' });
+        }
+        
         dMuts[idx].status = 'CONSENT_GIVEN';
         dMuts[idx].ownerConsentAt = new Date().toISOString();
         dMuts[idx].timeline.push({ step: 'CONSENT_GIVEN', label: 'Owner eSign Consent Received', actor: dMuts[idx].currentOwnerName, at: new Date().toISOString(), done: true });
@@ -343,6 +348,11 @@ router.post(
       try { dMuts = JSON.parse(fs.readFileSync('/tmp/bhumichain_dynamic_mutations.json', 'utf8')); } catch(e){}
       const idx = dMuts.findIndex(m => m.mutationId === req.params.mutationId);
       if (idx >= 0) {
+        // STRICT AADHAAR VERIFICATION: only the true owner can object
+        if (dMuts[idx].currentOwnerHash !== req.body.ownerAadhaarHash && dMuts[idx].currentOwnerHash !== 'unknown_hash') {
+          return res.status(403).json({ error: 'AADHAAR_MISMATCH', message: 'The provided Aadhaar identity does not match the legal title holder of this property.' });
+        }
+
         dMuts[idx].status = 'OBJECTION_FILED';
         dMuts[idx].ownerObjectionAt = new Date().toISOString();
         dMuts[idx].timeline.push({ step: 'OBJECTION_FILED', label: 'Owner Filed Objection', actor: dMuts[idx].currentOwnerName, at: new Date().toISOString(), done: true });
