@@ -3,6 +3,8 @@
 const { Router } = require('express');
 const { body, param, validationResult } = require('express-validator');
 const crypto = require('crypto');
+const axios = require('axios');
+const RECORD_SCAN_URL = process.env.RECORD_SCAN_URL || 'http://localhost:8010';
 const { submit, evaluate } = require('../services/fabric');
 const { broadcast } = require('../services/websocket');
 const { authenticate, requireRole, ROLES } = require('../middleware/auth');
@@ -61,6 +63,28 @@ router.post(
       if (!dlpi || Object.keys(dlpi).length === 0) {
         const { getMockResponse } = require('../mock/responses');
         dlpi = getMockResponse('dlpi', 'QueryDLPI', [dlpiId]);
+      }
+      
+      // Fallback: Check RecordScan AI for newly scanned documents
+      if (!dlpi) {
+        try {
+          const rsResponse = await axios.get(`${RECORD_SCAN_URL}/scan`);
+          const allScans = rsResponse.data || [];
+          const scan = allScans.find(s => 
+            s.suggestedDlpiId === dlpiId || 
+            `DLPI-UP-DAD-${s.extraction?.khasraNo || '00000'}` === dlpiId ||
+            dlpiId.includes(s.extraction?.khasraNo)
+          );
+          if (scan) {
+            dlpi = {
+              ownerName: (scan.extraction?.khatedars && scan.extraction.khatedars.length > 0) 
+                         ? scan.extraction.khatedars[0].name 
+                         : 'Unknown Owner',
+            };
+          }
+        } catch (e) {
+          console.warn('[mutation.js] Failed to query RecordScan AI:', e.message);
+        }
       }
       
       if (!dlpi) {
