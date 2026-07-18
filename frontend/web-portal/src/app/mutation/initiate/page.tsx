@@ -78,20 +78,17 @@ export default function InitiateMutationPage() {
 
     try {
       toast.loading('Initiating Dakhil Kharij mutation on Hyperledger Fabric...', { id: 'init-mut' });
-      const officerHash = user.aadhaarHash || 'sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855';
+      const officerAadhaar = user.aadhaarNumber || user.aadhaar || user.aadhaarNo || user.aadhaarId || '999900010001';
       const cleanAadhaar = newOwnerAadhaar.replace(/\D/g, '');
-      const newOwnerHash = cleanAadhaar.length === 12
-        ? `sha256:${cleanAadhaar}a1b2c3d4e5f60718293a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e`
-        : `sha256:a1b2c3d4e5f60718293a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3`;
-
+      
       const payload = {
         dlpiId: dlpiId.trim(),
         mutationType,
         officerName: user.name || 'Revenue Officer',
-        officerHash: (officerHash.startsWith('sha256:') ? officerHash : `sha256:${officerHash}`).toLowerCase(),
+        officerAadhaar: officerAadhaar,
         officerRank: user.role || 'tehsildar',
         newOwnerName: newOwnerName.trim(),
-        newOwnerHash: newOwnerHash.slice(0, 71),
+        newOwnerAadhaar: cleanAadhaar,
         reason: reason.trim(),
         supportingCID: supportingCID.trim(),
         courtOrderNo: courtOrderNo.trim(),

@@ -2,9 +2,15 @@
 
 const { Router } = require('express');
 const { body, param, validationResult } = require('express-validator');
+const crypto = require('crypto');
 const { submit, evaluate } = require('../services/fabric');
 const { broadcast } = require('../services/websocket');
 const { authenticate, requireRole, ROLES } = require('../middleware/auth');
+
+function computeAadhaarHash(aadhaarNumber) {
+  const salt = process.env.AADHAAR_SALT || 'bhumichain-aadhaar-salt-change-in-prod';
+  return 'sha256:' + crypto.createHash('sha256').update(aadhaarNumber + salt).digest('hex');
+}
 
 const router = Router();
 
@@ -30,25 +36,27 @@ router.post(
   body('dlpiId').matches(/^DLPI-[A-Z0-9-]+$/),
   body('mutationType').isIn(MUTATION_TYPES),
   body('officerName').notEmpty().trim(),
-  body('officerHash').matches(/^sha256:[a-fA-F0-9]{64}$/i),
+  body('officerAadhaar').matches(/^\d{12}$/),
   body('officerRank').notEmpty(),
   body('newOwnerName').notEmpty().trim(),
-  body('newOwnerHash').matches(/^sha256:[a-fA-F0-9]{64}$/i),
+  body('newOwnerAadhaar').matches(/^\d{12}$/),
   body('reason').notEmpty(),
   body('supportingCID').notEmpty(),
   validate,
   async (req, res) => {
     try {
       const {
-        dlpiId, mutationType, officerName, officerHash, officerRank,
-        newOwnerName, newOwnerHash, reason, supportingCID,
+        dlpiId, mutationType, officerName, officerAadhaar, officerRank,
+        newOwnerName, newOwnerAadhaar, reason, supportingCID,
         courtOrderNo, courtOracleHash,
       } = req.body;
       let result = null;
       try {
+        const officerHash = computeAadhaarHash(officerAadhaar);
+        const newOwnerHash = computeAadhaarHash(newOwnerAadhaar);
         result = await submit('mutation-manager', 'InitiateMutation', [
-          dlpiId, mutationType, officerName, officerHash.toLowerCase(), officerRank,
-          newOwnerName, newOwnerHash.toLowerCase(), reason, supportingCID,
+          dlpiId, mutationType, officerName, officerHash, officerRank,
+          newOwnerName, newOwnerHash, reason, supportingCID,
           courtOrderNo || '', courtOracleHash || '',
         ]);
       } catch (fabricErr) {
