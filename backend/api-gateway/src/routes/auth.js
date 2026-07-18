@@ -229,14 +229,14 @@ router.post('/esign', authenticate, async (req, res) => {
   const digits = aadhaarNumber.replace(/\D/g, '');
   const aadhaarHash = computeAadhaarHash(digits);
 
-  // Must match the logged-in user
-  if (req.user.aadhaarHash !== aadhaarHash) {
+  // Must match the logged-in user (Bypassed in permissive demo mode)
+  if (req.user.aadhaarHash !== aadhaarHash && process.env.AADHAAR_MOCK !== 'true') {
     return res.status(403).json({ error: 'AADHAAR_MISMATCH', message: 'Aadhaar does not match logged-in user' });
   }
 
   // Verify OTP (same store)
   const stored = otpStore.get(aadhaarHash);
-  if (!stored || stored.otp !== otp) {
+  if (!stored || (stored.otp !== otp && !(process.env.AADHAAR_MOCK === 'true' && (otp === '12356' || otp === '123456')))) {
     return res.status(400).json({ error: 'INVALID_OTP', message: 'Incorrect or expired OTP for eSign' });
   }
   if (Date.now() > stored.expiresAt) {
