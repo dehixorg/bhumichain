@@ -50,6 +50,26 @@ router.post(
         newOwnerName, newOwnerAadhaar, reason, supportingCID,
         courtOrderNo, courtOracleHash,
       } = req.body;
+      
+      // ── VERIFY DLPI EXISTS AND EXTRACT OWNER ──
+      let dlpi = null;
+      try {
+        dlpi = await evaluate('dlpi', 'QueryDLPI', [dlpiId]);
+      } catch (e) {
+        // Fallback to mock registry
+      }
+      if (!dlpi || Object.keys(dlpi).length === 0) {
+        const { getMockResponse } = require('../mock/responses');
+        dlpi = getMockResponse('dlpi', 'QueryDLPI', [dlpiId]);
+      }
+      
+      if (!dlpi) {
+        return res.status(400).json({ error: 'INVALID_DLPI', message: 'Land parcel not found in registry' });
+      }
+      
+      // Extract the real current owner name
+      const realOwnerName = dlpi.ownerName || (dlpi.owner && dlpi.owner.name) || 'Unknown Owner';
+
       let result = null;
       try {
         const officerHash = computeAadhaarHash(officerAadhaar);
@@ -71,7 +91,7 @@ router.post(
           mutationType,
           officerName,
           officerRank,
-          currentOwnerName: 'Ram Prasad Sharma',
+          currentOwnerName: realOwnerName,
           newOwnerName,
           reason,
           supportingCID,
