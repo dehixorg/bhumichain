@@ -543,7 +543,7 @@ export default function MutationDetailPage() {
 
                   {canConsent && (
                     <button
-                      onClick={() => setShowESign('consent')}
+                      onClick={() => handleConsent('0xesign-direct-demo-bypass')}
                       disabled={busy}
                       className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-[#0F4C81] hover:bg-[#0a3566] text-white font-semibold text-sm transition-colors disabled:opacity-50"
                     >
@@ -565,7 +565,7 @@ export default function MutationDetailPage() {
 
                   {canExecute && (
                     <button
-                      onClick={() => setShowESign('execute')}
+                      onClick={() => handleExecute('0xesign-direct-demo-bypass')}
                       disabled={busy}
                       className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-green-700 hover:bg-green-600 text-white font-semibold text-sm transition-colors disabled:opacity-50"
                     >
