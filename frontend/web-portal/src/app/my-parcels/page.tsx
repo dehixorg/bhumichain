@@ -382,9 +382,9 @@ export default function CitizenDashboard() {
                 <div>
                   <h2 className="text-xl font-black text-gray-900 tracking-tight flex items-center gap-2">
                     <Database className="w-5 h-5 text-[#0F4C81]" />
-                    My Land Holdings (Atomic Network)
+                    My Land Holdings
                   </h2>
-                  <p className="text-xs text-gray-500 mt-0.5">Records are atomic & verified on-chain against your exact Aadhaar</p>
+                  <p className="text-xs text-gray-500 mt-0.5">Records are verified on-chain against your exact Aadhaar</p>
                 </div>
 
               </div>
@@ -396,7 +396,7 @@ export default function CitizenDashboard() {
               ) : parcels.length === 0 ? (
                 <div className="bg-white border border-gray-200 rounded-2xl p-10 text-center shadow-sm">
                   <Database className="w-12 h-12 text-[#0F4C81] mx-auto mb-3 opacity-80" />
-                  <p className="text-gray-900 font-bold text-lg">Clean Atomic Slate — No Verified Records Found</p>
+                  <p className="text-gray-900 font-bold text-lg">Clean Slate — No Verified Records Found</p>
                   <p className="text-gray-500 text-sm mt-1 max-w-md mx-auto">
                     Under statutory registry rules, citizens cannot self-create land titles. New records or digitized Khataunis only appear here after <span className="font-bold text-[#0F4C81]">Tehsildar (`Revenue Judge`) verification and approval</span>.
                   </p>

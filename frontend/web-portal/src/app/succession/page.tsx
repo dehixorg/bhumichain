@@ -720,15 +720,6 @@ export default function SuccessionPage() {
                       </div>
                     )}
                   </div>
-                  {!isTehsildar && pendingNoms.length > 0 && (
-                    <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl p-4">
-                      <Info className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
-                      <div className="text-sm text-amber-800">
-                        <strong>Demo:</strong> Log in as <strong>Tehsildar</strong> to approve. Or{' '}
-                        <button onClick={() => approveNomination(pendingNoms[0]?.nominationId)} className="underline font-bold text-amber-700">approve now →</button>
-                      </div>
-                    </div>
-                  )}
                 </div>
               )}
 

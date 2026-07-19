@@ -594,7 +594,10 @@ router.post(
           req.params.transferId, req.user.aadhaarHash || 'mock-tehsildar-hash',
         ]);
         if (chainRes) result = chainRes;
-      } catch(e) {}
+      } catch (e) {
+        console.error('ApproveByTehsildar Error:', e);
+        return res.status(500).json({ success: false, error: e.message || String(e) });
+      }
 
       // Atomically mutate title to the new Buyer across disk & memory
       try {
