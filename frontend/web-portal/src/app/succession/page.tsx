@@ -108,12 +108,12 @@ export default function SuccessionPage() {
           }));
           setMyParcels(mapped); setSelectedDlpiId(mapped[0].dlpiId);
         } else {
-          setMyParcels([{ dlpiId: DEMO_DLPI, label: `${DEMO_DLPI} (Dadri Plot 100)` }]);
-          setSelectedDlpiId(DEMO_DLPI);
+          setMyParcels([]);
+          setSelectedDlpiId('');
         }
       } catch {
-        setMyParcels([{ dlpiId: DEMO_DLPI, label: `${DEMO_DLPI} (Dadri Plot 100)` }]);
-        setSelectedDlpiId(DEMO_DLPI);
+        setMyParcels([]);
+        setSelectedDlpiId('');
       } finally { setLoadingParcels(false); }
     })();
     const toNomArray = (data: any): any[] => Array.isArray(data) ? data : (Array.isArray(data?.nominations) ? data.nominations : []);
@@ -520,6 +520,11 @@ export default function SuccessionPage() {
                         <label className="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wider">Select Property (DLPI)</label>
                         {loadingParcels ? (
                           <div className="flex items-center gap-2 text-gray-500 text-sm py-2"><Loader2 className="w-4 h-4 animate-spin text-[#0F4C81]" /> Loading your land holdings…</div>
+                        ) : myParcels.length === 0 ? (
+                          <div className="flex flex-col gap-2 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm font-semibold">
+                            <div className="flex items-center gap-2"><AlertTriangle className="w-4 h-4" /> No registered properties found for your Aadhaar.</div>
+                            <div className="text-xs font-medium opacity-80">You must have ownership of a property to initiate succession.</div>
+                          </div>
                         ) : (
                           <select value={selectedDlpiId} onChange={e => setSelectedDlpiId(e.target.value)}
                             className="w-full bg-gray-50 border border-gray-300 rounded-xl px-3.5 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0F4C81]/40 focus:bg-white transition-all">
@@ -559,7 +564,7 @@ export default function SuccessionPage() {
                           <Plus className="w-4 h-4" /> Add Another Heir
                         </button>
                       </div>
-                      <button type="submit" disabled={isSubmittingHeirs}
+                      <button type="submit" disabled={isSubmittingHeirs || myParcels.length === 0}
                         className="w-full bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed text-white font-bold py-3.5 px-6 rounded-xl flex items-center justify-center gap-2.5 shadow-md transition-all">
                         {isSubmittingHeirs ? <><Loader2 className="w-5 h-5 animate-spin" /> Submitting…</> : <><BadgeCheck className="w-5 h-5" /> Submit Heirs for Tehsildar Approval <ArrowRight className="w-4 h-4" /></>}
                       </button>
