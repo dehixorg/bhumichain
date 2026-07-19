@@ -175,13 +175,22 @@ router.get('/', authenticate, async (req, res) => {
       let dMuts = [];
       try { dMuts = JSON.parse(fs.readFileSync('/tmp/bhumichain_dynamic_mutations.json')); } catch(e) {}
       if (req.user.role === 'citizen') {
-        const h = req.user.aadhaarHash;
-        dMuts = dMuts.filter(m => 
-          m.currentOwnerHash === h || 
-          m.newOwnerHash === h || 
-          m.currentOwnerName === req.user.name || 
-          m.newOwnerName === req.user.name
-        );
+        const h = req.user.aadhaarHash || '';
+        const userRaw = req.user.aadhaar || req.user.aadhaarRaw || req.user.aadhaarNumber || '';
+        const computedHash = userRaw ? computeAadhaarHash(userRaw) : '';
+        const userName = (req.user.name || '').toLowerCase();
+        
+        dMuts = dMuts.filter(m => {
+          const mCurName = (m.currentOwnerName || '').toLowerCase();
+          const mNewName = (m.newOwnerName || '').toLowerCase();
+          
+          if (m.currentOwnerHash && (m.currentOwnerHash === h || m.currentOwnerHash === computedHash)) return true;
+          if (m.newOwnerHash && (m.newOwnerHash === h || m.newOwnerHash === computedHash)) return true;
+          if (userName && mCurName && (mCurName.includes(userName) || userName.includes(mCurName))) return true;
+          if (userName && mNewName && (mNewName.includes(userName) || userName.includes(mNewName))) return true;
+          
+          return false;
+        });
       }
       return res.json(dMuts);
     }
@@ -211,13 +220,22 @@ router.get('/', authenticate, async (req, res) => {
     
     // STRICT FILTER: If citizen, only show mutations matching their Aadhaar Hash OR their exact name
     if (req.user.role === 'citizen') {
-      const h = req.user.aadhaarHash;
-      allMuts = allMuts.filter(m => 
-        m.currentOwnerHash === h || 
-        m.newOwnerHash === h || 
-        m.currentOwnerName === req.user.name || 
-        m.newOwnerName === req.user.name
-      );
+      const h = req.user.aadhaarHash || '';
+      const userRaw = req.user.aadhaar || req.user.aadhaarRaw || req.user.aadhaarNumber || '';
+      const computedHash = userRaw ? computeAadhaarHash(userRaw) : '';
+      const userName = (req.user.name || '').toLowerCase();
+      
+      allMuts = allMuts.filter(m => {
+        const mCurName = (m.currentOwnerName || '').toLowerCase();
+        const mNewName = (m.newOwnerName || '').toLowerCase();
+        
+        if (m.currentOwnerHash && (m.currentOwnerHash === h || m.currentOwnerHash === computedHash)) return true;
+        if (m.newOwnerHash && (m.newOwnerHash === h || m.newOwnerHash === computedHash)) return true;
+        if (userName && mCurName && (mCurName.includes(userName) || userName.includes(mCurName))) return true;
+        if (userName && mNewName && (mNewName.includes(userName) || userName.includes(mNewName))) return true;
+        
+        return false;
+      });
     }
     
     res.json(allMuts);
