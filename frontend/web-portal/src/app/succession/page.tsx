@@ -101,10 +101,39 @@ export default function SuccessionPage() {
         const res = await apiFetch('/api/dlpi/my-parcels');
         const data = await res.json();
         const parcels: any[] = Array.isArray(data) ? data : (data?.parcels || []);
+        
+        let allNoms: any[] = [];
+        try {
+          const nomRes = await getInheritorNominations();
+          allNoms = Array.isArray(nomRes) ? nomRes : (Array.isArray(nomRes?.nominations) ? nomRes.nominations : []);
+          setNominations(allNoms);
+        } catch (e) {}
+
+        const myNominatedDlpis = new Set<string>();
+        if (u) {
+          allNoms.forEach(n => {
+            if (
+              n.inheritorAadhaarNumber === u.aadhaar || 
+              n.inheritorAadhaarNumber === u.aadhaarHash || 
+              n.inheritorAadhaarNumber === u.aadhaarNo || 
+              (u.aadhaarRaw && n.inheritorAadhaarNumber === u.aadhaarRaw)
+            ) {
+              if (n.dlpiId) myNominatedDlpis.add(n.dlpiId);
+            }
+          });
+        }
+
+        const existingDlpis = new Set(parcels.map(p => p.dlpiId || p.id));
+        myNominatedDlpis.forEach(dlpiId => {
+          if (!existingDlpis.has(dlpiId)) {
+            parcels.push({ dlpiId, id: dlpiId, label: `${dlpiId} — (Nominated Heir)` });
+          }
+        });
+
         if (parcels.length > 0) {
           const mapped = parcels.map((p: any) => ({
             dlpiId: p.dlpiId || p.id,
-            label: `${p.dlpiId || p.id}${p.khataNo ? ` — Khata ${p.khataNo}` : ''}${p.locality ? `, ${p.locality}` : ''}`,
+            label: p.label || `${p.dlpiId || p.id}${p.khataNo ? ` — Khata ${p.khataNo}` : ''}${p.locality ? `, ${p.locality}` : ''}`,
           }));
           setMyParcels(mapped); setSelectedDlpiId(mapped[0].dlpiId);
         } else {
@@ -116,10 +145,15 @@ export default function SuccessionPage() {
         setSelectedDlpiId('');
       } finally { setLoadingParcels(false); }
     })();
-    const toNomArray = (data: any): any[] => Array.isArray(data) ? data : (Array.isArray(data?.nominations) ? data.nominations : []);
-    getInheritorNominations().then(data => setNominations(toNomArray(data))).catch(() => {});
     getMyPendingSuccessions().catch(() => {});
   }, []);
+
+  // Ensure the selected DLPI is always available in the dropdown
+  useEffect(() => {
+    if (selectedDlpiId && !myParcels.some(p => p.dlpiId === selectedDlpiId)) {
+      setMyParcels(prev => [...prev, { dlpiId: selectedDlpiId, id: selectedDlpiId, label: `${selectedDlpiId} — (Selected)` }]);
+    }
+  }, [selectedDlpiId, myParcels]);
 
   // Ensure Step 4/5/6 heirs strictly match the actual approved nominations instead of falling back to 3 demo heirs
   useEffect(() => {
@@ -405,9 +439,7 @@ export default function SuccessionPage() {
                         <p className="text-xs text-gray-500 mt-0.5">Complete Option 1 first to get Tehsildar verification, which unlocks Option 2 for Death Certificate OCR.</p>
                       </div>
                     </div>
-                    <span className="text-xs font-bold px-3 py-1 bg-blue-50 text-[#0F4C81] rounded-full border border-blue-200/60 shadow-xs shrink-0">
-                      ⚖️ Hindu Succession Act 2005
-                    </span>
+
                   </div>
 
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
