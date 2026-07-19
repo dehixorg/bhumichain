@@ -895,20 +895,7 @@ export default function SuccessionPage() {
                               <span className="text-xs font-bold text-red-700 bg-red-100 border border-red-300 px-3.5 py-2 rounded-full">⚖ Objected</span>
                             ) : (
                               <div className="flex flex-col items-end gap-1 w-full sm:w-auto">
-                                <div className="flex items-center gap-2 w-full sm:w-auto bg-white p-1.5 rounded-lg border border-gray-300 shadow-sm">
-                                  <input
-                                    type="text"
-                                    maxLength={12}
-                                    placeholder="12-digit Aadhaar No."
-                                    value={heirAadhaarInputs[heir.heirId] || ''}
-                                    onChange={e => setHeirAadhaarInputs(prev => ({ ...prev, [heir.heirId]: e.target.value.replace(/\D/g, '').slice(0, 12) }))}
-                                    className="px-3 py-1.5 text-xs border border-gray-200 rounded-md w-40 font-mono focus:outline-none focus:ring-1 focus:ring-[#0F4C81]"
-                                  />
-                                  <button onClick={() => handleConsent(heir.heirId)} className="bg-[#0F4C81] hover:bg-[#0a3860] text-white text-xs font-bold px-3.5 py-1.5 rounded-md shadow flex items-center gap-1.5 transition-colors shrink-0">
-                                    <Shield className="w-3.5 h-3.5" /> Verify & eSign
-                                  </button>
-                                </div>
-                                <span className="text-[10px] text-gray-400 font-medium italic">Or eSign via {heir.name}'s Home Page</span>
+                                <span className="flex items-center gap-1.5 text-xs font-bold text-amber-700 bg-amber-50 border border-amber-300 px-3.5 py-2 rounded-full shadow-sm"><Clock className="w-4 h-4" /> Pending eSign</span>
                               </div>
                             )}
                           </div>
