@@ -198,8 +198,13 @@ router.get('/my-parcels', authenticate, requireRole(ROLES.CITIZEN), async (req, 
         p.claimStatus = claim.status === 'MUTATED_AND_TRANSFERRED' ? 'VERIFIED' : 'OWNER_VERIFIED';
         p.atomicLock = claim;
         p.ownerName = claim.claimedBy || p.ownerName;
-        p.owner = { name: claim.claimedBy || p.owner?.name, aadhaarHash: claim.aadhaarHash || p.owner?.aadhaarHash };
-        p.owners = [{ name: claim.claimedBy || p.owner?.name, aadhaarHash: claim.aadhaarHash || p.owner?.aadhaarHash }];
+        if (claim.heirs && claim.heirs.length > 0) {
+          p.owners = claim.heirs;
+          p.owner = claim.heirs[0];
+        } else {
+          p.owner = { name: claim.claimedBy || p.owner?.name, aadhaarHash: claim.aadhaarHash || p.owner?.aadhaarHash };
+          p.owners = [{ name: claim.claimedBy || p.owner?.name, aadhaarHash: claim.aadhaarHash || p.owner?.aadhaarHash }];
+        }
       }
       
       // Override with dynamic mutation executed transfers
@@ -216,7 +221,7 @@ router.get('/my-parcels', authenticate, requireRole(ROLES.CITIZEN), async (req, 
       const oName = (p.owner?.name || p.ownerName || '').toLowerCase();
       const ownersList = p.owners || [];
 
-      if (oHash && (oHash === userHash || oHash === userRaw)) return true;
+      if (oHash && (oHash === userHash || oHash === userRaw || String(oHash).includes(userHash) || String(oHash).includes(userRaw))) return true;
       if (userName && oName && (oName.includes(userName) || userName.includes(oName))) return true;
       if (ownersList.some(o => (o.aadhaarHash && (o.aadhaarHash === userHash || o.aadhaarHash === userRaw)) || ((o.name || '').toLowerCase().includes(userName)))) return true;
 
