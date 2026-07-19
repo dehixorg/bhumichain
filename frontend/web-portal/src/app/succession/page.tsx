@@ -818,7 +818,7 @@ export default function SuccessionPage() {
                     ) : (
                       <div className="space-y-4">
                         <div className="grid grid-cols-2 gap-3 bg-emerald-50 border border-emerald-100 rounded-xl p-4">
-                          {[['Deceased Name', crsExtraction.name], ['Date of Death', crsExtraction.dod ? format(new Date(crsExtraction.dod), 'dd MMM yyyy') : '—'], ['Linked Property', crsExtraction.dlpiId], ['CRS Reg. No.', crsExtraction.crsRegistrationNo]].map(([lbl, val]) => (
+                          {[['Deceased Name', crsExtraction.name], ['Date of Death', crsExtraction.dod ? (isNaN(new Date(crsExtraction.dod).getTime()) ? crsExtraction.dod : format(new Date(crsExtraction.dod), 'dd MMM yyyy')) : '—'], ['Linked Property', crsExtraction.dlpiId], ['CRS Reg. No.', crsExtraction.crsRegistrationNo]].map(([lbl, val]) => (
                             <div key={lbl}><div className="text-xs text-gray-500 mb-0.5">{lbl}</div><div className="text-sm font-bold text-gray-800">{val}</div></div>
                           ))}
                         </div>
