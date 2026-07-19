@@ -300,8 +300,8 @@ function ensureEnglish(obj: any): any {
         body:    JSON.stringify({
           scanId:              result.scanId,
           dlpiId,
-          officerAadhaarNumber:  'sha256:' + '0'.repeat(64),
-          ownerAadhaarNumbers, // Raw digits — gateway will HMAC-hash these correctly
+          officerAadhaarHash:  'sha256:' + '0'.repeat(64),
+          ownerAadhaarHashes:  ownerAadhaarNumbers,
           owners:              legacyOwners.length > 0 ? legacyOwners : [],  // Fallback for older remote backend versions
           officerName:         'Vijay Singh (Patwari DAD-P1)',
           correctedFields:     Object.keys(edited).length ? edited : undefined,
@@ -311,7 +311,11 @@ function ensureEnglish(obj: any): any {
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.detail || 'Approval failed');
+        let errMsg = 'Approval failed';
+        if (err.detail) {
+          errMsg = typeof err.detail === 'string' ? err.detail : JSON.stringify(err.detail);
+        }
+        throw new Error(errMsg);
       }
 
       setStage('done');
