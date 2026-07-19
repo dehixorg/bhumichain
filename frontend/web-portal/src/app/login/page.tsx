@@ -395,7 +395,7 @@ export default function LoginPage() {
                           <p className="text-xs text-gray-500">
                             OTP sent to <span className="font-bold text-gray-800">{maskedPhone}</span>
                             <span className="block mt-1 font-bold text-green-700 bg-green-50 px-2 py-1 rounded border border-green-200">
-                              Demo OTP: 12356 or 123456
+                              Demo OTP: 123456
                             </span>
                           </p>
                           <OTPInput value={otp} onChange={setOtp} disabled={loading} error={!!error} />
