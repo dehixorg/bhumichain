@@ -88,9 +88,9 @@ router.post('/request-otp', async (req, res) => {
   }
 
   // Hash the Aadhaar with the same salted SHA-256 used by the succession chaincode input
-  const aadhaarNumber = computeAadhaarNumber(digits);
+  const parsedAadhaar = computeAadhaarNumber(digits);
   const otp = generateOTP();
-  otpStore.set(aadhaarNumber, { otp, expiresAt: Date.now() + OTP_TTL_MS });
+  otpStore.set(parsedAadhaar, { otp, expiresAt: Date.now() + OTP_TTL_MS });
 
   if (process.env.AADHAAR_MOCK === 'true') {
     console.log(`[AUTH MOCK] OTP for ${maskAadhaar(digits)}: ${otp}`);
@@ -116,22 +116,22 @@ router.post('/verify-otp', async (req, res) => {
 
   const digits = aadhaarNumber.replace(/\D/g, '');
   // Use salted SHA-256 hash — must match what the succession chaincode stores
-  const aadhaarNumber = computeAadhaarNumber(digits);
+  const parsedAadhaar = computeAadhaarNumber(digits);
 
   // Verify OTP
-  const stored = otpStore.get(aadhaarNumber);
+  const stored = otpStore.get(parsedAadhaar);
   if (!stored) {
     return res.status(400).json({ error: 'OTP_NOT_REQUESTED', message: 'Request an OTP first' });
   }
   if (Date.now() > stored.expiresAt) {
-    otpStore.delete(aadhaarNumber);
+    otpStore.delete(parsedAadhaar);
     return res.status(400).json({ error: 'OTP_EXPIRED', message: 'OTP expired. Request a new one.' });
   }
   if (stored.otp !== otp && !(process.env.AADHAAR_MOCK === 'true' && (otp === '12356' || otp === '123456'))) {
     return res.status(400).json({ error: 'INVALID_OTP', message: 'Incorrect OTP' });
   }
 
-  otpStore.delete(aadhaarNumber);
+  otpStore.delete(parsedAadhaar);
 
   // Fetch identity from oracle
   let identity;
@@ -177,22 +177,22 @@ router.post('/officer-login', async (req, res) => {
   }
 
   const digits = aadhaarNumber.replace(/\D/g, '');
-  const aadhaarNumber = computeAadhaarNumber(digits); // Salted SHA-256 — matches chaincode
+  const parsedAadhaar = computeAadhaarNumber(digits); // Salted SHA-256 — matches chaincode
 
   // Verify OTP
-  const stored = otpStore.get(aadhaarNumber);
+  const stored = otpStore.get(parsedAadhaar);
   if (!stored) {
     return res.status(400).json({ error: 'OTP_NOT_REQUESTED', message: 'Request an OTP first' });
   }
   if (Date.now() > stored.expiresAt) {
-    otpStore.delete(aadhaarNumber);
+    otpStore.delete(parsedAadhaar);
     return res.status(400).json({ error: 'OTP_EXPIRED' });
   }
   if (stored.otp !== otp) {
     return res.status(400).json({ error: 'INVALID_OTP', message: 'Incorrect OTP' });
   }
 
-  otpStore.delete(aadhaarNumber);
+  otpStore.delete(parsedAadhaar);
 
   // Fetch identity from oracle
   let identity;
@@ -226,7 +226,7 @@ router.post('/esign', authenticate, async (req, res) => {
   }
 
   const digits = aadhaarNumber.replace(/\D/g, '');
-  const aadhaarNumber = computeAadhaarNumber(digits);
+  const parsedAadhaar = computeAadhaarNumber(digits);
 
   // Must match the logged-in user (Bypassed in permissive demo mode)
   if (req.user.aadhaarNumber !== aadhaarNumber && process.env.AADHAAR_MOCK !== 'true') {
@@ -234,16 +234,16 @@ router.post('/esign', authenticate, async (req, res) => {
   }
 
   // Verify OTP (same store)
-  const stored = otpStore.get(aadhaarNumber);
+  const stored = otpStore.get(parsedAadhaar);
   if (!stored || (stored.otp !== otp && !(process.env.AADHAAR_MOCK === 'true' && (otp === '12356' || otp === '123456')))) {
     return res.status(400).json({ error: 'INVALID_OTP', message: 'Incorrect or expired OTP for eSign' });
   }
   if (Date.now() > stored.expiresAt) {
-    otpStore.delete(aadhaarNumber);
+    otpStore.delete(parsedAadhaar);
     return res.status(400).json({ error: 'OTP_EXPIRED' });
   }
 
-  otpStore.delete(aadhaarNumber);
+  otpStore.delete(parsedAadhaar);
 
   const timestamp = Date.now().toString();
   const eSignTxHash = 'esign:' + crypto.createHash('sha256')
