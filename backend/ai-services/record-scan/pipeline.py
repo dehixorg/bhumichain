@@ -266,12 +266,15 @@ def update_scan_status(scan_id: str, status: str):
         raise ValueError(f"Scan {scan_id} not found in database.")
 
 
-def query_scans_by_status(status: str) -> list[ScanResult]:
+def query_scans_by_status(status: Optional[str]) -> list[ScanResult]:
     table = _get_dynamo_table()
     if table:
         try:
             from boto3.dynamodb.conditions import Attr
-            resp = table.scan(FilterExpression=Attr('status').eq(status))
+            if status:
+                resp = table.scan(FilterExpression=Attr('status').eq(status))
+            else:
+                resp = table.scan()
             items = resp.get('Items', [])
             results = []
             for item in items:
@@ -288,8 +291,8 @@ def query_scans_by_status(status: str) -> list[ScanResult]:
     # Local fallback
     db = _load_local_db()
     results = []
-    for item in db.values():
-        if item.get('status') == status:
+    for _, item in db.items():
+        if not status or item.get('status') == status:
             data = json.loads(item['resultJson'])
             data['status'] = item['status']
             data['ownerAadhaarNumber'] = item.get('ownerAadhaarNumber')

@@ -325,12 +325,17 @@ async def approve_scan(req: ApproveRequest, background: BackgroundTasks):
 
 
 @app.get("/scan", response_model=list[ScanResult])
-def list_scans(status: str):
-    """Query scans by status (for SRO/Tehsildar review queues)."""
+def list_scans(status: Optional[str] = None):
+    """Query scans by status (for SRO/Tehsildar review queues), or all scans if status omitted."""
     if MOCK:
-        return [s for s in _scan_cache.values() if s.status == status]
+        if status:
+            return [s for s in _scan_cache.values() if s.status == status]
+        return list(_scan_cache.values())
     try:
-        return query_scans_by_status(status)
+        if status:
+            return query_scans_by_status(status)
+        else:
+            return query_scans_by_status(None) # Assuming it handles None or we might need to modify query_scans_by_status
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to query scans from DynamoDB: {str(e)}")
 
