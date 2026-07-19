@@ -785,7 +785,7 @@ export default function SuccessionPage() {
                     <div className="bg-emerald-900/80 border border-emerald-500/30 rounded-xl p-4 flex items-center gap-3">
                       <CheckCircle className="w-5 h-5 text-emerald-300 shrink-0" />
                       <div className="text-sm text-emerald-200">
-                        <strong className="text-white">Approved Heirs:</strong> {approvedNoms.map(n => n.inheritorName).join(', ')} — may upload death certificate for <strong>{selectedDlpiId || approvedNoms[0]?.dlpiId}</strong>
+                        <strong className="text-white">Approved Heirs</strong> may upload death certificate for <strong>{selectedDlpiId || approvedNoms[0]?.dlpiId}</strong>
                       </div>
                     </div>
                   )}
