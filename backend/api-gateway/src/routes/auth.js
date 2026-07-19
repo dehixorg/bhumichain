@@ -88,9 +88,9 @@ router.post('/request-otp', async (req, res) => {
   }
 
   // Hash the Aadhaar with the same salted SHA-256 used by the succession chaincode input
-  const aadhaarNumber = computeAadhaarNumber(digits);
+  const computedAadhaar = computeAadhaarNumber(digits);
   const otp = generateOTP();
-  otpStore.set(aadhaarNumber, { otp, expiresAt: Date.now() + OTP_TTL_MS });
+  otpStore.set(computedAadhaar, { otp, expiresAt: Date.now() + OTP_TTL_MS });
 
   if (process.env.AADHAAR_MOCK === 'true') {
     console.log(`[AUTH MOCK] OTP for ${maskAadhaar(digits)}: ${otp}`);
@@ -116,22 +116,22 @@ router.post('/verify-otp', async (req, res) => {
 
   const digits = aadhaarNumber.replace(/\D/g, '');
   // Use salted SHA-256 hash — must match what the succession chaincode stores
-  const aadhaarNumber = computeAadhaarNumber(digits);
+  const computedAadhaar = computeAadhaarNumber(digits);
 
   // Verify OTP
-  const stored = otpStore.get(aadhaarNumber);
+  const stored = otpStore.get(computedAadhaar);
   if (!stored) {
     return res.status(400).json({ error: 'OTP_NOT_REQUESTED', message: 'Request an OTP first' });
   }
   if (Date.now() > stored.expiresAt) {
-    otpStore.delete(aadhaarNumber);
+    otpStore.delete(computedAadhaar);
     return res.status(400).json({ error: 'OTP_EXPIRED', message: 'OTP expired. Request a new one.' });
   }
   if (stored.otp !== otp && !(process.env.AADHAAR_MOCK === 'true' && (otp === '12356' || otp === '123456'))) {
     return res.status(400).json({ error: 'INVALID_OTP', message: 'Incorrect OTP' });
   }
 
-  otpStore.delete(aadhaarNumber);
+  otpStore.delete(computedAadhaar);
 
   // Fetch identity from oracle
   let identity;
