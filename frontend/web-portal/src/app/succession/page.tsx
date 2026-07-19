@@ -451,18 +451,28 @@ export default function SuccessionPage() {
                     {/* OPTION 2: UPLOAD DEATH CERTIFICATE */}
                     <div
                       onClick={() => {
-                        const isApprovedHeir = approvedNoms.length > 0 || isTehsildar;
+                        const isApprovedHeir = isTehsildar || approvedNoms.some(n => 
+                          n.inheritorAadhaarNumber === user?.aadhaar || 
+                          n.inheritorAadhaarNumber === user?.aadhaarHash || 
+                          n.inheritorAadhaarNumber === user?.aadhaarNo ||
+                          (user?.aadhaarRaw && n.inheritorAadhaarNumber === user?.aadhaarRaw)
+                        );
                         if (isApprovedHeir) {
                           setStep('upload_document');
                         } else {
-                          toast.error("Option 2 is locked! You must first submit Option 1 (Nominate Legal Heirs) and get Tehsildar approval before uploading the Death Certificate.");
+                          toast.error("Option 2 is locked! You must first submit Option 1 (Nominate Legal Heirs) and get Tehsildar approval before uploading the Death Certificate. Only approved heirs can access this.");
                         }
                       }}
                       className={clsx(
                         "p-5 rounded-2xl border-2 transition-all flex flex-col justify-between shadow-sm relative overflow-hidden",
                         step === 'upload_document'
                           ? "bg-gradient-to-br from-emerald-800 via-emerald-900 to-emerald-950 border-emerald-500 text-white shadow-lg ring-2 ring-emerald-500/30 cursor-pointer"
-                          : (approvedNoms.length > 0 || isTehsildar)
+                          : (isTehsildar || approvedNoms.some(n => 
+                              n.inheritorAadhaarNumber === user?.aadhaar || 
+                              n.inheritorAadhaarNumber === user?.aadhaarHash || 
+                              n.inheritorAadhaarNumber === user?.aadhaarNo ||
+                              (user?.aadhaarRaw && n.inheritorAadhaarNumber === user?.aadhaarRaw)
+                            ))
                             ? "bg-emerald-50/80 hover:bg-emerald-100 border-emerald-300 text-emerald-950 cursor-pointer"
                             : "bg-gray-100/90 border-gray-300/80 text-gray-500 cursor-not-allowed opacity-80"
                       )}>
@@ -472,11 +482,21 @@ export default function SuccessionPage() {
                             "text-[11px] font-extrabold uppercase px-3 py-1 rounded-full tracking-wider flex items-center gap-1.5 shadow-xs",
                             step === 'upload_document' 
                               ? "bg-emerald-400 text-gray-950 font-black" 
-                              : (approvedNoms.length > 0 || isTehsildar)
+                              : (isTehsildar || approvedNoms.some(n => 
+                                  n.inheritorAadhaarNumber === user?.aadhaar || 
+                                  n.inheritorAadhaarNumber === user?.aadhaarHash || 
+                                  n.inheritorAadhaarNumber === user?.aadhaarNo ||
+                                  (user?.aadhaarRaw && n.inheritorAadhaarNumber === user?.aadhaarRaw)
+                                ))
                                 ? "bg-emerald-600 text-white font-bold"
                                 : "bg-gray-300 text-gray-700 font-bold"
                           )}>
-                            {(approvedNoms.length > 0 || isTehsildar) ? <><CheckCircle className="w-3.5 h-3.5" /> Option 2 (Unlocked)</> : <><Lock className="w-3.5 h-3.5" /> Option 2 (Locked)</>}
+                            {(isTehsildar || approvedNoms.some(n => 
+                                n.inheritorAadhaarNumber === user?.aadhaar || 
+                                n.inheritorAadhaarNumber === user?.aadhaarHash || 
+                                n.inheritorAadhaarNumber === user?.aadhaarNo ||
+                                (user?.aadhaarRaw && n.inheritorAadhaarNumber === user?.aadhaarRaw)
+                              )) ? <><CheckCircle className="w-3.5 h-3.5" /> Option 2 (Unlocked)</> : <><Lock className="w-3.5 h-3.5" /> Option 2 (Locked)</>}
                           </span>
                           {step === 'upload_document' && (
                             <span className="flex items-center gap-1 text-xs font-bold text-emerald-300 bg-white/10 px-2.5 py-0.5 rounded-full border border-white/20">
@@ -485,18 +505,48 @@ export default function SuccessionPage() {
                           )}
                         </div>
                         <div className="flex items-center gap-2.5 font-bold text-base mb-2">
-                          <Upload className={clsx("w-5 h-5 shrink-0", step === 'upload_document' ? "text-emerald-300" : (approvedNoms.length > 0 || isTehsildar) ? "text-emerald-700" : "text-gray-400")} />
+                          <Upload className={clsx("w-5 h-5 shrink-0", step === 'upload_document' ? "text-emerald-300" : (isTehsildar || approvedNoms.some(n => 
+                            n.inheritorAadhaarNumber === user?.aadhaar || 
+                            n.inheritorAadhaarNumber === user?.aadhaarHash || 
+                            n.inheritorAadhaarNumber === user?.aadhaarNo ||
+                            (user?.aadhaarRaw && n.inheritorAadhaarNumber === user?.aadhaarRaw)
+                          )) ? "text-emerald-700" : "text-gray-400")} />
                           <span>Upload Death Certificate</span>
                         </div>
-                        <p className={clsx("text-xs leading-relaxed", step === 'upload_document' ? "text-emerald-100" : (approvedNoms.length > 0 || isTehsildar) ? "text-emerald-900/80" : "text-gray-500")}>
-                          {(approvedNoms.length > 0 || isTehsildar)
+                        <p className={clsx("text-xs leading-relaxed", step === 'upload_document' ? "text-emerald-100" : (isTehsildar || approvedNoms.some(n => 
+                            n.inheritorAadhaarNumber === user?.aadhaar || 
+                            n.inheritorAadhaarNumber === user?.aadhaarHash || 
+                            n.inheritorAadhaarNumber === user?.aadhaarNo ||
+                            (user?.aadhaarRaw && n.inheritorAadhaarNumber === user?.aadhaarRaw)
+                          )) ? "text-emerald-900/80" : "text-gray-500")}>
+                          {(isTehsildar || approvedNoms.some(n => 
+                            n.inheritorAadhaarNumber === user?.aadhaar || 
+                            n.inheritorAadhaarNumber === user?.aadhaarHash || 
+                            n.inheritorAadhaarNumber === user?.aadhaarNo ||
+                            (user?.aadhaarRaw && n.inheritorAadhaarNumber === user?.aadhaarRaw)
+                          ))
                             ? "Tehsildar has verified your heir status! Upload official Death Certificate for AI OCR & equal coparcenary share division."
                             : "🔒 Requires Tehsildar approval from Option 1 first. Once verified, this card unlocks to allow Death Certificate upload."}
                         </p>
                       </div>
-                      <div className={clsx("mt-4 flex items-center justify-between text-xs font-bold pt-3 border-t", step === 'upload_document' ? "border-emerald-400/30 text-emerald-300" : (approvedNoms.length > 0 || isTehsildar) ? "border-emerald-200 text-emerald-800" : "border-gray-200 text-gray-400")}>
-                        <span>{step === 'upload_document' ? "Uploading Form Below ↓" : (approvedNoms.length > 0 || isTehsildar) ? "Switch to Option 2 →" : "🔒 Complete Option 1 First"}</span>
-                        {(approvedNoms.length > 0 || isTehsildar) ? <ArrowRight className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
+                      <div className={clsx("mt-4 flex items-center justify-between text-xs font-bold pt-3 border-t", step === 'upload_document' ? "border-emerald-400/30 text-emerald-300" : (isTehsildar || approvedNoms.some(n => 
+                        n.inheritorAadhaarNumber === user?.aadhaar || 
+                        n.inheritorAadhaarNumber === user?.aadhaarHash || 
+                        n.inheritorAadhaarNumber === user?.aadhaarNo ||
+                        (user?.aadhaarRaw && n.inheritorAadhaarNumber === user?.aadhaarRaw)
+                      )) ? "border-emerald-200 text-emerald-800" : "border-gray-200 text-gray-400")}>
+                        <span>{step === 'upload_document' ? "Uploading Form Below ↓" : (isTehsildar || approvedNoms.some(n => 
+                          n.inheritorAadhaarNumber === user?.aadhaar || 
+                          n.inheritorAadhaarNumber === user?.aadhaarHash || 
+                          n.inheritorAadhaarNumber === user?.aadhaarNo ||
+                          (user?.aadhaarRaw && n.inheritorAadhaarNumber === user?.aadhaarRaw)
+                        )) ? "Switch to Option 2 →" : "🔒 Complete Option 1 First"}</span>
+                        {(isTehsildar || approvedNoms.some(n => 
+                          n.inheritorAadhaarNumber === user?.aadhaar || 
+                          n.inheritorAadhaarNumber === user?.aadhaarHash || 
+                          n.inheritorAadhaarNumber === user?.aadhaarNo ||
+                          (user?.aadhaarRaw && n.inheritorAadhaarNumber === user?.aadhaarRaw)
+                        )) ? <ArrowRight className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
                       </div>
                     </div>
                   </div>
