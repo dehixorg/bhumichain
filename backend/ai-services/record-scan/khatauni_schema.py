@@ -100,6 +100,6 @@ class ScanResult(BaseModel):
     processingTimeMs: int = 0
     storedInDynamoDB: bool = False
     status: str = 'COMPLETED'
-    ownerAadhaarHash: Optional[str] = None
+    ownerAadhaarNumber: Optional[str] = None
     patwariName: Optional[str] = None
     patwariHash: Optional[str] = None

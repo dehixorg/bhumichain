@@ -149,7 +149,7 @@ function ensureEnglish(obj: any): any {
       dod: dod || undefined, // undefined lets frontend use default if missing
       crsRegistrationNo: reg_no,
       dlpiId: "DLPI-UP-DAD-00100",
-      aadhaarHash: aadhaar || "XXXX-XXXX-1234",
+      aadhaarNumber: aadhaar || "XXXX-XXXX-1234",
       rawText: text
     }));
 

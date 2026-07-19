@@ -26,7 +26,7 @@ interface Parcel {
   encumbranceStatus: string;
   claimStatus:       string;
   ownerName:         string;
-  ownerAadhaarHash:  string;
+  ownerAadhaarNumber:  string;
   location:          { latitude: number; longitude: number };
   valuation:         { circleRateINR: number };
   isTribal?:         boolean;
@@ -270,7 +270,7 @@ function ESignModal({
           <h3 className="text-gray-900 font-semibold">Tehsildar eSign — Final Approval</h3>
         </div>
         <p className="text-sm text-gray-400 mb-5">
-          eSign will record SHA-256(aadhaarHash:otp:action:timestamp) on-chain as irrevocable consent proof. DPDPA 2023 compliant — raw Aadhaar not stored.
+          eSign will record SHA-256(aadhaarNumber:otp:action:timestamp) on-chain as irrevocable consent proof. DPDPA 2023 compliant — raw Aadhaar not stored.
         </p>
 
         {!otpSent ? (

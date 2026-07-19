@@ -9,9 +9,8 @@ const { submit, evaluate } = require('../services/fabric');
 const { broadcast } = require('../services/websocket');
 const { authenticate, requireRole, ROLES } = require('../middleware/auth');
 
-function computeAadhaarHash(aadhaarNumber) {
-  const salt = process.env.AADHAAR_SALT || 'bhumichain-aadhaar-salt-change-in-prod';
-  return 'sha256:' + crypto.createHash('sha256').update(aadhaarNumber + salt).digest('hex');
+function computeAadhaarNumber(aadhaarNumber) {
+  return aadhaarNumber;
 }
 
 const router = Router();
@@ -98,8 +97,8 @@ router.post(
       const realOwnerName = dlpi.ownerName || (dlpi.owner && dlpi.owner.name) || 'Unknown Owner';
 
       let result = null;
-      const officerHash = computeAadhaarHash(officerAadhaar);
-      const newOwnerHash = computeAadhaarHash(newOwnerAadhaar);
+      const officerHash = computeAadhaarNumber(officerAadhaar);
+      const newOwnerHash = computeAadhaarNumber(newOwnerAadhaar);
       try {
         result = await submit('mutation-manager', 'InitiateMutation', [
           dlpiId, mutationType, officerName, officerHash, officerRank,
@@ -175,9 +174,9 @@ router.get('/', authenticate, async (req, res) => {
       let dMuts = [];
       try { dMuts = JSON.parse(fs.readFileSync('/tmp/bhumichain_dynamic_mutations.json')); } catch(e) {}
       if (req.user.role === 'citizen') {
-        const h = req.user.aadhaarHash || '';
+        const h = req.user.aadhaarNumber || '';
         const userRaw = req.user.aadhaar || req.user.aadhaarRaw || req.user.aadhaarNumber || '';
-        const computedHash = userRaw ? computeAadhaarHash(userRaw) : '';
+        const computedHash = userRaw ? computeAadhaarNumber(userRaw) : '';
         const userName = (req.user.name || '').toLowerCase();
         
         dMuts = dMuts.filter(m => {
@@ -220,9 +219,9 @@ router.get('/', authenticate, async (req, res) => {
     
     // STRICT FILTER: If citizen, only show mutations matching their Aadhaar Hash OR their exact name
     if (req.user.role === 'citizen') {
-      const h = req.user.aadhaarHash || '';
+      const h = req.user.aadhaarNumber || '';
       const userRaw = req.user.aadhaar || req.user.aadhaarRaw || req.user.aadhaarNumber || '';
-      const computedHash = userRaw ? computeAadhaarHash(userRaw) : '';
+      const computedHash = userRaw ? computeAadhaarNumber(userRaw) : '';
       const userName = (req.user.name || '').toLowerCase();
       
       allMuts = allMuts.filter(m => {
@@ -307,7 +306,7 @@ router.post(
 router.post(
   '/:mutationId/consent',
   authenticate,
-  body('ownerAadhaarHash').notEmpty(),
+  body('ownerAadhaarNumber').notEmpty(),
   body('eSignTxHash').notEmpty(),
   validate,
   async (req, res) => {
@@ -315,7 +314,7 @@ router.post(
     let fabricErr = null;
     try {
       result = await submit('mutation-manager', 'RecordOwnerConsent', [
-        req.params.mutationId, req.body.ownerAadhaarHash, req.body.eSignTxHash,
+        req.params.mutationId, req.body.ownerAadhaarNumber, req.body.eSignTxHash,
       ]);
     } catch (e) {
       fabricErr = e;
@@ -328,7 +327,7 @@ router.post(
       const idx = dMuts.findIndex(m => m.mutationId === req.params.mutationId);
       if (idx >= 0) {
         // STRICT AADHAAR VERIFICATION: only the true owner can consent
-        if (dMuts[idx].currentOwnerHash !== req.body.ownerAadhaarHash && dMuts[idx].currentOwnerHash !== 'unknown_hash') {
+        if (dMuts[idx].currentOwnerHash !== req.body.ownerAadhaarNumber && dMuts[idx].currentOwnerHash !== 'unknown_hash') {
           return res.status(403).json({ error: 'AADHAAR_MISMATCH', message: 'The provided Aadhaar identity does not match the legal title holder of this property.' });
         }
         
@@ -359,7 +358,7 @@ router.post(
 router.post(
   '/:mutationId/objection',
   authenticate,
-  body('ownerAadhaarHash').notEmpty(),
+  body('ownerAadhaarNumber').notEmpty(),
   body('objectionReason').notEmpty(),
   body('evidenceCID').notEmpty(),
   validate,
@@ -369,7 +368,7 @@ router.post(
     try {
       result = await submit('mutation-manager', 'RecordOwnerObjection', [
         req.params.mutationId,
-        req.body.ownerAadhaarHash,
+        req.body.ownerAadhaarNumber,
         req.body.objectionReason,
         req.body.evidenceCID,
       ]);
@@ -384,7 +383,7 @@ router.post(
       const idx = dMuts.findIndex(m => m.mutationId === req.params.mutationId);
       if (idx >= 0) {
         // STRICT AADHAAR VERIFICATION: only the true owner can object
-        if (dMuts[idx].currentOwnerHash !== req.body.ownerAadhaarHash && dMuts[idx].currentOwnerHash !== 'unknown_hash') {
+        if (dMuts[idx].currentOwnerHash !== req.body.ownerAadhaarNumber && dMuts[idx].currentOwnerHash !== 'unknown_hash') {
           return res.status(403).json({ error: 'AADHAAR_MISMATCH', message: 'The provided Aadhaar identity does not match the legal title holder of this property.' });
         }
 

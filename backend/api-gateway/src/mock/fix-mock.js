@@ -16,7 +16,7 @@ async function forceSeed() {
       return;
     }
     
-    const targetSellerHash = t.sellers[0].aadhaarHash;
+    const targetSellerHash = t.sellers[0].aadhaarNumber;
     console.log("Found seller hash from transfer:", targetSellerHash);
 
     // 2. Fetch the current owners using OwnerOf (bypasses GetDLPI schema bug)
@@ -37,7 +37,7 @@ async function forceSeed() {
     
     // The new buyer is our target seller!
     const newOwner = [{
-      aadhaarHash: targetSellerHash, 
+      aadhaarNumber: targetSellerHash, 
       name: 'Seller',
       share: '1/1', 
       shareDecimal: 1.0, 

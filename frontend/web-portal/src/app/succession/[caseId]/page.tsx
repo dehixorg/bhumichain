@@ -49,7 +49,7 @@ export default function SuccessionDetailPage() {
 
     try {
       await recordHeirConsent(caseData.caseId, {
-        heirAadhaarHash: heir.aadhaarHash,
+        heirAadhaarNumber: heir.aadhaarNumber,
         eSignTxHash: `esign-${heirId}-${Date.now()}`,
       });
     } catch { /* offline ok */ }

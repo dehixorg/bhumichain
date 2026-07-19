@@ -110,7 +110,7 @@ async def upload_scan(
 class ApproveRequest(BaseModel):
     scanId:              str
     dlpiId:              str
-    officerAadhaarHash:  str
+    officerAadhaarNumber:  str
     owners:              list[dict] = []       # Legacy: pre-hashed owners (may mismatch server hash)
     ownerAadhaarNumbers: Optional[list[dict]] = None  # Preferred: raw digits for server-side hashing
     officerName:         str
@@ -168,7 +168,7 @@ async def scan_death_cert(file: UploadFile = File(...)):
             "crsRegistrationNo": reg_no,
             "dlpiId": "DLPI-UP-DAD-00100", # default fallback
             "aadhaar": "999988887777",
-            "aadhaarHash": "999988887777", # raw Aadhaar
+            "aadhaarNumber": "999988887777", # raw Aadhaar
             "rawText": text # for debugging
         }
     except Exception as e:
@@ -180,7 +180,7 @@ async def scan_death_cert(file: UploadFile = File(...)):
             "crsRegistrationNo": "CRS-GBN-2026-00891",
             "dlpiId": "DLPI-UP-DAD-00100",
             "aadhaar": "999988887777",
-            "aadhaarHash": "999988887777"
+            "aadhaarNumber": "999988887777"
         }
 
 @app.post("/scan/approve")
@@ -245,7 +245,7 @@ async def approve_scan(req: ApproveRequest, background: BackgroundTasks):
             initial_owners.append({
                 "name":         o.get("name", "Unknown"),
                 "aadhaarRaw":   o.get("aadhaar", ""),  # Gateway will HMAC-hash this
-                "aadhaarHash":  "sha256:" + "0" * 64,  # Placeholder; gateway overwrites
+                "aadhaarNumber":  "sha256:" + "0" * 64,  # Placeholder; gateway overwrites
                 "share":        share_str,
                 "shareDecimal": share_dec
             })
@@ -254,7 +254,7 @@ async def approve_scan(req: ApproveRequest, background: BackgroundTasks):
         for owner in req.owners:
             initial_owners.append({
                 "name":         owner.get("name", "Unknown"),
-                "aadhaarHash":  owner.get("aadhaarHash", "sha256:" + "0" * 64),
+                "aadhaarNumber":  owner.get("aadhaarNumber", "sha256:" + "0" * 64),
                 "share":        share_str,
                 "shareDecimal": share_dec
             })
@@ -262,7 +262,7 @@ async def approve_scan(req: ApproveRequest, background: BackgroundTasks):
         initial_owners.append({
             "name":         owner_name,
             "aadhaarRaw":   "",
-            "aadhaarHash":  "sha256:" + "0" * 64,
+            "aadhaarNumber":  "sha256:" + "0" * 64,
             "share":        "1/1",
             "shareDecimal": 1.0
         })
@@ -308,10 +308,10 @@ async def approve_scan(req: ApproveRequest, background: BackgroundTasks):
             s.suggestedDlpiId = req.dlpiId
             s.owners = req.owners
             s.patwariName = req.officerName
-            s.patwariHash = req.officerAadhaarHash
+            s.patwariHash = req.officerAadhaarNumber
     else:
         try:
-            save_patwari_approval(req.scanId, req.dlpiId, req.owners, req.officerName, req.officerAadhaarHash)
+            save_patwari_approval(req.scanId, req.dlpiId, req.owners, req.officerName, req.officerAadhaarNumber)
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Failed to save Patwari approval: {str(e)}")
 
@@ -383,7 +383,7 @@ def approve_scan_sro_by_dlpi(dlpiId: str):
 
 
 class TehsildarApproveRequest(BaseModel):
-    officerAadhaarHash: str
+    officerAadhaarNumber: str
     officerName:        str
     token:              str
 

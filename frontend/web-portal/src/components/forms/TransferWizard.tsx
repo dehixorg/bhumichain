@@ -25,7 +25,7 @@ export interface TransferResult {
 interface Props {
   dlpiId: string;
   sellerName: string;
-  sellerAadhaarHash: string;
+  sellerAadhaarNumber: string;
   onComplete?: (result: TransferResult) => void;
 }
 
@@ -41,7 +41,7 @@ interface ComplianceResult {
 
 const DEMO_BUYER = {
   name:        'Rakesh Agarwal',
-  aadhaarHash: '999900010009',
+  aadhaarNumber: '999900010009',
   declaredINR: 4_800_000,
 };
 
@@ -62,7 +62,7 @@ const STEP_LABELS: { id: WizardStep; label: string }[] = [
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export default function TransferWizard({ dlpiId, sellerName, sellerAadhaarHash, onComplete }: Props) {
+export default function TransferWizard({ dlpiId, sellerName, sellerAadhaarNumber, onComplete }: Props) {
   const [step, setStep]                       = useState<WizardStep>('form');
   const [transfer, setTransfer]               = useState<Transfer | null>(null);
   const [compliance, setCompliance]           = useState<ComplianceResult | null>(null);
@@ -78,7 +78,7 @@ export default function TransferWizard({ dlpiId, sellerName, sellerAadhaarHash, 
 
   const prefillDemo = () => {
     setBuyerName(DEMO_BUYER.name);
-    setBuyerHash(DEMO_BUYER.aadhaarHash);
+    setBuyerHash(DEMO_BUYER.aadhaarNumber);
     setDeclaredVal(String(DEMO_BUYER.declaredINR));
   };
 
@@ -105,9 +105,9 @@ export default function TransferWizard({ dlpiId, sellerName, sellerAadhaarHash, 
     try {
       const res = await initiateTransfer({
         dlpiId,
-        sellerAadhaarHash,
+        sellerAadhaarNumber,
         buyerName:        buyerName || DEMO_BUYER.name,
-        buyerAadhaarHash: buyerHash || DEMO_BUYER.aadhaarHash,
+        buyerAadhaarNumber: buyerHash || DEMO_BUYER.aadhaarNumber,
         declaredValueINR: Number(declaredVal) || DEMO_BUYER.declaredINR,
       });
       setTransfer(res);
@@ -135,7 +135,7 @@ export default function TransferWizard({ dlpiId, sellerName, sellerAadhaarHash, 
     try {
       await recordConsent(tid, {
         partyType:    isSeller ? 'SELLER' : 'BUYER',
-        aadhaarHash:  isSeller ? sellerAadhaarHash : (buyerHash || DEMO_BUYER.aadhaarHash),
+        aadhaarNumber:  isSeller ? sellerAadhaarNumber : (buyerHash || DEMO_BUYER.aadhaarNumber),
         eSignTxHash:  `esign-${signerId}-${Date.now()}`,
       });
     } catch (e: any) {
@@ -155,7 +155,7 @@ export default function TransferWizard({ dlpiId, sellerName, sellerAadhaarHash, 
     if ((isSeller && buyerConsented) || (!isSeller && sellerConsented)) {
       setTimeout(() => setStep('payment'), 600);
     }
-  }, [transfer, sellerAadhaarHash, buyerHash, buyerName, sellerName, sellerConsented, buyerConsented]);
+  }, [transfer, sellerAadhaarNumber, buyerHash, buyerName, sellerName, sellerConsented, buyerConsented]);
 
   const consentSigners = [
     {

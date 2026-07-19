@@ -90,7 +90,7 @@ def random_name(is_tribal=False):
     return f"{random.choice(UP_FIRST_NAMES)} {random.choice(UP_SURNAMES)}"
 
 
-def sim_aadhaar_hash(name: str, seed: str) -> str:
+def sim_aadhaar_number(name: str, seed: str) -> str:
     fake = f"{name}-{seed}-{random.randint(100000000000, 999999999999)}"
     return hashlib.sha256(fake.encode()).hexdigest()[:32]
 
@@ -152,7 +152,7 @@ def generate_parcel(index: int) -> dict:
 
     owner_name = random_name(is_tribal)
     owner_dob  = random_dob()
-    owner_hash = sim_aadhaar_hash(owner_name, owner_dob)
+    owner_hash = sim_aadhaar_number(owner_name, owner_dob)
 
     is_coparcenary = (
         land_type in ["Bhumidhari", "Sirdar", "Tribal_FRA"]
@@ -196,7 +196,7 @@ def generate_parcel(index: int) -> dict:
         "claimStatus":       claim_status,
         "owner": {
             "name":        owner_name,
-            "aadhaarHash": owner_hash,
+            "aadhaarNumber": owner_hash,
             "dob":         owner_dob,
             "isTribal":    is_tribal,
         },
@@ -237,7 +237,7 @@ def generate_demo_parcels() -> List[dict]:
             "landType": "Residential", "landTypeDesc": "Residential plot / abadi",
             "areaHectares": 0.025, "isTribal": False, "isCoparcenary": False,
             "encumbranceStatus": "CLEAR", "claimStatus": "VERIFIED",
-            "owner": {"name": "Priya Kumar", "aadhaarHash": DEMO_CITIZEN_PLACEHOLDERS["999900010010"], "dob": "1990-04-15", "isTribal": False},
+            "owner": {"name": "Priya Kumar", "aadhaarNumber": DEMO_CITIZEN_PLACEHOLDERS["999900010010"], "dob": "1990-04-15", "isTribal": False},
             "location": {"latitude": demo_centers[0][0], "longitude": demo_centers[0][1], "boundaryPolygon": generate_polygon(demo_centers[0][0], demo_centers[0][1], 0.025)},
             "valuation": {"circleRateINR": 3_750_000, "lastAssessedDate": "2025-04-01"},
             "mutationHistory": [{"type": "Vikray (Sale)", "date": "2019-03-10", "officerName": "Lekhpal Anil Verma", "mutationNo": "DM/DAD/4521/2019"}],
@@ -251,7 +251,7 @@ def generate_demo_parcels() -> List[dict]:
             "landType": "Bhumidhari", "landTypeDesc": "Hereditary tenant with full rights",
             "areaHectares": 1.2, "isTribal": False, "isCoparcenary": True,
             "encumbranceStatus": "MORTGAGED", "claimStatus": "UNDER_REVIEW",
-            "owner": {"name": "Priya Kumar", "aadhaarHash": DEMO_CITIZEN_PLACEHOLDERS["999900010010"], "dob": "1990-04-15", "isTribal": False},
+            "owner": {"name": "Priya Kumar", "aadhaarNumber": DEMO_CITIZEN_PLACEHOLDERS["999900010010"], "dob": "1990-04-15", "isTribal": False},
             "location": {"latitude": demo_centers[1][0], "longitude": demo_centers[1][1], "boundaryPolygon": generate_polygon(demo_centers[1][0], demo_centers[1][1], 1.2)},
             "valuation": {"circleRateINR": 1_440_000, "lastAssessedDate": "2025-04-01"},
             "mutationHistory": [], "ipfsCID": "QmPriyaKumarBhumidhari2026", "createdAt": "2026-06-01T00:00:00Z",
@@ -264,7 +264,7 @@ def generate_demo_parcels() -> List[dict]:
             "landType": "Bhumidhari", "landTypeDesc": "Hereditary tenant with full rights",
             "areaHectares": 2.4, "isTribal": False, "isCoparcenary": True,
             "encumbranceStatus": "CLEAR", "claimStatus": "SEEDED_UNVERIFIED",
-            "owner": {"name": "Arun Sharma", "aadhaarHash": DEMO_CITIZEN_PLACEHOLDERS["999900010011"], "dob": "1985-09-22", "isTribal": False},
+            "owner": {"name": "Arun Sharma", "aadhaarNumber": DEMO_CITIZEN_PLACEHOLDERS["999900010011"], "dob": "1985-09-22", "isTribal": False},
             "coparcenary": {
                 "heirs": [
                     {"name": "Arun Sharma", "relation": "Self", "share": "1/2", "shareDecimal": 0.5},
@@ -287,7 +287,7 @@ def generate_demo_parcels() -> List[dict]:
             "areaHectares": 0.04, "isTribal": False, "isCoparcenary": False,
             "encumbranceStatus": "COURT_INJUNCTION", "claimStatus": "DISPUTED",
             "disputeNote": "Boundary encroachment alleged by adjacent plot owner. Civil suit filed in Dadri court (CS/2025/0441).",
-            "owner": {"name": "Suresh Yadav", "aadhaarHash": DEMO_CITIZEN_PLACEHOLDERS["999900010012"], "dob": "1978-12-03", "isTribal": False},
+            "owner": {"name": "Suresh Yadav", "aadhaarNumber": DEMO_CITIZEN_PLACEHOLDERS["999900010012"], "dob": "1978-12-03", "isTribal": False},
             "location": {"latitude": demo_centers[3][0], "longitude": demo_centers[3][1], "boundaryPolygon": generate_polygon(demo_centers[3][0], demo_centers[3][1], 0.04)},
             "valuation": {"circleRateINR": 4_800_000, "lastAssessedDate": "2025-04-01"},
             "mutationHistory": [], "ipfsCID": "QmSureshYadavResidential2026", "createdAt": "2026-06-01T00:00:00Z",
@@ -300,7 +300,7 @@ def generate_demo_parcels() -> List[dict]:
             "landType": "Sirdar", "landTypeDesc": "Hereditary tenant with limited rights",
             "areaHectares": 0.8, "isTribal": False, "isCoparcenary": False,
             "encumbranceStatus": "CLEAR", "claimStatus": "CLAIM_SUBMITTED",
-            "owner": {"name": "Meena Devi", "aadhaarHash": DEMO_CITIZEN_PLACEHOLDERS["999900010013"], "dob": "1972-06-18", "isTribal": False},
+            "owner": {"name": "Meena Devi", "aadhaarNumber": DEMO_CITIZEN_PLACEHOLDERS["999900010013"], "dob": "1972-06-18", "isTribal": False},
             "location": {"latitude": demo_centers[4][0], "longitude": demo_centers[4][1], "boundaryPolygon": generate_polygon(demo_centers[4][0], demo_centers[4][1], 0.8)},
             "valuation": {"circleRateINR": 720_000, "lastAssessedDate": "2025-04-01"},
             "mutationHistory": [], "ipfsCID": "QmMeenaDeviSirdar2026", "createdAt": "2026-06-01T00:00:00Z",
@@ -313,7 +313,7 @@ def generate_demo_parcels() -> List[dict]:
             "landType": "Tribal_FRA", "landTypeDesc": "Tribal / forest rights patta",
             "areaHectares": 2.1, "isTribal": True, "isCoparcenary": False,
             "encumbranceStatus": "CLEAR", "claimStatus": "VERIFIED",
-            "owner": {"name": "Ramkali Gond", "aadhaarHash": DEMO_CITIZEN_PLACEHOLDERS["999900010020"], "dob": "1968-02-10", "isTribal": True, "community": "Gond", "tribeId": "GOND-UP-GBN-002481"},
+            "owner": {"name": "Ramkali Gond", "aadhaarNumber": DEMO_CITIZEN_PLACEHOLDERS["999900010020"], "dob": "1968-02-10", "isTribal": True, "community": "Gond", "tribeId": "GOND-UP-GBN-002481"},
             "tribalProtection": {
                 "scheduleType": "Schedule V", "fraPatteNumber": "FRA/DAD/2011/0088",
                 "gramSabhaVillage": "Roja Yakubpur", "gramSabhaId": "GSBH-DAD-0007",

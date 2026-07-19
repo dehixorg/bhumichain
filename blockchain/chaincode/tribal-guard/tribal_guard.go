@@ -36,7 +36,7 @@ type TribalTransferAttempt struct {
 	ScheduleType        string   `json:"scheduleType"`
 	RequestedByHash     string   `json:"requestedByHash"`   // who initiated
 	BuyerName           string   `json:"buyerName"`
-	BuyerAadhaarHash    string   `json:"buyerAadhaarHash"`
+	BuyerAadhaarNumber    string   `json:"buyerAadhaarNumber"`
 	IsTribalBuyer       bool     `json:"isTribalBuyer"`
 	TribalCertHash      string   `json:"tribalCertHash,omitempty"` // if tribal buyer
 	TribalCommunity     string   `json:"tribalCommunity,omitempty"`
@@ -64,7 +64,7 @@ type TribalTransferAttempt struct {
 }
 
 type GramSabhaApproval struct {
-	MemberAadhaarHash   string `json:"memberAadhaarHash"`
+	MemberAadhaarNumber   string `json:"memberAadhaarNumber"`
 	MemberName          string `json:"memberName"`
 	VillageID           string `json:"villageId"`
 	SignedAt            string `json:"signedAt,omitempty"`
@@ -181,7 +181,7 @@ func (c *TribalGuardContract) RegisterTribalParcel(
 // Target: <200ms response for hard reject (no DB reads beyond state, no AI).
 func (c *TribalGuardContract) CheckTransfer(
 	ctx contractapi.TransactionContextInterface,
-	dlpiId, buyerName, buyerAadhaarHash string,
+	dlpiId, buyerName, buyerAadhaarNumber string,
 	isTribalBuyer bool,
 	tribalCertHash, tribalCommunity string,
 ) (*TransferCheckResult, error) {
@@ -209,7 +209,7 @@ func (c *TribalGuardContract) CheckTransfer(
 		DLPIId:           dlpiId,
 		ScheduleType:     registry.ScheduleType,
 		BuyerName:        buyerName,
-		BuyerAadhaarHash: buyerAadhaarHash,
+		BuyerAadhaarNumber: buyerAadhaarNumber,
 		IsTribalBuyer:    isTribalBuyer,
 		TribalCertHash:   tribalCertHash,
 		TribalCommunity:  tribalCommunity,
@@ -355,7 +355,7 @@ func (c *TribalGuardContract) CheckTransfer(
 // RecordGramSabhaApproval — individual Gram Sabha member signs approval
 func (c *TribalGuardContract) RecordGramSabhaApproval(
 	ctx contractapi.TransactionContextInterface,
-	attemptID, memberAadhaarHash, memberName, villageID, eSignTxHash string,
+	attemptID, memberAadhaarNumber, memberName, villageID, eSignTxHash string,
 ) error {
 	attempt, err := c.getAttempt(ctx, attemptID)
 	if err != nil {
@@ -370,13 +370,13 @@ func (c *TribalGuardContract) RecordGramSabhaApproval(
 
 	// Check if already approved by this member
 	for _, a := range attempt.GramSabhaApprovals {
-		if a.MemberAadhaarHash == memberAadhaarHash {
+		if a.MemberAadhaarNumber == memberAadhaarNumber {
 			return fmt.Errorf("member %s has already recorded approval", memberName)
 		}
 	}
 
 	attempt.GramSabhaApprovals = append(attempt.GramSabhaApprovals, GramSabhaApproval{
-		MemberAadhaarHash: memberAadhaarHash,
+		MemberAadhaarNumber: memberAadhaarNumber,
 		MemberName:        memberName,
 		VillageID:         villageID,
 		SignedAt:          now,

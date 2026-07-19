@@ -11,7 +11,7 @@ const DEMO_DLPI = {
   tehsilCode:        'DAD',
   districtCode:      'UP-GBN',
   ownerName:         'Deepak Narayan Singh',
-  ownerAadhaarHash:  'sha256:a3f8e2d1c7b4a09f6e5d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b3a',
+  ownerAadhaarNumber:  'sha256:a3f8e2d1c7b4a09f6e5d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b3a',
   landType:          'Bhumidhari',
   landTypeDesc:      'Hereditary tenant with full rights',
   areaHectares:      2.4,
@@ -32,7 +32,7 @@ const DEMO_TRIBAL_DLPI = {
   tehsilCode:        'DAD',
   districtCode:      'UP-GBN',
   ownerName:         'Ramkali Gond',
-  ownerAadhaarHash:  'sha256:b4g9f3d2c8e1a7f0e6d5c4b3a2f1e0d9c8b7a6f5e4d3c2b1a0f9e8d7c6b5a',
+  ownerAadhaarNumber:  'sha256:b4g9f3d2c8e1a7f0e6d5c4b3a2f1e0d9c8b7a6f5e4d3c2b1a0f9e8d7c6b5a',
   landType:          'Tribal_FRA',
   landTypeDesc:      'Tribal / forest rights patta',
   areaHectares:      2.1,
@@ -311,7 +311,7 @@ const DEMO_SUCCESSION_CASE = {
     {
       heirId:       'HEIR-001',
       name:         'Ankur Singh',
-      aadhaarHash:  'sha256:heir1ankur3f8e2d1c7b4a09f6e5d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8',
+      aadhaarNumber:  'sha256:heir1ankur3f8e2d1c7b4a09f6e5d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8',
       relation:     'Son',
       gender:       'Male',
       dob:          '1988-03-15',
@@ -327,7 +327,7 @@ const DEMO_SUCCESSION_CASE = {
     {
       heirId:       'HEIR-002',
       name:         'Nitin Singh',
-      aadhaarHash:  'sha256:heir2nitin8e2d1c7b4a09f6e5d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8f7',
+      aadhaarNumber:  'sha256:heir2nitin8e2d1c7b4a09f6e5d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8f7',
       relation:     'Son',
       gender:       'Male',
       dob:          '1991-07-22',
@@ -343,7 +343,7 @@ const DEMO_SUCCESSION_CASE = {
     {
       heirId:       'HEIR-003',
       name:         'Neeta Singh',
-      aadhaarHash:  'sha256:heir3neeta1c7b4a09f6e5d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8f7e6d5',
+      aadhaarNumber:  'sha256:heir3neeta1c7b4a09f6e5d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8f7e6d5',
       relation:     'Daughter',
       gender:       'Female',
       dob:          '1994-11-08',
@@ -370,9 +370,9 @@ const DEMO_SUCCESSION_CASE = {
 const DEMO_TRANSFER = {
   transferId:          'TXF-DLPI-UP-DAD-00100-b2c3d4e5',
   dlpiId:              'DLPI-UP-DAD-00100',
-  sellerAadhaarHash:   'sha256:a3f8e2d1c7b4a09f6e5d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b3a',
+  sellerAadhaarNumber:   'sha256:a3f8e2d1c7b4a09f6e5d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b3a',
   buyerName:           'Rakesh Agarwal',
-  buyerAadhaarHash:    'sha256:buyer1rakesh9d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b3a2f1e0',
+  buyerAadhaarNumber:    'sha256:buyer1rakesh9d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b3a2f1e0',
   declaredValueINR:    4_800_000,
   oracleValueINR:      5_200_000,
   stampDutyINR:        208_000,
@@ -418,9 +418,9 @@ const DEMO_MUTATION = {
   officerRank:             'Patwari',
   officerHash:             'sha256:officer1ramesh3f8e2d1c7b4a09f6e5d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a',
   currentOwnerName:        'Deepak Narayan Singh',
-  currentOwnerAadhaarHash: 'sha256:owner1deepak3f8e2d1c7b4a09f6e5d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9',
+  currentOwnerAadhaarNumber: 'sha256:owner1deepak3f8e2d1c7b4a09f6e5d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9',
   newOwnerName:            'Ankur Singh',
-  newOwnerAadhaarHash:     'sha256:heir1ankur3f8e2d1c7b4a09f6e5d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8',
+  newOwnerAadhaarNumber:     'sha256:heir1ankur3f8e2d1c7b4a09f6e5d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8',
   reason:                  'Death of Deepak Narayan Singh (CRS Reg: CRS-GBN-2026-00541). Son Ankur Singh is primary legal heir under Hindu Succession Act 1956.',
   supportingCID:           'QmDeathCertDeepaK2026Khatauni',
   courtOrderNo:            null,
@@ -695,8 +695,8 @@ module.exports = {
                  parcel.dlpiId = sc.dlpiId;
                  parcel.initialOwners = sc.heirs.map(h => ({
                    name: h.name,
-                   aadhaarHash: h.aadhaarHash || h.aadhaar || '',
-                   aadhaar: h.aadhaar || h.aadhaarHash || '',
+                   aadhaarNumber: h.aadhaarNumber || h.aadhaar || '',
+                   aadhaar: h.aadhaar || h.aadhaarNumber || '',
                    share: h.share || h.finalShare || `1/${sc.heirs.length}`,
                    shareDecimal: h.shareDecimal || h.finalShareDec || (1.0 / sc.heirs.length)
                  }));
@@ -707,8 +707,8 @@ module.exports = {
                  if (existing) {
                    existing.initialOwners = sc.heirs.map(h => ({
                      name: h.name,
-                     aadhaarHash: h.aadhaarHash || h.aadhaar || '',
-                     aadhaar: h.aadhaar || h.aadhaarHash || '',
+                     aadhaarNumber: h.aadhaarNumber || h.aadhaar || '',
+                     aadhaar: h.aadhaar || h.aadhaarNumber || '',
                      share: h.share || h.finalShare || `1/${sc.heirs.length}`,
                      shareDecimal: h.shareDecimal || h.finalShareDec || (1.0 / sc.heirs.length)
                    }));
@@ -723,7 +723,7 @@ module.exports = {
           const ownersList = s.initialOwners || s.owners || [];
           if (!Array.isArray(ownersList) || ownersList.length === 0) return false;
           return ownersList.some(o => {
-            const oHash = o.aadhaarHash || '';
+            const oHash = o.aadhaarNumber || '';
             const oRaw  = o.aadhaar || '';
             const oName = (o.name || '').toLowerCase();
             if (oHash && (oHash === ownerHash || oHash === userRaw)) return true;
@@ -749,13 +749,13 @@ module.exports = {
           if (atomicClaims[p.dlpiId]) {
             const claim = atomicClaims[p.dlpiId];
             if (claim.heirs && Array.isArray(claim.heirs)) {
-              return claim.heirs.some(h => (h.aadhaarHash && (h.aadhaarHash === ownerHash || h.aadhaarHash === userRaw)) || (h.aadhaar && (h.aadhaar === ownerHash || h.aadhaar === userRaw)) || ((h.name || '').toLowerCase().includes(userName) && userName.length > 1));
+              return claim.heirs.some(h => (h.aadhaarNumber && (h.aadhaarNumber === ownerHash || h.aadhaarNumber === userRaw)) || (h.aadhaar && (h.aadhaar === ownerHash || h.aadhaar === userRaw)) || ((h.name || '').toLowerCase().includes(userName) && userName.length > 1));
             }
-            return (claim.aadhaarHash && (claim.aadhaarHash.includes(ownerHash) || claim.aadhaarHash.includes(userRaw))) ||
+            return (claim.aadhaarNumber && (claim.aadhaarNumber.includes(ownerHash) || claim.aadhaarNumber.includes(userRaw))) ||
                    ((claim.claimedBy || '').toLowerCase().includes(userName) && userName.length > 1);
           }
           const ownersList = p.owners || [];
-          return ownersList.some(o => (o.aadhaarHash && (o.aadhaarHash === ownerHash || o.aadhaarHash === userRaw)) || (o.aadhaar && (o.aadhaar === ownerHash || o.aadhaar === userRaw)) || ((o.name || '').toLowerCase().includes(userName) && userName.length > 1)) ||
+          return ownersList.some(o => (o.aadhaarNumber && (o.aadhaarNumber === ownerHash || o.aadhaarNumber === userRaw)) || (o.aadhaar && (o.aadhaar === ownerHash || o.aadhaar === userRaw)) || ((o.name || '').toLowerCase().includes(userName) && userName.length > 1)) ||
                  (userRaw === '999900010010' && (p.ownerName || '').toLowerCase().includes('priya')) ||
                  (userRaw === '999900010015' && (p.ownerName || '').toLowerCase().includes('sunita'));
         }) : [];
@@ -765,9 +765,9 @@ module.exports = {
           if (atomicClaims[p.dlpiId]) {
             const claim = atomicClaims[p.dlpiId];
             if (claim.heirs && Array.isArray(claim.heirs)) {
-              return claim.heirs.some(h => (h.aadhaarHash && (h.aadhaarHash === ownerHash || h.aadhaarHash === userRaw)) || (h.aadhaar && (h.aadhaar === ownerHash || h.aadhaar === userRaw)) || ((h.name || '').toLowerCase().includes(userName) && userName.length > 1));
+              return claim.heirs.some(h => (h.aadhaarNumber && (h.aadhaarNumber === ownerHash || h.aadhaarNumber === userRaw)) || (h.aadhaar && (h.aadhaar === ownerHash || h.aadhaar === userRaw)) || ((h.name || '').toLowerCase().includes(userName) && userName.length > 1));
             }
-            return (claim.aadhaarHash && (claim.aadhaarHash.includes(ownerHash) || claim.aadhaarHash.includes(userRaw))) ||
+            return (claim.aadhaarNumber && (claim.aadhaarNumber.includes(ownerHash) || claim.aadhaarNumber.includes(userRaw))) ||
                    ((claim.claimedBy || '').toLowerCase().includes(userName) && userName.length > 1) ||
                    (userRaw === '999900010015' && (claim.claimedBy || '').toLowerCase().includes('sunita'));
           }
@@ -778,7 +778,7 @@ module.exports = {
         let myExecutedCasesParcels = [];
         try {
           const mCases = JSON.parse(fs.readFileSync('/tmp/bhumichain_mock_cases.json', 'utf8')) || [];
-          mCases.filter(c => (c.status === 'EXECUTED' || c.status === 'AUTO_MUTATED' || c.status === 'COMPLETED' || c.status === 'TEHSILDAR_APPROVED') && c.heirs && c.heirs.some(h => (h.aadhaarHash && (h.aadhaarHash === ownerHash || h.aadhaarHash === userRaw)) || (h.aadhaar && (h.aadhaar === ownerHash || h.aadhaar === userRaw)) || ((h.name || '').toLowerCase().includes(userName) && userName.length > 1))).forEach(sc => {
+          mCases.filter(c => (c.status === 'EXECUTED' || c.status === 'AUTO_MUTATED' || c.status === 'COMPLETED' || c.status === 'TEHSILDAR_APPROVED') && c.heirs && c.heirs.some(h => (h.aadhaarNumber && (h.aadhaarNumber === ownerHash || h.aadhaarNumber === userRaw)) || (h.aadhaar && (h.aadhaar === ownerHash || h.aadhaar === userRaw)) || ((h.name || '').toLowerCase().includes(userName) && userName.length > 1))).forEach(sc => {
             if (!demoParcels.find(p => p.dlpiId === sc.dlpiId) && !claimedDemoParcels.find(p => p.dlpiId === sc.dlpiId) && !myScans.find(p => p.dlpiId === sc.dlpiId) && !mySeeded.find(p => p.dlpiId === sc.dlpiId)) {
               myExecutedCasesParcels.push({
                 ...DEMO_DLPI,
@@ -918,7 +918,7 @@ module.exports = {
           dlpiId: args[0],
           familyId: args[1],
           deceasedName: args[2],
-          deceasedAadhaarHash: args[3],
+          deceasedAadhaarNumber: args[3],
           dateOfDeath: args[4],
           deathCertCID: args[5],
           crsRegistrationNo: args[6],
@@ -983,7 +983,7 @@ module.exports = {
         return cases.filter(c => {
           if (!['AWAITING_CONSENTS', 'HEIR_CONSENT_PENDING'].includes(c.status)) return false;
           const me = c.heirs?.find(h => {
-            if (h.aadhaarHash === myHash) return true;
+            if (h.aadhaarNumber === myHash) return true;
             const nameLower = (h.name || '').toLowerCase();
             if (myHash === '999900010010' && nameLower.includes('priya')) return true;
             if (myHash === '999900010015' && nameLower.includes('sunita')) return true;
@@ -1000,7 +1000,7 @@ module.exports = {
         const sc = cases.find(c => c && c.caseId === args[0]);
         let returnedStatus = 'CONSENT_RECORDED';
         if (sc && sc.heirs) {
-          const heir = sc.heirs.find(h => h.aadhaarHash === args[1] || h.aadhaar === args[1] || (args[1] && (String(args[1]).replace(/\D/g, '') === String(h.aadhaar || h.aadhaarHash).replace(/\D/g, ''))));
+          const heir = sc.heirs.find(h => h.aadhaarNumber === args[1] || h.aadhaar === args[1] || (args[1] && (String(args[1]).replace(/\D/g, '') === String(h.aadhaar || h.aadhaarNumber).replace(/\D/g, ''))));
           if (heir) {
             heir.hasConsented = true;
             heir.consentedAt = new Date().toISOString();
@@ -1012,7 +1012,7 @@ module.exports = {
           }
           fs.writeFileSync('/tmp/bhumichain_mock_cases.json', JSON.stringify(cases, null, 2));
         }
-        return { caseId: args[0], heirAadhaarHash: args[1], eSignTxHash: args[2], consentedAt: new Date().toISOString(), status: returnedStatus };
+        return { caseId: args[0], heirAadhaarNumber: args[1], eSignTxHash: args[2], consentedAt: new Date().toISOString(), status: returnedStatus };
       }
       case 'uttaradhikar::ExecuteSuccession': {
         const fs = require('fs');
@@ -1032,7 +1032,7 @@ module.exports = {
           if (parcel) {
             parcel.initialOwners = sc.heirs.map(h => ({
               name: h.name,
-              aadhaarHash: h.aadhaarHash,
+              aadhaarNumber: h.aadhaarNumber,
               share: h.share || h.finalShare,
               shareDecimal: h.shareDecimal || h.finalShareDec
             }));
@@ -1070,7 +1070,7 @@ module.exports = {
         return { caseId: args[0], status: 'EXECUTED', executedAt: new Date().toISOString(), txHash: `0xsuc-exec-${Date.now()}` };
       }
       case 'uttaradhikar::RecordHeirObjection':
-        return { caseId: args[0], heirAadhaarHash: args[1], reason: args[2], objectedAt: new Date().toISOString(), status: 'OBJECTION_FILED' };
+        return { caseId: args[0], heirAadhaarNumber: args[1], reason: args[2], objectedAt: new Date().toISOString(), status: 'OBJECTION_FILED' };
       case 'uttaradhikar::RecordHeirNotification':
         return { caseId: args[0], channel: args[1], deliveredAt: new Date().toISOString(), recorded: true };
       case 'bhumi-auction::GetAllAuctions':

@@ -57,7 +57,7 @@ const (
 
 // TransferParty — a seller or buyer in a transfer, with their share info
 type TransferParty struct {
-	AadhaarHash   string  `json:"aadhaarHash"`
+	AadhaarNumber   string  `json:"aadhaarNumber"`
 	Name          string  `json:"name"`
 	ShareFraction string  `json:"shareFraction"` // "1/3", "1/2" etc.
 	ShareDecimal  float64 `json:"shareDecimal"`
@@ -271,7 +271,7 @@ func (c *PropertyTransferContract) InitiateTransfer(
 	// Verify each seller is a current owner
 	type dlpiOwners struct {
 		Owners []struct {
-			AadhaarHash string `json:"aadhaarHash"`
+			AadhaarNumber string `json:"aadhaarNumber"`
 		} `json:"owners"`
 	}
 	var dlpiWithOwners dlpiOwners
@@ -279,7 +279,7 @@ func (c *PropertyTransferContract) InitiateTransfer(
 		for _, seller := range sellers {
 			isOwner := false
 			for _, o := range dlpiWithOwners.Owners {
-				if matchAadhaar(o.AadhaarHash, seller.AadhaarHash) {
+				if matchAadhaar(o.AadhaarNumber, seller.AadhaarNumber) {
 					isOwner = true
 					break
 				}
@@ -288,7 +288,7 @@ func (c *PropertyTransferContract) InitiateTransfer(
 				return "", fmt.Errorf(
 					"OWNERSHIP_DENIED: Seller %s (%s) is not a registered owner of parcel %s on the blockchain. "+
 						"Only the actual current owners listed in the land record can sell this property.",
-					seller.Name, seller.AadhaarHash, dlpiId)
+					seller.Name, seller.AadhaarNumber, dlpiId)
 			}
 		}
 	}
@@ -318,7 +318,7 @@ func (c *PropertyTransferContract) InitiateTransfer(
 // WaivePreemption — co-owner waives their 30-day preemption right for a SHARE_SALE
 func (c *PropertyTransferContract) WaivePreemption(
 	ctx contractapi.TransactionContextInterface,
-	transferID, coOwnerAadhaarHash, eSignTxHash string,
+	transferID, coOwnerAadhaarNumber, eSignTxHash string,
 ) error {
 
 	proposal, err := c.getProposal(ctx, transferID)
@@ -335,7 +335,7 @@ func (c *PropertyTransferContract) WaivePreemption(
 	// Verify this hash is a registered co-owner for preemption
 	isCoOwner := false
 	for _, h := range proposal.Preemption.CoOwnerHashes {
-		if h == coOwnerAadhaarHash {
+		if h == coOwnerAadhaarNumber {
 			isCoOwner = true
 			break
 		}
@@ -346,12 +346,12 @@ func (c *PropertyTransferContract) WaivePreemption(
 
 	// Already waived?
 	for _, w := range proposal.Preemption.Waivers {
-		if w == coOwnerAadhaarHash {
+		if w == coOwnerAadhaarNumber {
 			return fmt.Errorf("preemption already waived by this co-owner")
 		}
 	}
 
-	proposal.Preemption.Waivers = append(proposal.Preemption.Waivers, coOwnerAadhaarHash)
+	proposal.Preemption.Waivers = append(proposal.Preemption.Waivers, coOwnerAadhaarNumber)
 
 	// If all co-owners have waived, move to consent collection
 	if len(proposal.Preemption.Waivers) >= len(proposal.Preemption.CoOwnerHashes) {
@@ -371,7 +371,7 @@ func (c *PropertyTransferContract) WaivePreemption(
 // This converts the transfer into an internal transfer to the co-owner
 func (c *PropertyTransferContract) ExercisePreemption(
 	ctx contractapi.TransactionContextInterface,
-	transferID, coOwnerAadhaarHash, eSignTxHash string,
+	transferID, coOwnerAadhaarNumber, eSignTxHash string,
 ) error {
 
 	proposal, err := c.getProposal(ctx, transferID)
@@ -386,7 +386,7 @@ func (c *PropertyTransferContract) ExercisePreemption(
 	// Share and price remain the same as the original sale
 	isCoOwner := false
 	for _, h := range proposal.Preemption.CoOwnerHashes {
-		if matchAadhaar(h, coOwnerAadhaarHash) {
+		if matchAadhaar(h, coOwnerAadhaarNumber) {
 			isCoOwner = true
 			break
 		}
@@ -400,7 +400,7 @@ func (c *PropertyTransferContract) ExercisePreemption(
 	sellerShare := proposal.Sellers[0].ShareFraction
 	sellerShareDec := proposal.Sellers[0].ShareDecimal
 	proposal.Buyers = []TransferParty{{
-		AadhaarHash:   coOwnerAadhaarHash,
+		AadhaarNumber:   coOwnerAadhaarNumber,
 		Name:          "Co-owner (preemption)",
 		ShareFraction: sellerShare,
 		ShareDecimal:  sellerShareDec,
@@ -408,13 +408,13 @@ func (c *PropertyTransferContract) ExercisePreemption(
 		ConsentedAt:   time.Now().UTC().Format(time.RFC3339),
 		ESignTxHash:   eSignTxHash,
 	}}
-	proposal.Preemption.PreemptionClaimed = coOwnerAadhaarHash
+	proposal.Preemption.PreemptionClaimed = coOwnerAadhaarNumber
 	proposal.Preemption.Resolved = true
 	proposal.Status = StatusPreemptionExercised
 	proposal.UpdatedAt = time.Now().UTC().Format(time.RFC3339)
 
 	event, _ := json.Marshal(map[string]string{
-		"transferId": transferID, "exercisedBy": coOwnerAadhaarHash,
+		"transferId": transferID, "exercisedBy": coOwnerAadhaarNumber,
 	})
 	_ = ctx.GetStub().SetEvent("PreemptionExercised", event)
 	return c.saveProposal(ctx, proposal)
@@ -460,7 +460,7 @@ func (c *PropertyTransferContract) RecordFraudScore(
 // RecordConsent — Step 3: any seller or buyer records their Aadhaar eSign
 func (c *PropertyTransferContract) RecordConsent(
 	ctx contractapi.TransactionContextInterface,
-	transferID, partyRole, aadhaarHash, eSignTxHash string,
+	transferID, partyRole, aadhaarNumber, eSignTxHash string,
 ) error {
 	// partyRole: "SELLER" | "BUYER" | "OFFICER"
 
@@ -481,7 +481,7 @@ func (c *PropertyTransferContract) RecordConsent(
 	switch partyRole {
 	case "SELLER":
 		for i, s := range proposal.Sellers {
-			if matchAadhaar(s.AadhaarHash, aadhaarHash) {
+			if matchAadhaar(s.AadhaarNumber, aadhaarNumber) {
 				proposal.Sellers[i].HasConsented = true
 				proposal.Sellers[i].ConsentedAt = now
 				proposal.Sellers[i].ESignTxHash = eSignTxHash
@@ -491,7 +491,7 @@ func (c *PropertyTransferContract) RecordConsent(
 		}
 	case "BUYER":
 		for i, b := range proposal.Buyers {
-			if matchAadhaar(b.AadhaarHash, aadhaarHash) {
+			if matchAadhaar(b.AadhaarNumber, aadhaarNumber) {
 				proposal.Buyers[i].HasConsented = true
 				proposal.Buyers[i].ConsentedAt = now
 				proposal.Buyers[i].ESignTxHash = eSignTxHash
@@ -501,12 +501,12 @@ func (c *PropertyTransferContract) RecordConsent(
 		}
 	case "OFFICER":
 		// Officer endorsement is stored separately but treated as consent
-		proposal.OfficerHash = aadhaarHash
+		proposal.OfficerHash = aadhaarNumber
 		found = true
 	}
 
 	if !found {
-		return fmt.Errorf("aadhaarHash %s not found as %s in transfer %s", aadhaarHash, partyRole, transferID)
+		return fmt.Errorf("aadhaarNumber %s not found as %s in transfer %s", aadhaarNumber, partyRole, transferID)
 	}
 
 	if c.allConsentsGiven(proposal) {
@@ -651,12 +651,12 @@ func (c *PropertyTransferContract) ApproveByTehsildar(
 	// Build seller hashes list for DLPI removal
 	sellerHashes := make([]string, len(proposal.Sellers))
 	for i, s := range proposal.Sellers {
-		sellerHashes[i] = s.AadhaarHash
+		sellerHashes[i] = s.AadhaarNumber
 	}
 
 	// Build CoOwner structs for new buyers
 	type CoOwnerInput struct {
-		AadhaarHash   string  `json:"aadhaarHash"`
+		AadhaarNumber   string  `json:"aadhaarNumber"`
 		Name          string  `json:"name"`
 		Share         string  `json:"share"`
 		ShareDecimal  float64 `json:"shareDecimal"`
@@ -665,7 +665,7 @@ func (c *PropertyTransferContract) ApproveByTehsildar(
 	newBuyerInputs := make([]CoOwnerInput, len(proposal.Buyers))
 	for i, b := range proposal.Buyers {
 		newBuyerInputs[i] = CoOwnerInput{
-			AadhaarHash:  b.AadhaarHash,
+			AadhaarNumber:  b.AadhaarNumber,
 			Name:         b.Name,
 			Share:        b.ShareFraction,
 			ShareDecimal: b.ShareDecimal,
@@ -849,7 +849,7 @@ func validateBuyerShares(sellers []TransferParty, buyers []TransferParty, transf
 	}
 	for _, b := range buyers {
 		if b.ShareDecimal <= 0 {
-			return fmt.Errorf("buyer %s has invalid share decimal: %f", b.AadhaarHash, b.ShareDecimal)
+			return fmt.Errorf("buyer %s has invalid share decimal: %f", b.AadhaarNumber, b.ShareDecimal)
 		}
 		buyerTotal += b.ShareDecimal
 	}

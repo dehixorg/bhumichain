@@ -54,25 +54,25 @@ export async function initiateTransfer(payload: {
   dlpiId: string;
   sellerName?: string;
   sellerAadhaarNumber?: string;
-  sellerAadhaarHash?: string;
+  sellerAadhaarNumber?: string;
   buyerName: string;
   buyerAadhaarNumber?: string;
-  buyerAadhaarHash?: string;
+  buyerAadhaarNumber?: string;
   declaredValueINR: number;
   isTribalBuyer?: boolean;
 }): Promise<Transfer & { tribalCheck?: TribalCheckResult }> {
-  const sellerNum = (payload.sellerAadhaarNumber || payload.sellerAadhaarHash || '').replace(/\D/g, '') || payload.sellerAadhaarHash || '';
-  const buyerNum = (payload.buyerAadhaarNumber || payload.buyerAadhaarHash || '').replace(/\D/g, '') || payload.buyerAadhaarHash || '';
+  const sellerNum = (payload.sellerAadhaarNumber || payload.sellerAadhaarNumber || '').replace(/\D/g, '') || payload.sellerAadhaarNumber || '';
+  const buyerNum = (payload.buyerAadhaarNumber || payload.buyerAadhaarNumber || '').replace(/\D/g, '') || payload.buyerAadhaarNumber || '';
   const res = await apiFetch('/api/transfer/initiate', {
     method: 'POST',
     body: JSON.stringify({
       ...payload,
       sellerAadhaarNumber: sellerNum,
       sellerAadhaar: sellerNum,
-      sellerAadhaarHash: sellerNum,
+      sellerAadhaarNumber: sellerNum,
       buyerAadhaarNumber: buyerNum,
       buyerAadhaar: buyerNum,
-      buyerAadhaarHash: buyerNum,
+      buyerAadhaarNumber: buyerNum,
     }),
   });
   const data = await res.json();
@@ -92,17 +92,17 @@ export async function getMyPendingTransfers(): Promise<any[]> {
 export async function recordConsent(transferId: string, payload: {
   partyType: 'SELLER' | 'BUYER';
   aadhaarNumber?: string;
-  aadhaarHash?: string;
+  aadhaarNumber?: string;
   eSignTxHash: string;
 }) {
-  const aadhaarNum = ((payload.aadhaarNumber || payload.aadhaarHash || '').replace(/\D/g, '') || payload.aadhaarHash || '');
+  const aadhaarNum = ((payload.aadhaarNumber || payload.aadhaarNumber || '').replace(/\D/g, '') || payload.aadhaarNumber || '');
   const res = await apiFetch(`/api/transfer/${transferId}/consent`, {
     method: 'POST',
     body: JSON.stringify({
       ...payload,
       aadhaarNumber: aadhaarNum,
       aadhaar: aadhaarNum,
-      aadhaarHash: aadhaarNum,
+      aadhaarNumber: aadhaarNum,
     }),
   });
   const data = await res.json();
@@ -169,7 +169,7 @@ export async function initiateSuccession(payload: {
   dlpiId: string;
   familyId: string;
   deceasedName: string;
-  deceasedAadhaarHash: string;
+  deceasedAadhaarNumber: string;
   dateOfDeath: string;
   deathCertCID: string;
   crsRegistrationNo: string;
@@ -183,7 +183,7 @@ export async function initiateSuccession(payload: {
 }
 
 export async function recordHeirConsent(caseId: string, payload: {
-  heirAadhaarHash: string;
+  heirAadhaarNumber: string;
   eSignTxHash: string;
 }) {
   const res = await apiFetch(`/api/succession/${caseId}/consent`, {
@@ -230,7 +230,7 @@ export async function approveInheritorNomination(nominationId: string) {
 export async function checkTribal(payload: {
   dlpiId: string;
   buyerName: string;
-  buyerAadhaarHash: string;
+  buyerAadhaarNumber: string;
   isTribalBuyer?: boolean;
 }): Promise<TribalCheckResult> {
   const res = await apiFetch('/api/tribal/check', {
@@ -318,7 +318,7 @@ export async function getAuctions() {
 
 export async function placeBid(auctionId: string, payload: {
   bidAmountINR: number;
-  bidderAadhaarHash: string;
+  bidderAadhaarNumber: string;
 }) {
   const res = await apiFetch(`/api/auction/${auctionId}/bid`, {
     method: 'POST',

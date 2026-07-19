@@ -24,7 +24,7 @@ APPLICABLE_LAWS = [
 ]
 
 
-def aadhaar_hash(name, dob):
+def aadhaar_number(name, dob):
     return hashlib.sha256(f"{name}-{dob}-{random.randint(1, 999999)}".encode()).hexdigest()[:32]
 
 
@@ -94,7 +94,7 @@ def generate_family(index: int, surname: str = None) -> dict:
             "relation": "Widow",
             "gender": "F",
             "dob": random_dob(1940, 1965),
-            "aadhaarHash": aadhaar_hash(widow_name, patriarch_dob),
+            "aadhaarNumber": aadhaar_number(widow_name, patriarch_dob),
             "isAlive": True,
             "isAdult": True,
         })
@@ -111,7 +111,7 @@ def generate_family(index: int, surname: str = None) -> dict:
             "relation": "Son",
             "gender": "M",
             "dob": son_dob,
-            "aadhaarHash": aadhaar_hash(son_name, son_dob),
+            "aadhaarNumber": aadhaar_number(son_name, son_dob),
             "isAlive": True,
             "isAdult": True,
         })
@@ -128,7 +128,7 @@ def generate_family(index: int, surname: str = None) -> dict:
             "relation": "Daughter",
             "gender": "F",
             "dob": dau_dob,
-            "aadhaarHash": aadhaar_hash(dau_name, dau_dob),
+            "aadhaarNumber": aadhaar_number(dau_name, dau_dob),
             "isAlive": True,
             "isAdult": True,
         })
@@ -154,7 +154,7 @@ def generate_family(index: int, surname: str = None) -> dict:
         "familyId": f"FAM-MH-NSK-{index:03d}",
         "patriarch": {
             "name": patriarch_name,
-            "aadhaarHash": aadhaar_hash(patriarch_name, patriarch_dob),
+            "aadhaarNumber": aadhaar_number(patriarch_name, patriarch_dob),
             "dob": patriarch_dob,
             "dod": patriarch_dod,
             "isAlive": False,
@@ -181,7 +181,7 @@ def generate_ramesh_family_exact() -> dict:
         "familyId": "FAM-MH-SNN-001",
         "patriarch": {
             "name": "Ramesh Dattatray Patil",
-            "aadhaarHash": hashlib.sha256("Ramesh-1958-demo".encode()).hexdigest()[:32],
+            "aadhaarNumber": hashlib.sha256("Ramesh-1958-demo".encode()).hexdigest()[:32],
             "dob": "1958-03-15",
             "dod": "2026-05-20",
             "isAlive": False,
@@ -196,7 +196,7 @@ def generate_ramesh_family_exact() -> dict:
                 "relation": "Son",
                 "gender": "M",
                 "dob": "1982-07-10",
-                "aadhaarHash": hashlib.sha256("Arun-1982-demo".encode()).hexdigest()[:32],
+                "aadhaarNumber": hashlib.sha256("Arun-1982-demo".encode()).hexdigest()[:32],
                 "isAlive": True,
                 "isAdult": True,
                 "share": "1/3",
@@ -209,7 +209,7 @@ def generate_ramesh_family_exact() -> dict:
                 "relation": "Son",
                 "gender": "M",
                 "dob": "1985-11-22",
-                "aadhaarHash": hashlib.sha256("Vijay-1985-demo".encode()).hexdigest()[:32],
+                "aadhaarNumber": hashlib.sha256("Vijay-1985-demo".encode()).hexdigest()[:32],
                 "isAlive": True,
                 "isAdult": True,
                 "share": "1/3",
@@ -222,7 +222,7 @@ def generate_ramesh_family_exact() -> dict:
                 "relation": "Daughter",
                 "gender": "F",
                 "dob": "1988-04-05",
-                "aadhaarHash": hashlib.sha256("Sunita-1988-demo".encode()).hexdigest()[:32],
+                "aadhaarNumber": hashlib.sha256("Sunita-1988-demo".encode()).hexdigest()[:32],
                 "isAlive": True,
                 "isAdult": True,
                 "share": "1/3",

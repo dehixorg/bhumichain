@@ -149,7 +149,7 @@ router.get(
     try {
       const ec = await submit('encumbrance', 'GenerateEC', [
         req.params.dlpiId,
-        req.user.aadhaarHash || 'sha256:requestor',
+        req.user.aadhaarNumber || 'sha256:requestor',
       ]);
       res.json(ec);
     } catch (e) {

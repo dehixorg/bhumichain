@@ -112,7 +112,7 @@ export default function TribalPage() {
     const payload = {
       dlpiId:          TRIBAL_DLPI,
       buyerName:       buyerMode === 'non_tribal' ? 'Suresh Balaji Deshmukh' : 'Ramesh Tukaram Bhil',
-      buyerAadhaarHash: buyerMode === 'non_tribal'
+      buyerAadhaarNumber: buyerMode === 'non_tribal'
         ? 'sha256:buyer1suresh9d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b3a2f1e0'
         : 'sha256:tribalbhil2f1e0d9c8b7a6f5e4d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8f7',
       isTribalBuyer:   buyerMode === 'same_community',

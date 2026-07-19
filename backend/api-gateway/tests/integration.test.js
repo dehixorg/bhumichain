@@ -17,7 +17,7 @@ const jwt = require('jsonwebtoken');
 const { app } = require('../src/index');
 
 function makeToken(role = 'revenue_officer') {
-  return jwt.sign({ role, name: 'Test User', aadhaarHash: 'sha256:' + 'a'.repeat(64) }, 'test-secret-123');
+  return jwt.sign({ role, name: 'Test User', aadhaarNumber: 'sha256:' + 'a'.repeat(64) }, 'test-secret-123');
 }
 
 const AUTH = { Authorization: `Bearer ${makeToken()}` };
@@ -83,9 +83,9 @@ describe('Transfer Routes', () => {
       .set({ Authorization: `Bearer ${makeToken('sro')}` })
       .send({
         dlpiId: 'DLPI-MH-SNN-00142',
-        sellerAadhaarHash: 'sha256:' + 'a'.repeat(64),
+        sellerAadhaarNumber: 'sha256:' + 'a'.repeat(64),
         buyerName: 'Suresh Deshmukh',
-        buyerAadhaarHash: 'sha256:' + 'b'.repeat(64),
+        buyerAadhaarNumber: 'sha256:' + 'b'.repeat(64),
         declaredValueINR: 4800000,
       });
     expect(res.status).toBe(201);
@@ -98,9 +98,9 @@ describe('Transfer Routes', () => {
       .set({ Authorization: `Bearer ${makeToken('sro')}` })
       .send({
         dlpiId: 'DLPI-MH-IGT-T0023',
-        sellerAadhaarHash: 'sha256:' + 'a'.repeat(64),
+        sellerAadhaarNumber: 'sha256:' + 'a'.repeat(64),
         buyerName: 'Rahul Shinde',
-        buyerAadhaarHash: 'sha256:' + 'c'.repeat(64),
+        buyerAadhaarNumber: 'sha256:' + 'c'.repeat(64),
         declaredValueINR: 1800000,
         isTribalBuyer: false,
       });
@@ -121,7 +121,7 @@ describe('Succession Routes (Scene 3)', () => {
         dlpiId: 'DLPI-MH-SNN-00142',
         familyId: 'FAM-001',
         deceasedName: 'Ramesh Dattatray Patil',
-        deceasedAadhaarHash: 'sha256:' + 'a'.repeat(64),
+        deceasedAadhaarNumber: 'sha256:' + 'a'.repeat(64),
         dateOfDeath: '2026-05-20',
         deathCertCID: 'QmDeathCertMock',
         crsRegistrationNo: 'CRS-NSK-2026-00541',
@@ -151,7 +151,7 @@ describe('TribalGuard Routes (Scene 6)', () => {
       .send({
         dlpiId: 'DLPI-MH-IGT-T0023',
         buyerName: 'Rahul Shinde',
-        buyerAadhaarHash: 'sha256:' + 'c'.repeat(64),
+        buyerAadhaarNumber: 'sha256:' + 'c'.repeat(64),
         isTribalBuyer: false,
       });
     expect(res.status).toBe(403);

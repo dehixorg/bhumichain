@@ -13,7 +13,7 @@ export const DEMO_MY_PARCELS = [
     encumbranceStatus: 'CLEAR',
     claimStatus:       'VERIFIED',
     owner:             { name: 'Priya Kumar', aadhaarNumber: '999900010010' },
-    owners:            [{ name: 'Priya Kumar', aadhaarNumber: '999900010010', aadhaarHash: '999900010010', share: '1/1', shareDecimal: 1.0, isVerified: true }],
+    owners:            [{ name: 'Priya Kumar', aadhaarNumber: '999900010010', aadhaarNumber: '999900010010', share: '1/1', shareDecimal: 1.0, isVerified: true }],
     location:          { latitude: 28.5706, longitude: 77.5413 },
     valuation:         { circleRateINR: 3750000 },
     txHash:            '0xdemo_priya1_tx',
@@ -33,7 +33,7 @@ export const DEMO_MY_PARCELS = [
     encumbranceStatus: 'MORTGAGED',
     claimStatus:       'UNDER_REVIEW',
     owner:             { name: 'Priya Kumar', aadhaarNumber: '999900010010' },
-    owners:            [{ name: 'Priya Kumar', aadhaarNumber: '999900010010', aadhaarHash: '999900010010', share: '1/1', shareDecimal: 1.0, isVerified: true }],
+    owners:            [{ name: 'Priya Kumar', aadhaarNumber: '999900010010', aadhaarNumber: '999900010010', share: '1/1', shareDecimal: 1.0, isVerified: true }],
     location:          { latitude: 28.5480, longitude: 77.5620 },
     valuation:         { circleRateINR: 1440000 },
     txHash:            '0xdemo_priya2_tx',
@@ -53,7 +53,7 @@ export const DEMO_MY_PARCELS = [
     encumbranceStatus: 'CLEAR',
     claimStatus:       'SEEDED_UNVERIFIED',
     owner:             { name: 'Rakesh Agarwal', aadhaarNumber: '999900010009' },
-    owners:            [{ name: 'Rakesh Agarwal', aadhaarNumber: '999900010009', aadhaarHash: '999900010009', share: '1/1', shareDecimal: 1.0, isVerified: true }],
+    owners:            [{ name: 'Rakesh Agarwal', aadhaarNumber: '999900010009', aadhaarNumber: '999900010009', share: '1/1', shareDecimal: 1.0, isVerified: true }],
     location:          { latitude: 28.6010, longitude: 77.4850 },
     valuation:         { circleRateINR: 2880000 },
     txHash:            '0xdemo_arun_tx',
@@ -74,7 +74,7 @@ export const DEMO_MY_PARCELS = [
     claimStatus:       'DISPUTED',
     disputeNote:       'Boundary encroachment alleged by adjacent plot owner. Civil suit filed in Dadri court (CS/2025/0441).',
     owner:             { name: 'Suresh Yadav', aadhaarNumber: '999900010012' },
-    owners:            [{ name: 'Suresh Yadav', aadhaarNumber: '999900010012', aadhaarHash: '999900010012', share: '1/1', shareDecimal: 1.0, isVerified: true }],
+    owners:            [{ name: 'Suresh Yadav', aadhaarNumber: '999900010012', aadhaarNumber: '999900010012', share: '1/1', shareDecimal: 1.0, isVerified: true }],
     location:          { latitude: 28.5280, longitude: 77.6100 },
     valuation:         { circleRateINR: 4800000 },
     txHash:            '0xdemo_suresh_tx',
@@ -94,7 +94,7 @@ export const DEMO_MY_PARCELS = [
     encumbranceStatus: 'CLEAR',
     claimStatus:       'CLAIM_SUBMITTED',
     owner:             { name: 'Meena Devi', aadhaarNumber: '999900010005' },
-    owners:            [{ name: 'Meena Devi', aadhaarNumber: '999900010005', aadhaarHash: '999900010005', share: '1/1', shareDecimal: 1.0, isVerified: true }],
+    owners:            [{ name: 'Meena Devi', aadhaarNumber: '999900010005', aadhaarNumber: '999900010005', share: '1/1', shareDecimal: 1.0, isVerified: true }],
     location:          { latitude: 28.5900, longitude: 77.4700 },
     valuation:         { circleRateINR: 720000 },
     txHash:            '0xdemo_meena_tx',
@@ -161,8 +161,8 @@ export const DEMO_DLPI = {
   districtCode:      'UP-GBN',
   ownerName:         'Hi User',
   owner:             { name: 'Hi User', aadhaarNumber: '111122223333' },
-  owners:            [{ name: 'Hi User', aadhaarNumber: '111122223333', aadhaarHash: '111122223333', share: '1/1', shareDecimal: 1.0, isVerified: true }],
-  ownerAadhaarHash:  '111122223333',
+  owners:            [{ name: 'Hi User', aadhaarNumber: '111122223333', aadhaarNumber: '111122223333', share: '1/1', shareDecimal: 1.0, isVerified: true }],
+  ownerAadhaarNumber:  '111122223333',
   landType:          'Bhumidhari',
   landTypeDesc:      'Hereditary tenant with full rights',
   areaHectares:      2.4,
@@ -179,40 +179,40 @@ export const DEMO_DLPI = {
 const DEMO_PERSONAS: Record<string, any> = {
   tehsildar: {
     role: 'tehsildar', name: 'Amit Saxena',
-    aadhaarNumber: '999900010001', aadhaar: '999900010001', aadhaarHash: '999900010001',
+    aadhaarNumber: '999900010001', aadhaar: '999900010001', aadhaarNumber: '999900010001',
     jurisdictionCode: 'GBN-DAD', tehsilCode: 'DAD',
   },
   circle_inspector: {
     role: 'circle_inspector', name: 'Rajesh Verma',
-    aadhaarNumber: '999900010002', aadhaar: '999900010002', aadhaarHash: '999900010002',
+    aadhaarNumber: '999900010002', aadhaar: '999900010002', aadhaarNumber: '999900010002',
     jurisdictionCode: 'GBN-DAD', circleCode: 'DAD-C1',
     patwariCodes: ['DAD-P1', 'DAD-P2', 'DAD-P3'], tehsilCode: 'DAD',
   },
   patwari: {
     role: 'patwari', name: 'Vijay Singh',
-    aadhaarNumber: '999900010003', aadhaar: '999900010003', aadhaarHash: '999900010003',
+    aadhaarNumber: '999900010003', aadhaar: '999900010003', aadhaarNumber: '999900010003',
     jurisdictionCode: 'GBN-DAD', patwariCode: 'DAD-P1',
     villageCodes: ['DAD-001', 'DAD-002', 'DAD-003'], tehsilCode: 'DAD',
   },
   citizen: {
     role: 'citizen', name: 'Priya Kumar',
-    aadhaarNumber: '999900010010', aadhaar: '999900010010', aadhaarHash: '999900010010',
+    aadhaarNumber: '999900010010', aadhaar: '999900010010', aadhaarNumber: '999900010010',
   },
   citizen_buyer: {
     role: 'citizen', name: 'Rakesh Agarwal',
-    aadhaarNumber: '999900010009', aadhaar: '999900010009', aadhaarHash: '999900010009',
+    aadhaarNumber: '999900010009', aadhaar: '999900010009', aadhaarNumber: '999900010009',
   },
   suresh_yadav: {
     role: 'citizen', name: 'Suresh Yadav',
-    aadhaarNumber: '999900010012', aadhaar: '999900010012', aadhaarHash: '999900010012',
+    aadhaarNumber: '999900010012', aadhaar: '999900010012', aadhaarNumber: '999900010012',
   },
   citizen_heir1: {
     role: 'citizen', name: 'Suresh Yadav',
-    aadhaarNumber: '999900010012', aadhaar: '999900010012', aadhaarHash: '999900010012',
+    aadhaarNumber: '999900010012', aadhaar: '999900010012', aadhaarNumber: '999900010012',
   },
   citizen_heir2: {
     role: 'citizen', name: 'Sunita Kumar',
-    aadhaarNumber: '999900010015', aadhaar: '999900010015', aadhaarHash: '999900010015',
+    aadhaarNumber: '999900010015', aadhaar: '999900010015', aadhaarNumber: '999900010015',
   },
 };
 
@@ -284,14 +284,14 @@ export async function handleMockApi(path: string, options: RequestInit): Promise
     if (!isOfficer) {
       const digits = (body.aadhaarNumber || '').replace(/\D/g, '');
       if (digits) {
-        const existing = Object.values(DEMO_PERSONAS).find((p: any) => p.aadhaarHash === digits || p.aadhaar === digits || p.aadhaarNo === digits || p.aadhaarNumber === digits) as any;
+        const existing = Object.values(DEMO_PERSONAS).find((p: any) => p.aadhaarNumber === digits || p.aadhaar === digits || p.aadhaarNo === digits || p.aadhaarNumber === digits) as any;
         if (existing) {
-          user = { ...existing, aadhaarNumber: digits, aadhaarHash: digits, aadhaar: digits, aadhaarNo: digits };
+          user = { ...existing, aadhaarNumber: digits, aadhaarNumber: digits, aadhaar: digits, aadhaarNo: digits };
         } else {
           // Check if any property in state.myParcels was seeded/added or nominated for this Aadhaar
           const assigned = state.myParcels.find(p => {
             const owners = (p as any).owners || (p as any).initialOwners || [];
-            if (owners.some((o: any) => o.aadhaarHash === digits || o.aadhaar === digits || o.aadhaarNo === digits || o.aadhaarNumber === digits)) return true;
+            if (owners.some((o: any) => o.aadhaarNumber === digits || o.aadhaar === digits || o.aadhaarNo === digits || o.aadhaarNumber === digits)) return true;
             if ((p as any).inheritorNomination && (p as any).inheritorNomination.inheritorAadhaarNumber === digits) return true;
             return false;
           });
@@ -301,7 +301,7 @@ export async function handleMockApi(path: string, options: RequestInit): Promise
             role: 'citizen',
             name: ownerName,
             aadhaarNumber: digits,
-            aadhaarHash: digits,
+            aadhaarNumber: digits,
             aadhaar: digits,
             aadhaarRaw: digits,
             aadhaarNo: digits,
@@ -365,7 +365,7 @@ export async function handleMockApi(path: string, options: RequestInit): Promise
       owners: owners || [
         {
           aadhaarNumber: cleanAadhaar,
-          aadhaarHash: cleanAadhaar,
+          aadhaarNumber: cleanAadhaar,
           aadhaar: cleanAadhaar,
           name: ownerName || 'New Atomic Owner',
           share: '1/1',
@@ -384,15 +384,15 @@ export async function handleMockApi(path: string, options: RequestInit): Promise
     // Get the currently logged-in user from the auth header
     const authHeader = (options.headers as Record<string, string>)?.['Authorization'] || '';
     const tokenPayload = authHeader.startsWith('Bearer mock.') ? JSON.parse(atob(authHeader.split('.')[1])) : null;
-    const myAadhaar = tokenPayload?.aadhaarNumber || tokenPayload?.aadhaarHash || tokenPayload?.aadhaar || tokenPayload?.aadhaarNo || '';
+    const myAadhaar = tokenPayload?.aadhaarNumber || tokenPayload?.aadhaarNumber || tokenPayload?.aadhaar || tokenPayload?.aadhaarNo || '';
     // Filter to only return parcels that belong to this user OR where they are the registered/approved inheritor
     const myParcels = myAadhaar
       ? state.myParcels.filter(p => {
           const owners = (p as any).owners || (p as any).initialOwners || [];
-          if (owners.length > 0 && owners.some((o: any) => o.aadhaarNumber === myAadhaar || o.aadhaarHash === myAadhaar || o.aadhaar === myAadhaar || o.aadhaarNo === myAadhaar || (o.name && o.name === tokenPayload?.name))) return true;
+          if (owners.length > 0 && owners.some((o: any) => o.aadhaarNumber === myAadhaar || o.aadhaarNumber === myAadhaar || o.aadhaar === myAadhaar || o.aadhaarNo === myAadhaar || (o.name && o.name === tokenPayload?.name))) return true;
           if ((p as any).inheritorNomination && ((p as any).inheritorNomination.inheritorAadhaarNumber === myAadhaar || (p as any).inheritorNomination.inheritorAadhaar === myAadhaar)) return true;
           // Fallback: check by name for demo parcels
-          const persona = Object.values(DEMO_PERSONAS).find((p: any) => p.aadhaarNumber === myAadhaar || p.aadhaarHash === myAadhaar || p.aadhaar === myAadhaar) as any;
+          const persona = Object.values(DEMO_PERSONAS).find((p: any) => p.aadhaarNumber === myAadhaar || p.aadhaarNumber === myAadhaar || p.aadhaar === myAadhaar) as any;
           return persona && (p as any).owner?.name === persona.name;
         })
       : state.myParcels;
@@ -554,7 +554,7 @@ export async function handleMockApi(path: string, options: RequestInit): Promise
         role: 'citizen',
         name: nom.inheritorName,
         aadhaarNumber: nom.inheritorAadhaarNumber,
-        aadhaarHash: nom.inheritorAadhaarNumber,
+        aadhaarNumber: nom.inheritorAadhaarNumber,
         aadhaar: nom.inheritorAadhaarNumber,
         aadhaarRaw: nom.inheritorAadhaarNumber,
         aadhaarNo: nom.inheritorAadhaarNumber,
@@ -572,7 +572,7 @@ export async function handleMockApi(path: string, options: RequestInit): Promise
       const nom = (parcel as any).inheritorNomination;
       const authHeader = (options.headers as Record<string, string>)?.['Authorization'] || '';
       const tokenPayload = authHeader.startsWith('Bearer mock.') ? JSON.parse(atob(authHeader.split('.')[1])) : null;
-      const myAadhaar = (tokenPayload?.aadhaarNumber || tokenPayload?.aadhaarHash || body.callerAadhaar || '').replace(/\D/g, '');
+      const myAadhaar = (tokenPayload?.aadhaarNumber || tokenPayload?.aadhaarNumber || body.callerAadhaar || '').replace(/\D/g, '');
       if (myAadhaar && myAadhaar !== nom.inheritorAadhaarNumber) {
         return jsonResponse({
           error: 'FORBIDDEN_INHERITOR_ONLY',
@@ -590,7 +590,7 @@ export async function handleMockApi(path: string, options: RequestInit): Promise
       heirs: (heirs || []).map((h: any, i: number) => ({
         heirId: `HEIR-DYN-${i+1}`,
         name: h.name || 'Unknown',
-        aadhaarHash: (h.aadhaar || '').replace(/\D/g, ''),
+        aadhaarNumber: (h.aadhaar || '').replace(/\D/g, ''),
         hasConsented: false,
         hasObjected: false,
         finalShare: `1/${heirs.length}`,
@@ -605,9 +605,9 @@ export async function handleMockApi(path: string, options: RequestInit): Promise
   if (path === '/api/succession/my-pending' && method === 'GET') {
     const authHeader = (options.headers as Record<string, string>)?.['Authorization'] || '';
     const tokenPayload = authHeader.startsWith('Bearer mock.') ? JSON.parse(atob(authHeader.split('.')[1])) : null;
-    const myAadhaar = (tokenPayload?.aadhaarNumber || tokenPayload?.aadhaarHash || '').replace(/\D/g, '');
+    const myAadhaar = (tokenPayload?.aadhaarNumber || tokenPayload?.aadhaarNumber || '').replace(/\D/g, '');
     const pending = state.pendingSuccessions.filter(sc => {
-      const heir = sc.heirs?.find((h: any) => h.aadhaarHash.replace(/\D/g, '') === myAadhaar);
+      const heir = sc.heirs?.find((h: any) => h.aadhaarNumber.replace(/\D/g, '') === myAadhaar);
       return heir || (state.myParcels.some(p => (p as any).inheritorNomination?.inheritorAadhaarNumber === myAadhaar && p.dlpiId === sc.dlpiId));
     });
     return jsonResponse(pending);
@@ -615,10 +615,10 @@ export async function handleMockApi(path: string, options: RequestInit): Promise
 
   if (path.match(/^\/api\/succession\/[^\/]+\/consent$/) && method === 'POST') {
     const caseId = path.split('/')[3];
-    const { heirAadhaarHash } = body;
+    const { heirAadhaarNumber } = body;
     const sc = state.pendingSuccessions.find(c => c.caseId === caseId);
     if (sc) {
-      const heir = sc.heirs?.find((h: any) => h.aadhaarHash.replace(/\D/g, '') === (heirAadhaarHash || '').replace(/\D/g, ''));
+      const heir = sc.heirs?.find((h: any) => h.aadhaarNumber.replace(/\D/g, '') === (heirAadhaarNumber || '').replace(/\D/g, ''));
       if (heir) heir.hasConsented = true;
       const allConsented = sc.heirs?.every((h: any) => h.hasConsented);
       if (allConsented) sc.status = 'PENDING_TEHSILDAR_EXECUTION';
@@ -637,7 +637,7 @@ export async function handleMockApi(path: string, options: RequestInit): Promise
     }
 
     const nom = (parcel as any).inheritorNomination || state.inheritorNominations.find((n: any) => n.dlpiId === sc.dlpiId && n.status === 'APPROVED');
-    const targetHeirs = sc.heirs && sc.heirs.length > 0 ? sc.heirs : (nom ? [{ name: nom.inheritorName, aadhaarHash: nom.inheritorAadhaarNumber, finalShare: '1/1', finalShareDec: 1.0 }] : []);
+    const targetHeirs = sc.heirs && sc.heirs.length > 0 ? sc.heirs : (nom ? [{ name: nom.inheritorName, aadhaarNumber: nom.inheritorAadhaarNumber, finalShare: '1/1', finalShareDec: 1.0 }] : []);
 
     if (targetHeirs.length === 0) {
       return jsonResponse({ error: 'NO_APPROVED_HEIRS', message: 'No registered or approved inheritors found for this property.' }, 400);
@@ -648,8 +648,8 @@ export async function handleMockApi(path: string, options: RequestInit): Promise
     // Atomically mutate DLPI property: remove deceased & transfer 100% to approved Inheritor(s)
     const newOwners = targetHeirs.map((h: any) => ({
       name: h.name || 'Legal Inheritor',
-      aadhaarNumber: (h.aadhaarHash || '').replace(/\D/g, ''),
-      aadhaarHash: (h.aadhaarHash || '').replace(/\D/g, ''),
+      aadhaarNumber: (h.aadhaarNumber || '').replace(/\D/g, ''),
+      aadhaarNumber: (h.aadhaarNumber || '').replace(/\D/g, ''),
       share: h.finalShare || `1/${targetHeirs.length}`,
       shareDecimal: h.finalShareDec || (1.0 / targetHeirs.length),
       ownerSince: new Date().toISOString(),
@@ -679,8 +679,8 @@ export async function handleMockApi(path: string, options: RequestInit): Promise
 
   if (path === '/api/transfer/initiate' && method === 'POST') {
     const { dlpiId, buyerName, declaredValueINR } = body;
-    const sellerAadhaarNumber = (body.sellerAadhaarNumber || body.sellerAadhaar || body.sellerAadhaarHash || '').replace(/\D/g, '');
-    const buyerAadhaarNumber = (body.buyerAadhaarNumber || body.buyerAadhaar || body.buyerAadhaarHash || '').replace(/\D/g, '');
+    const sellerAadhaarNumber = (body.sellerAadhaarNumber || body.sellerAadhaar || body.sellerAadhaarNumber || '').replace(/\D/g, '');
+    const buyerAadhaarNumber = (body.buyerAadhaarNumber || body.buyerAadhaar || body.buyerAadhaarNumber || '').replace(/\D/g, '');
 
     if (!sellerAadhaarNumber || !buyerAadhaarNumber) {
       return jsonResponse({ error: 'VALIDATION_ERROR', message: 'Seller Aadhaar Number and Buyer Aadhaar Number (exact 12 digits) are required.' }, 400);
@@ -694,7 +694,7 @@ export async function handleMockApi(path: string, options: RequestInit): Promise
 
     const owners = (parcel as any).owners || [];
     const isOwner = owners.some((o: any) => {
-      const oNum = (o.aadhaarNumber || o.aadhaarHash || o.aadhaar || '').replace(/\D/g, '');
+      const oNum = (o.aadhaarNumber || o.aadhaarNumber || o.aadhaar || '').replace(/\D/g, '');
       return oNum === sellerAadhaarNumber || (o.name && o.name === body.sellerName);
     });
 
@@ -740,7 +740,7 @@ export async function handleMockApi(path: string, options: RequestInit): Promise
   if (path === '/api/transfer/my-pending' && method === 'GET') {
     const authHeader = (options.headers as Record<string, string>)?.['Authorization'] || '';
     const tokenPayload = authHeader.startsWith('Bearer mock.') ? JSON.parse(atob(authHeader.split('.')[1])) : null;
-    const myAadhaar = (tokenPayload?.aadhaarNumber || tokenPayload?.aadhaarHash || tokenPayload?.aadhaar || '').replace(/\D/g, '');
+    const myAadhaar = (tokenPayload?.aadhaarNumber || tokenPayload?.aadhaarNumber || tokenPayload?.aadhaar || '').replace(/\D/g, '');
     const myName = tokenPayload?.name || '';
 
     // Return transfers waiting for this buyer's eSign
@@ -819,7 +819,7 @@ export async function handleMockApi(path: string, options: RequestInit): Promise
       (parcel as any).owners = [{
         name: transfer.buyerName,
         aadhaarNumber: transfer.buyerAadhaarNumber,
-        aadhaarHash: transfer.buyerAadhaarNumber,
+        aadhaarNumber: transfer.buyerAadhaarNumber,
         share: '1/1',
         shareDecimal: 1.0,
         ownerSince: new Date().toISOString(),

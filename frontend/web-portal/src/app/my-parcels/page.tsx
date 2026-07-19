@@ -116,7 +116,7 @@ export default function CitizenDashboard() {
       await new Promise(r => setTimeout(r, 1200));
       await recordConsent(transferId, {
         partyType: 'BUYER',
-        aadhaarNumber: ((user as any).aadhaarNumber || user.aadhaarHash || '').replace(/\D/g, ''),
+        aadhaarNumber: ((user as any).aadhaarNumber || user.aadhaarNumber || '').replace(/\D/g, ''),
         eSignTxHash: '0x' + Math.random().toString(16).slice(2)
       });
       toast.success('🎉 Purchase Agreement eSigned! Sent to Patwari officer queue.', { id: 'buyer-esign' });
@@ -174,7 +174,7 @@ export default function CitizenDashboard() {
       await initiateTransfer({
         dlpiId: sellModalParcel.dlpiId,
         sellerName: user.name || 'Seller',
-        sellerAadhaarNumber: ((user as any).aadhaarNumber || user.aadhaarHash || '').replace(/\D/g, ''),
+        sellerAadhaarNumber: ((user as any).aadhaarNumber || user.aadhaarNumber || '').replace(/\D/g, ''),
         buyerName: sellBuyerName || 'Buyer',
         buyerAadhaarNumber: sellBuyerAadhaar.replace(/\D/g, ''),
         declaredValueINR: Number(sellDeclaredVal) || 4500000,
@@ -214,7 +214,7 @@ export default function CitizenDashboard() {
       toast.loading('Verifying identity & executing Aadhaar eSign on-chain...', { id: 'esign' });
       await new Promise(r => setTimeout(r, 1200));
       await recordHeirConsent(caseId, {
-        heirAadhaarHash: entered,
+        heirAadhaarNumber: entered,
         eSignTxHash: '0x' + Math.random().toString(16).slice(2)
       });
       toast.success('🎉 Successfully eSigned your virasat consent! Case forwarded for Tehsildar verification.', { id: 'esign' });
@@ -317,7 +317,7 @@ export default function CitizenDashboard() {
                             <span className="px-2.5 py-0.5 bg-amber-200 text-amber-900 rounded-full text-xs font-bold font-mono self-start sm:self-auto">HSA 2005 S.6(3) Coparcener</span>
                           </div>
                           <p className="text-sm text-amber-900 mt-1.5 leading-relaxed">
-                            A virasat (succession) claim (`{scase.caseId || 'SUC-ACTIVE'}`) has been initiated for land parcel <strong className="font-mono">{scase.dlpiId}</strong> following the verification & upload of the Death Certificate for Late <strong className="underline">{scase.deceasedName || scase.deceasedHash || 'Deceased Owner'}</strong>.
+                            A virasat (succession) claim (`{scase.caseId || 'SUC-ACTIVE'}`) has been initiated for land parcel <strong className="font-mono">{scase.dlpiId}</strong> following the verification & upload of the Death Certificate for Late <strong className="underline">{scase.deceasedName || scase.deceasedAadhaar || 'Deceased Owner'}</strong>.
                             You are listed as a legal co-heir with equal coparcenary rights (`Share: {scase.share || 'Equal Share'}`). Please enter your 12-digit Aadhaar below to digitally verify & eSign:
                           </p>
                           <div className="mt-4 flex flex-col lg:flex-row items-stretch lg:items-center gap-3">
@@ -665,7 +665,7 @@ export default function CitizenDashboard() {
                     Seller: <span className="font-bold">{user?.name}</span>
                   </p>
                   <p className="text-xs text-gray-600 font-mono mt-0.5">
-                    Aadhaar No: <span className="font-bold text-gray-900">{((user as any)?.aadhaarNumber || user?.aadhaarHash || '').replace(/\D/g, '') || '999900010010'}</span>
+                    Aadhaar No: <span className="font-bold text-gray-900">{((user as any)?.aadhaarNumber || user?.aadhaarNumber || '').replace(/\D/g, '') || '999900010010'}</span>
                   </p>
                 </div>
 

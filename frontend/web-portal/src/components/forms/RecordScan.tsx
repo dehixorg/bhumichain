@@ -257,7 +257,7 @@ function ensureEnglish(obj: any): any {
     
     // Collect raw Aadhaar numbers from parties — stored directly, no hashing
     let ownerAadhaarNumbers: { name: string; aadhaar: string }[] = [];
-    let legacyOwners: { name: string; aadhaarHash: string }[] = [];
+    let legacyOwners: { name: string; aadhaarNumber: string }[] = [];
     try {
       const partiesList = ext?.parties || [];
       for (let i = 0; i < partiesList.length; i++) {
@@ -275,10 +275,10 @@ function ensureEnglish(obj: any): any {
               name: pName || 'Unknown',
               aadhaar: digits,
             });
-            // Legacy owners array — store raw digits directly as aadhaarHash (no hashing)
+            // Legacy owners array — store raw digits directly as aadhaarNumber (no hashing)
             legacyOwners.push({
               name: pName || 'Unknown',
-              aadhaarHash: digits  // Raw Aadhaar stored directly for instant matching
+              aadhaarNumber: digits  // Raw Aadhaar stored directly for instant matching
             });
           }
         }
@@ -300,7 +300,7 @@ function ensureEnglish(obj: any): any {
         body:    JSON.stringify({
           scanId:              result.scanId,
           dlpiId,
-          officerAadhaarHash:  'sha256:' + '0'.repeat(64),
+          officerAadhaarNumber:  'sha256:' + '0'.repeat(64),
           ownerAadhaarNumbers, // Raw digits — gateway will HMAC-hash these correctly
           owners:              legacyOwners.length > 0 ? legacyOwners : [],  // Fallback for older remote backend versions
           officerName:         'Vijay Singh (Patwari DAD-P1)',

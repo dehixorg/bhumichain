@@ -124,7 +124,7 @@ export default function TransferPage() {
                 <TransferWizard
                   dlpiId={DEMO_DLPI}
                   sellerName={DEMO_SELLER_NAME}
-                  sellerAadhaarHash={DEMO_SELLER_HASH}
+                  sellerAadhaarNumber={DEMO_SELLER_HASH}
                   onComplete={handleTransferComplete}
                 />
               </div>

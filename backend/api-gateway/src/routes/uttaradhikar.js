@@ -31,14 +31,11 @@ function matchAadhaar(stored, input) {
   if ((iDigits === '999988887777' || sDigits === '999988887777') && (String(stored).includes('owner1ramesh') || String(input).includes('owner1ramesh') || String(stored).includes('a3f8e2d1') || String(input).includes('a3f8e2d1'))) {
     return true;
   }
-  const salt = process.env.AADHAAR_SALT || 'bhumichain-aadhaar-salt-change-in-prod';
   if (iDigits && iDigits.length >= 12) {
-    const computed = 'sha256:' + crypto.createHash('sha256').update(iDigits + salt).digest('hex');
-    if (stored === computed || stored === computed.slice(7)) return true;
+    if (stored === iDigits || stored === iDigits.slice(7)) return true;
   }
   if (sDigits && sDigits.length >= 12) {
-    const computed = 'sha256:' + crypto.createHash('sha256').update(sDigits + salt).digest('hex');
-    if (input === computed || input === computed.slice(7)) return true;
+    if (input === sDigits || input === sDigits.slice(7)) return true;
   }
   return false;
 }
@@ -122,7 +119,7 @@ router.post(
   body('dlpiId').matches(/^DLPI-[A-Z0-9-]+$/),
   body('familyId').notEmpty(),
   body('deceasedName').notEmpty().trim(),
-  body('deceasedAadhaarHash').optional().trim(),
+  body('deceasedAadhaarNumber').optional().trim(),
   body('deceasedAadhaar').optional().trim(),
   body('dateOfDeath').isISO8601(),
   body('deathCertCID').notEmpty(),
@@ -134,9 +131,9 @@ router.post(
         dlpiId, familyId, deceasedName,
         dateOfDeath, deathCertCID, crsRegistrationNo, heirs
       } = req.body;
-      const deceasedAadhaarHash = req.body.deceasedAadhaarHash || req.body.deceasedAadhaar || req.body.deceasedAadhaarNo || '';
-      if (!deceasedAadhaarHash) {
-        return res.status(400).json({ error: 'VALIDATION_ERROR', message: 'deceasedAadhaarHash (or deceasedAadhaar) is required.' });
+      const deceasedAadhaarNumber = req.body.deceasedAadhaarNumber || req.body.deceasedAadhaar || req.body.deceasedAadhaarNo || '';
+      if (!deceasedAadhaarNumber) {
+        return res.status(400).json({ error: 'VALIDATION_ERROR', message: 'deceasedAadhaarNumber (or deceasedAadhaar) is required.' });
       }
 
       // ── ACID PRE-FLIGHT: Verify parcel is OWNER_VERIFIED and deceased was an on-chain owner ──
@@ -160,11 +157,11 @@ router.post(
             message: `Parcel ${dlpiId} has status '${dlpi.claimStatus}'. Succession can only be initiated on OWNER_VERIFIED parcels. Complete Patwari upload → SRO approval → Tehsildar approval first.`,
           });
         }
-        const isOwner = (dlpi.owners || []).some(o => matchAadhaar(o.aadhaarHash || o.aadhaar || o.aadhaarRaw, deceasedAadhaarHash));
+        const isOwner = (dlpi.owners || []).some(o => matchAadhaar(o.aadhaarNumber || o.aadhaar || o.aadhaarRaw, deceasedAadhaarNumber));
         if (!isOwner) {
           return res.status(403).json({
             error: 'DECEASED_NOT_CURRENT_OWNER',
-            message: `Succession Rejected! The deceased (${deceasedAadhaarHash}) is not the current registered owner of parcel ${dlpiId}. If the property was transferred or sold prior to death, it cannot be inherited via Virasat.`,
+            message: `Succession Rejected! The deceased (${deceasedAadhaarNumber}) is not the current registered owner of parcel ${dlpiId}. If the property was transferred or sold prior to death, it cannot be inherited via Virasat.`,
           });
         }
       } catch (preFlightErr) {
@@ -181,13 +178,13 @@ router.post(
         const shareDec = 1.0 / heirs.length;
         const shareStr = `1/${heirs.length}`;
         const formattedHeirs = heirs.map((h, i) => {
-          const rawInput = h.aadhaar || h.aadhaarNo || h.aadhaarHash || '';
+          const rawInput = h.aadhaar || h.aadhaarNo || h.aadhaarNumber || '';
           const rawDigits = String(rawInput).replace(/\D/g, '');
-          const storedAadhaar = rawDigits && rawDigits.length >= 12 ? rawDigits : (h.aadhaarHash || h.aadhaar || '');
+          const storedAadhaar = rawDigits && rawDigits.length >= 12 ? rawDigits : (h.aadhaarNumber || h.aadhaar || '');
           return {
             heirId: `HEIR-DYN-${i+1}`,
             name: h.name || 'Unknown',
-            aadhaarHash: storedAadhaar,
+            aadhaarNumber: storedAadhaar,
             relation: 'Legal Heir', gender: 'Unknown', dob: '1990-01-01',
             isAlive: true, isAdult: true, isNri: false, isMinor: false,
             legalBasis: 'Hindu Succession Act 1956/2005',
@@ -224,7 +221,7 @@ router.post(
 
       let result;
       const argsArray = [
-        dlpiId, familyId, deceasedName, deceasedAadhaarHash,
+        dlpiId, familyId, deceasedName, deceasedAadhaarNumber,
         dateOfDeath, deathCertCID, crsRegistrationNo,
         'Hindu',
         aiResult.applicableLaw,
@@ -255,7 +252,7 @@ router.post(
           dlpiId,
           familyId,
           deceasedName,
-          deceasedHash: deceasedAadhaarHash,
+          deceasedAadhaar: deceasedAadhaarNumber,
           dateOfDeath,
           deathCertCID,
           crsRegistrationNo,
@@ -294,14 +291,14 @@ router.get('/my-pending', authenticate, requireRole(ROLES.CITIZEN), async (req, 
     if (fs.existsSync('/tmp/bhumichain_history_cleared.json')) return res.json([]);
     let cases;
     try {
-      cases = await evaluate('uttaradhikar', 'GetMyPendingSuccessions', [req.user.aadhaarHash]);
+      cases = await evaluate('uttaradhikar', 'GetMyPendingSuccessions', [req.user.aadhaarNumber]);
       if (!cases || !Array.isArray(cases)) {
         throw new Error('Real chaincode returned invalid array');
       }
     } catch (fabricErr) {
       console.warn('[Succession] Real chaincode failed for my-pending, falling back to mock response', fabricErr.message);
       const { getMockResponse } = require('../mock/responses');
-      cases = getMockResponse('uttaradhikar', 'GetMyPendingSuccessions', [req.user.aadhaarHash]);
+      cases = getMockResponse('uttaradhikar', 'GetMyPendingSuccessions', [req.user.aadhaarNumber]);
     }
     res.json(cases || []);
   } catch (e) {
@@ -416,13 +413,13 @@ router.post(
               message: `Execution Aborted! Parcel ${sCase.dlpiId} has already been transferred to a new buyer (` + dlpi.claimStatus + `). A living owner's property transfer overrides any pending heir nomination or succession claim.`
             });
           }
-          const deceasedHash = sCase.deceasedHash || sCase.deceasedAadhaarHash || '';
-          if (deceasedHash && (dlpi.owners || []).length > 0) {
-            const stillOwner = (dlpi.owners || []).some(o => matchAadhaar(o.aadhaarHash || o.aadhaar || o.aadhaarRaw, deceasedHash));
+          const deceasedAadhaar = sCase.deceasedAadhaar || sCase.deceasedAadhaarNumber || '';
+          if (deceasedAadhaar && (dlpi.owners || []).length > 0) {
+            const stillOwner = (dlpi.owners || []).some(o => matchAadhaar(o.aadhaarNumber || o.aadhaar || o.aadhaarRaw, deceasedAadhaar));
             if (!stillOwner) {
               return res.status(403).json({
                 error: 'DECEASED_NO_LONGER_OWNER',
-                message: `Execution Aborted! The deceased (${deceasedHash}) is no longer the registered owner of parcel ${sCase.dlpiId}. The property title has already transferred.`
+                message: `Execution Aborted! The deceased (${deceasedAadhaar}) is no longer the registered owner of parcel ${sCase.dlpiId}. The property title has already transferred.`
               });
             }
           }
@@ -431,10 +428,10 @@ router.post(
         if (preExecErr.status === 403) throw preExecErr;
       }
 
-      const currentOwnersJSON = JSON.stringify([{ aadhaarHash: sCase.deceasedHash || sCase.deceasedAadhaarHash || '' }]);
+      const currentOwnersJSON = JSON.stringify([{ aadhaarNumber: sCase.deceasedAadhaar || sCase.deceasedAadhaarNumber || '' }]);
       const heirs = sCase.heirs || [];
       const newOwnersJSON = JSON.stringify(heirs.map(h => ({
-        aadhaarHash: h.aadhaarHash,
+        aadhaarNumber: h.aadhaarNumber,
         name: h.name,
         share: h.finalShare || h.legalShare || h.share || `1/${heirs.length}`,
         shareDecimal: h.finalShareDec || h.legalShareDec || h.shareDecimal || (heirs.length > 0 ? 1.0 / heirs.length : 1.0),
@@ -445,7 +442,7 @@ router.post(
       try {
         const mutResult = await submit('mutation-manager', 'InitiateMutation', [
           sCase.dlpiId, "INHERITANCE",
-          req.user.name, req.user.aadhaarHash, "Tehsildar",
+          req.user.name, req.user.aadhaarNumber, "Tehsildar",
           "UTTARADHIKAR_ENGINE", sCase.caseId,
           currentOwnersJSON, newOwnersJSON,
           "Succession executed by Tehsildar", "", "", "", ""
@@ -482,7 +479,7 @@ router.post(
             txHash: req.params.caseId,
             dlpiId: sCase.dlpiId,
             claimedBy: heirs.map(h => h.name).join(', '),
-            aadhaarHash: heirs.map(h => h.aadhaarHash || h.aadhaar || '').join(','),
+            aadhaarNumber: heirs.map(h => h.aadhaarNumber || h.aadhaar || '').join(','),
             heirs: heirs,
             claimedAt: new Date().toISOString(),
             status: 'MUTATED_AND_TRANSFERRED'
@@ -494,7 +491,7 @@ router.post(
           if (!Array.isArray(seeded)) seeded = [];
           const multiOwners = heirs.map(h => ({
             name: h.name,
-            aadhaarHash: h.aadhaarHash,
+            aadhaarNumber: h.aadhaarNumber,
             share: h.finalShare || h.legalShare || h.share || `1/${heirs.length}`,
             shareDecimal: h.finalShareDec || h.legalShareDec || h.shareDecimal || (1.0 / heirs.length)
           }));
@@ -563,7 +560,7 @@ router.post(
   '/:caseId/notification',
   authenticate,
   requireRole(ROLES.ORACLE),
-  body('heirAadhaarHash').notEmpty(),
+  body('heirAadhaarNumber').notEmpty(),
   body('channel').isIn(['SMS', 'WHATSAPP', 'PUSH', 'DIGILOCKER', 'EMAIL']),
   body('deliveredAt').isISO8601(),
   validate,
@@ -573,14 +570,14 @@ router.post(
       try {
         result = await submit('uttaradhikar', 'RecordHeirNotification', [
           req.params.caseId,
-          req.body.heirAadhaarHash,
+          req.body.heirAadhaarNumber,
           req.body.channel,
           req.body.deliveredAt,
         ]);
       } catch (fabricErr) {
         const { getMockResponse } = require('../mock/responses');
         result = getMockResponse('uttaradhikar', 'RecordHeirNotification', [
-          req.params.caseId, req.body.heirAadhaarHash, req.body.channel, req.body.deliveredAt
+          req.params.caseId, req.body.heirAadhaarNumber, req.body.channel, req.body.deliveredAt
         ]);
       }
       res.json(result);
@@ -595,21 +592,21 @@ router.post(
 router.post(
   '/:caseId/consent',
   authenticate,
-  body('heirAadhaarHash').optional().trim(),
+  body('heirAadhaarNumber').optional().trim(),
   body('heirAadhaar').optional().trim(),
   body('eSignTxHash').notEmpty(),
   validate,
   async (req, res) => {
     try {
-      const heirAadhaarHash = req.body.heirAadhaarHash || req.body.heirAadhaar || req.body.aadhaarNo || '';
-      if (!heirAadhaarHash) {
-        return res.status(400).json({ error: 'VALIDATION_ERROR', message: 'heirAadhaarHash (or heirAadhaar) is required.' });
+      const heirAadhaarNumber = req.body.heirAadhaarNumber || req.body.heirAadhaar || req.body.aadhaarNo || '';
+      if (!heirAadhaarNumber) {
+        return res.status(400).json({ error: 'VALIDATION_ERROR', message: 'heirAadhaarNumber (or heirAadhaar) is required.' });
       }
       let result;
       try {
         result = await submit('uttaradhikar', 'RecordHeirConsent', [
           req.params.caseId,
-          heirAadhaarHash,
+          heirAadhaarNumber,
           req.body.eSignTxHash,
         ]);
         if (!result || !result.status) {
@@ -621,12 +618,12 @@ router.post(
       // ALWAYS update mock state to prevent UI queue inconsistencies
       const { getMockResponse } = require('../mock/responses');
       const mockResult = getMockResponse('uttaradhikar', 'RecordHeirConsent', [
-        req.params.caseId, heirAadhaarHash, req.body.eSignTxHash
+        req.params.caseId, heirAadhaarNumber, req.body.eSignTxHash
       ]);
       if (!result) result = mockResult;
       broadcast('HeirConsentRecorded', {
         caseId: req.params.caseId,
-        heirAadhaarHash: heirAadhaarHash,
+        heirAadhaarNumber: heirAadhaarNumber,
       });
       // If tehsildar approval triggered, broadcast that too
       if (result && result.status === 'PENDING_TEHSILDAR_APPROVAL') {
@@ -646,7 +643,7 @@ router.post(
 router.post(
   '/:caseId/objection',
   authenticate,
-  body('heirAadhaarHash').optional().trim(),
+  body('heirAadhaarNumber').optional().trim(),
   body('heirAadhaar').optional().trim(),
   body('disputeType').isIn(['ShareDispute', 'RightToInherit', 'FalseClaim']),
   body('objectionReason').notEmpty(),
@@ -654,15 +651,15 @@ router.post(
   validate,
   async (req, res) => {
     try {
-      const heirAadhaarHash = req.body.heirAadhaarHash || req.body.heirAadhaar || req.body.aadhaarNo || '';
-      if (!heirAadhaarHash) {
-        return res.status(400).json({ error: 'VALIDATION_ERROR', message: 'heirAadhaarHash (or heirAadhaar) is required.' });
+      const heirAadhaarNumber = req.body.heirAadhaarNumber || req.body.heirAadhaar || req.body.aadhaarNo || '';
+      if (!heirAadhaarNumber) {
+        return res.status(400).json({ error: 'VALIDATION_ERROR', message: 'heirAadhaarNumber (or heirAadhaar) is required.' });
       }
       let result;
       try {
         result = await submit('uttaradhikar', 'RecordHeirObjection', [
           req.params.caseId,
-          heirAadhaarHash,
+          heirAadhaarNumber,
           req.body.disputeType,
           req.body.objectionReason,
           req.body.evidenceCID,
@@ -670,7 +667,7 @@ router.post(
       } catch (fabricErr) {
         const { getMockResponse } = require('../mock/responses');
         result = getMockResponse('uttaradhikar', 'RecordHeirObjection', [
-          req.params.caseId, heirAadhaarHash, req.body.disputeType,
+          req.params.caseId, heirAadhaarNumber, req.body.disputeType,
           req.body.objectionReason, req.body.evidenceCID
         ]);
       }

@@ -19,22 +19,21 @@ const router = Router();
 
 // Compute Aadhaar hash the same way auth.js does during login,
 // so citizen portal queries match what's stored in the DLPI.
-function computeAadhaarHash(digits) {
-  const salt = process.env.AADHAAR_SALT || 'bhumichain-aadhaar-salt-change-in-prod';
-  return 'sha256:' + crypto.createHash('sha256').update(digits + salt).digest('hex');
+function computeAadhaarNumber(digits) {
+  return digits;
 }
 
 // Resolve initialOwners: if any owner has direct aadhaar / aadhaarRaw / aadhaarNo, store direct 12-digit Aadhaar digits cleanly.
 function resolveOwnerHashes(initialOwners) {
   if (!Array.isArray(initialOwners)) return initialOwners;
   return initialOwners.map(owner => {
-    const rawInput = owner.aadhaarRaw || owner.aadhaar || owner.aadhaarNo || owner.aadhaarHash || '';
+    const rawInput = owner.aadhaarRaw || owner.aadhaar || owner.aadhaarNo || owner.aadhaarNumber || '';
     if (rawInput && typeof rawInput === 'string') {
       const digits = rawInput.replace(/\D/g, '');
       if (digits.length >= 12) {
         console.log(`[dlpi] Storing direct raw aadhaar for '${owner.name}': ...${digits.slice(-4)}`);
         const { aadhaarRaw, aadhaar, aadhaarNo, ...rest } = owner;
-        return { ...rest, aadhaarHash: digits }; // store raw 12 digits directly
+        return { ...rest, aadhaarNumber: digits }; // store raw 12 digits directly
       }
     }
     return owner;
@@ -59,7 +58,7 @@ router.get('/my-parcels', authenticate, requireRole(ROLES.CITIZEN), async (req, 
     let isCleared = false;
     try { if (fs.existsSync('/tmp/bhumichain_history_cleared.json')) isCleared = true; } catch(e) {}
 
-    const userHash = req.user.aadhaarHash || '';
+    const userHash = req.user.aadhaarNumber || '';
     const userRaw  = req.user.aadhaar || req.user.aadhaarRaw || req.user.aadhaarNo || '';
     const userName = (req.user.name || '').toLowerCase();
 
@@ -91,7 +90,7 @@ router.get('/my-parcels', authenticate, requireRole(ROLES.CITIZEN), async (req, 
         if (!['VERIFIED', 'SEEDED_UNVERIFIED', 'CI_APPROVED', 'SCAN_PENDING_TEHSILDAR', 'SCAN_PENDING_SRO', 'UNDER_REVIEW'].includes(s.status)) return false;
         const khatedars = s.extraction?.khatedars || [];
         return khatedars.some(k => {
-          const kHash = k.aadhaarHash || '';
+          const kHash = k.aadhaarNumber || '';
           const kName = (k.name || '').toLowerCase();
           if (kHash && (kHash === userHash || kHash === userRaw)) return true;
           if (userName && kName && (kName.includes(userName) || userName.includes(kName))) return true;
@@ -114,7 +113,7 @@ router.get('/my-parcels', authenticate, requireRole(ROLES.CITIZEN), async (req, 
           ownerName: ext.khatedars && ext.khatedars.length > 0 ? ext.khatedars[0].name : (req.user.name || 'Unknown'),
           owners: (ext.khatedars || []).map(k => ({
             name: k.name,
-            aadhaarHash: k.aadhaarHash || userHash || userRaw,
+            aadhaarNumber: k.aadhaarNumber || userHash || userRaw,
             share: k.share || '1/1',
             shareDecimal: 1.0,
           })),
@@ -123,7 +122,7 @@ router.get('/my-parcels', authenticate, requireRole(ROLES.CITIZEN), async (req, 
           submittedAt: s.createdAt || new Date().toISOString(),
           tehsil: ext.tehsil || 'Dadri',
           gram: ext.village || 'Dadri',
-          owner: { name: ext.khatedars && ext.khatedars.length > 0 ? ext.khatedars[0].name : (req.user.name || 'Unknown'), aadhaarHash: userHash || userRaw }
+          owner: { name: ext.khatedars && ext.khatedars.length > 0 ? ext.khatedars[0].name : (req.user.name || 'Unknown'), aadhaarNumber: userHash || userRaw }
         };
       });
     } catch (rsErr) {
@@ -175,8 +174,8 @@ router.get('/my-parcels', authenticate, requireRole(ROLES.CITIZEN), async (req, 
           landType: 'Bhumidhari',
           claimStatus: 'VERIFIED',
           ownerName: claim.claimedBy,
-          owner: { name: claim.claimedBy, aadhaarHash: claim.aadhaarHash },
-          owners: [{ name: claim.claimedBy, aadhaarHash: claim.aadhaarHash }]
+          owner: { name: claim.claimedBy, aadhaarNumber: claim.aadhaarNumber },
+          owners: [{ name: claim.claimedBy, aadhaarNumber: claim.aadhaarNumber }]
         });
       }
     });
@@ -185,12 +184,12 @@ router.get('/my-parcels', authenticate, requireRole(ROLES.CITIZEN), async (req, 
       if (p.owners && p.owners.length > 0 && !p.owner) {
         p.owner = {
           name: p.owners[0].name,
-          aadhaarHash: p.owners[0].aadhaarHash,
+          aadhaarNumber: p.owners[0].aadhaarNumber,
         };
       }
       if (p.initialOwners && p.initialOwners.length > 0 && (!p.owners || p.owners.length === 0)) {
         p.owners = p.initialOwners;
-        p.owner = { name: p.initialOwners[0].name, aadhaarHash: p.initialOwners[0].aadhaarHash };
+        p.owner = { name: p.initialOwners[0].name, aadhaarNumber: p.initialOwners[0].aadhaarNumber };
       }
       // Override with latest mutation / atomic claim transfer
       if (atomicClaims[p.dlpiId]) {
@@ -202,8 +201,8 @@ router.get('/my-parcels', authenticate, requireRole(ROLES.CITIZEN), async (req, 
           p.owners = claim.heirs;
           p.owner = claim.heirs[0];
         } else {
-          p.owner = { name: claim.claimedBy || p.owner?.name, aadhaarHash: claim.aadhaarHash || p.owner?.aadhaarHash };
-          p.owners = [{ name: claim.claimedBy || p.owner?.name, aadhaarHash: claim.aadhaarHash || p.owner?.aadhaarHash }];
+          p.owner = { name: claim.claimedBy || p.owner?.name, aadhaarNumber: claim.aadhaarNumber || p.owner?.aadhaarNumber };
+          p.owners = [{ name: claim.claimedBy || p.owner?.name, aadhaarNumber: claim.aadhaarNumber || p.owner?.aadhaarNumber }];
         }
       }
       
@@ -211,19 +210,19 @@ router.get('/my-parcels', authenticate, requireRole(ROLES.CITIZEN), async (req, 
       const execMut = executedMuts.find(m => m.dlpiId === p.dlpiId);
       if (execMut) {
         p.ownerName = execMut.newOwnerName;
-        p.owner = { name: execMut.newOwnerName, aadhaarHash: execMut.newOwnerHash };
-        p.owners = [{ name: execMut.newOwnerName, aadhaarHash: execMut.newOwnerHash }];
+        p.owner = { name: execMut.newOwnerName, aadhaarNumber: execMut.newOwnerHash };
+        p.owners = [{ name: execMut.newOwnerName, aadhaarNumber: execMut.newOwnerHash }];
       }
       return p;
     }).filter(p => {
       // Strictly verify current ownership against logged in citizen
-      const oHash = p.owner?.aadhaarHash || '';
+      const oHash = p.owner?.aadhaarNumber || '';
       const oName = (p.owner?.name || p.ownerName || '').toLowerCase();
       const ownersList = p.owners || [];
 
       if (oHash && (oHash === userHash || oHash === userRaw || String(oHash).includes(userHash) || String(oHash).includes(userRaw))) return true;
       if (userName && oName && (oName.includes(userName) || userName.includes(oName))) return true;
-      if (ownersList.some(o => (o.aadhaarHash && (o.aadhaarHash === userHash || o.aadhaarHash === userRaw)) || ((o.name || '').toLowerCase().includes(userName)))) return true;
+      if (ownersList.some(o => (o.aadhaarNumber && (o.aadhaarNumber === userHash || o.aadhaarNumber === userRaw)) || ((o.name || '').toLowerCase().includes(userName)))) return true;
 
       // Demo citizen fallbacks for initial seeded data
       if (userRaw === '999900010010' && oName.includes('priya')) return true;
@@ -271,7 +270,7 @@ router.get(
             ownerName: ext.khatedars && ext.khatedars.length > 0 ? ext.khatedars[0].name : 'Unknown',
             owners: (ext.khatedars || []).map(k => ({
               name: k.name,
-              aadhaarHash: k.aadhaarHash || 'sha256:' + '0'.repeat(64),
+              aadhaarNumber: k.aadhaarNumber || 'sha256:' + '0'.repeat(64),
               share: k.share || '1/1',
               shareDecimal: 1.0,
             })),
@@ -312,7 +311,7 @@ router.post(
     const secret = process.env.SERVICE_SECRET || 'bhumichain-internal-service-secret';
     const providedSecret = req.headers['x-service-secret'];
     if (providedSecret && providedSecret === secret) {
-      req.user = { role: 'patwari', name: 'RecordScan-Service', aadhaarHash: 'sha256:' + '0'.repeat(64) };
+      req.user = { role: 'patwari', name: 'RecordScan-Service', aadhaarNumber: 'sha256:' + '0'.repeat(64) };
       return next();
     }
     authenticate(req, res, () => {
@@ -327,7 +326,7 @@ router.post(
   async (req, res) => {
     try {
       const payload = req.body;
-      // Hash any raw Aadhaar numbers server-side (removes aadhaarRaw, adds aadhaarHash)
+      // Hash any raw Aadhaar numbers server-side (removes aadhaarRaw, adds aadhaarNumber)
       if (payload.initialOwners) {
         payload.initialOwners = resolveOwnerHashes(payload.initialOwners);
       }
@@ -393,7 +392,7 @@ router.post(
           scheduleVArea: !!p.isTribal,
           initialOwners: [
             {
-              aadhaarHash: p.owner.aadhaarHash,
+              aadhaarNumber: p.owner.aadhaarNumber,
               name: p.owner.name,
               share: '1/1',
               shareDecimal: 1.0,
@@ -434,7 +433,7 @@ router.get('/:dlpiId', authenticate, dlpiParam, validate, async (req, res) => {
     if (parcel.owners && parcel.owners.length > 0 && !parcel.owner) {
       parcel.owner = {
         name: parcel.owners[0].name,
-        aadhaarHash: parcel.owners[0].aadhaarHash,
+        aadhaarNumber: parcel.owners[0].aadhaarNumber,
       };
     }
     
@@ -470,7 +469,7 @@ router.post(
         txHash: eSignHash,
         dlpiId: req.params.dlpiId,
         claimedBy: req.user.name || 'Citizen Owner',
-        aadhaarHash: req.user.aadhaarHash || req.user.aadhaar || '',
+        aadhaarNumber: req.user.aadhaarNumber || req.user.aadhaar || '',
         claimedAt: new Date().toISOString(),
         consensus: 'HYPERLEDGER_FABRIC_SVAMITVA_CONSENSUS',
         status: 'ATOMICALLY_VERIFIED_AND_LOCKED'
@@ -502,7 +501,7 @@ router.post(
       try {
         const chainRes = await submit('dlpi', 'ClaimDLPI', [
           req.params.dlpiId,
-          req.user.aadhaarHash,
+          req.user.aadhaarNumber,
           eSignHash,
         ]);
         if (chainRes) result = { ...chainRes, atomicLock: atomicReceipt };
@@ -513,7 +512,7 @@ router.post(
       // 3. Also sync with RecordScan AI Python service if available
       try {
         await axios.post(`${RECORD_SCAN_URL}/scan/approve-tehsildar-by-dlpi/${req.params.dlpiId}`, {
-          officerAadhaarHash: req.user.aadhaarHash,
+          officerAadhaarNumber: req.user.aadhaarNumber,
           officerName: req.user.name || 'Citizen Claim'
         }).catch(() => {});
       } catch (e) {}
@@ -637,7 +636,7 @@ router.post(
       // 2. Approve off-chain in RecordScan Python service
       try {
         const payload = {
-          officerAadhaarHash: req.user.aadhaarHash || ('sha256:' + '0'.repeat(64)),
+          officerAadhaarNumber: req.user.aadhaarNumber || ('sha256:' + '0'.repeat(64)),
           officerName: req.user.name || 'Tehsildar',
           token: req.headers.authorization ? req.headers.authorization.split(' ')[1] : '',
         };
@@ -667,7 +666,7 @@ router.post(
     try {
       const result = await submit('dlpi', 'DisputeParcel', [
         req.params.dlpiId,
-        req.user.aadhaarHash,
+        req.user.aadhaarNumber,
         req.body.reason,
       ]);
       res.json(result);
@@ -744,7 +743,7 @@ router.post(
   requireRole(...CAN_CREATE_DLPI),
   body('dlpiId').matches(/^DLPI-[A-Z0-9-]+$/),
   body('ownerName').notEmpty().trim(),
-  body('ownerAadhaarHash').matches(/^sha256:[a-f0-9]{64}$/),
+  body('ownerAadhaarNumber').matches(/^sha256:[a-f0-9]{64}$/),
   body('landType').isIn(['Bhumidhari', 'Sirdar', 'Residential', 'Commercial', 'Tribal_FRA', 'Govt_Reserved']),
   body('areaHectares').isFloat({ min: 0.001 }),
   body('geojsonCID').notEmpty(),
@@ -753,7 +752,7 @@ router.post(
   async (req, res) => {
     try {
       const { 
-        dlpiId, ownerName, ownerAadhaarHash, landType, areaHectares, 
+        dlpiId, ownerName, ownerAadhaarNumber, landType, areaHectares, 
         surveyDocCID, geojsonCID, khasraNo 
       } = req.body;
       
@@ -770,7 +769,7 @@ router.post(
         initialOwners: [
           {
             name: ownerName,
-            aadhaarHash: ownerAadhaarHash,
+            aadhaarNumber: ownerAadhaarNumber,
             share: "1/1",
             shareDecimal: 1.0,
             ownerSince: new Date().toISOString().slice(0, 10),
@@ -826,7 +825,7 @@ router.post(
       const { heirs } = req.body;
       const plan = {
         dlpiId: req.params.dlpiId,
-        creatorAadhaarHash: req.user.aadhaarHash,
+        creatorAadhaarNumber: req.user.aadhaarNumber,
         heirs: heirs,
       };
       const result = await submit('dlpi', 'SubmitInheritancePlan', [req.params.dlpiId, JSON.stringify(plan)]);
@@ -843,12 +842,12 @@ router.post(
   authenticate,
   requireRole(ROLES.ORACLE, ROLES.PATWARI, ROLES.CIRCLE_INSPECTOR, ROLES.TEHSILDAR),
   dlpiParam,
-  body('deceasedHash').notEmpty(),
+  body('deceasedAadhaar').notEmpty(),
   validate,
   async (req, res) => {
     try {
-      const { deceasedHash } = req.body;
-      const result = await submit('dlpi', 'InitiateSuccession', [req.params.dlpiId, deceasedHash]);
+      const { deceasedAadhaar } = req.body;
+      const result = await submit('dlpi', 'InitiateSuccession', [req.params.dlpiId, deceasedAadhaar]);
       res.json(result);
     } catch (e) {
       res.status(500).json({ error: 'FABRIC_ERROR', message: e.message });
@@ -865,7 +864,7 @@ router.post(
   validate,
   async (req, res) => {
     try {
-      const result = await submit('dlpi', 'ConsentSuccession', [req.params.dlpiId, req.user.aadhaarHash]);
+      const result = await submit('dlpi', 'ConsentSuccession', [req.params.dlpiId, req.user.aadhaarNumber]);
       res.json(result);
     } catch (e) {
       res.status(500).json({ error: 'FABRIC_ERROR', message: e.message });
@@ -926,7 +925,7 @@ router.post('/seed', authenticate, async (req, res) => {
       owners: owners || [
         {
           aadhaarNumber: cleanAadhaar,
-          aadhaarHash: cleanAadhaar,
+          aadhaarNumber: cleanAadhaar,
           aadhaar: cleanAadhaar,
           name: ownerName || req.user?.name || 'New Atomic Owner',
           share: '1/1',

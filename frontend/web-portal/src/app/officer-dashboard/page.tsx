@@ -611,7 +611,7 @@ export default function OfficerDashboardPage() {
                     successionsQueue.map(item => (
                       <tr key={item.caseId} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
                         <td className="px-4 py-3 font-mono text-[#0F4C81] text-xs font-semibold">{item.caseId}</td>
-                        <td className="px-4 py-3 text-gray-900 text-sm font-semibold">{item.deceasedName || item.deceasedHash || 'Deceased Owner'}</td>
+                        <td className="px-4 py-3 text-gray-900 text-sm font-semibold">{item.deceasedName || item.deceasedAadhaar || 'Deceased Owner'}</td>
                         <td className="px-4 py-3 text-gray-900 font-mono text-sm">{item.dlpiId}</td>
                         <td className="px-4 py-3">
                           <div className="space-y-1">

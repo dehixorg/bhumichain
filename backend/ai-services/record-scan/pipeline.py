@@ -183,7 +183,7 @@ def retrieve_scan(scan_id: str) -> Optional[ScanResult]:
             if item:
                 data = json.loads(item['resultJson'])
                 data['status'] = item.get('status', 'COMPLETED')
-                data['ownerAadhaarHash'] = item.get('ownerAadhaarHash')
+                data['ownerAadhaarNumber'] = item.get('ownerAadhaarNumber')
                 data['patwariName'] = item.get('patwariName')
                 data['patwariHash'] = item.get('patwariHash')
                 return _ensure_english_only(ScanResult(**data))
@@ -196,7 +196,7 @@ def retrieve_scan(scan_id: str) -> Optional[ScanResult]:
     if item:
         data = json.loads(item['resultJson'])
         data['status'] = item.get('status', 'COMPLETED')
-        data['ownerAadhaarHash'] = item.get('ownerAadhaarHash')
+        data['ownerAadhaarNumber'] = item.get('ownerAadhaarNumber')
         data['patwariName'] = item.get('patwariName')
         data['patwariHash'] = item.get('patwariHash')
         return _ensure_english_only(ScanResult(**data))
@@ -277,7 +277,7 @@ def query_scans_by_status(status: str) -> list[ScanResult]:
             for item in items:
                 data = json.loads(item['resultJson'])
                 data['status'] = item['status']
-                data['ownerAadhaarHash'] = item.get('ownerAadhaarHash')
+                data['ownerAadhaarNumber'] = item.get('ownerAadhaarNumber')
                 data['patwariName'] = item.get('patwariName')
                 data['patwariHash'] = item.get('patwariHash')
                 results.append(_ensure_english_only(ScanResult(**data)))
@@ -292,7 +292,7 @@ def query_scans_by_status(status: str) -> list[ScanResult]:
         if item.get('status') == status:
             data = json.loads(item['resultJson'])
             data['status'] = item['status']
-            data['ownerAadhaarHash'] = item.get('ownerAadhaarHash')
+            data['ownerAadhaarNumber'] = item.get('ownerAadhaarNumber')
             data['patwariName'] = item.get('patwariName')
             data['patwariHash'] = item.get('patwariHash')
             results.append(_ensure_english_only(ScanResult(**data)))
@@ -300,7 +300,7 @@ def query_scans_by_status(status: str) -> list[ScanResult]:
 
 
 def save_patwari_approval(scan_id: str, dlpi_id: str, owners: list, officer_name: str, officer_hash: str):
-    first_owner_hash = owners[0].get('aadhaarHash', 'sha256:' + '0'*64) if owners else 'sha256:' + '0'*64
+    first_owner_hash = owners[0].get('aadhaarNumber', 'sha256:' + '0'*64) if owners else 'sha256:' + '0'*64
     table = _get_dynamo_table()
     if table:
         try:
@@ -311,7 +311,7 @@ def save_patwari_approval(scan_id: str, dlpi_id: str, owners: list, officer_name
                 data['status'] = 'SCAN_PENDING_SRO'
                 data['suggestedDlpiId'] = dlpi_id
                 data['owners'] = owners
-                data['ownerAadhaarHash'] = first_owner_hash
+                data['ownerAadhaarNumber'] = first_owner_hash
                 data['patwariName'] = officer_name
                 data['patwariHash'] = officer_hash
                 table.put_item(Item={
@@ -319,7 +319,7 @@ def save_patwari_approval(scan_id: str, dlpi_id: str, owners: list, officer_name
                     'status': 'SCAN_PENDING_SRO',
                     'suggestedDlpiId': dlpi_id,
                     'owners': owners,
-                    'ownerAadhaarHash': first_owner_hash,
+                    'ownerAadhaarNumber': first_owner_hash,
                     'patwariName': officer_name,
                     'patwariHash': officer_hash,
                     'resultJson': json.dumps(data, ensure_ascii=False)
@@ -336,13 +336,13 @@ def save_patwari_approval(scan_id: str, dlpi_id: str, owners: list, officer_name
         data['status'] = 'SCAN_PENDING_SRO'
         data['suggestedDlpiId'] = dlpi_id
         data['owners'] = owners
-        data['ownerAadhaarHash'] = first_owner_hash
+        data['ownerAadhaarNumber'] = first_owner_hash
         data['patwariName'] = officer_name
         data['patwariHash'] = officer_hash
         item['status'] = 'SCAN_PENDING_SRO'
         item['suggestedDlpiId'] = dlpi_id
         item['owners'] = owners
-        item['ownerAadhaarHash'] = first_owner_hash
+        item['ownerAadhaarNumber'] = first_owner_hash
         item['patwariName'] = officer_name
         item['patwariHash'] = officer_hash
         item['resultJson'] = json.dumps(data, ensure_ascii=False)
@@ -355,7 +355,7 @@ def save_patwari_approval(scan_id: str, dlpi_id: str, owners: list, officer_name
             "status": "SCAN_PENDING_SRO",
             "suggestedDlpiId": dlpi_id,
             "owners": owners,
-            "ownerAadhaarHash": first_owner_hash,
+            "ownerAadhaarNumber": first_owner_hash,
             "patwariName": officer_name,
             "patwariHash": officer_hash,
             "resultJson": json.dumps({

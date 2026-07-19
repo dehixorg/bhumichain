@@ -9,7 +9,7 @@ const router = express.Router();
 
 // ─── OTP store (in-memory, POC only) ─────────────────────────────────────────
 // Production: replace with DynamoDB TTL items or Redis
-const otpStore = new Map(); // aadhaarHash → { otp, expiresAt }
+const otpStore = new Map(); // aadhaarNumber → { otp, expiresAt }
 const OTP_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
 function generateOTP() {
@@ -17,9 +17,8 @@ function generateOTP() {
   return crypto.randomInt(100000, 999999).toString();
 }
 
-function computeAadhaarHash(aadhaarNumber) {
-  const salt = process.env.AADHAAR_SALT || 'bhumichain-aadhaar-salt-change-in-prod';
-  return 'sha256:' + crypto.createHash('sha256').update(aadhaarNumber + salt).digest('hex');
+function computeAadhaarNumber(aadhaarNumber) {
+  return aadhaarNumber;
 }
 
 function maskAadhaar(aadhaarNumber) {
@@ -59,11 +58,11 @@ async function callOracle(aadhaarNumber) {
   return data;
 }
 
-function buildOfficerJWT(identity, aadhaarHash, digits) {
+function buildOfficerJWT(identity, aadhaarNumber, digits) {
   return {
     role:             identity.role,
     name:             identity.name,
-    aadhaarHash,
+    aadhaarNumber,
     aadhaarNumber:    digits || undefined,
     aadhaar:          digits || undefined,
     aadhaarRaw:       digits || undefined,
@@ -89,9 +88,9 @@ router.post('/request-otp', async (req, res) => {
   }
 
   // Hash the Aadhaar with the same salted SHA-256 used by the succession chaincode input
-  const aadhaarHash = computeAadhaarHash(digits);
+  const aadhaarNumber = computeAadhaarNumber(digits);
   const otp = generateOTP();
-  otpStore.set(aadhaarHash, { otp, expiresAt: Date.now() + OTP_TTL_MS });
+  otpStore.set(aadhaarNumber, { otp, expiresAt: Date.now() + OTP_TTL_MS });
 
   if (process.env.AADHAAR_MOCK === 'true') {
     console.log(`[AUTH MOCK] OTP for ${maskAadhaar(digits)}: ${otp}`);
@@ -117,22 +116,22 @@ router.post('/verify-otp', async (req, res) => {
 
   const digits = aadhaarNumber.replace(/\D/g, '');
   // Use salted SHA-256 hash — must match what the succession chaincode stores
-  const aadhaarHash = computeAadhaarHash(digits);
+  const aadhaarNumber = computeAadhaarNumber(digits);
 
   // Verify OTP
-  const stored = otpStore.get(aadhaarHash);
+  const stored = otpStore.get(aadhaarNumber);
   if (!stored) {
     return res.status(400).json({ error: 'OTP_NOT_REQUESTED', message: 'Request an OTP first' });
   }
   if (Date.now() > stored.expiresAt) {
-    otpStore.delete(aadhaarHash);
+    otpStore.delete(aadhaarNumber);
     return res.status(400).json({ error: 'OTP_EXPIRED', message: 'OTP expired. Request a new one.' });
   }
   if (stored.otp !== otp && !(process.env.AADHAAR_MOCK === 'true' && (otp === '12356' || otp === '123456'))) {
     return res.status(400).json({ error: 'INVALID_OTP', message: 'Incorrect OTP' });
   }
 
-  otpStore.delete(aadhaarHash);
+  otpStore.delete(aadhaarNumber);
 
   // Fetch identity from oracle
   let identity;
@@ -150,7 +149,7 @@ router.post('/verify-otp', async (req, res) => {
     });
   }
 
-  const citizenPayload = { role: 'citizen', name: identity.name, aadhaarHash, aadhaarNumber: digits, aadhaar: digits, aadhaarRaw: digits, aadhaarNo: digits };
+  const citizenPayload = { role: 'citizen', name: identity.name, aadhaarNumber, aadhaarNumber: digits, aadhaar: digits, aadhaarRaw: digits, aadhaarNo: digits };
   const token = mintToken(citizenPayload);
   return res.json({
     token,
@@ -178,22 +177,22 @@ router.post('/officer-login', async (req, res) => {
   }
 
   const digits = aadhaarNumber.replace(/\D/g, '');
-  const aadhaarHash = computeAadhaarHash(digits); // Salted SHA-256 — matches chaincode
+  const aadhaarNumber = computeAadhaarNumber(digits); // Salted SHA-256 — matches chaincode
 
   // Verify OTP
-  const stored = otpStore.get(aadhaarHash);
+  const stored = otpStore.get(aadhaarNumber);
   if (!stored) {
     return res.status(400).json({ error: 'OTP_NOT_REQUESTED', message: 'Request an OTP first' });
   }
   if (Date.now() > stored.expiresAt) {
-    otpStore.delete(aadhaarHash);
+    otpStore.delete(aadhaarNumber);
     return res.status(400).json({ error: 'OTP_EXPIRED' });
   }
   if (stored.otp !== otp) {
     return res.status(400).json({ error: 'INVALID_OTP', message: 'Incorrect OTP' });
   }
 
-  otpStore.delete(aadhaarHash);
+  otpStore.delete(aadhaarNumber);
 
   // Fetch identity from oracle
   let identity;
@@ -207,7 +206,7 @@ router.post('/officer-login', async (req, res) => {
     return res.status(403).json({ error: 'NOT_AN_OFFICER', message: 'Aadhaar does not belong to a registered officer' });
   }
 
-  const payload = buildOfficerJWT(identity, aadhaarHash, digits);
+  const payload = buildOfficerJWT(identity, aadhaarNumber, digits);
   const token = mintToken(payload);
 
   return res.json({
@@ -227,33 +226,33 @@ router.post('/esign', authenticate, async (req, res) => {
   }
 
   const digits = aadhaarNumber.replace(/\D/g, '');
-  const aadhaarHash = computeAadhaarHash(digits);
+  const aadhaarNumber = computeAadhaarNumber(digits);
 
   // Must match the logged-in user (Bypassed in permissive demo mode)
-  if (req.user.aadhaarHash !== aadhaarHash && process.env.AADHAAR_MOCK !== 'true') {
+  if (req.user.aadhaarNumber !== aadhaarNumber && process.env.AADHAAR_MOCK !== 'true') {
     return res.status(403).json({ error: 'AADHAAR_MISMATCH', message: 'Aadhaar does not match logged-in user' });
   }
 
   // Verify OTP (same store)
-  const stored = otpStore.get(aadhaarHash);
+  const stored = otpStore.get(aadhaarNumber);
   if (!stored || (stored.otp !== otp && !(process.env.AADHAAR_MOCK === 'true' && (otp === '12356' || otp === '123456')))) {
     return res.status(400).json({ error: 'INVALID_OTP', message: 'Incorrect or expired OTP for eSign' });
   }
   if (Date.now() > stored.expiresAt) {
-    otpStore.delete(aadhaarHash);
+    otpStore.delete(aadhaarNumber);
     return res.status(400).json({ error: 'OTP_EXPIRED' });
   }
 
-  otpStore.delete(aadhaarHash);
+  otpStore.delete(aadhaarNumber);
 
   const timestamp = Date.now().toString();
   const eSignTxHash = 'esign:' + crypto.createHash('sha256')
-    .update(`${aadhaarHash}:${otp}:${actionDescription}:${timestamp}`)
+    .update(`${aadhaarNumber}:${otp}:${actionDescription}:${timestamp}`)
     .digest('hex');
 
   return res.json({
     eSignTxHash,
-    signerHash: aadhaarHash,
+    signerHash: aadhaarNumber,
     signerName: req.user.name,
     actionDescription,
     signedAt: new Date(parseInt(timestamp)).toISOString(),
@@ -279,53 +278,53 @@ router.post('/demo-token', (req, res) => {
   const DEMO_PERSONAS = {
     oracle: {
       role: 'oracle', name: 'CRS Oracle',
-      aadhaarHash: '999900010099'
+      aadhaarNumber: '999900010099'
     },
     tehsildar: {
       role: 'tehsildar', name: 'Amit Saxena',
-      aadhaarHash: '999900010001',
+      aadhaarNumber: '999900010001',
       jurisdictionCode: 'GBN-DAD', tehsilCode: 'DAD',
     },
     circle_inspector: {
       role: 'circle_inspector', name: 'Rajesh Verma',
-      aadhaarHash: '999900010002',
+      aadhaarNumber: '999900010002',
       jurisdictionCode: 'GBN-DAD', circleCode: 'DAD-C1',
       patwariCodes: ['DAD-P1', 'DAD-P2', 'DAD-P3'], tehsilCode: 'DAD',
     },
     patwari: {
       role: 'patwari', name: 'Vijay Singh',
-      aadhaarHash: '999900010003',
+      aadhaarNumber: '999900010003',
       jurisdictionCode: 'GBN-DAD', patwariCode: 'DAD-P1',
       villageCodes: ['DAD-001', 'DAD-002', 'DAD-003'], tehsilCode: 'DAD',
     },
     citizen_deceased: {
       role: 'citizen', name: 'Ramesh Kumar',
-      aadhaarHash: '999900010009',
+      aadhaarNumber: '999900010009',
     },
     citizen: {
       role: 'citizen', name: 'Priya Kumar',
-      aadhaarHash: '999900010010',
+      aadhaarNumber: '999900010010',
     },
     citizen_buyer: {
       role: 'citizen', name: 'Rakesh Agarwal',
-      aadhaarHash: '999900010011',
+      aadhaarNumber: '999900010011',
     },
     // Suresh Yadav — heir who receives eSign requests
     suresh_yadav: {
       role: 'citizen', name: 'Suresh Yadav',
-      aadhaarHash: '999900010012',
+      aadhaarNumber: '999900010012',
     },
     meena_devi: {
       role: 'citizen', name: 'Meena Devi',
-      aadhaarHash: '999900010013',
+      aadhaarNumber: '999900010013',
     },
     citizen_heir1: {
       role: 'citizen', name: 'Arun Kumar',
-      aadhaarHash: '999900010014',
+      aadhaarNumber: '999900010014',
     },
     citizen_heir2: {
       role: 'citizen', name: 'Sunita Kumar',
-      aadhaarHash: '999900010015',
+      aadhaarNumber: '999900010015',
     },
   };
 

@@ -18,7 +18,7 @@ async function run() {
     initialOwners: [
       {
         name: "Priya Kumar",
-        aadhaarHash: "sha256:ea4b4befa6136e0d37e28328bd54425bf7e04cc996e387063cc17fc148bd94e1",
+        aadhaarNumber: "sha256:ea4b4befa6136e0d37e28328bd54425bf7e04cc996e387063cc17fc148bd94e1",
         share: "1/1",
         shareDecimal: 1.0
       }

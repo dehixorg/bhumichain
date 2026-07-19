@@ -14,7 +14,7 @@ async function unifiedFetch(path: string, options: RequestInit = {}): Promise<Re
 export interface JWTUser {
   role: string;
   name: string;
-  aadhaarHash: string;
+  aadhaarNumber: string;
   aadhaarId?: string;
   aadhaarNumber?: string;
   aadhaar?: string;
@@ -47,7 +47,7 @@ export function clearToken(): void {
 
 export function formatMaskedAadhaar(user: any): string {
   if (!user) return 'XXXX-XXXX-XXXX';
-  const rawDigits = (user.aadhaarNumber || user.aadhaar || user.aadhaarNo || user.aadhaarId || user.aadhaarHash || '').replace(/\D/g, '');
+  const rawDigits = (user.aadhaarNumber || user.aadhaar || user.aadhaarNo || user.aadhaarId || user.aadhaarNumber || '').replace(/\D/g, '');
   if (rawDigits.length >= 4) {
     const last4 = rawDigits.slice(-4);
     return `XXXX-XXXX-${last4}`;

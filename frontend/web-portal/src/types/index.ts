@@ -13,14 +13,14 @@ export type TehsilCode = 'DAD' | 'NDA' | 'JWR' | 'BSK' | 'SNN' | 'IGT' | 'NSK' |
 
 export interface ParcelOwner {
   name: string;
-  aadhaarHash: string;
+  aadhaarNumber: string;
   dob?: string;
   isTribal?: boolean;
 }
 
 export interface CoparcenaryHeir {
   name: string;
-  aadhaarHash: string;
+  aadhaarNumber: string;
   relation: string;
   share: string;
   shareDecimal: number;
@@ -99,7 +99,7 @@ export interface GeoFeatureCollection {
 export interface SuccessionHeir {
   heirId: string;
   name: string;
-  aadhaarHash: string;
+  aadhaarNumber: string;
   relation: string;
   gender: string;
   dob: string;
@@ -138,9 +138,9 @@ export interface SuccessionCase {
 export interface Transfer {
   transferId: string;
   dlpiId: string;
-  sellerAadhaarHash: string;
+  sellerAadhaarNumber: string;
   buyerName: string;
-  buyerAadhaarHash: string;
+  buyerAadhaarNumber: string;
   declaredValueINR: number;
   oracleValueINR: number;
   stampDutyINR: number;
@@ -195,5 +195,5 @@ export interface AuthUser {
   token: string;
   role: UserRole;
   name: string;
-  aadhaarHash?: string;
+  aadhaarNumber?: string;
 }

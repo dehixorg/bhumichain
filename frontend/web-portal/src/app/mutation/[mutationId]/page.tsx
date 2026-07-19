@@ -190,7 +190,7 @@ function ESignModal({
           <h3 className="text-gray-900 font-semibold">{actionLabel}</h3>
         </div>
         <p className="text-sm text-gray-400 mb-5">
-          SHA-256(aadhaarHash:otp:action:timestamp) recorded on Hyperledger Fabric as consent proof.
+          SHA-256(aadhaarNumber:otp:action:timestamp) recorded on Hyperledger Fabric as consent proof.
         </p>
         {!otpSent ? (
           <>
@@ -329,7 +329,7 @@ export default function MutationDetailPage() {
   async function handleConsent(eSignTxHash: string) {
     setShowESign(null);
     const data = await postAction('/consent', {
-      ownerAadhaarHash: `sha256:${user?.aadhaarHash?.replace('sha256:', '') ?? 'demo'}`,
+      ownerAadhaarNumber: `sha256:${user?.aadhaarNumber?.replace('sha256:', '') ?? 'demo'}`,
       eSignTxHash,
     });
     if (data) { setActionDone('CONSENT_GIVEN'); if (mutation) setMutation({ ...mutation, status: 'CONSENT_GIVEN', ownerConsentAt: new Date().toISOString() }); }
@@ -338,7 +338,7 @@ export default function MutationDetailPage() {
   async function handleObjection(reason: string) {
     setShowObjection(false);
     const data = await postAction('/objection', {
-      ownerAadhaarHash: `sha256:${user?.aadhaarHash?.replace('sha256:', '') ?? 'demo'}`,
+      ownerAadhaarNumber: `sha256:${user?.aadhaarNumber?.replace('sha256:', '') ?? 'demo'}`,
       objectionReason: reason,
       evidenceCID: 'QmObjectionDoc2026',
     });

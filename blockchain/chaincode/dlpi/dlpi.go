@@ -38,7 +38,7 @@ func matchAadhaar(a, b string) bool {
 // CoOwner represents one owner's stake in a parcel.
 // A parcel can have 1-N owners, each with a defined share.
 type CoOwner struct {
-	AadhaarHash  string  `json:"aadhaarHash"`  // sha256(aadhaar+salt) — never raw
+	AadhaarNumber  string  `json:"aadhaarNumber"`  // sha256(aadhaar+salt) — never raw
 	Name         string  `json:"name"`         // display name (off-chain resolved)
 	Share        string  `json:"share"`        // "1/3", "1/2", "2/5" etc.
 	ShareDecimal float64 `json:"shareDecimal"` // 0.333... for computation
@@ -110,7 +110,7 @@ type CoparcenaryMeta struct {
 type Heir struct {
 	MemberId      string  `json:"memberId"`
 	Name          string  `json:"name"`
-	AadhaarHash   string  `json:"aadhaarHash"`
+	AadhaarNumber   string  `json:"aadhaarNumber"`
 	Relation      string  `json:"relation"`
 	Share         string  `json:"share"`
 	ShareDecimal  float64 `json:"shareDecimal"`
@@ -130,7 +130,7 @@ type PendingSuccession struct {
 // InheritancePlan tracks pre-registered succession plans while the owner is alive
 type InheritancePlan struct {
 	DLPIId             string `json:"dlpiId"`
-	CreatorAadhaarHash string `json:"creatorAadhaarHash"`
+	CreatorAadhaarNumber string `json:"creatorAadhaarNumber"`
 	Heirs              []Heir `json:"heirs"`
 	Status             string `json:"status"` // ACTIVE, EXECUTED
 	CreatedAt          string `json:"createdAt"`
@@ -160,7 +160,7 @@ type MutationEntry struct {
 	MutationType string `json:"type"`
 	Date         string `json:"date"`
 	OfficerName  string `json:"officerName"`
-	OfficerHash  string `json:"officerAadhaarHash"`
+	OfficerHash  string `json:"officerAadhaarNumber"`
 	MutationNo   string `json:"mutationNo"`
 	TxHash       string `json:"txHash"`
 	IPFSCID      string `json:"ipfsCID"`
@@ -229,14 +229,14 @@ func (c *DLPIContract) OwnerOf(ctx contractapi.TransactionContextInterface, dlpi
 	}
 	var owners []string
 	for _, o := range dlpi.Owners {
-		owners = append(owners, o.AadhaarHash)
+		owners = append(owners, o.AadhaarNumber)
 	}
 	return owners, nil
 }
 
 // BalanceOf returns the number of DLPI Tokens owned by a specific Aadhaar Hash
-func (c *DLPIContract) BalanceOf(ctx contractapi.TransactionContextInterface, ownerAadhaarHash string) (int, error) {
-	queryString := fmt.Sprintf(`{"selector":{"owners":{"$elemMatch":{"aadhaarHash":"%s"}}}}`, ownerAadhaarHash)
+func (c *DLPIContract) BalanceOf(ctx contractapi.TransactionContextInterface, ownerAadhaarNumber string) (int, error) {
+	queryString := fmt.Sprintf(`{"selector":{"owners":{"$elemMatch":{"aadhaarNumber":"%s"}}}}`, ownerAadhaarNumber)
 	resultsIterator, err := ctx.GetStub().GetQueryResult(queryString)
 	if err != nil {
 		return 0, err
@@ -254,7 +254,7 @@ func (c *DLPIContract) BalanceOf(ctx contractapi.TransactionContextInterface, ow
 }
 
 // TransferFrom transfers a tokenized parcel from one owner to another
-func (c *DLPIContract) TransferFrom(ctx contractapi.TransactionContextInterface, fromAadhaarHash, toAadhaarHash, toName, dlpiId string) error {
+func (c *DLPIContract) TransferFrom(ctx contractapi.TransactionContextInterface, fromAadhaarNumber, toAadhaarNumber, toName, dlpiId string) error {
 	dlpi, err := c.GetDLPI(ctx, dlpiId)
 	if err != nil {
 		return err
@@ -264,9 +264,9 @@ func (c *DLPIContract) TransferFrom(ctx contractapi.TransactionContextInterface,
 	}
 	found := false
 	for i, o := range dlpi.Owners {
-		if matchAadhaar(o.AadhaarHash, fromAadhaarHash) {
+		if matchAadhaar(o.AadhaarNumber, fromAadhaarNumber) {
 			// Update the owner to the new buyer
-			dlpi.Owners[i].AadhaarHash = toAadhaarHash
+			dlpi.Owners[i].AadhaarNumber = toAadhaarNumber
 			dlpi.Owners[i].Name = toName
 			dlpi.Owners[i].OwnerSince = time.Now().UTC().Format(time.RFC3339)
 			dlpi.Owners[i].IsVerified = true // Auto-verified on chain transfer
@@ -275,7 +275,7 @@ func (c *DLPIContract) TransferFrom(ctx contractapi.TransactionContextInterface,
 		}
 	}
 	if !found {
-		return fmt.Errorf("sender %s is not an owner of token %s", fromAadhaarHash, dlpiId)
+		return fmt.Errorf("sender %s is not an owner of token %s", fromAadhaarNumber, dlpiId)
 	}
 	
 	dlpi.UpdatedAt = time.Now().UTC().Format(time.RFC3339)
@@ -460,7 +460,7 @@ func (c *DLPIContract) QueryPendingScans(ctx contractapi.TransactionContextInter
 
 // ClaimDLPI — owner verifies and claims a seeded record via Aadhaar eSign
 func (c *DLPIContract) ClaimDLPI(ctx contractapi.TransactionContextInterface,
-	dlpiId, ownerAadhaarHash, eSignTxHash string) error {
+	dlpiId, ownerAadhaarNumber, eSignTxHash string) error {
 
 	dlpi, err := c.GetDLPI(ctx, dlpiId)
 	if err != nil {
@@ -473,7 +473,7 @@ func (c *DLPIContract) ClaimDLPI(ctx contractapi.TransactionContextInterface,
 	found := false
 	now := time.Now().UTC().Format(time.RFC3339)
 	for i, o := range dlpi.Owners {
-		if matchAadhaar(o.AadhaarHash, ownerAadhaarHash) {
+		if matchAadhaar(o.AadhaarNumber, ownerAadhaarNumber) {
 			dlpi.Owners[i].IsVerified = true
 			dlpi.Owners[i].VerifiedAt = now
 			found = true
@@ -497,7 +497,7 @@ func (c *DLPIContract) ClaimDLPI(ctx contractapi.TransactionContextInterface,
 	dlpi.UpdatedAt = now
 
 	event, _ := json.Marshal(map[string]string{
-		"dlpiId": dlpiId, "ownerHash": ownerAadhaarHash, "status": dlpi.ClaimStatus,
+		"dlpiId": dlpiId, "ownerHash": ownerAadhaarNumber, "status": dlpi.ClaimStatus,
 	})
 	_ = ctx.GetStub().SetEvent("DLPIClaimed", event)
 	return c.saveDLPI(ctx, dlpi)
@@ -505,7 +505,7 @@ func (c *DLPIContract) ClaimDLPI(ctx contractapi.TransactionContextInterface,
 
 // DisputeDLPI — owner disputes the seeded data
 func (c *DLPIContract) DisputeDLPI(ctx contractapi.TransactionContextInterface,
-	dlpiId, ownerAadhaarHash, reason string) error {
+	dlpiId, ownerAadhaarNumber, reason string) error {
 
 	dlpi, err := c.GetDLPI(ctx, dlpiId)
 	if err != nil {
@@ -513,7 +513,7 @@ func (c *DLPIContract) DisputeDLPI(ctx contractapi.TransactionContextInterface,
 	}
 	found := false
 	for _, o := range dlpi.Owners {
-		if matchAadhaar(o.AadhaarHash, ownerAadhaarHash) {
+		if matchAadhaar(o.AadhaarNumber, ownerAadhaarNumber) {
 			found = true
 			break
 		}
@@ -641,7 +641,7 @@ func (c *DLPIContract) ReleaseTransferLock(ctx contractapi.TransactionContextInt
 // Atomically removes selling owners and adds buying owners
 func (c *DLPIContract) UpdateOwners(ctx contractapi.TransactionContextInterface,
 	dlpiId string,
-	sellerHashesJSON string, // []string of aadhaarHashes to remove
+	sellerHashesJSON string, // []string of aadhaarNumberes to remove
 	newBuyersJSON string,    // []CoOwner to add
 	mutationType, officerName, officerHash, mutationNo, ipfsCID, description string,
 ) error {
@@ -670,7 +670,7 @@ func (c *DLPIContract) UpdateOwners(ctx contractapi.TransactionContextInterface,
 	remaining := []CoOwner{}
 	var removedCount int
 	for _, o := range dlpi.Owners {
-		if !removeSet[o.AadhaarHash] {
+		if !removeSet[o.AadhaarNumber] {
 			remaining = append(remaining, o)
 		} else {
 			removedCount++
@@ -805,7 +805,7 @@ func (c *DLPIContract) InitiateSuccession(ctx contractapi.TransactionContextInte
 
 // RecordHeirConsent — individual heir's Aadhaar eSign consent
 func (c *DLPIContract) RecordHeirConsent(ctx contractapi.TransactionContextInterface,
-	dlpiId, heirAadhaarHash, consentTxHash string) error {
+	dlpiId, heirAadhaarNumber, consentTxHash string) error {
 
 	pendingKey := "PENDING_SUCCESSION_" + dlpiId
 	pendingBytes, err := ctx.GetStub().GetState(pendingKey)
@@ -819,7 +819,7 @@ func (c *DLPIContract) RecordHeirConsent(ctx contractapi.TransactionContextInter
 
 	found := false
 	for i, h := range pending.Heirs {
-		if matchAadhaar(h.AadhaarHash, heirAadhaarHash) {
+		if matchAadhaar(h.AadhaarNumber, heirAadhaarNumber) {
 			pending.Heirs[i].HasConsented = true
 			pending.Heirs[i].ConsentTxHash = consentTxHash
 			found = true
@@ -850,7 +850,7 @@ func (c *DLPIContract) RecordHeirConsent(ctx contractapi.TransactionContextInter
 	}
 
 	event, _ := json.Marshal(map[string]string{
-		"dlpiId": dlpiId, "heirHash": heirAadhaarHash, "allConsented": "false",
+		"dlpiId": dlpiId, "heirHash": heirAadhaarNumber, "allConsented": "false",
 	})
 	_ = ctx.GetStub().SetEvent("HeirConsentRecorded", event)
 	return nil
@@ -872,7 +872,7 @@ func (c *DLPIContract) completeMutation(ctx contractapi.TransactionContextInterf
 	newOwners := make([]CoOwner, len(pending.Heirs))
 	for i, h := range pending.Heirs {
 		newOwners[i] = CoOwner{
-			AadhaarHash:  h.AadhaarHash,
+			AadhaarNumber:  h.AadhaarNumber,
 			Name:         h.Name,
 			Share:        h.Share,
 			ShareDecimal: h.ShareDecimal,
@@ -963,15 +963,15 @@ func (c *DLPIContract) AddJangananaFlag(ctx contractapi.TransactionContextInterf
 	return c.saveDLPI(ctx, dlpi)
 }
 
-// QueryDLPIsByOwner — find all parcels owned by a given aadhaarHash (CouchDB)
+// QueryDLPIsByOwner — find all parcels owned by a given aadhaarNumber (CouchDB)
 func (c *DLPIContract) QueryDLPIsByOwner(ctx contractapi.TransactionContextInterface,
-	ownerAadhaarHash string) ([]*DLPI, error) {
+	ownerAadhaarNumber string) ([]*DLPI, error) {
 
 	// CouchDB query: parcels where owners array contains this hash OR pendingSuccession heirs contains this hash
 	query := fmt.Sprintf(
-		`{"selector":{"$or":[{"owners":{"$elemMatch":{"aadhaarHash":"%s"}}},{"pendingSuccession":{"heirs":{"$elemMatch":{"aadhaarHash":"%s"}}}}]}}`,
-		ownerAadhaarHash,
-		ownerAadhaarHash,
+		`{"selector":{"$or":[{"owners":{"$elemMatch":{"aadhaarNumber":"%s"}}},{"pendingSuccession":{"heirs":{"$elemMatch":{"aadhaarNumber":"%s"}}}}]}}`,
+		ownerAadhaarNumber,
+		ownerAadhaarNumber,
 	)
 	iter, err := ctx.GetStub().GetQueryResult(query)
 	if err != nil {
@@ -1012,7 +1012,7 @@ func validateShares(owners []CoOwner) error {
 	var total float64
 	for _, o := range owners {
 		if o.ShareDecimal <= 0 || o.ShareDecimal > 1 {
-			return fmt.Errorf("owner %s has invalid shareDecimal: %f", o.AadhaarHash, o.ShareDecimal)
+			return fmt.Errorf("owner %s has invalid shareDecimal: %f", o.AadhaarNumber, o.ShareDecimal)
 		}
 		total += o.ShareDecimal
 	}

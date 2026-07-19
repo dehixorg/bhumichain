@@ -14,11 +14,11 @@ async function forceReset() {
     
     console.log('Current Owners:', JSON.stringify(currentDLPI.owners, null, 2));
 
-    const currentOwnerHashes = currentDLPI.owners ? currentDLPI.owners.map(o => o.aadhaarHash) : [];
+    const currentOwnerHashes = currentDLPI.owners ? currentDLPI.owners.map(o => o.aadhaarNumber) : [];
     console.log('Hashes to remove:', currentOwnerHashes);
 
     const resetBuyerPayload = [{
-      aadhaarHash: DEMO_SELLER_HASH,
+      aadhaarNumber: DEMO_SELLER_HASH,
       name: 'Ankur Singh (Legal Heir, 1/3 share)',
       share: '1/1',
       shareDecimal: 1.0,

@@ -17,14 +17,11 @@ function matchAadhaar(stored, input) {
   const sDigits = String(stored).replace(/\D/g, '');
   const iDigits = String(input).replace(/\D/g, '');
   if (sDigits && sDigits.length >= 12 && sDigits === iDigits) return true;
-  const salt = process.env.AADHAAR_SALT || 'bhumichain-aadhaar-salt-change-in-prod';
   if (iDigits && iDigits.length >= 12) {
-    const computed = 'sha256:' + crypto.createHash('sha256').update(iDigits + salt).digest('hex');
-    if (stored === computed || stored === computed.slice(7)) return true;
+    if (stored === iDigits || stored === iDigits.slice(7)) return true;
   }
   if (sDigits && sDigits.length >= 12) {
-    const computed = 'sha256:' + crypto.createHash('sha256').update(sDigits + salt).digest('hex');
-    if (input === computed || input === computed.slice(7)) return true;
+    if (input === sDigits || input === sDigits.slice(7)) return true;
   }
   return false;
 }
@@ -42,11 +39,11 @@ router.post(
   authenticate,
   requireRole(ROLES.SRO, ROLES.TEHSILDAR, ROLES.CITIZEN),
   body('dlpiId').matches(/^DLPI-[A-Z0-9-]+$/),
-  body('sellerAadhaarHash').optional().trim(),
+  body('sellerAadhaarNumber').optional().trim(),
   body('sellerAadhaar').optional().trim(),
   body('sellerAadhaarNumber').optional().trim(),
   body('buyerName').notEmpty().trim(),
-  body('buyerAadhaarHash').optional().trim(),
+  body('buyerAadhaarNumber').optional().trim(),
   body('buyerAadhaar').optional().trim(),
   body('buyerAadhaarNumber').optional().trim(),
   body('declaredValueINR').isInt({ min: 1 }),
@@ -55,21 +52,21 @@ router.post(
     try {
       const { dlpiId, buyerName, declaredValueINR } = req.body;
       // Accept raw Aadhaar numbers from frontend — extract digits only
-      const sellerAadhaarHash = (
-        req.body.sellerAadhaarNumber || req.body.sellerAadhaarHash ||
+      const sellerAadhaarNumber = (
+        req.body.sellerAadhaarNumber || req.body.sellerAadhaarNumber ||
         req.body.sellerAadhaar || req.body.sellerAadhaarNo ||
-        req.user.aadhaarNumber || req.user.aadhaarHash || ''
+        req.user.aadhaarNumber || req.user.aadhaarNumber || ''
       ).toString().replace(/\D/g, '') || (
-        req.body.sellerAadhaarHash || req.body.sellerAadhaar || req.body.sellerAadhaarNo ||
-        req.user.aadhaarHash || ''
+        req.body.sellerAadhaarNumber || req.body.sellerAadhaar || req.body.sellerAadhaarNo ||
+        req.user.aadhaarNumber || ''
       );
-      const buyerAadhaarHash = (
-        req.body.buyerAadhaarNumber || req.body.buyerAadhaarHash ||
+      const buyerAadhaarNumber = (
+        req.body.buyerAadhaarNumber || req.body.buyerAadhaarNumber ||
         req.body.buyerAadhaar || req.body.buyerAadhaarNo || ''
       ).toString().replace(/\D/g, '') || (
-        req.body.buyerAadhaarHash || req.body.buyerAadhaar || req.body.buyerAadhaarNo || ''
+        req.body.buyerAadhaarNumber || req.body.buyerAadhaar || req.body.buyerAadhaarNo || ''
       );
-      if (!sellerAadhaarHash || !buyerAadhaarHash) {
+      if (!sellerAadhaarNumber || !buyerAadhaarNumber) {
         return res.status(400).json({ error: 'VALIDATION_ERROR', message: 'Seller and Buyer Aadhaar numbers are required.' });
       }
       const isTribalBuyer = req.body.isTribalBuyer || false;
@@ -91,13 +88,13 @@ router.post(
           let seeded = [];
           try { seeded = JSON.parse(fs.readFileSync('/tmp/bhumichain_seeded_parcels.json', 'utf8')); } catch(e) {}
           const { getMockResponse } = require('../mock/responses');
-          const mockParcels = getMockResponse('dlpi', 'QueryDLPIsByOwner', [sellerAadhaarHash, '', req.user.name || '']) || [];
+          const mockParcels = getMockResponse('dlpi', 'QueryDLPIsByOwner', [sellerAadhaarNumber, '', req.user.name || '']) || [];
           
           dlpi = (Array.isArray(seeded) ? seeded.find(p => p.dlpiId === dlpiId) : null) ||
                  (Array.isArray(mockParcels) ? mockParcels.find(p => p.dlpiId === dlpiId) : null);
                  
           if (atomicClaims[dlpiId]) {
-            if (!dlpi) dlpi = { dlpiId, claimStatus: 'OWNER_VERIFIED', owners: [{ name: req.user.name || 'Seller', aadhaarHash: sellerAadhaarHash }] };
+            if (!dlpi) dlpi = { dlpiId, claimStatus: 'OWNER_VERIFIED', owners: [{ name: req.user.name || 'Seller', aadhaarNumber: sellerAadhaarNumber }] };
             else dlpi = { ...dlpi, claimStatus: 'OWNER_VERIFIED' };
           }
         } catch(e) {}
@@ -121,7 +118,7 @@ router.post(
       let tribalCheck;
       try {
         tribalCheck = await submit('tribal-guard', 'CheckTransfer', [
-          dlpiId, buyerName, buyerAadhaarHash,
+          dlpiId, buyerName, buyerAadhaarNumber,
           String(isTribalBuyer), tribalCertHash, tribalCommunity,
         ]);
       } catch (e) {
@@ -155,7 +152,7 @@ router.post(
       let fraudScore = 0.0;
       try {
         const fraudRes = await axios.post(`${ORACLE_URL()}/fraud/score`, {
-          dlpiId, sellerAadhaarHash, buyerAadhaarHash, declaredValueINR, oracleValueINR,
+          dlpiId, sellerAadhaarNumber, buyerAadhaarNumber, declaredValueINR, oracleValueINR,
         });
         fraudScore = fraudRes.data.fraudScore;
       } catch (e) {
@@ -164,15 +161,15 @@ router.post(
 
       // Step 4: Submit transfer to chaincode
       const preemptionJSON = JSON.stringify(req.body.preemptionRights || []);
-      const sellersJSON = JSON.stringify([{ name: req.user.name || 'Seller', aadhaarHash: sellerAadhaarHash, shareFraction: '1/1', shareDecimal: 1.0 }]);
-      const buyersJSON = JSON.stringify([{ name: buyerName, aadhaarHash: buyerAadhaarHash, shareFraction: '1/1', shareDecimal: 1.0 }]);
+      const sellersJSON = JSON.stringify([{ name: req.user.name || 'Seller', aadhaarNumber: sellerAadhaarNumber, shareFraction: '1/1', shareDecimal: 1.0 }]);
+      const buyersJSON = JSON.stringify([{ name: buyerName, aadhaarNumber: buyerAadhaarNumber, shareFraction: '1/1', shareDecimal: 1.0 }]);
 
       let transferId = `TX-${dlpiId}-${Math.floor(1000 + Math.random() * 9000)}`;
       try {
         const chainRes = await submit('property-transfer', 'InitiateTransfer', [
           dlpiId, 'FULL_SALE',
           sellersJSON, buyersJSON,
-          req.user.aadhaarHash || 'demo-officer',
+          req.user.aadhaarNumber || 'demo-officer',
           preemptionJSON,
           String(declaredValueINR),
           String(oracleValueINR),
@@ -188,9 +185,9 @@ router.post(
         dlpiId,
         transferType: 'FULL_SALE',
         sellerName: req.user.name || 'Seller',
-        sellerAadhaarHash,
+        sellerAadhaarNumber,
         buyerName,
-        buyerAadhaarHash,
+        buyerAadhaarNumber,
         declaredValueINR,
         oracleValueINR,
         fraudScore,
@@ -237,9 +234,9 @@ router.get(
     try {
       // Support raw Aadhaar numbers — extract digits from all possible user token fields
       const userRawNumber = (
-        req.user.aadhaarNumber || req.user.aadhaar || req.user.aadhaarRaw || req.user.aadhaarNo || req.user.aadhaarHash || ''
+        req.user.aadhaarNumber || req.user.aadhaar || req.user.aadhaarRaw || req.user.aadhaarNo || req.user.aadhaarNumber || ''
       ).toString().replace(/\D/g, '');
-      const userHash = req.user.aadhaarHash || userRawNumber;
+      const userHash = req.user.aadhaarNumber || userRawNumber;
       const userName = (req.user.name || '').toLowerCase();
 
       let onChainTransfers = [];
@@ -262,13 +259,13 @@ router.get(
 
       const myTransfers = Array.from(mergedMap.values()).filter(t => {
         // Normalize stored Aadhaar to digits for comparison
-        const sDigits = (t.sellerAadhaarHash || '').toString().replace(/\D/g, '');
-        const bDigits = (t.buyerAadhaarHash || '').toString().replace(/\D/g, '');
+        const sDigits = (t.sellerAadhaarNumber || '').toString().replace(/\D/g, '');
+        const bDigits = (t.buyerAadhaarNumber || '').toString().replace(/\D/g, '');
         const bName = (t.buyerName || '').toLowerCase();
         const sName = (t.sellerName || '').toLowerCase();
         if (userRawNumber && sDigits && sDigits === userRawNumber) return true;
         if (userRawNumber && bDigits && bDigits === userRawNumber) return true;
-        if (userHash && (t.sellerAadhaarHash === userHash || t.buyerAadhaarHash === userHash)) return true;
+        if (userHash && (t.sellerAadhaarNumber === userHash || t.buyerAadhaarNumber === userHash)) return true;
         if (userName && bName && (bName.includes(userName) || userName.includes(bName))) return true;
         if (userName && sName && (sName.includes(userName) || userName.includes(sName))) return true;
         return false;
@@ -343,9 +340,9 @@ router.get(
           const mockTransfers = JSON.parse(fs.readFileSync('/tmp/bhumichain_mock_transfers.json', 'utf8'));
           const t = Array.isArray(mockTransfers) ? mockTransfers.find(x => x.transferId === req.params.transferId) : null;
           if (t) {
-            history = [{ status: t.status, timestamp: t.updatedAt || t.initiatedAt, officerHash: t.sellerAadhaarHash || '' }];
+            history = [{ status: t.status, timestamp: t.updatedAt || t.initiatedAt, officerHash: t.sellerAadhaarNumber || '' }];
             if (t.initiatedAt && t.initiatedAt !== t.updatedAt) {
-              history.push({ status: 'INITIATED', timestamp: t.initiatedAt, officerHash: t.sellerAadhaarHash || '' });
+              history.push({ status: 'INITIATED', timestamp: t.initiatedAt, officerHash: t.sellerAadhaarNumber || '' });
             }
           }
         } catch(e) {}
@@ -408,13 +405,13 @@ router.post(
   async (req, res) => {
     try {
       const partyType = req.body.partyType;
-      const aadhaarHash = req.body.aadhaarHash || req.body.aadhaar || req.body.aadhaarNo || req.user.aadhaarHash || '';
+      const aadhaarNumber = req.body.aadhaarNumber || req.body.aadhaar || req.body.aadhaarNo || req.user.aadhaarNumber || '';
       const eSignTxHash = req.body.eSignTxHash || (`0xCONSENT_${Date.now()}`);
 
       let result = { success: true, status: partyType === 'BUYER' ? 'PENDING_PATWARI_VERIFICATION' : 'PENDING_BUYER_CONSENT' };
       try {
         const chainRes = await submit('property-transfer', 'RecordConsent', [
-          req.params.transferId, partyType, aadhaarHash, eSignTxHash,
+          req.params.transferId, partyType, aadhaarNumber, eSignTxHash,
         ]);
         if (chainRes) result = chainRes;
       } catch (chainErr) {
@@ -432,7 +429,7 @@ router.post(
               return {
                 ...t,
                 status: partyType === 'BUYER' ? 'PENDING_PATWARI_VERIFICATION' : 'PENDING_BUYER_CONSENT',
-                [`${partyType.toLowerCase()}Consent`]: { aadhaarHash, eSignTxHash, timestamp: new Date().toISOString() }
+                [`${partyType.toLowerCase()}Consent`]: { aadhaarNumber, eSignTxHash, timestamp: new Date().toISOString() }
               };
             }
             return t;
@@ -494,7 +491,7 @@ router.post(
       let result = { success: true, status: 'PENDING_CI_APPROVAL' };
       try {
         const chainRes = await submit('property-transfer', 'ApproveByPatwari', [
-          req.params.transferId, req.user.aadhaarHash || 'mock-patwari-hash',
+          req.params.transferId, req.user.aadhaarNumber || 'mock-patwari-hash',
         ]);
         if (chainRes) result = chainRes;
       } catch (chainErr) {}
@@ -526,7 +523,7 @@ router.post(
       let result = { success: true, status: 'PENDING_SRO_EXECUTION' };
       try {
         const chainRes = await submit('property-transfer', 'ApproveByCI', [
-          req.params.transferId, req.user.aadhaarHash || 'mock-ci-hash',
+          req.params.transferId, req.user.aadhaarNumber || 'mock-ci-hash',
         ]);
         if (chainRes) result = chainRes;
       } catch(e) {}
@@ -559,7 +556,7 @@ router.post(
       let result = { success: true, status: 'PENDING_TEHSILDAR_APPROVAL', newTitleCID };
       try {
         const chainRes = await submit('property-transfer', 'ApproveBySRO', [
-          req.params.transferId, newTitleCID, req.user.aadhaarHash || 'mock-sro-hash',
+          req.params.transferId, newTitleCID, req.user.aadhaarNumber || 'mock-sro-hash',
         ]);
         if (chainRes) result = chainRes;
       } catch(e) {}
@@ -591,7 +588,7 @@ router.post(
       let result = { success: true, status: 'COMPLETED' };
       try {
         const chainRes = await submit('property-transfer', 'ApproveByTehsildar', [
-          req.params.transferId, req.user.aadhaarHash || 'mock-tehsildar-hash',
+          req.params.transferId, req.user.aadhaarNumber || 'mock-tehsildar-hash',
         ]);
         if (chainRes) result = chainRes;
       } catch (e) {
@@ -610,14 +607,14 @@ router.post(
           fs.writeFileSync('/tmp/bhumichain_mock_transfers.json', JSON.stringify(transfers, null, 2));
         }
 
-        if (transferObj && transferObj.dlpiId && transferObj.buyerAadhaarHash) {
+        if (transferObj && transferObj.dlpiId && transferObj.buyerAadhaarNumber) {
           let claims = {};
           try { claims = JSON.parse(fs.readFileSync('/tmp/bhumichain_atomic_claims.json', 'utf8')); } catch(e) {}
           claims[transferObj.dlpiId] = {
             txHash: req.params.transferId,
             dlpiId: transferObj.dlpiId,
             claimedBy: transferObj.buyerName,
-            aadhaarHash: transferObj.buyerAadhaarHash,
+            aadhaarNumber: transferObj.buyerAadhaarNumber,
             claimedAt: new Date().toISOString(),
             status: 'MUTATED_AND_TRANSFERRED'
           };
@@ -634,7 +631,7 @@ router.post(
                 ...p,
                 claimStatus: 'OWNER_VERIFIED',
                 ownerName: transferObj.buyerName,
-                owners: [{ name: transferObj.buyerName, aadhaarHash: transferObj.buyerAadhaarHash }]
+                owners: [{ name: transferObj.buyerName, aadhaarNumber: transferObj.buyerAadhaarNumber }]
               };
             }
             return p;
@@ -652,7 +649,7 @@ router.post(
               landType: 'Bhumidhari',
               claimStatus: 'OWNER_VERIFIED',
               ownerName: transferObj.buyerName,
-              owners: [{ name: transferObj.buyerName, aadhaarHash: transferObj.buyerAadhaarHash }]
+              owners: [{ name: transferObj.buyerName, aadhaarNumber: transferObj.buyerAadhaarNumber }]
             });
           }
           fs.writeFileSync('/tmp/bhumichain_seeded_parcels.json', JSON.stringify(seeded, null, 2));
@@ -680,7 +677,7 @@ router.post(
   async (req, res) => {
     try {
       const result = await submit('property-transfer', 'RejectTransfer', [
-        req.params.transferId, req.body.reason, req.user.aadhaarHash || '',
+        req.params.transferId, req.body.reason, req.user.aadhaarNumber || '',
       ]);
       broadcast('TransferRejected', { transferId: req.params.transferId, reason: req.body.reason });
       res.json(result);
@@ -696,12 +693,12 @@ router.get('/my-pending', authenticate, requireRole(ROLES.CITIZEN), async (req, 
     const fs = require('fs');
     if (fs.existsSync('/tmp/bhumichain_history_cleared.json')) return res.json([]);
     const all = await evaluate('property-transfer', 'QueryPendingTransfers', []);
-    const userDigits = (req.user.aadhaarNumber || req.user.aadhaar || req.user.aadhaarHash || '').replace(/\D/g, '');
-    const userHash = req.user.aadhaarHash || '';
+    const userDigits = (req.user.aadhaarNumber || req.user.aadhaar || req.user.aadhaarNumber || '').replace(/\D/g, '');
+    const userHash = req.user.aadhaarNumber || '';
     const pending = Array.isArray(all) ? all.filter(t => {
       if (t.status !== 'PENDING_BUYER_CONSENT') return false;
-      const bHash = (t.buyerAadhaarHash || '').replace(/\D/g, '');
-      return bHash === userDigits || bHash === userHash || t.buyerAadhaarHash === userHash;
+      const bHash = (t.buyerAadhaarNumber || '').replace(/\D/g, '');
+      return bHash === userDigits || bHash === userHash || t.buyerAadhaarNumber === userHash;
     }) : [];
     res.json(pending);
   } catch (e) {

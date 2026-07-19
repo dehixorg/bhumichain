@@ -43,7 +43,7 @@ const DEMO_FAMILY_ID = 'FAM-UP-DAD-00100-001';
 const DEMO_DECEASED = {
   name: 'Ramesh Kumar',
   aadhaar: '999988887777',
-  aadhaarHash: '999988887777', // Raw 12-digit Aadhaar exactly as entered
+  aadhaarNumber: '999988887777', // Raw 12-digit Aadhaar exactly as entered
   dod: '2026-05-20',
 };
 const DEMO_CRS = { deathCertCID: 'QmDeathCertRameshK2026', crsRegistrationNo: 'CRS-GBN-2026-00891' };
@@ -114,7 +114,7 @@ export default function SuccessionPage() {
           allNoms.forEach(n => {
             if (
               n.inheritorAadhaarNumber === u.aadhaar || 
-              n.inheritorAadhaarNumber === u.aadhaarHash || 
+              n.inheritorAadhaarNumber === u.aadhaarNumber || 
               n.inheritorAadhaarNumber === u.aadhaarNo || 
               (u.aadhaarRaw && n.inheritorAadhaarNumber === u.aadhaarRaw)
             ) {
@@ -162,7 +162,7 @@ export default function SuccessionPage() {
         heirId: `HEIR-DYN-${i+1}`,
         name: n.inheritorName,
         aadhaar: n.inheritorAadhaarNumber,
-        aadhaarHash: n.inheritorAadhaarNumber,
+        aadhaarNumber: n.inheritorAadhaarNumber,
         relation: 'Legal Heir',
         gender: 'Unknown',
         dob: '1990-01-01',
@@ -240,15 +240,15 @@ export default function SuccessionPage() {
       }
       setCrsExtraction({
         name: data.name || DEMO_DECEASED.name, dod: data.dod || DEMO_DECEASED.dod,
-        aadhaar: data.aadhaar || data.aadhaarHash || DEMO_DECEASED.aadhaar,
-        aadhaarHash: data.aadhaarHash || data.aadhaar || DEMO_DECEASED.aadhaarHash,
+        aadhaar: data.aadhaar || data.aadhaarNumber || DEMO_DECEASED.aadhaar,
+        aadhaarNumber: data.aadhaarNumber || data.aadhaar || DEMO_DECEASED.aadhaarNumber,
         crsRegistrationNo: data.crsRegistrationNo || DEMO_CRS.crsRegistrationNo,
         dlpiId: data.dlpiId || selectedDlpiId || DEMO_DLPI,
       });
       toast.success('Death certificate verified by AI');
     } catch {
       setCrsAiSteps(p => p.map(s => ({ ...s, done: true })));
-      setCrsExtraction({ name: DEMO_DECEASED.name, dod: DEMO_DECEASED.dod, aadhaar: DEMO_DECEASED.aadhaar, aadhaarHash: DEMO_DECEASED.aadhaarHash, crsRegistrationNo: DEMO_CRS.crsRegistrationNo, dlpiId: selectedDlpiId || DEMO_DLPI });
+      setCrsExtraction({ name: DEMO_DECEASED.name, dod: DEMO_DECEASED.dod, aadhaar: DEMO_DECEASED.aadhaar, aadhaarNumber: DEMO_DECEASED.aadhaarNumber, crsRegistrationNo: DEMO_CRS.crsRegistrationNo, dlpiId: selectedDlpiId || DEMO_DLPI });
       toast('Using demo data — AI service offline', { icon: 'ℹ️' });
     } finally { setIsScanning(false); }
   };
@@ -263,7 +263,7 @@ export default function SuccessionPage() {
       const res = await initiateSuccession({
         dlpiId: crsExtraction.dlpiId || selectedDlpiId || DEMO_DLPI,
         familyId: DEMO_FAMILY_ID, deceasedName: crsExtraction.name || DEMO_DECEASED.name,
-        deceasedAadhaarHash: crsExtraction.aadhaar || crsExtraction.aadhaarHash || DEMO_DECEASED.aadhaar,
+        deceasedAadhaarNumber: crsExtraction.aadhaar || crsExtraction.aadhaarNumber || DEMO_DECEASED.aadhaar,
         dateOfDeath: crsExtraction.dod || DEMO_DECEASED.dod,
         deathCertCID: DEMO_CRS.deathCertCID, crsRegistrationNo: crsExtraction.crsRegistrationNo || DEMO_CRS.crsRegistrationNo,
         heirs: approvedNoms.map(n => ({ name: n.inheritorName, aadhaar: n.inheritorAadhaarNumber })),
@@ -273,7 +273,7 @@ export default function SuccessionPage() {
       try { sc = await getSuccessionCase(res.caseId || 'SUC-DEMO'); } catch {}
       const activeHeirs = (res.heirs && Array.isArray(res.heirs) && res.heirs.length > 0) ? res.heirs : (sc?.heirs || []);
       setCaseData(sc || res);
-      setHeirs(activeHeirs.map((h: any, i: number) => ({ ...h, heirId: h.heirId || `HEIR-DYN-${i+1}`, aadhaar: h.aadhaar || h.aadhaarHash || h.inheritorAadhaarNumber, hasConsented: false, hasObjected: false })));
+      setHeirs(activeHeirs.map((h: any, i: number) => ({ ...h, heirId: h.heirId || `HEIR-DYN-${i+1}`, aadhaar: h.aadhaar || h.aadhaarNumber || h.inheritorAadhaarNumber, hasConsented: false, hasObjected: false })));
       triggerMock('scene3_mutation_alert');
       toast.success('Case created! eSign requests sent to all heirs.');
       setStep('esign_heirs');
@@ -282,7 +282,7 @@ export default function SuccessionPage() {
       setFrontendError(`[Step 4 Error] ${msg}`);
       const ct = citizenTokenRef.current; if (ct) setToken(ct);
       setHeirs(approvedNoms.map((n, i) => ({
-        heirId: `HEIR-DYN-${i+1}`, name: n.inheritorName, aadhaar: n.inheritorAadhaarNumber, aadhaarHash: n.inheritorAadhaarNumber,
+        heirId: `HEIR-DYN-${i+1}`, name: n.inheritorName, aadhaar: n.inheritorAadhaarNumber, aadhaarNumber: n.inheritorAadhaarNumber,
         relation: 'Legal Heir', gender: 'Unknown', dob: '1990-01-01',
         isAlive: true, isAdult: true, isNri: false,
         share: `1/${approvedNoms.length}`, shareDecimal: 1/approvedNoms.length,
@@ -303,12 +303,12 @@ export default function SuccessionPage() {
     }
     try {
       await recordHeirConsent(caseData?.caseId || DEMO_DLPI, {
-        heirAadhaarHash: entered,
+        heirAadhaarNumber: entered,
         eSignTxHash: '0x' + Array.from({length:40}, () => Math.floor(Math.random()*16).toString(16)).join(''),
       });
     } catch {}
     setHeirs(prev => {
-      const updated = prev.map(h => h.heirId === heirId ? { ...h, hasConsented: true, consentedAt: new Date().toISOString(), aadhaar: entered, aadhaarHash: entered } : h);
+      const updated = prev.map(h => h.heirId === heirId ? { ...h, hasConsented: true, consentedAt: new Date().toISOString(), aadhaar: entered, aadhaarNumber: entered } : h);
       if (updated.every(h => h.hasConsented)) {
         toast.success('🎉 All heirs have eSigned via Aadhaar! Case forwarded to Tehsildar Portal for virasat execution.');
         setStep('tehsildar_final');
@@ -356,7 +356,7 @@ export default function SuccessionPage() {
       setFrontendError(`[Step 6 Error] ${msg}`);
       setExecutionResult({
         status: 'AUTO_MUTATED', dlpiId: crsExtraction?.dlpiId || selectedDlpiId || DEMO_DLPI,
-        heirs: heirs.map(h => ({ name: h.name, share: h.share || `1/${heirs.length}`, aadhaarHash: h.aadhaarHash })),
+        heirs: heirs.map(h => ({ name: h.name, share: h.share || `1/${heirs.length}`, aadhaarNumber: h.aadhaarNumber })),
       });
       toast.error('Blockchain error: ' + msg);
     } finally { setIsExecuting(false); }
@@ -485,7 +485,7 @@ export default function SuccessionPage() {
                       onClick={() => {
                         const isApprovedHeir = isTehsildar || approvedNoms.some(n => 
                           n.inheritorAadhaarNumber === user?.aadhaar || 
-                          n.inheritorAadhaarNumber === user?.aadhaarHash || 
+                          n.inheritorAadhaarNumber === user?.aadhaarNumber || 
                           n.inheritorAadhaarNumber === user?.aadhaarNo ||
                           (user?.aadhaarRaw && n.inheritorAadhaarNumber === user?.aadhaarRaw)
                         );
@@ -501,7 +501,7 @@ export default function SuccessionPage() {
                           ? "bg-gradient-to-br from-emerald-800 via-emerald-900 to-emerald-950 border-emerald-500 text-white shadow-lg ring-2 ring-emerald-500/30 cursor-pointer"
                           : (isTehsildar || approvedNoms.some(n => 
                               n.inheritorAadhaarNumber === user?.aadhaar || 
-                              n.inheritorAadhaarNumber === user?.aadhaarHash || 
+                              n.inheritorAadhaarNumber === user?.aadhaarNumber || 
                               n.inheritorAadhaarNumber === user?.aadhaarNo ||
                               (user?.aadhaarRaw && n.inheritorAadhaarNumber === user?.aadhaarRaw)
                             ))
@@ -516,7 +516,7 @@ export default function SuccessionPage() {
                               ? "bg-emerald-400 text-gray-950 font-black" 
                               : (isTehsildar || approvedNoms.some(n => 
                                   n.inheritorAadhaarNumber === user?.aadhaar || 
-                                  n.inheritorAadhaarNumber === user?.aadhaarHash || 
+                                  n.inheritorAadhaarNumber === user?.aadhaarNumber || 
                                   n.inheritorAadhaarNumber === user?.aadhaarNo ||
                                   (user?.aadhaarRaw && n.inheritorAadhaarNumber === user?.aadhaarRaw)
                                 ))
@@ -525,7 +525,7 @@ export default function SuccessionPage() {
                           )}>
                             {(isTehsildar || approvedNoms.some(n => 
                                 n.inheritorAadhaarNumber === user?.aadhaar || 
-                                n.inheritorAadhaarNumber === user?.aadhaarHash || 
+                                n.inheritorAadhaarNumber === user?.aadhaarNumber || 
                                 n.inheritorAadhaarNumber === user?.aadhaarNo ||
                                 (user?.aadhaarRaw && n.inheritorAadhaarNumber === user?.aadhaarRaw)
                               )) ? <><CheckCircle className="w-3.5 h-3.5" /> Option 2 (Unlocked)</> : <><Lock className="w-3.5 h-3.5" /> Option 2 (Locked)</>}
@@ -539,7 +539,7 @@ export default function SuccessionPage() {
                         <div className="flex items-center gap-2.5 font-bold text-base mb-2">
                           <Upload className={clsx("w-5 h-5 shrink-0", step === 'upload_document' ? "text-emerald-300" : (isTehsildar || approvedNoms.some(n => 
                             n.inheritorAadhaarNumber === user?.aadhaar || 
-                            n.inheritorAadhaarNumber === user?.aadhaarHash || 
+                            n.inheritorAadhaarNumber === user?.aadhaarNumber || 
                             n.inheritorAadhaarNumber === user?.aadhaarNo ||
                             (user?.aadhaarRaw && n.inheritorAadhaarNumber === user?.aadhaarRaw)
                           )) ? "text-emerald-700" : "text-gray-400")} />
@@ -547,13 +547,13 @@ export default function SuccessionPage() {
                         </div>
                         <p className={clsx("text-xs leading-relaxed", step === 'upload_document' ? "text-emerald-100" : (isTehsildar || approvedNoms.some(n => 
                             n.inheritorAadhaarNumber === user?.aadhaar || 
-                            n.inheritorAadhaarNumber === user?.aadhaarHash || 
+                            n.inheritorAadhaarNumber === user?.aadhaarNumber || 
                             n.inheritorAadhaarNumber === user?.aadhaarNo ||
                             (user?.aadhaarRaw && n.inheritorAadhaarNumber === user?.aadhaarRaw)
                           )) ? "text-emerald-900/80" : "text-gray-500")}>
                           {(isTehsildar || approvedNoms.some(n => 
                             n.inheritorAadhaarNumber === user?.aadhaar || 
-                            n.inheritorAadhaarNumber === user?.aadhaarHash || 
+                            n.inheritorAadhaarNumber === user?.aadhaarNumber || 
                             n.inheritorAadhaarNumber === user?.aadhaarNo ||
                             (user?.aadhaarRaw && n.inheritorAadhaarNumber === user?.aadhaarRaw)
                           ))
@@ -563,19 +563,19 @@ export default function SuccessionPage() {
                       </div>
                       <div className={clsx("mt-4 flex items-center justify-between text-xs font-bold pt-3 border-t", step === 'upload_document' ? "border-emerald-400/30 text-emerald-300" : (isTehsildar || approvedNoms.some(n => 
                         n.inheritorAadhaarNumber === user?.aadhaar || 
-                        n.inheritorAadhaarNumber === user?.aadhaarHash || 
+                        n.inheritorAadhaarNumber === user?.aadhaarNumber || 
                         n.inheritorAadhaarNumber === user?.aadhaarNo ||
                         (user?.aadhaarRaw && n.inheritorAadhaarNumber === user?.aadhaarRaw)
                       )) ? "border-emerald-200 text-emerald-800" : "border-gray-200 text-gray-400")}>
                         <span>{step === 'upload_document' ? "Uploading Form Below ↓" : (isTehsildar || approvedNoms.some(n => 
                           n.inheritorAadhaarNumber === user?.aadhaar || 
-                          n.inheritorAadhaarNumber === user?.aadhaarHash || 
+                          n.inheritorAadhaarNumber === user?.aadhaarNumber || 
                           n.inheritorAadhaarNumber === user?.aadhaarNo ||
                           (user?.aadhaarRaw && n.inheritorAadhaarNumber === user?.aadhaarRaw)
                         )) ? "Switch to Option 2 →" : "🔒 Complete Option 1 First"}</span>
                         {(isTehsildar || approvedNoms.some(n => 
                           n.inheritorAadhaarNumber === user?.aadhaar || 
-                          n.inheritorAadhaarNumber === user?.aadhaarHash || 
+                          n.inheritorAadhaarNumber === user?.aadhaarNumber || 
                           n.inheritorAadhaarNumber === user?.aadhaarNo ||
                           (user?.aadhaarRaw && n.inheritorAadhaarNumber === user?.aadhaarRaw)
                         )) ? <ArrowRight className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
