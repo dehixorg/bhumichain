@@ -198,9 +198,9 @@ router.get('/my-parcels', authenticate, requireRole(ROLES.CITIZEN), async (req, 
           claimStatus: s.status === 'VERIFIED' ? 'VERIFIED' : s.status,
           encumbranceStatus: 'CLEAR',
           isTribal: false,
-          ownerName: ext.khatedars && ext.khatedars.length > 0 ? ext.khatedars[0].name : (req.user.name || 'Unknown'),
+          ownerName: ext.khatedars && ext.khatedars.length > 0 ? ext.khatedars[0].name : 'Unknown',
           owners: s.owners && s.owners.length > 0 ? s.owners : (
-            (ext.khatedars && ext.khatedars.length > 0) ? ext.khatedars : [ { name: req.user.name || 'Unknown', aadhaarNumber: s.ownerAadhaarHash || s.ownerAadhaarNumber || userHash || userRaw } ]
+            (ext.khatedars && ext.khatedars.length > 0) ? ext.khatedars : [ { name: 'Unknown', aadhaarNumber: s.ownerAadhaarHash || s.ownerAadhaarNumber || '' } ]
           ).map(k => ({
             name: k.name,
             aadhaarNumber: k.aadhaarNumber || userHash || userRaw,
@@ -212,7 +212,7 @@ router.get('/my-parcels', authenticate, requireRole(ROLES.CITIZEN), async (req, 
           submittedAt: s.createdAt || new Date().toISOString(),
           tehsil: ext.tehsil || 'Dadri',
           gram: ext.village || 'Dadri',
-          owner: { name: ext.khatedars && ext.khatedars.length > 0 ? ext.khatedars[0].name : (req.user.name || 'Unknown'), aadhaarNumber: userHash || userRaw }
+          owner: { name: ext.khatedars && ext.khatedars.length > 0 ? ext.khatedars[0].name : 'Unknown', aadhaarNumber: s.ownerAadhaarHash || s.ownerAadhaarNumber || '' }
         };
       });
     } catch (rsErr) {
@@ -325,7 +325,7 @@ router.get('/my-parcels', authenticate, requireRole(ROLES.CITIZEN), async (req, 
       const ownersList = p.owners || [];
 
       if (oHash && (oHash === userHash || oHash === userRaw)) return true;
-      if (userName && oName && (oName.includes(userName) || userName.includes(oName))) return true;
+      if (userName && oName && oName.length > 2 && (oName.includes(userName) || userName.includes(oName))) return true;
       // Check aadhaarHash AND aadhaarNumber in owners list (on-chain uses aadhaarHash)
       if (ownersList.some(o => {
         const h = (o.aadhaarNumber || o.aadhaarHash || '').replace(/\D/g, '');
