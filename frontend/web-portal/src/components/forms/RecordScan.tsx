@@ -259,13 +259,18 @@ function ensureEnglish(obj: any): any {
     let ownerAadhaarNumbers: { name: string; aadhaar: string }[] = [];
     let legacyOwners: { name: string; aadhaarNumber: string }[] = [];
     try {
-      const partiesList = ext?.parties || [];
+      const partiesList = ext?.parties || ext?.khatedars || ext?.owners || [];
+      const listName = ext.parties ? 'parties' : (ext.khatedars ? 'khatedars' : 'owners');
       for (let i = 0; i < partiesList.length; i++) {
         const p = partiesList[i];
-        const namePath = `parties[${i}].name`;
-        const aadhaarPath = `parties[${i}].aadhaar`;
+        const namePath = `${listName}[${i}].name`;
+        const aadhaarPath = `${listName}[${i}].aadhaarNumber`;
+        const fallbackAadhaarPath = `${listName}[${i}].aadhaar`;
         const pName = edited[namePath] !== undefined ? edited[namePath] : p.name;
-        let pAadhaar = edited[aadhaarPath] !== undefined ? edited[aadhaarPath] : p.aadhaar;
+        
+        let pAadhaar = p.aadhaarNumber || p.aadhaar;
+        if (edited[aadhaarPath] !== undefined) pAadhaar = edited[aadhaarPath];
+        else if (edited[fallbackAadhaarPath] !== undefined) pAadhaar = edited[fallbackAadhaarPath];
         
         if (pAadhaar && typeof pAadhaar === 'string') {
           // Strip all non-digits (handles formats like 9999-0001-0012 or 999900010012)
@@ -489,36 +494,43 @@ function ensureEnglish(obj: any): any {
               })}
             </div>
 
-            {/* Parties */}
-            {ext.parties && ext.parties.length > 0 && (
+            {/* Parties / Khatedars / Owners */}
+            {((ext.parties && ext.parties.length > 0) || (ext.khatedars && ext.khatedars.length > 0) || (ext.owners && ext.owners.length > 0)) && (
               <div className="mt-4 pt-4 border-t border-gray-200">
                 <div className="text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wider">
-                  Parties involved
+                  Parties / Owners involved
                 </div>
-                {ext.parties.map((p: any, i: number) => {
-                  const namePath = `parties[${i}].name`;
-                  const rolePath = `parties[${i}].role`;
-                  const aadhaarPath = `parties[${i}].aadhaar`;
+                {(ext.parties || ext.khatedars || ext.owners).map((p: any, i: number) => {
+                  const listName = ext.parties ? 'parties' : (ext.khatedars ? 'khatedars' : 'owners');
+                  const namePath = `${listName}[${i}].name`;
+                  const rolePath = `${listName}[${i}].role`;
+                  const aadhaarPath = `${listName}[${i}].aadhaarNumber`;
+                  const fallbackAadhaarPath = `${listName}[${i}].aadhaar`;
                   const nameVal = edited[namePath] !== undefined ? edited[namePath] : p.name;
                   const roleVal = edited[rolePath] !== undefined ? edited[rolePath] : p.role;
-                  const aadhaarVal = edited[aadhaarPath] !== undefined ? edited[aadhaarPath] : p.aadhaar;
+                  
+                  let aadhaarVal = p.aadhaarNumber || p.aadhaar;
+                  if (edited[aadhaarPath] !== undefined) aadhaarVal = edited[aadhaarPath];
+                  else if (edited[fallbackAadhaarPath] !== undefined) aadhaarVal = edited[fallbackAadhaarPath];
 
                   return (
                     <div key={i} className="flex flex-col gap-2 py-3 border-b border-gray-200 last:border-0">
                       <EditableField 
-                        label={`Party ${i + 1} Name`} 
+                        label={`Person ${i + 1} Name`} 
                         value={nameVal || ''} 
                         onChange={(v) => setEdited({ ...edited, [namePath]: v })}
                         flagged={ext.extraction_meta?.low_confidence_fields?.includes(namePath)}
                       />
+                      {p.role !== undefined && (
+                        <EditableField 
+                          label={`Person ${i + 1} Role`} 
+                          value={roleVal || ''} 
+                          onChange={(v) => setEdited({ ...edited, [rolePath]: v })}
+                          flagged={ext.extraction_meta?.low_confidence_fields?.includes(rolePath)}
+                        />
+                      )}
                       <EditableField 
-                        label={`Party ${i + 1} Role`} 
-                        value={roleVal || ''} 
-                        onChange={(v) => setEdited({ ...edited, [rolePath]: v })}
-                        flagged={ext.extraction_meta?.low_confidence_fields?.includes(rolePath)}
-                      />
-                      <EditableField 
-                        label={`Party ${i + 1} Aadhaar Number (Required)`} 
+                        label={`Person ${i + 1} Aadhaar Number (Required)`} 
                         value={aadhaarVal || ''} 
                         onChange={(v) => setEdited({ ...edited, [aadhaarPath]: v })}
                         flagged={ext.extraction_meta?.low_confidence_fields?.includes(aadhaarPath)}
