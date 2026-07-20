@@ -972,6 +972,7 @@ module.exports = {
         return cases.filter(c => c && ['AWAITING_CONSENTS', 'HEIR_CONSENT_PENDING', 'PENDING_TEHSILDAR_APPROVAL', 'ALL_CONSENTED', 'PENDING_TEHSILDAR', 'SUCCESSION_PENDING_TEHSILDAR', 'COURT_REFERRED'].includes(c.status));
       }
       case 'uttaradhikar::GetMyPendingSuccessions': {
+        const myHashRaw = String(args[0] || '').replace(/\D/g, '');
         const myHash = args[0];
         const fs = require('fs');
         let cases = [];
@@ -983,6 +984,8 @@ module.exports = {
         return cases.filter(c => {
           if (!['AWAITING_CONSENTS', 'HEIR_CONSENT_PENDING'].includes(c.status)) return false;
           const me = c.heirs?.find(h => {
+            const hAadhaar = String(h.aadhaarNumber || h.aadhaar || '').replace(/\D/g, '');
+            if (hAadhaar && myHashRaw && hAadhaar === myHashRaw) return true;
             if (h.aadhaarNumber === myHash) return true;
             const nameLower = (h.name || '').toLowerCase();
             if (myHash === '999900010010' && nameLower.includes('priya')) return true;

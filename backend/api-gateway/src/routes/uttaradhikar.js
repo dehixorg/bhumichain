@@ -289,22 +289,33 @@ router.get('/my-pending', authenticate, requireRole(ROLES.CITIZEN), async (req, 
   try {
     const fs = require('fs');
     if (fs.existsSync('/tmp/bhumichain_history_cleared.json')) return res.json([]);
-    let cases;
+    let cases = [];
     try {
-      cases = await evaluate('uttaradhikar', 'GetMyPendingSuccessions', [req.user.aadhaarNumber]);
-      if (!cases || !Array.isArray(cases)) {
-        throw new Error('Real chaincode returned invalid array');
+      const ccCases = await evaluate('uttaradhikar', 'GetMyPendingSuccessions', [req.user.aadhaarNumber]);
+      if (ccCases && Array.isArray(ccCases)) {
+        cases = cases.concat(ccCases);
       }
     } catch (fabricErr) {
       console.warn('[Succession] Real chaincode failed for my-pending, falling back to mock response', fabricErr.message);
-      const { getMockResponse } = require('../mock/responses');
-      cases = getMockResponse('uttaradhikar', 'GetMyPendingSuccessions', [req.user.aadhaarNumber]);
     }
-    res.json(cases || []);
+    
+    // Always merge mock cases if they exist
+    const { getMockResponse } = require('../mock/responses');
+    const mockCases = getMockResponse('uttaradhikar', 'GetMyPendingSuccessions', [req.user.aadhaarNumber]) || [];
+    
+    // Merge by caseId to avoid duplicates
+    const mergedMap = new Map();
+    cases.forEach(c => mergedMap.set(c.caseId, c));
+    mockCases.forEach(c => {
+      if (!mergedMap.has(c.caseId)) mergedMap.set(c.caseId, c);
+    });
+    
+    res.json(Array.from(mergedMap.values()));
   } catch (e) {
     res.status(500).json({ error: 'FABRIC_ERROR', message: e.message });
   }
 });
+
 
 // GET /api/succession/pending/all — Officer queue
 router.get('/pending/all', authenticate, requireRole(ROLES.TEHSILDAR, ROLES.COLLECTOR), async (req, res) => {

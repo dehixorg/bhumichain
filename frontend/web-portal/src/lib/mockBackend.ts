@@ -385,14 +385,27 @@ export async function handleMockApi(path: string, options: RequestInit): Promise
     const authHeader = (options.headers as Record<string, string>)?.['Authorization'] || '';
     const tokenPayload = authHeader.startsWith('Bearer mock.') ? JSON.parse(atob(authHeader.split('.')[1])) : null;
     const myAadhaar = tokenPayload?.aadhaarNumber || tokenPayload?.aadhaarNumber || tokenPayload?.aadhaar || tokenPayload?.aadhaarNo || '';
+    const myRawAadhaar = String(myAadhaar).replace(/\D/g, '');
+    
     // Filter to only return parcels that belong to this user OR where they are the registered/approved inheritor
     const myParcels = myAadhaar
       ? state.myParcels.filter(p => {
           const owners = (p as any).owners || (p as any).initialOwners || [];
-          if (owners.length > 0 && owners.some((o: any) => o.aadhaarNumber === myAadhaar || o.aadhaarNumber === myAadhaar || o.aadhaar === myAadhaar || o.aadhaarNo === myAadhaar || (o.name && o.name === tokenPayload?.name))) return true;
-          if ((p as any).inheritorNomination && ((p as any).inheritorNomination.inheritorAadhaarNumber === myAadhaar || (p as any).inheritorNomination.inheritorAadhaar === myAadhaar)) return true;
+          if (owners.length > 0 && owners.some((o: any) => {
+            const oRaw = String(o.aadhaarNumber || o.aadhaar || o.aadhaarNo || '').replace(/\D/g, '');
+            return (myRawAadhaar && oRaw && myRawAadhaar === oRaw) || o.aadhaarNumber === myAadhaar || o.aadhaar === myAadhaar || o.aadhaarNo === myAadhaar || (o.name && o.name === tokenPayload?.name);
+          })) return true;
+          
+          if ((p as any).inheritorNomination) {
+            const nomRaw = String((p as any).inheritorNomination.inheritorAadhaarNumber || (p as any).inheritorNomination.inheritorAadhaar || '').replace(/\D/g, '');
+            if ((myRawAadhaar && nomRaw && myRawAadhaar === nomRaw) || (p as any).inheritorNomination.inheritorAadhaarNumber === myAadhaar || (p as any).inheritorNomination.inheritorAadhaar === myAadhaar) return true;
+          }
+          
           // Fallback: check by name for demo parcels
-          const persona = Object.values(DEMO_PERSONAS).find((p: any) => p.aadhaarNumber === myAadhaar || p.aadhaarNumber === myAadhaar || p.aadhaar === myAadhaar) as any;
+          const persona = Object.values(DEMO_PERSONAS).find((p: any) => {
+            const pRaw = String(p.aadhaarNumber || p.aadhaar || '').replace(/\D/g, '');
+            return (myRawAadhaar && pRaw && myRawAadhaar === pRaw) || p.aadhaarNumber === myAadhaar || p.aadhaar === myAadhaar;
+          }) as any;
           return persona && (p as any).owner?.name === persona.name;
         })
       : state.myParcels;
