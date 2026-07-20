@@ -84,8 +84,11 @@ router.get('/my-parcels', authenticate, requireRole(ROLES.CITIZEN), async (req, 
     // Check RecordScan AI database for any scans verified/approved by Tehsildar or pending
     let recordScans = [];
     try {
-      const rsResponse = await axios.get(`${RECORD_SCAN_URL}/scan`);
-      const allScans = rsResponse.data || [];
+      const statuses = ['APPROVED', 'SCAN_PENDING_TEHSILDAR', 'SCAN_PENDING_SRO'];
+      const responses = await Promise.all(
+        statuses.map(st => axios.get(`${RECORD_SCAN_URL}/scan?status=${st}`).catch(() => ({ data: [] })))
+      );
+      const allScans = responses.flatMap(r => r.data || []);
       recordScans = allScans.filter(s => {
         if (!['VERIFIED', 'SEEDED_UNVERIFIED', 'CI_APPROVED', 'SCAN_PENDING_TEHSILDAR', 'SCAN_PENDING_SRO', 'UNDER_REVIEW', 'APPROVED', 'COMPLETED'].includes(s.status)) return false;
         const khatedars = s.extraction?.khatedars || [];
@@ -647,6 +650,7 @@ router.post(
       // 2. Approve off-chain in RecordScan Python service
       try {
         const payload = {
+          officerAadhaarNumber: req.user.aadhaarNumber || ('sha256:' + '0'.repeat(64)),
           officerAadhaarHash: req.user.aadhaarNumber || ('sha256:' + '0'.repeat(64)),
           officerName: req.user.name || 'Tehsildar',
           token: req.headers.authorization ? req.headers.authorization.split(' ')[1] : '',
