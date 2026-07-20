@@ -88,6 +88,7 @@ export default function SuccessionPage() {
 
   const parcelNominations = nominations.filter(n => !selectedDlpiId || n.dlpiId === selectedDlpiId);
   const approvedNoms = parcelNominations.filter(n => n.status === 'APPROVED');
+  const allApprovedNoms = nominations.filter(n => n.status === 'APPROVED');
   const pendingNoms = parcelNominations.filter(n => n.status !== 'APPROVED');
   const isTehsildar = user?.role === 'tehsildar' || user?.role === 'collector';
   const step2List = isTehsildar ? nominations : parcelNominations;
@@ -483,7 +484,7 @@ export default function SuccessionPage() {
                     {/* OPTION 2: UPLOAD DEATH CERTIFICATE */}
                     <div
                       onClick={() => {
-                        const isApprovedHeir = isTehsildar || approvedNoms.some(n => 
+                        const isApprovedHeir = isTehsildar || allApprovedNoms.some(n => 
                           n.inheritorAadhaarNumber === user?.aadhaar || 
                           n.inheritorAadhaarNumber === user?.aadhaarNumber || 
                           n.inheritorAadhaarNumber === user?.aadhaarNo ||
@@ -499,7 +500,7 @@ export default function SuccessionPage() {
                         "p-5 rounded-2xl border-2 transition-all flex flex-col justify-between shadow-sm relative overflow-hidden",
                         step === 'upload_document'
                           ? "bg-gradient-to-br from-emerald-800 via-emerald-900 to-emerald-950 border-emerald-500 text-white shadow-lg ring-2 ring-emerald-500/30 cursor-pointer"
-                          : (isTehsildar || approvedNoms.some(n => 
+                          : (isTehsildar || allApprovedNoms.some(n => 
                               n.inheritorAadhaarNumber === user?.aadhaar || 
                               n.inheritorAadhaarNumber === user?.aadhaarNumber || 
                               n.inheritorAadhaarNumber === user?.aadhaarNo ||
@@ -514,7 +515,7 @@ export default function SuccessionPage() {
                             "text-[11px] font-extrabold uppercase px-3 py-1 rounded-full tracking-wider flex items-center gap-1.5 shadow-xs",
                             step === 'upload_document' 
                               ? "bg-emerald-400 text-gray-950 font-black" 
-                              : (isTehsildar || approvedNoms.some(n => 
+                              : (isTehsildar || allApprovedNoms.some(n => 
                                   n.inheritorAadhaarNumber === user?.aadhaar || 
                                   n.inheritorAadhaarNumber === user?.aadhaarNumber || 
                                   n.inheritorAadhaarNumber === user?.aadhaarNo ||
@@ -523,7 +524,7 @@ export default function SuccessionPage() {
                                 ? "bg-emerald-600 text-white font-bold"
                                 : "bg-gray-300 text-gray-700 font-bold"
                           )}>
-                            {(isTehsildar || approvedNoms.some(n => 
+                            {(isTehsildar || allApprovedNoms.some(n => 
                                 n.inheritorAadhaarNumber === user?.aadhaar || 
                                 n.inheritorAadhaarNumber === user?.aadhaarNumber || 
                                 n.inheritorAadhaarNumber === user?.aadhaarNo ||
@@ -537,7 +538,7 @@ export default function SuccessionPage() {
                           )}
                         </div>
                         <div className="flex items-center gap-2.5 font-bold text-base mb-2">
-                          <Upload className={clsx("w-5 h-5 shrink-0", step === 'upload_document' ? "text-emerald-300" : (isTehsildar || approvedNoms.some(n => 
+                          <Upload className={clsx("w-5 h-5 shrink-0", step === 'upload_document' ? "text-emerald-300" : (isTehsildar || allApprovedNoms.some(n => 
                             n.inheritorAadhaarNumber === user?.aadhaar || 
                             n.inheritorAadhaarNumber === user?.aadhaarNumber || 
                             n.inheritorAadhaarNumber === user?.aadhaarNo ||
@@ -545,13 +546,13 @@ export default function SuccessionPage() {
                           )) ? "text-emerald-700" : "text-gray-400")} />
                           <span>Upload Death Certificate</span>
                         </div>
-                        <p className={clsx("text-xs leading-relaxed", step === 'upload_document' ? "text-emerald-100" : (isTehsildar || approvedNoms.some(n => 
+                        <p className={clsx("text-xs leading-relaxed", step === 'upload_document' ? "text-emerald-100" : (isTehsildar || allApprovedNoms.some(n => 
                             n.inheritorAadhaarNumber === user?.aadhaar || 
                             n.inheritorAadhaarNumber === user?.aadhaarNumber || 
                             n.inheritorAadhaarNumber === user?.aadhaarNo ||
                             (user?.aadhaarRaw && n.inheritorAadhaarNumber === user?.aadhaarRaw)
                           )) ? "text-emerald-900/80" : "text-gray-500")}>
-                          {(isTehsildar || approvedNoms.some(n => 
+                          {(isTehsildar || allApprovedNoms.some(n => 
                             n.inheritorAadhaarNumber === user?.aadhaar || 
                             n.inheritorAadhaarNumber === user?.aadhaarNumber || 
                             n.inheritorAadhaarNumber === user?.aadhaarNo ||
@@ -561,19 +562,19 @@ export default function SuccessionPage() {
                             : "🔒 Requires Tehsildar approval from Option 1 first. Once verified, this card unlocks to allow Death Certificate upload."}
                         </p>
                       </div>
-                      <div className={clsx("mt-4 flex items-center justify-between text-xs font-bold pt-3 border-t", step === 'upload_document' ? "border-emerald-400/30 text-emerald-300" : (isTehsildar || approvedNoms.some(n => 
+                      <div className={clsx("mt-4 flex items-center justify-between text-xs font-bold pt-3 border-t", step === 'upload_document' ? "border-emerald-400/30 text-emerald-300" : (isTehsildar || allApprovedNoms.some(n => 
                         n.inheritorAadhaarNumber === user?.aadhaar || 
                         n.inheritorAadhaarNumber === user?.aadhaarNumber || 
                         n.inheritorAadhaarNumber === user?.aadhaarNo ||
                         (user?.aadhaarRaw && n.inheritorAadhaarNumber === user?.aadhaarRaw)
                       )) ? "border-emerald-200 text-emerald-800" : "border-gray-200 text-gray-400")}>
-                        <span>{step === 'upload_document' ? "Uploading Form Below ↓" : (isTehsildar || approvedNoms.some(n => 
+                        <span>{step === 'upload_document' ? "Uploading Form Below ↓" : (isTehsildar || allApprovedNoms.some(n => 
                           n.inheritorAadhaarNumber === user?.aadhaar || 
                           n.inheritorAadhaarNumber === user?.aadhaarNumber || 
                           n.inheritorAadhaarNumber === user?.aadhaarNo ||
                           (user?.aadhaarRaw && n.inheritorAadhaarNumber === user?.aadhaarRaw)
                         )) ? "Switch to Option 2 →" : "🔒 Complete Option 1 First"}</span>
-                        {(isTehsildar || approvedNoms.some(n => 
+                        {(isTehsildar || allApprovedNoms.some(n => 
                           n.inheritorAadhaarNumber === user?.aadhaar || 
                           n.inheritorAadhaarNumber === user?.aadhaarNumber || 
                           n.inheritorAadhaarNumber === user?.aadhaarNo ||
