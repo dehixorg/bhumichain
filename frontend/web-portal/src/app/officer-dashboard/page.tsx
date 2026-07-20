@@ -118,7 +118,15 @@ function QueueRow({ item, userRole, fetchQueue }: { item: QueueItem; userRole: s
         fetchQueue();
       } else {
         console.error('Approval error data:', data);
-        toast.error(data.detail || data.message || data.error || `Approval failed: ${JSON.stringify(data)}`);
+        // Special case: PROPERTY_NOT_SEEN — show very prominent warning
+        if (data.error === 'PROPERTY_NOT_SEEN') {
+          toast.error(
+            `⚠️ CANNOT COMMIT: ${data.message || 'Owner Aadhaar is invalid or a dummy value. The citizen will NOT be able to see this property. Ask the Patwari to re-upload with the correct Aadhaar number.'}`,
+            { duration: 10000 }
+          );
+        } else {
+          toast.error(data.detail || data.message || data.error || `Approval failed: ${JSON.stringify(data)}`);
+        }
       }
     } catch (e: any) {
       toast.error(e.message || 'An error occurred during approval');

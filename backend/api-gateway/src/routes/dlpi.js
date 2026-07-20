@@ -631,19 +631,107 @@ router.post(
   async (req, res) => {
     const dlpiId = req.params.dlpiId;
     try {
-      // 1. Try on-chain approval (may fail if DLPI was created in mock mode)
-      let txHash = `mock-tehsildar-tx-${Date.now()}`;
+      // A. Query the scan from the RecordScan service to get the Patwari-entered Aadhaar
+      let scan = null;
+      let patwariAadhaar = '';
       try {
-        const txResult = await submit('dlpi', 'ApproveScanTehsildar', [dlpiId]);
-        txHash = txResult.txHash || txHash;
-        console.log(`[scan-approve-tehsildar] On-chain approval succeeded for ${dlpiId}`);
-      } catch (fabricErr) {
-        const msg = fabricErr.message || '';
-        const isNotFound = msg.includes('not found') || msg.includes('ABORTED') || msg.includes('does not exist');
-        if (isNotFound) {
-          console.warn(`[scan-approve-tehsildar] Fabric says '${dlpiId}' not found (created in mock). Using mock approval.`);
+        const scanRes = await axios.get(`${RECORD_SCAN_URL}/scan/by-dlpi/${dlpiId}`);
+        scan = scanRes.data;
+        if (scan) {
+          patwariAadhaar = scan.ownerAadhaarNumber || (scan.owners && scan.owners[0] && scan.owners[0].aadhaarNumber) || '';
+        }
+      } catch (scanErr) {
+        if (scanErr.response && scanErr.response.status === 404) {
+          console.warn(`[scan-approve-tehsildar] No scan found for DLPI ${dlpiId} in Python service — proceeding without Aadhaar check.`);
         } else {
-          throw fabricErr;
+          console.warn(`[scan-approve-tehsildar] Failed to query scan from Python service:`, scanErr.message);
+        }
+      }
+
+      // B. If patwariAadhaar is a dummy (e.g. 999988887777 or starts with it), throw an error to the frontend
+      if (patwariAadhaar && (patwariAadhaar === '999988887777' || patwariAadhaar.startsWith('999988887777'))) {
+        return res.status(400).json({
+          error: 'PROPERTY_NOT_SEEN',
+          message: 'Tehsildar cannot commit this property: Owner Aadhaar number is a dummy/fallback value (999988887777). The citizen will not be able to see this parcel. Please have the Patwari re-upload or correct the Aadhaar first.'
+        });
+      }
+
+      // C. Check on-chain DLPI and correct owner if mismatched
+      let dlpiOnChain = null;
+      let currentOwnerAadhaar = '';
+      try {
+        const dlpiData = await evaluate('dlpi', 'GetDLPI', [dlpiId]);
+        if (dlpiData) {
+          dlpiOnChain = dlpiData;
+          if (dlpiData.owners && dlpiData.owners.length > 0) {
+            currentOwnerAadhaar = dlpiData.owners[0].aadhaarNumber || '';
+          }
+        }
+      } catch (err) {
+        console.warn(`[scan-approve-tehsildar] GetDLPI failed:`, err.message);
+      }
+
+      let txHash = `mock-tehsildar-tx-${Date.now()}`;
+      let correctionDone = false;
+
+      if (patwariAadhaar && dlpiOnChain && currentOwnerAadhaar !== patwariAadhaar) {
+        console.log(`[scan-approve-tehsildar] Owner mismatch! On-chain: ${currentOwnerAadhaar}, Patwari entered: ${patwariAadhaar}. Correcting on-chain first...`);
+        const sellers = (dlpiOnChain.owners || []).map(o => o.aadhaarNumber).filter(Boolean);
+        const correctOwners = (scan.owners && scan.owners.length > 0)
+          ? scan.owners.map(o => ({
+              aadhaarNumber: o.aadhaarNumber || patwariAadhaar,
+              name: o.name || 'Unknown',
+              share: o.share || '1/1',
+              shareDecimal: o.shareDecimal || 1.0,
+              ownerSince: new Date().toISOString(),
+              isVerified: false,
+              isTribal: false
+            }))
+          : [{
+              aadhaarNumber: patwariAadhaar,
+              name: scan.ownerName || 'Unknown',
+              share: '1/1',
+              shareDecimal: 1.0,
+              ownerSince: new Date().toISOString(),
+              isVerified: false,
+              isTribal: false
+            }];
+
+        try {
+          const txResult = await submit('dlpi', 'UpdateOwners', [
+            dlpiId,
+            JSON.stringify(sellers),
+            JSON.stringify(correctOwners),
+            'GENESIS_CORRECTION',
+            req.user.name || 'Tehsildar',
+            req.user.aadhaarNumber || '999900010003',
+            `MUT-CORR-${Date.now()}`,
+            scan.ipfsCID || 'QmPending',
+            'Correcting owner Aadhaar to the one entered by Patwari during scan approval'
+          ]);
+          txHash = txResult.txHash || txHash;
+          correctionDone = true;
+          console.log(`[scan-approve-tehsildar] On-chain owner correction succeeded!`);
+        } catch (updateErr) {
+          console.error(`[scan-approve-tehsildar] On-chain UpdateOwners failed:`, updateErr.message);
+          throw new Error(`Failed to correct DLPI owner on-chain: ${updateErr.message}`);
+        }
+      }
+
+      // 1. Try on-chain approval (only if correction was not already done, since UpdateOwners already finalized it)
+      if (!correctionDone) {
+        try {
+          const txResult = await submit('dlpi', 'ApproveScanTehsildar', [dlpiId]);
+          txHash = txResult.txHash || txHash;
+          console.log(`[scan-approve-tehsildar] On-chain approval succeeded for ${dlpiId}`);
+        } catch (fabricErr) {
+          const msg = fabricErr.message || '';
+          const isNotFound = msg.includes('not found') || msg.includes('ABORTED') || msg.includes('does not exist');
+          if (isNotFound) {
+            console.warn(`[scan-approve-tehsildar] Fabric says '${dlpiId}' not found (created in mock). Using mock approval.`);
+          } else {
+            throw fabricErr;
+          }
         }
       }
 

@@ -340,6 +340,41 @@ def list_scans(status: Optional[str] = None):
         raise HTTPException(status_code=500, detail=f"Failed to query scans from DynamoDB: {str(e)}")
 
 
+@app.get("/scan/by-dlpi/{dlpiId}")
+def get_scan_by_dlpi(dlpiId: str):
+    """Get the most recent scan for a given DLPI ID. Returns 404 if not found."""
+    if MOCK:
+        # Search in-memory cache
+        candidates = [s for s in _scan_cache.values() if s.suggestedDlpiId == dlpiId]
+        if not candidates:
+            raise HTTPException(status_code=404, detail=f"No scan found for DLPI {dlpiId}")
+        return candidates[-1]  # Return the last one added
+    try:
+        import pipeline
+        table = pipeline._get_dynamo_table()
+        if table:
+            from boto3.dynamodb.conditions import Attr
+            resp = table.scan(FilterExpression=Attr('suggestedDlpiId').eq(dlpiId))
+            items = resp.get('Items', [])
+            if items:
+                item = items[0]
+                scan = pipeline.retrieve_scan(item['scanId'])
+                if scan:
+                    return scan
+        # Fallback to local DB
+        db = pipeline._load_local_db()
+        for s_id, item in db.items():
+            if item.get('suggestedDlpiId') == dlpiId:
+                scan = pipeline.retrieve_scan(s_id)
+                if scan:
+                    return scan
+        raise HTTPException(status_code=404, detail=f"No scan found for DLPI {dlpiId}")
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to query scan by DLPI: {str(e)}")
+
+
 @app.post("/scan/approve-sro-by-dlpi/{dlpiId}")
 def approve_scan_sro_by_dlpi(dlpiId: str):
     """SRO (Kanungo) approves scan off-chain, promoting status to SCAN_PENDING_TEHSILDAR."""

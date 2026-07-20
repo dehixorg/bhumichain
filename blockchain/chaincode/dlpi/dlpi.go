@@ -703,7 +703,11 @@ func (c *DLPIContract) UpdateOwners(ctx contractapi.TransactionContextInterface,
 	}
 
 	dlpi.Owners = remaining
-	dlpi.ClaimStatus = "OWNER_VERIFIED"
+	if mutationType == "GENESIS_CORRECTION" {
+		dlpi.ClaimStatus = "SEEDED_UNVERIFIED"
+	} else {
+		dlpi.ClaimStatus = "OWNER_VERIFIED"
+	}
 	dlpi.TransferLock = &TransferLock{IsLocked: false}
 	dlpi.UpdatedAt = now
 
