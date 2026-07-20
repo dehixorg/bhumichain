@@ -758,7 +758,7 @@ router.post(
         if (dlpiData) {
           dlpiOnChain = dlpiData;
           if (dlpiData.owners && dlpiData.owners.length > 0) {
-            currentOwnerAadhaar = dlpiData.owners[0].aadhaarNumber || '';
+            currentOwnerAadhaar = dlpiData.owners[0].aadhaarNumber || dlpiData.owners[0].aadhaarHash || '';
           }
         }
       } catch (err) {
@@ -770,10 +770,11 @@ router.post(
 
       if (patwariAadhaar && dlpiOnChain && currentOwnerAadhaar !== patwariAadhaar) {
         console.log(`[scan-approve-tehsildar] Owner mismatch! On-chain: ${currentOwnerAadhaar}, Patwari entered: ${patwariAadhaar}. Correcting on-chain first...`);
-        const sellers = (dlpiOnChain.owners || []).map(o => o.aadhaarNumber).filter(Boolean);
+        const sellers = (dlpiOnChain.owners || []).map(o => o.aadhaarNumber || o.aadhaarHash).filter(Boolean);
         const correctOwners = (scan.owners && scan.owners.length > 0)
           ? scan.owners.map(o => ({
               aadhaarNumber: o.aadhaarNumber || patwariAadhaar,
+              aadhaarHash: o.aadhaarNumber || patwariAadhaar,
               name: o.name || 'Unknown',
               share: o.share || '1/1',
               shareDecimal: o.shareDecimal || 1.0,
@@ -783,6 +784,7 @@ router.post(
             }))
           : [{
               aadhaarNumber: patwariAadhaar,
+              aadhaarHash: patwariAadhaar,
               name: scan.ownerName || 'Unknown',
               share: '1/1',
               shareDecimal: 1.0,
