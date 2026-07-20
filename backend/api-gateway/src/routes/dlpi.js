@@ -241,6 +241,10 @@ router.get('/my-parcels', authenticate, requireRole(ROLES.CITIZEN), async (req, 
     try { dMuts = JSON.parse(fs.readFileSync('/tmp/bhumichain_dynamic_mutations.json', 'utf8')); } catch(e) {}
     const executedMuts = dMuts.filter(m => m.status === 'EXECUTED');
 
+    let mockTransfers = [];
+    try { mockTransfers = JSON.parse(fs.readFileSync('/tmp/bhumichain_mock_transfers.json', 'utf8')); } catch(e) {}
+    if (!Array.isArray(mockTransfers)) mockTransfers = [];
+
     let seededParcels = [];
     try { seededParcels = JSON.parse(fs.readFileSync('/tmp/bhumichain_seeded_parcels.json', 'utf8')); } catch(e) {}
     if (Array.isArray(seededParcels)) {
@@ -337,6 +341,14 @@ router.get('/my-parcels', authenticate, requireRole(ROLES.CITIZEN), async (req, 
       if (userRaw === '999900010015' && oName.includes('sunita')) return true;
       if (userRaw === '999900010012' && oName.includes('suresh')) return true;
       return false;
+    }).filter(p => {
+      // Hide parcels that the seller has just initiated a transfer for
+      const pendingTx = mockTransfers.find(t => t.dlpiId === p.dlpiId && t.status === 'PENDING_BUYER_CONSENT');
+      if (pendingTx) {
+        const sellerAadhaar = (pendingTx.sellerAadhaarNumber || '').replace(/\D/g, '');
+        if (sellerAadhaar === userHash || sellerAadhaar === userRaw) return false;
+      }
+      return true;
     });
 
     res.json(adapted);
