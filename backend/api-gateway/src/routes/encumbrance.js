@@ -29,7 +29,7 @@ router.post(
   body('cersaiRegNo').notEmpty(),
   body('mortgageDate').isISO8601(),
   body('mortgageExpiry').isISO8601(),
-  body('registeredByHash').matches(/^sha256:[a-f0-9]{64}$/),
+  body('registeredByHash').notEmpty(),
   validate,
   async (req, res) => {
     try {
@@ -73,7 +73,7 @@ router.post(
   body('injunctionDate').isISO8601(),
   body('injunctionType').isIn(['STAY', 'ATTACHMENT', 'FREEZE', 'PROHIBITORY']),
   body('eCourtsOracleHash').notEmpty(),
-  body('registeredByHash').matches(/^sha256:[a-f0-9]{64}$/),
+  body('registeredByHash').notEmpty(),
   validate,
   async (req, res) => {
     try {
@@ -101,7 +101,7 @@ router.post(
   body('itAssessmentYear').matches(/^\d{4}-\d{2}$/),
   body('panHash').notEmpty(),
   body('itDemandAmountINR').isInt({ min: 1 }),
-  body('registeredByHash').matches(/^sha256:[a-f0-9]{64}$/),
+  body('registeredByHash').notEmpty(),
   validate,
   async (req, res) => {
     try {
@@ -121,7 +121,7 @@ router.post(
   '/:encumbranceId/release',
   authenticate,
   requireRole(ROLES.BANK, ROLES.COLLECTOR, ROLES.REVENUE_OFFICER),
-  body('releasedByHash').matches(/^sha256:[a-f0-9]{64}$/),
+  body('releasedByHash').notEmpty(),
   body('releaseDocCID').notEmpty(),
   validate,
   async (req, res) => {

@@ -59,7 +59,7 @@ router.post(
   authenticate,
   body('dlpiId').matches(/^DLPI-[A-Z0-9-]+$/),
   body('buyerName').notEmpty().trim(),
-  body('buyerAadhaarNumber').matches(/^sha256:[a-f0-9]{64}$/),
+  body('buyerAadhaarNumber').notEmpty(),
   validate,
   async (req, res) => {
     try {
@@ -110,7 +110,7 @@ router.get('/parcel/:dlpiId/attempts', authenticate, requireRole(ROLES.COLLECTOR
 router.post(
   '/:attemptId/gram-sabha',
   authenticate,
-  body('memberAadhaarNumber').matches(/^sha256:[a-f0-9]{64}$/),
+  body('memberAadhaarNumber').notEmpty(),
   body('memberName').notEmpty(),
   body('villageId').notEmpty(),
   body('eSignTxHash').notEmpty(),
