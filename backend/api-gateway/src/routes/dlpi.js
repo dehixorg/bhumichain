@@ -51,6 +51,62 @@ const dlpiParam = param('dlpiId').matches(/^DLPI-[A-Z0-9-]+$/);
 
 // ── Static routes (must come before /:dlpiId) ─────────────────────────────────
 
+// GET /api/dlpi/debug-aadhaar?aadhaar=999900010012
+// Debug endpoint: shows exactly what scans and DLPIs would be returned for a given Aadhaar
+router.get('/debug-aadhaar', authenticate, async (req, res) => {
+  const aadhaar = (req.query.aadhaar || req.user.aadhaarNumber || '').replace(/\D/g, '');
+  const report = { aadhaar, matches: [], allScans: [], onChainDLPIs: [], filterDecisions: [] };
+
+  // 1. Fetch on-chain DLPIs
+  try {
+    const onChain = await evaluate('dlpi', 'QueryDLPIsByOwner', [aadhaar]);
+    report.onChainDLPIs = onChain || [];
+  } catch (e) {
+    report.onChainDLPIs = [`ERROR: ${e.message}`];
+  }
+
+  // 2. Fetch ALL scans from RecordScan service
+  try {
+    const r = await axios.get(`${RECORD_SCAN_URL}/scan`);
+    const allScans = r.data || [];
+    report.allScans = allScans.map(s => ({
+      scanId: s.scanId,
+      suggestedDlpiId: s.suggestedDlpiId,
+      status: s.status,
+      ownerAadhaarNumber: s.ownerAadhaarNumber,
+      ownerAadhaarHash: s.ownerAadhaarHash,
+      khatedars: (s.extraction?.khatedars || []).map(k => ({ name: k.name, aadhaarNumber: k.aadhaarNumber })),
+      owners: s.owners || [],
+    }));
+
+    // Check each scan against the Aadhaar
+    report.filterDecisions = allScans.map(s => {
+      const khatedars = s.extraction?.khatedars || [];
+      const khatedarMatch = khatedars.some(k => k.aadhaarNumber === aadhaar);
+      const ownerMatch = (s.owners || []).some(o => o.aadhaarNumber === aadhaar);
+      const directMatch = s.ownerAadhaarHash === aadhaar || s.ownerAadhaarNumber === aadhaar;
+      const matched = khatedarMatch || ownerMatch || directMatch;
+      if (matched) report.matches.push(s.suggestedDlpiId);
+      return {
+        scanId: s.scanId,
+        dlpiId: s.suggestedDlpiId,
+        status: s.status,
+        ownerAadhaarNumber: s.ownerAadhaarNumber,
+        khatedarAadhaars: khatedars.map(k => k.aadhaarNumber),
+        ownerAadhaars: (s.owners || []).map(o => o.aadhaarNumber),
+        khatedarMatch,
+        ownerMatch,
+        directMatch,
+        WILL_SHOW: matched,
+      };
+    });
+  } catch (e) {
+    report.allScans = [`ERROR: ${e.message}`];
+  }
+
+  res.json(report);
+});
+
 // GET /api/dlpi/my-parcels — citizen's own parcels
 router.get('/my-parcels', authenticate, requireRole(ROLES.CITIZEN), async (req, res) => {
   try {
@@ -61,6 +117,7 @@ router.get('/my-parcels', authenticate, requireRole(ROLES.CITIZEN), async (req, 
     const userHash = req.user.aadhaarNumber || '';
     const userRaw  = req.user.aadhaar || req.user.aadhaarRaw || req.user.aadhaarNo || '';
     const userName = (req.user.name || '').toLowerCase();
+    console.log(`[my-parcels] User: ${req.user.name}, userHash=${userHash}, userRaw=${userRaw}`);
 
     let parcels;
     try {
@@ -84,16 +141,18 @@ router.get('/my-parcels', authenticate, requireRole(ROLES.CITIZEN), async (req, 
     // Check RecordScan AI database for any scans verified/approved by Tehsildar or pending
     let recordScans = [];
     try {
-      const statuses = ['APPROVED', 'SCAN_PENDING_TEHSILDAR', 'SCAN_PENDING_SRO'];
-      const responses = await Promise.all(
-        statuses.map(st => axios.get(`${RECORD_SCAN_URL}/scan?status=${st}`).catch(() => ({ data: [] })))
-      );
-      const allScans = responses.flatMap(r => r.data || []);
+      // Fetch ALL scans (no status filter) — we filter by ownership, not status
+      const allScansRes = await axios.get(`${RECORD_SCAN_URL}/scan`).catch(() => ({ data: [] }));
+      const allScans = allScansRes.data || [];
+      console.log(`[my-parcels] Total scans from RecordScan: ${allScans.length}`);
       recordScans = allScans.filter(s => {
-        if (!['VERIFIED', 'SEEDED_UNVERIFIED', 'CI_APPROVED', 'SCAN_PENDING_TEHSILDAR', 'SCAN_PENDING_SRO', 'UNDER_REVIEW', 'APPROVED', 'COMPLETED'].includes(s.status)) return false;
+        if (!['VERIFIED', 'SEEDED_UNVERIFIED', 'CI_APPROVED', 'SCAN_PENDING_TEHSILDAR', 'SCAN_PENDING_SRO', 'UNDER_REVIEW', 'APPROVED', 'COMPLETED'].includes(s.status)) {
+          console.log(`[my-parcels]   SKIP scan ${s.scanId} (status=${s.status})`);
+          return false;
+        }
         const khatedars = s.extraction?.khatedars || [];
         const hasKhatedarMatch = khatedars.some(k => {
-          const kHash = k.aadhaarNumber || '';
+          const kHash = (k.aadhaarNumber || '').replace(/\D/g, '');
           const kName = (k.name || '').toLowerCase();
           if (kHash && (kHash === userHash || kHash === userRaw)) return true;
           if (userName && kName && (kName.includes(userName) || userName.includes(kName))) return true;
@@ -104,13 +163,18 @@ router.get('/my-parcels', authenticate, requireRole(ROLES.CITIZEN), async (req, 
         });
         
         const hasOwnerMatch = (s.owners || []).some(o => {
-          const oHash = o.aadhaarNumber || '';
+          const oHash = (o.aadhaarNumber || '').replace(/\D/g, '');
           return oHash === userHash || oHash === userRaw;
         });
         
-        const hasDirectHashMatch = s.ownerAadhaarHash === userHash || s.ownerAadhaarHash === userRaw || s.ownerAadhaarNumber === userHash || s.ownerAadhaarNumber === userRaw;
+        const directOwnerNum = (s.ownerAadhaarNumber || '').replace(/\D/g, '');
+        const directOwnerHash = (s.ownerAadhaarHash || '').replace(/\D/g, '');
+        const hasDirectHashMatch = directOwnerNum === userHash || directOwnerNum === userRaw ||
+                                   directOwnerHash === userHash || directOwnerHash === userRaw;
 
-        return hasKhatedarMatch || hasOwnerMatch || hasDirectHashMatch;
+        const matched = hasKhatedarMatch || hasOwnerMatch || hasDirectHashMatch;
+        console.log(`[my-parcels]   Scan ${s.scanId} dlpi=${s.suggestedDlpiId} status=${s.status} ownerAadhaar=${s.ownerAadhaarNumber} khatedars=${JSON.stringify(khatedars.map(k=>({n:k.name,a:k.aadhaarNumber})))} → khatedarMatch=${hasKhatedarMatch} ownerMatch=${hasOwnerMatch} directMatch=${hasDirectHashMatch} SHOW=${matched}`);
+        return matched;
       }).map(s => {
         const ext = s.extraction || {};
         return {
