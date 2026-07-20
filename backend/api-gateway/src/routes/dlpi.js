@@ -769,8 +769,10 @@ router.post(
       let correctionDone = false;
 
       if (patwariAadhaar && dlpiOnChain && currentOwnerAadhaar !== patwariAadhaar) {
-        console.log(`[scan-approve-tehsildar] Owner mismatch! On-chain: ${currentOwnerAadhaar}, Patwari entered: ${patwariAadhaar}. Correcting on-chain first...`);
+        console.log(`[scan-approve-tehsildar] Owner mismatch! On-chain: '${currentOwnerAadhaar}', Patwari entered: '${patwariAadhaar}'.`);
+        console.log(`[scan-approve-tehsildar] dlpiOnChain.owners:`, JSON.stringify(dlpiOnChain.owners));
         const sellers = (dlpiOnChain.owners || []).map(o => o.aadhaarNumber || o.aadhaarHash).filter(Boolean);
+        console.log(`[scan-approve-tehsildar] sellers array passed to chaincode:`, sellers);
         const correctOwners = (scan.owners && scan.owners.length > 0)
           ? scan.owners.map(o => ({
               aadhaarNumber: o.aadhaarNumber || patwariAadhaar,
