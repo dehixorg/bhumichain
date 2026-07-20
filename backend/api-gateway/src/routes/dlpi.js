@@ -245,9 +245,24 @@ router.get('/my-parcels', authenticate, requireRole(ROLES.CITIZEN), async (req, 
     try { seededParcels = JSON.parse(fs.readFileSync('/tmp/bhumichain_seeded_parcels.json', 'utf8')); } catch(e) {}
     if (Array.isArray(seededParcels)) {
       seededParcels.forEach(sp => {
-        if (!mergedMap.has(sp.dlpiId)) finalParcels.push(sp);
+        // Include parcel if user is listed in owners[] (for succession-inherited properties)
+        const isCoOwner = Array.isArray(sp.owners) && sp.owners.some(o => {
+          const oH = (o.aadhaarNumber || '').replace(/\D/g, '');
+          return (oH && (oH === userHash || oH === userRaw));
+        });
+        if (isCoOwner) {
+          // Always include co-owned parcels (overwrite any previous version)
+          finalParcels.push(sp);
+        } else if (!mergedMap.has(sp.dlpiId) && !finalParcels.some(p => p.dlpiId === sp.dlpiId)) {
+          finalParcels.push(sp);
+        }
       });
     }
+
+    // Deduplicate finalParcels by dlpiId before adapting (co-owner seeding may add dupes)
+    const dedupeMap = new Map();
+    finalParcels.forEach(p => { if (p && p.dlpiId) dedupeMap.set(p.dlpiId, p); });
+    finalParcels = Array.from(dedupeMap.values());
 
     Object.keys(atomicClaims).forEach(dlpiId => {
       const claim = atomicClaims[dlpiId];
@@ -338,6 +353,15 @@ router.get('/my-parcels', authenticate, requireRole(ROLES.CITIZEN), async (req, 
         if (userRaw === '999900010015' && oName.includes('sunita')) return true;
         if (userRaw === '999900010012' && oName.includes('suresh')) return true;
       }
+
+      // Check if the user is a nominated inheritor for this parcel
+      const noms = global.inheritorNominations || [];
+      const isNominated = noms.some(n => 
+        n.dlpiId === p.dlpiId && 
+        ((n.inheritorAadhaarNumber || '').replace(/\D/g, '') === userRaw || (n.inheritorAadhaarNumber || '').replace(/\D/g, '') === userHash)
+      );
+      if (isNominated) return true;
+
       return false;
     });
 

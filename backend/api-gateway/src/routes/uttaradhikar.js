@@ -265,19 +265,31 @@ router.post(
       }
 
       global.successionCases = global.successionCases || {};
-      global.successionCases[result.caseId] = { ...result, aiResult };
+      // Store the full heir list with Aadhaar numbers so /my-pending can match
+      const parsedHeirs = result.heirs || (typeof aiResult.heirs === 'string' ? JSON.parse(aiResult.heirs) : (aiResult.heirs || []));
+      const heirAadhaarList = parsedHeirs.map(h => (String(h.aadhaarNumber || h.aadhaar || '')).replace(/\D/g, '').trim()).filter(Boolean);
+      global.successionCases[result.caseId] = {
+        ...result,
+        heirs: parsedHeirs,
+        heirAadhaarList,
+        aiResult,
+        status: result.status || 'HEIR_CONSENT_PENDING',
+        consentedAadhaar: [],
+      };
       try {
         fs.writeFileSync('/tmp/bhumichain_succession_cases.json', JSON.stringify(global.successionCases, null, 2));
       } catch (e) {}
 
+      // Broadcast to all heirs with their Aadhaar numbers
       broadcast('SuccessionInitiated', {
         caseId: result.caseId,
         dlpiId,
         deceasedName,
-        message: `Death of ${deceasedName} registered. Heirs identified. Notifications dispatched.`,
+        heirAadhaarList,
+        message: `Death of ${deceasedName} registered. eSign notifications dispatched to all ${heirAadhaarList.length} heir(s).`,
       }, dlpiId);
 
-      res.status(201).json({ ...result, aiResult });
+      res.status(201).json({ ...result, heirs: parsedHeirs, aiResult });
     } catch (e) {
       res.status(500).json({ error: 'FABRIC_ERROR', message: e.message });
     }
@@ -289,6 +301,9 @@ router.get('/my-pending', authenticate, requireRole(ROLES.CITIZEN), async (req, 
   try {
     const fs = require('fs');
     if (fs.existsSync('/tmp/bhumichain_history_cleared.json')) return res.json([]);
+
+    const userAadhaar = (req.user.aadhaarNumber || req.user.aadhaar || '').replace(/\D/g, '');
+
     let cases = [];
     try {
       const ccCases = await evaluate('uttaradhikar', 'GetMyPendingSuccessions', [req.user.aadhaarNumber]);
@@ -309,8 +324,49 @@ router.get('/my-pending', authenticate, requireRole(ROLES.CITIZEN), async (req, 
     mockCases.forEach(c => {
       if (!mergedMap.has(c.caseId)) mergedMap.set(c.caseId, c);
     });
+
+    // ── KEY FIX: Also scan in-memory & disk succession cases for heir match ──
+    // This ensures dynamically-initiated cases show up for ALL heirs
+    try {
+      global.successionCases = global.successionCases || {};
+      if (fs.existsSync('/tmp/bhumichain_succession_cases.json')) {
+        const diskCases = JSON.parse(fs.readFileSync('/tmp/bhumichain_succession_cases.json', 'utf8'));
+        // Merge disk into memory (disk has priority for persisted state)
+        Object.assign(global.successionCases, diskCases);
+      }
+      Object.values(global.successionCases).forEach(sc => {
+        if (!sc || !sc.caseId) return;
+        // Skip already-executed cases
+        if (['AUTO_MUTATED', 'EXECUTED', 'COMPLETED'].includes(sc.status)) return;
+        // Check if logged-in user is an heir
+        const heirList = sc.heirAadhaarList || (sc.heirs || []).map(h => String(h.aadhaarNumber || h.aadhaar || '').replace(/\D/g, ''));
+        const isHeir = userAadhaar && heirList.some(a => a && a === userAadhaar);
+        if (isHeir && !mergedMap.has(sc.caseId)) {
+          // Build a user-facing pending case object
+          const myHeirInfo = (sc.heirs || []).find(h => String(h.aadhaarNumber || h.aadhaar || '').replace(/\D/g, '') === userAadhaar);
+          mergedMap.set(sc.caseId, {
+            caseId: sc.caseId,
+            dlpiId: sc.dlpiId,
+            deceasedName: sc.deceasedName,
+            deceasedAadhaar: sc.deceasedAadhaar || sc.deceasedAadhaarNumber,
+            status: sc.status || 'HEIR_CONSENT_PENDING',
+            share: myHeirInfo ? (myHeirInfo.finalShare || myHeirInfo.legalShare || myHeirInfo.share || `1/${(sc.heirs||[]).length}`) : 'Equal Share',
+            heirs: sc.heirs,
+            createdAt: sc.createdAt,
+          });
+        }
+      });
+    } catch (diskErr) {
+      console.warn('[my-pending] Disk case scan non-fatal:', diskErr.message);
+    }
+
+    // Only return cases that still need this user's consent
+    const pendingForUser = Array.from(mergedMap.values()).filter(c => {
+      if (['AUTO_MUTATED', 'EXECUTED', 'COMPLETED'].includes(c.status)) return false;
+      return true;
+    });
     
-    res.json(Array.from(mergedMap.values()));
+    res.json(pendingForUser);
   } catch (e) {
     res.status(500).json({ error: 'FABRIC_ERROR', message: e.message });
   }
@@ -632,12 +688,47 @@ router.post(
         req.params.caseId, heirAadhaarNumber, req.body.eSignTxHash
       ]);
       if (!result) result = mockResult;
+
+      // ── KEY FIX: Track consents in global.successionCases so Tehsildar queue gets updated ──
+      try {
+        global.successionCases = global.successionCases || {};
+        const diskPath = '/tmp/bhumichain_succession_cases.json';
+        if (fs.existsSync(diskPath)) {
+          const diskCases = JSON.parse(fs.readFileSync(diskPath, 'utf8'));
+          Object.assign(global.successionCases, diskCases);
+        }
+        const sc = global.successionCases[req.params.caseId];
+        if (sc) {
+          // Record consent for this heir
+          sc.consentedAadhaar = sc.consentedAadhaar || [];
+          const cleanedAadhaar = heirAadhaarNumber.replace(/\D/g, '');
+          if (!sc.consentedAadhaar.includes(cleanedAadhaar)) {
+            sc.consentedAadhaar.push(cleanedAadhaar);
+          }
+          // Check if ALL heirs have now consented
+          const heirAadhaarList = sc.heirAadhaarList || (sc.heirs || []).map(h => String(h.aadhaarNumber || h.aadhaar || '').replace(/\D/g, ''));
+          const allConsented = heirAadhaarList.length > 0 && heirAadhaarList.every(a => sc.consentedAadhaar.includes(a));
+          if (allConsented) {
+            sc.status = 'PENDING_TEHSILDAR_APPROVAL';
+            if (result) result.status = 'PENDING_TEHSILDAR_APPROVAL';
+            console.log(`[Succession] All ${heirAadhaarList.length} heirs consented for case ${req.params.caseId} → PENDING_TEHSILDAR_APPROVAL`);
+          } else {
+            sc.status = sc.status || 'HEIR_CONSENT_PENDING';
+          }
+          global.successionCases[req.params.caseId] = sc;
+          fs.writeFileSync(diskPath, JSON.stringify(global.successionCases, null, 2));
+        }
+      } catch (consentTrackErr) {
+        console.warn('[Consent] Track non-fatal:', consentTrackErr.message);
+      }
+
       broadcast('HeirConsentRecorded', {
         caseId: req.params.caseId,
         heirAadhaarNumber: heirAadhaarNumber,
       });
       // If tehsildar approval triggered, broadcast that too
-      if (result && result.status === 'PENDING_TEHSILDAR_APPROVAL') {
+      const finalStatus = result?.status || (global.successionCases[req.params.caseId]?.status);
+      if (finalStatus === 'PENDING_TEHSILDAR_APPROVAL') {
         broadcast('AllHeirsConsented', {
           caseId: req.params.caseId,
           message: '✅ All heirs have consented. Case forwarded to Tehsildar for final approval.',
@@ -706,7 +797,7 @@ router.get('/pending/all', authenticate, requireRole(ROLES.TEHSILDAR, ROLES.REVE
       realList = [];
     }
 
-    // Merge real + mock + disk cases so officer sees everything
+    // Merge real + mock + disk + in-memory cases so officer sees everything
     const { getMockResponse } = require('../mock/responses');
     const mockList = getMockResponse('uttaradhikar', 'QueryPendingSuccessions', []) || [];
 
@@ -717,8 +808,12 @@ router.get('/pending/all', authenticate, requireRole(ROLES.TEHSILDAR, ROLES.REVE
       diskList = [...diskList, ...Object.values(bCases || {})];
     } catch(e) {}
 
+    // Also merge from in-memory store (catches cases before disk flush)
+    global.successionCases = global.successionCases || {};
+    diskList = [...diskList, ...Object.values(global.successionCases)];
+
     const pendingStatuses = ['AWAITING_CONSENTS', 'HEIR_CONSENT_PENDING', 'PENDING_TEHSILDAR_APPROVAL', 'ALL_CONSENTED', 'PENDING_TEHSILDAR', 'SUCCESSION_PENDING_TEHSILDAR', 'COURT_REFERRED'];
-    const filteredDisk = diskList.filter(c => c && pendingStatuses.includes(c.status));
+    const filteredDisk = diskList.filter(c => c && c.caseId && pendingStatuses.includes(c.status));
 
     const mergedMap = new Map();
     mockList.forEach(c => mergedMap.set(c.caseId, c));

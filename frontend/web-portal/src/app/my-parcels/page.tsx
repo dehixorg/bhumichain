@@ -219,6 +219,11 @@ export default function CitizenDashboard() {
       });
       toast.success('🎉 Successfully eSigned your virasat consent! Case forwarded for Tehsildar verification.', { id: 'esign' });
       setPendingSuccessions(prev => prev.filter(c => c.caseId !== caseId));
+      // Refresh parcels so inherited land appears if Tehsildar already executed
+      apiFetch('/api/dlpi/my-parcels')
+        .then(r => r.json())
+        .then(d => { if (Array.isArray(d)) setParcels(d); })
+        .catch(() => {});
     } catch (err: any) {
       toast.error('Failed to provide consent: ' + (err?.message || err), { id: 'esign' });
       console.error(err);
