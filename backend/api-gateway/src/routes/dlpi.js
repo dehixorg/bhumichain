@@ -87,7 +87,7 @@ router.get('/my-parcels', authenticate, requireRole(ROLES.CITIZEN), async (req, 
       const rsResponse = await axios.get(`${RECORD_SCAN_URL}/scan`);
       const allScans = rsResponse.data || [];
       recordScans = allScans.filter(s => {
-        if (!['VERIFIED', 'SEEDED_UNVERIFIED', 'CI_APPROVED', 'SCAN_PENDING_TEHSILDAR', 'SCAN_PENDING_SRO', 'UNDER_REVIEW'].includes(s.status)) return false;
+        if (!['VERIFIED', 'SEEDED_UNVERIFIED', 'CI_APPROVED', 'SCAN_PENDING_TEHSILDAR', 'SCAN_PENDING_SRO', 'UNDER_REVIEW', 'APPROVED', 'COMPLETED'].includes(s.status)) return false;
         const khatedars = s.extraction?.khatedars || [];
         return khatedars.some(k => {
           const kHash = k.aadhaarNumber || '';
