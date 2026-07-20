@@ -636,13 +636,14 @@ router.post(
       // 2. Approve off-chain in RecordScan Python service
       try {
         const payload = {
-          officerAadhaarNumber: req.user.aadhaarNumber || ('sha256:' + '0'.repeat(64)),
+          officerAadhaarHash: req.user.aadhaarNumber || ('sha256:' + '0'.repeat(64)),
           officerName: req.user.name || 'Tehsildar',
           token: req.headers.authorization ? req.headers.authorization.split(' ')[1] : '',
         };
         await axios.post(`${RECORD_SCAN_URL}/scan/approve-tehsildar-by-dlpi/${dlpiId}`, payload);
       } catch (axErr) {
-        console.warn(`[scan-approve-tehsildar] Python approve-tehsildar failed (non-fatal):`, axErr.message);
+        console.warn(`[scan-approve-tehsildar] Python approve-tehsildar failed:`, axErr.message);
+        throw new Error(`Python RecordScan service rejected the approval: ${axErr.response?.data?.detail || axErr.message}`);
       }
 
       res.json({ success: true, txHash });
