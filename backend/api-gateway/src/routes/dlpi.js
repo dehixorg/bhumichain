@@ -271,15 +271,28 @@ router.get('/my-parcels', authenticate, requireRole(ROLES.CITIZEN), async (req, 
     });
 
     const adapted = finalParcels.map(p => {
+      // Normalize on-chain DLPI owners: aadhaarHash → aadhaarNumber
+      if (Array.isArray(p.owners)) {
+        p.owners = p.owners.map(o => ({
+          ...o,
+          aadhaarNumber: o.aadhaarNumber || o.aadhaarHash || '',
+        }));
+      }
+      if (Array.isArray(p.initialOwners)) {
+        p.initialOwners = p.initialOwners.map(o => ({
+          ...o,
+          aadhaarNumber: o.aadhaarNumber || o.aadhaarHash || '',
+        }));
+      }
       if (p.owners && p.owners.length > 0 && !p.owner) {
         p.owner = {
           name: p.owners[0].name,
-          aadhaarNumber: p.owners[0].aadhaarNumber,
+          aadhaarNumber: p.owners[0].aadhaarNumber || p.owners[0].aadhaarHash || '',
         };
       }
       if (p.initialOwners && p.initialOwners.length > 0 && (!p.owners || p.owners.length === 0)) {
         p.owners = p.initialOwners;
-        p.owner = { name: p.initialOwners[0].name, aadhaarNumber: p.initialOwners[0].aadhaarNumber };
+        p.owner = { name: p.initialOwners[0].name, aadhaarNumber: p.initialOwners[0].aadhaarNumber || p.initialOwners[0].aadhaarHash || '' };
       }
       // Override with latest mutation / atomic claim transfer
       if (atomicClaims[p.dlpiId]) {
@@ -306,13 +319,18 @@ router.get('/my-parcels', authenticate, requireRole(ROLES.CITIZEN), async (req, 
       return p;
     }).filter(p => {
       // Strictly verify current ownership against logged in citizen
-      const oHash = p.owner?.aadhaarNumber || '';
+      // Check both aadhaarNumber AND aadhaarHash (on-chain DLPIs use aadhaarHash)
+      const oHash = p.owner?.aadhaarNumber || p.owner?.aadhaarHash || '';
       const oName = (p.owner?.name || p.ownerName || '').toLowerCase();
       const ownersList = p.owners || [];
 
-      if (oHash && (oHash === userHash || oHash === userRaw || String(oHash).includes(userHash) || String(oHash).includes(userRaw))) return true;
+      if (oHash && (oHash === userHash || oHash === userRaw)) return true;
       if (userName && oName && (oName.includes(userName) || userName.includes(oName))) return true;
-      if (ownersList.some(o => (o.aadhaarNumber && (o.aadhaarNumber === userHash || o.aadhaarNumber === userRaw)) || ((o.name || '').toLowerCase().includes(userName)))) return true;
+      // Check aadhaarHash AND aadhaarNumber in owners list (on-chain uses aadhaarHash)
+      if (ownersList.some(o => {
+        const h = (o.aadhaarNumber || o.aadhaarHash || '').replace(/\D/g, '');
+        return h === userHash || h === userRaw;
+      })) return true;
 
       // Demo citizen fallbacks for initial seeded data
       if (userRaw === '999900010010' && oName.includes('priya')) return true;
