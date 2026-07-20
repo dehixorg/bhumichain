@@ -258,16 +258,15 @@ router.get(
       mockTransfers.forEach(t => mergedMap.set(t.transferId, t));
 
       const myTransfers = Array.from(mergedMap.values()).filter(t => {
+        if (t.status !== 'PENDING_BUYER_CONSENT') return false;
+        
         // Normalize stored Aadhaar to digits for comparison
-        const sDigits = (t.sellerAadhaarNumber || '').toString().replace(/\D/g, '');
         const bDigits = (t.buyerAadhaarNumber || '').toString().replace(/\D/g, '');
         const bName = (t.buyerName || '').toLowerCase();
-        const sName = (t.sellerName || '').toLowerCase();
-        if (userRawNumber && sDigits && sDigits === userRawNumber) return true;
+        
         if (userRawNumber && bDigits && bDigits === userRawNumber) return true;
-        if (userHash && (t.sellerAadhaarNumber === userHash || t.buyerAadhaarNumber === userHash)) return true;
+        if (userHash && t.buyerAadhaarNumber === userHash) return true;
         if (userName && bName && (bName.includes(userName) || userName.includes(bName))) return true;
-        if (userName && sName && (sName.includes(userName) || userName.includes(sName))) return true;
         return false;
       });
 
@@ -686,25 +685,5 @@ router.post(
     }
   },
 );
-
-// GET /api/transfer/my-pending — returns transfers pending buyer consent
-router.get('/my-pending', authenticate, requireRole(ROLES.CITIZEN), async (req, res) => {
-  try {
-    const fs = require('fs');
-    if (fs.existsSync('/tmp/bhumichain_history_cleared.json')) return res.json([]);
-    const all = await evaluate('property-transfer', 'QueryPendingTransfers', []);
-    const userDigits = (req.user.aadhaarNumber || req.user.aadhaar || req.user.aadhaarNumber || '').replace(/\D/g, '');
-    const userHash = req.user.aadhaarNumber || '';
-    const pending = Array.isArray(all) ? all.filter(t => {
-      if (t.status !== 'PENDING_BUYER_CONSENT') return false;
-      const bHash = (t.buyerAadhaarNumber || '').replace(/\D/g, '');
-      return bHash === userDigits || bHash === userHash || t.buyerAadhaarNumber === userHash;
-    }) : [];
-    res.json(pending);
-  } catch (e) {
-    console.warn('[Transfer] Real chaincode failed for my-pending, returning empty array', e.message);
-    res.json([]);
-  }
-});
 
 module.exports = router;
