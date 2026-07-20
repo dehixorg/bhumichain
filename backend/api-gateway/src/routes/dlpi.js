@@ -53,8 +53,17 @@ const dlpiParam = param('dlpiId').matches(/^DLPI-[A-Z0-9-]+$/);
 
 // GET /api/dlpi/debug-aadhaar?aadhaar=999900010012
 // Debug endpoint: shows exactly what scans and DLPIs would be returned for a given Aadhaar
-router.get('/debug-aadhaar', authenticate, async (req, res) => {
-  const aadhaar = (req.query.aadhaar || req.user.aadhaarNumber || '').replace(/\D/g, '');
+// No auth required — dev/demo only. Protected by AADHAAR_MOCK=true env check.
+router.get('/debug-aadhaar', async (req, res) => {
+  // Only available in mock/demo mode for safety
+  const isDemoMode = process.env.AADHAAR_MOCK === 'true' || process.env.FABRIC_MODE === 'mock';
+  if (!isDemoMode) {
+    return res.status(403).json({ error: 'Only available in demo/mock mode' });
+  }
+  const aadhaar = (req.query.aadhaar || '').replace(/\D/g, '');
+  if (!aadhaar) {
+    return res.status(400).json({ error: 'Provide ?aadhaar=XXXXXXXXXXXX in the query string' });
+  }
   const report = { aadhaar, matches: [], allScans: [], onChainDLPIs: [], filterDecisions: [] };
 
   // 1. Fetch on-chain DLPIs
@@ -82,9 +91,11 @@ router.get('/debug-aadhaar', authenticate, async (req, res) => {
     // Check each scan against the Aadhaar
     report.filterDecisions = allScans.map(s => {
       const khatedars = s.extraction?.khatedars || [];
-      const khatedarMatch = khatedars.some(k => k.aadhaarNumber === aadhaar);
-      const ownerMatch = (s.owners || []).some(o => o.aadhaarNumber === aadhaar);
-      const directMatch = s.ownerAadhaarHash === aadhaar || s.ownerAadhaarNumber === aadhaar;
+      const khatedarMatch = khatedars.some(k => (k.aadhaarNumber || '').replace(/\D/g,'') === aadhaar);
+      const ownerMatch = (s.owners || []).some(o => (o.aadhaarNumber || '').replace(/\D/g,'') === aadhaar);
+      const directOwnerNum = (s.ownerAadhaarNumber || '').replace(/\D/g,'');
+      const directOwnerHash = (s.ownerAadhaarHash || '').replace(/\D/g,'');
+      const directMatch = directOwnerNum === aadhaar || directOwnerHash === aadhaar;
       const matched = khatedarMatch || ownerMatch || directMatch;
       if (matched) report.matches.push(s.suggestedDlpiId);
       return {
@@ -98,6 +109,7 @@ router.get('/debug-aadhaar', authenticate, async (req, res) => {
         ownerMatch,
         directMatch,
         WILL_SHOW: matched,
+        WHY_NOT: !matched ? `ownerAadhaarNumber=${s.ownerAadhaarNumber} != ${aadhaar}, khatedars=${JSON.stringify(khatedars.map(k=>k.aadhaarNumber))}` : 'matched!',
       };
     });
   } catch (e) {
