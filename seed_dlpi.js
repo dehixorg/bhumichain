@@ -19,7 +19,7 @@ async function run() {
     scheduleVArea: false,
     initialOwners: [
       {
-        aadhaarHash: 'sha256:heir1ankur3f8e2d1c7b4a09f6e5d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8',
+        aadhaarNumber: '999900010014',
         name: 'Ankur Singh (Legal Heir, 1/3 share)',
         share: '1/1',
         shareDecimal: 1.0,

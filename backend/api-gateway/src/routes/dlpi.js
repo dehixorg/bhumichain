@@ -83,7 +83,7 @@ router.get('/debug-aadhaar', async (req, res) => {
       suggestedDlpiId: s.suggestedDlpiId,
       status: s.status,
       ownerAadhaarNumber: s.ownerAadhaarNumber,
-      ownerAadhaarHash: s.ownerAadhaarHash,
+      ownerAadhaarNumber: s.ownerAadhaarNumber,
       khatedars: (s.extraction?.khatedars || []).map(k => ({ name: k.name, aadhaarNumber: k.aadhaarNumber })),
       owners: s.owners || [],
     }));
@@ -94,7 +94,7 @@ router.get('/debug-aadhaar', async (req, res) => {
       const khatedarMatch = khatedars.some(k => (k.aadhaarNumber || '').replace(/\D/g,'') === aadhaar);
       const ownerMatch = (s.owners || []).some(o => (o.aadhaarNumber || '').replace(/\D/g,'') === aadhaar);
       const directOwnerNum = (s.ownerAadhaarNumber || '').replace(/\D/g,'');
-      const directOwnerHash = (s.ownerAadhaarHash || '').replace(/\D/g,'');
+      const directOwnerHash = (s.ownerAadhaarNumber || '').replace(/\D/g,'');
       const directMatch = directOwnerNum === aadhaar || directOwnerHash === aadhaar;
       const matched = khatedarMatch || ownerMatch || directMatch;
       if (matched) report.matches.push(s.suggestedDlpiId);
@@ -180,7 +180,7 @@ router.get('/my-parcels', authenticate, requireRole(ROLES.CITIZEN), async (req, 
         });
         
         const directOwnerNum = (s.ownerAadhaarNumber || '').replace(/\D/g, '');
-        const directOwnerHash = (s.ownerAadhaarHash || '').replace(/\D/g, '');
+        const directOwnerHash = (s.ownerAadhaarNumber || '').replace(/\D/g, '');
         const hasDirectHashMatch = directOwnerNum === userHash || directOwnerNum === userRaw ||
                                    directOwnerHash === userHash || directOwnerHash === userRaw;
 
@@ -200,7 +200,7 @@ router.get('/my-parcels', authenticate, requireRole(ROLES.CITIZEN), async (req, 
           isTribal: false,
           ownerName: ext.khatedars && ext.khatedars.length > 0 ? ext.khatedars[0].name : 'Unknown',
           owners: s.owners && s.owners.length > 0 ? s.owners : (
-            (ext.khatedars && ext.khatedars.length > 0) ? ext.khatedars : [ { name: 'Unknown', aadhaarNumber: s.ownerAadhaarHash || s.ownerAadhaarNumber || '' } ]
+            (ext.khatedars && ext.khatedars.length > 0) ? ext.khatedars : [ { name: 'Unknown', aadhaarNumber: s.ownerAadhaarNumber || s.ownerAadhaarNumber || '' } ]
           ).map(k => ({
             name: k.name,
             aadhaarNumber: k.aadhaarNumber || userHash || userRaw,
@@ -212,7 +212,7 @@ router.get('/my-parcels', authenticate, requireRole(ROLES.CITIZEN), async (req, 
           submittedAt: s.createdAt || new Date().toISOString(),
           tehsil: ext.tehsil || 'Dadri',
           gram: ext.village || 'Dadri',
-          owner: { name: ext.khatedars && ext.khatedars.length > 0 ? ext.khatedars[0].name : 'Unknown', aadhaarNumber: s.ownerAadhaarHash || s.ownerAadhaarNumber || '' }
+          owner: { name: ext.khatedars && ext.khatedars.length > 0 ? ext.khatedars[0].name : 'Unknown', aadhaarNumber: s.ownerAadhaarNumber || s.ownerAadhaarNumber || '' }
         };
       });
     } catch (rsErr) {
@@ -271,28 +271,28 @@ router.get('/my-parcels', authenticate, requireRole(ROLES.CITIZEN), async (req, 
     });
 
     const adapted = finalParcels.map(p => {
-      // Normalize on-chain DLPI owners: aadhaarHash → aadhaarNumber
+      // Normalize on-chain DLPI owners: aadhaarNumber → aadhaarNumber
       if (Array.isArray(p.owners)) {
         p.owners = p.owners.map(o => ({
           ...o,
-          aadhaarNumber: o.aadhaarNumber || o.aadhaarHash || '',
+          aadhaarNumber: o.aadhaarNumber || o.aadhaarNumber || '',
         }));
       }
       if (Array.isArray(p.initialOwners)) {
         p.initialOwners = p.initialOwners.map(o => ({
           ...o,
-          aadhaarNumber: o.aadhaarNumber || o.aadhaarHash || '',
+          aadhaarNumber: o.aadhaarNumber || o.aadhaarNumber || '',
         }));
       }
       if (p.owners && p.owners.length > 0 && !p.owner) {
         p.owner = {
           name: p.owners[0].name,
-          aadhaarNumber: p.owners[0].aadhaarNumber || p.owners[0].aadhaarHash || '',
+          aadhaarNumber: p.owners[0].aadhaarNumber || p.owners[0].aadhaarNumber || '',
         };
       }
       if (p.initialOwners && p.initialOwners.length > 0 && (!p.owners || p.owners.length === 0)) {
         p.owners = p.initialOwners;
-        p.owner = { name: p.initialOwners[0].name, aadhaarNumber: p.initialOwners[0].aadhaarNumber || p.initialOwners[0].aadhaarHash || '' };
+        p.owner = { name: p.initialOwners[0].name, aadhaarNumber: p.initialOwners[0].aadhaarNumber || p.initialOwners[0].aadhaarNumber || '' };
       }
       // Override with latest mutation / atomic claim transfer
       if (atomicClaims[p.dlpiId]) {
@@ -319,16 +319,16 @@ router.get('/my-parcels', authenticate, requireRole(ROLES.CITIZEN), async (req, 
       return p;
     }).filter(p => {
       // Strictly verify current ownership against logged in citizen
-      // Check both aadhaarNumber AND aadhaarHash (on-chain DLPIs use aadhaarHash)
-      const oHash = p.owner?.aadhaarNumber || p.owner?.aadhaarHash || '';
+      // Check both aadhaarNumber AND aadhaarNumber (on-chain DLPIs use aadhaarNumber)
+      const oHash = p.owner?.aadhaarNumber || p.owner?.aadhaarNumber || '';
       const oName = (p.owner?.name || p.ownerName || '').toLowerCase();
       const ownersList = p.owners || [];
 
       if (oHash && (oHash === userHash || oHash === userRaw)) return true;
       if (userName && oName && oName.length > 2 && (oName.includes(userName) || userName.includes(oName))) return true;
-      // Check aadhaarHash AND aadhaarNumber in owners list (on-chain uses aadhaarHash)
+      // Check aadhaarNumber AND aadhaarNumber in owners list (on-chain uses aadhaarNumber)
       if (ownersList.some(o => {
-        const h = (o.aadhaarNumber || o.aadhaarHash || '').replace(/\D/g, '');
+        const h = (o.aadhaarNumber || o.aadhaarNumber || '').replace(/\D/g, '');
         return h === userHash || h === userRaw;
       })) return true;
 
@@ -758,7 +758,7 @@ router.post(
         if (dlpiData) {
           dlpiOnChain = dlpiData;
           if (dlpiData.owners && dlpiData.owners.length > 0) {
-            currentOwnerAadhaar = dlpiData.owners[0].aadhaarNumber || dlpiData.owners[0].aadhaarHash || '';
+            currentOwnerAadhaar = dlpiData.owners[0].aadhaarNumber || dlpiData.owners[0].aadhaarNumber || '';
           }
         }
       } catch (err) {
@@ -771,7 +771,7 @@ router.post(
       if (patwariAadhaar && dlpiOnChain && currentOwnerAadhaar !== patwariAadhaar) {
         console.log(`[scan-approve-tehsildar] Owner mismatch! On-chain: '${currentOwnerAadhaar}', Patwari entered: '${patwariAadhaar}'.`);
         console.log(`[scan-approve-tehsildar] dlpiOnChain.owners:`, JSON.stringify(dlpiOnChain.owners));
-        const sellers = (dlpiOnChain.owners || []).map(o => o.aadhaarNumber || o.aadhaarHash || "");
+        const sellers = (dlpiOnChain.owners || []).map(o => o.aadhaarNumber || o.aadhaarNumber || "");
         const correctOwners = (scan.owners && scan.owners.length > 0)
           ? scan.owners.map(o => ({
               aadhaarNumber: o.aadhaarNumber || patwariAadhaar,
@@ -834,7 +834,7 @@ router.post(
       try {
         const payload = {
           officerAadhaarNumber: req.user.aadhaarNumber || ('sha256:' + '0'.repeat(64)),
-          officerAadhaarHash: req.user.aadhaarNumber || ('sha256:' + '0'.repeat(64)),
+          officerAadhaarNumber: req.user.aadhaarNumber || ('sha256:' + '0'.repeat(64)),
           officerName: req.user.name || 'Tehsildar',
           token: req.headers.authorization ? req.headers.authorization.split(' ')[1] : '',
         };

@@ -728,7 +728,7 @@ module.exports = {
             const oName = (o.name || '').toLowerCase();
             if (oHash && (oHash === ownerHash || oHash === userRaw)) return true;
             if (oRaw && (oRaw === ownerHash || oRaw === userRaw)) return true;
-            if (userName && oName && (oName.includes(userName) || userName.includes(oName))) return true;
+            if (userName && oName && oName.length > 2 && (oName.includes(userName) || userName.includes(oName))) return true;
             if (userRaw === '999900010010' && oName.includes('priya')) return true;
             if (userRaw === '999900010015' && oName.includes('sunita')) return true;
             if (userRaw === '999900010012' && oName.includes('suresh')) return true;

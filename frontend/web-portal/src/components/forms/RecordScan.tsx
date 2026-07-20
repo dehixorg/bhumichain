@@ -306,9 +306,9 @@ function ensureEnglish(obj: any): any {
           scanId:              result.scanId,
           dlpiId,
           officerAadhaarNumber: '999900010003', // mock patwari for now
-          officerAadhaarHash:  'sha256:' + '0'.repeat(64),
+          officerAadhaarNumber:  'sha256:' + '0'.repeat(64),
           ownerAadhaarNumbers: ownerAadhaarNumbers,
-          ownerAadhaarHashes:  ownerAadhaarNumbers,
+          ownerAadhaarNumberes:  ownerAadhaarNumbers,
           owners:              legacyOwners.length > 0 ? legacyOwners : [],  // Fallback for older remote backend versions
           officerName:         'Vijay Singh (Patwari DAD-P1)',
           correctedFields:     Object.keys(edited).length ? edited : undefined,
