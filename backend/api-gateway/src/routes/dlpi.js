@@ -89,7 +89,7 @@ router.get('/my-parcels', authenticate, requireRole(ROLES.CITIZEN), async (req, 
       recordScans = allScans.filter(s => {
         if (!['VERIFIED', 'SEEDED_UNVERIFIED', 'CI_APPROVED', 'SCAN_PENDING_TEHSILDAR', 'SCAN_PENDING_SRO', 'UNDER_REVIEW', 'APPROVED', 'COMPLETED'].includes(s.status)) return false;
         const khatedars = s.extraction?.khatedars || [];
-        return khatedars.some(k => {
+        const hasKhatedarMatch = khatedars.some(k => {
           const kHash = k.aadhaarNumber || '';
           const kName = (k.name || '').toLowerCase();
           if (kHash && (kHash === userHash || kHash === userRaw)) return true;
@@ -99,6 +99,13 @@ router.get('/my-parcels', authenticate, requireRole(ROLES.CITIZEN), async (req, 
           if (userRaw === '999900010012' && kName.includes('suresh')) return true;
           return false;
         });
+        
+        const hasOwnerMatch = (s.owners || []).some(o => {
+          const oHash = o.aadhaarNumber || '';
+          return oHash === userHash || oHash === userRaw;
+        });
+
+        return hasKhatedarMatch || hasOwnerMatch;
       }).map(s => {
         const ext = s.extraction || {};
         return {
