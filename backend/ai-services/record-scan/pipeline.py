@@ -184,6 +184,7 @@ def retrieve_scan(scan_id: str) -> Optional[ScanResult]:
                 data = json.loads(item['resultJson'])
                 data['status'] = item.get('status', 'COMPLETED')
                 data['ownerAadhaarNumber'] = item.get('ownerAadhaarNumber')
+                data['owners'] = item.get('owners')
                 data['patwariName'] = item.get('patwariName')
                 data['patwariHash'] = item.get('patwariHash')
                 return _ensure_english_only(ScanResult(**data))
@@ -197,6 +198,7 @@ def retrieve_scan(scan_id: str) -> Optional[ScanResult]:
         data = json.loads(item['resultJson'])
         data['status'] = item.get('status', 'COMPLETED')
         data['ownerAadhaarNumber'] = item.get('ownerAadhaarNumber')
+        data['owners'] = item.get('owners')
         data['patwariName'] = item.get('patwariName')
         data['patwariHash'] = item.get('patwariHash')
         return _ensure_english_only(ScanResult(**data))
@@ -281,6 +283,7 @@ def query_scans_by_status(status: Optional[str]) -> list[ScanResult]:
                 data = json.loads(item['resultJson'])
                 data['status'] = item['status']
                 data['ownerAadhaarNumber'] = item.get('ownerAadhaarNumber')
+                data['owners'] = item.get('owners')
                 data['patwariName'] = item.get('patwariName')
                 data['patwariHash'] = item.get('patwariHash')
                 results.append(_ensure_english_only(ScanResult(**data)))
@@ -296,6 +299,7 @@ def query_scans_by_status(status: Optional[str]) -> list[ScanResult]:
             data = json.loads(item['resultJson'])
             data['status'] = item['status']
             data['ownerAadhaarNumber'] = item.get('ownerAadhaarNumber')
+            data['owners'] = item.get('owners')
             data['patwariName'] = item.get('patwariName')
             data['patwariHash'] = item.get('patwariHash')
             results.append(_ensure_english_only(ScanResult(**data)))

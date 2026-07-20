@@ -84,3 +84,8 @@ class ScanResult(BaseModel):
     suggestedDlpiId: str = ""
     processingTimeMs: int = 0
     storedInDynamoDB: bool = False
+    status: str = 'COMPLETED'
+    owners: Optional[List[dict]] = None
+    ownerAadhaarNumber: Optional[str] = None
+    patwariName: Optional[str] = None
+    patwariHash: Optional[str] = None
