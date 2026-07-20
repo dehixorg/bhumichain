@@ -118,7 +118,7 @@ router.get('/my-parcels', authenticate, requireRole(ROLES.CITIZEN), async (req, 
           encumbranceStatus: 'CLEAR',
           isTribal: false,
           ownerName: ext.khatedars && ext.khatedars.length > 0 ? ext.khatedars[0].name : (req.user.name || 'Unknown'),
-          owners: (ext.khatedars || []).map(k => ({
+          owners: s.owners && s.owners.length > 0 ? s.owners : (ext.khatedars || []).map(k => ({
             name: k.name,
             aadhaarNumber: k.aadhaarNumber || userHash || userRaw,
             share: k.share || '1/1',
