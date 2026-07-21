@@ -288,6 +288,12 @@ export default function SuccessionPage() {
       try { sc = await getSuccessionCase(res.caseId || 'SUC-DEMO'); } catch {}
       const activeHeirs = (res.heirs && Array.isArray(res.heirs) && res.heirs.length > 0) ? res.heirs : (sc?.heirs || []);
       setCaseData(sc || res);
+      // Persist caseId so handleConsent works even if caseData gets lost
+      const activeCaseId = (sc?.caseId || res?.caseId);
+      if (activeCaseId && typeof window !== 'undefined') {
+        localStorage.setItem('bhumichain_active_succession_caseId', activeCaseId);
+        localStorage.setItem('bhumichain_active_succession_dlpiId', crsExtraction?.dlpiId || selectedDlpiId || DEMO_DLPI);
+      }
       setHeirs(activeHeirs.map((h: any, i: number) => ({ ...h, heirId: h.heirId || `HEIR-DYN-${i+1}`, aadhaar: h.aadhaar || h.aadhaarNumber || h.inheritorAadhaarNumber, hasConsented: false, hasObjected: false })));
       triggerMock('scene3_mutation_alert');
       toast.success('Case created! eSign requests sent to all heirs.');
@@ -316,8 +322,15 @@ export default function SuccessionPage() {
       toast.error(`Please enter a valid 12-digit Aadhaar Number for ${heir.name} (` + (entered ? `${entered.length} digits entered` : 'field empty') + `) to digitally verify & eSign.`);
       return;
     }
+    // Resolve caseId: React state first, then localStorage fallback
+    const resolvedCaseId = caseData?.caseId
+      || (typeof window !== 'undefined' ? localStorage.getItem('bhumichain_active_succession_caseId') : null)
+      || DEMO_DLPI;
+    const resolvedDlpiId = caseData?.dlpiId
+      || (typeof window !== 'undefined' ? localStorage.getItem('bhumichain_active_succession_dlpiId') : null)
+      || DEMO_DLPI;
     try {
-      await recordHeirConsent(caseData?.caseId || DEMO_DLPI, {
+      await recordHeirConsent(resolvedCaseId, {
         heirAadhaarNumber: entered,
         eSignTxHash: '0x' + Array.from({length:40}, () => Math.floor(Math.random()*16).toString(16)).join(''),
       });
@@ -325,6 +338,18 @@ export default function SuccessionPage() {
     setHeirs(prev => {
       const updated = prev.map(h => h.heirId === heirId ? { ...h, hasConsented: true, consentedAt: new Date().toISOString(), aadhaar: entered, aadhaarNumber: entered } : h);
       if (updated.every(h => h.hasConsented)) {
+        // All heirs signed — call mark-ready to guarantee officer queue update
+        const signedAadhaar = updated.map(h => h.aadhaar || h.aadhaarNumber || '').filter(Boolean);
+        apiFetch(`/api/succession/${resolvedCaseId}/mark-ready`, {
+          method: 'POST',
+          body: JSON.stringify({
+            dlpiId: resolvedDlpiId,
+            deceasedName: caseData?.deceasedName || crsExtraction?.name || 'Deceased',
+            heirs: updated.map(h => ({ name: h.name, aadhaar: h.aadhaar, aadhaarNumber: h.aadhaar })),
+            heirAadhaarList: signedAadhaar,
+            consentedAadhaar: signedAadhaar,
+          }),
+        }).catch(e => console.warn('[mark-ready]', e));
         toast.success('🎉 All heirs have eSigned via Aadhaar! Case forwarded to Tehsildar Portal for virasat execution.');
         setStep('tehsildar_final');
       } else {
@@ -332,7 +357,7 @@ export default function SuccessionPage() {
       }
       return updated;
     });
-  }, [heirs, caseData, heirAadhaarInputs]);
+  }, [heirs, caseData, crsExtraction, heirAadhaarInputs]);
 
   // Step 5 handler (Check status from Tehsildar Portal OR demo approve if requested)
   const handleTehsildarFinalApprove = async () => {

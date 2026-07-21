@@ -405,6 +405,62 @@ router.get('/pending/all', authenticate, requireRole(ROLES.TEHSILDAR, ROLES.COLL
   }
 });
 
+// POST /api/succession/:caseId/mark-ready — citizen calls this after all heirs eSign
+// Forces status to PENDING_TEHSILDAR_APPROVAL regardless of on-chain state
+router.post('/:caseId/mark-ready', authenticate, async (req, res) => {
+  try {
+    const { caseId } = req.params;
+    const diskPath = '/tmp/bhumichain_succession_cases.json';
+    global.successionCases = global.successionCases || {};
+
+    // Load from disk first
+    try {
+      if (fs.existsSync(diskPath)) {
+        const diskCases = JSON.parse(fs.readFileSync(diskPath, 'utf8'));
+        Object.assign(global.successionCases, diskCases);
+      }
+    } catch (e) {}
+
+    let sc = global.successionCases[caseId];
+
+    // If case doesn't exist in memory yet, create a minimal record from request body
+    if (!sc) {
+      sc = {
+        caseId,
+        dlpiId: req.body.dlpiId || caseId,
+        deceasedName: req.body.deceasedName || 'Deceased',
+        heirs: req.body.heirs || [],
+        heirAadhaarList: req.body.heirAadhaarList || [],
+        consentedAadhaar: req.body.consentedAadhaar || [],
+        createdAt: new Date().toISOString(),
+      };
+    }
+
+    // Force status to PENDING_TEHSILDAR_APPROVAL
+    sc.status = 'PENDING_TEHSILDAR_APPROVAL';
+    sc.allHeirsConsentedAt = new Date().toISOString();
+    global.successionCases[caseId] = sc;
+
+    // Save to disk
+    try {
+      fs.writeFileSync(diskPath, JSON.stringify(global.successionCases, null, 2));
+    } catch (e) {
+      console.warn('[mark-ready] Disk write failed:', e.message);
+    }
+
+    broadcast('AllHeirsConsented', {
+      caseId,
+      dlpiId: sc.dlpiId,
+      message: '✅ All heirs have eSigned. Case forwarded to Tehsildar for final virasat execution.',
+    });
+
+    console.log(`[Succession] Case ${caseId} marked PENDING_TEHSILDAR_APPROVAL by citizen`);
+    res.json({ success: true, caseId, status: 'PENDING_TEHSILDAR_APPROVAL' });
+  } catch (e) {
+    res.status(500).json({ error: 'SERVER_ERROR', message: e.message });
+  }
+});
+
 // GET /api/succession/:caseId
 router.get('/:caseId', authenticate, async (req, res) => {
   try {
