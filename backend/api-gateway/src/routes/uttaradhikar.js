@@ -76,7 +76,7 @@ router.post(
         dlpiId,
         inheritorName,
         inheritorAadhaarNumber: cleanDigits,
-        status: 'PENDING_TEHSILDAR',
+        status: 'APPROVED',
         nominatedAt: new Date().toISOString(),
       };
       global.inheritorNominations.push(nomination);

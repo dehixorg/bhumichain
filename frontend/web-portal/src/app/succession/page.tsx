@@ -26,11 +26,10 @@ const maskAadhaar = (val?: string | null): string => {
 };
 const delay = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 
-type WStep = 'add_heir'|'tehsildar_approval'|'upload_document'|'esign_heirs'|'tehsildar_final'|'blockchain_division';
+type WStep = 'add_heir'|'upload_document'|'esign_heirs'|'tehsildar_final'|'blockchain_division';
 
 const STEPS: { id: WStep; label: string }[] = [
   { id: 'add_heir',           label: 'Add Heir' },
-  { id: 'tehsildar_approval', label: 'Tehsildar Approval' },
   { id: 'upload_document',    label: 'Upload Document' },
   { id: 'esign_heirs',        label: 'eSign by All Heirs' },
   { id: 'tehsildar_final',    label: 'Tehsildar Verification' },
@@ -209,11 +208,11 @@ export default function SuccessionPage() {
       for (const heir of valid) {
         await addInheritorNomination({ dlpiId: selectedDlpiId, inheritorName: heir.name.trim(), inheritorAadhaarNumber: heir.aadhaar });
       }
-      toast.success(`${valid.length} heir(s) submitted for Tehsildar Approval!`);
+      toast.success(`${valid.length} heir(s) added successfully!`);
       const noms = await getInheritorNominations();
       const nomArr = Array.isArray(noms) ? noms : (Array.isArray(noms?.nominations) ? noms.nominations : []);
       setNominations(nomArr);
-      setStep('tehsildar_approval');
+      setStep('upload_document');
     } catch (err: any) {
       const msg = err?.response?.data?.message || err?.response?.data?.error || err?.message || 'Unknown error submitting heirs';
       setFrontendError(`[Step 1 Error] ${msg}`);
@@ -406,7 +405,6 @@ export default function SuccessionPage() {
 
   const stepHint: Record<WStep,string> = {
     add_heir: 'Select your property and add all legal heirs with their Aadhaar numbers.',
-    tehsildar_approval: 'Wait for Tehsildar to review and approve the heir list.',
     upload_document: 'Upload the CRS death certificate — AI will extract details.',
     esign_heirs: 'Each heir must click eSign to consent to their land share.',
     tehsildar_final: 'Tehsildar reviews all eSigns and gives final approval.',
@@ -476,7 +474,7 @@ export default function SuccessionPage() {
                       <div className="bg-[#0F4C81] p-2.5 rounded-xl text-white shadow-sm"><Landmark className="w-5 h-5" /></div>
                       <div>
                         <h2 className="font-extrabold text-gray-900 text-base">Select Virasat (Succession) Action</h2>
-                        <p className="text-xs text-gray-500 mt-0.5">Complete Option 1 first to get Tehsildar verification, which unlocks Option 2 for Death Certificate OCR.</p>
+                        <p className="text-xs text-gray-500 mt-0.5">Complete Option 1 first to add your heirs, which automatically unlocks Option 2 for Death Certificate OCR.</p>
                       </div>
                     </div>
 
@@ -511,7 +509,7 @@ export default function SuccessionPage() {
                           <span>Nominate Legal Heirs</span>
                         </div>
                         <p className={clsx("text-xs leading-relaxed", step === 'add_heir' ? "text-blue-100" : "text-gray-600")}>
-                          Submit full name & 12-digit Aadhaar of all legal heirs for your property. Must be verified & approved by Tehsildar first.
+                          Submit full name & 12-digit Aadhaar of all legal heirs for your property. This unlocks the death certificate upload step.
                         </p>
                       </div>
                       <div className={clsx("mt-4 flex items-center justify-between text-xs font-bold pt-3 border-t", step === 'add_heir' ? "border-white/20 text-amber-300" : "border-gray-200 text-[#0F4C81]")}>
@@ -526,7 +524,7 @@ export default function SuccessionPage() {
                         if (isApprovedHeirGlobal) {
                           setStep('upload_document');
                         } else {
-                          toast.error("Option 2 is locked! You must first submit Option 1 (Nominate Legal Heirs) and get Tehsildar approval before uploading the Death Certificate. Only approved heirs can access this.");
+                          toast.error("Option 2 is locked! You must first submit Option 1 (Nominate Legal Heirs) before uploading the Death Certificate.");
                         }
                       }}
                       className={clsx(
@@ -684,67 +682,9 @@ export default function SuccessionPage() {
                 </div>
               )}
 
-              {/* STEP 2: TEHSILDAR APPROVAL */}
-              {step === 'tehsildar_approval' && (
-                <div className="space-y-5">
-                  <div className="card">
-                    <div className="flex items-center gap-3 mb-5 pb-4 border-b border-gray-100">
-                      <div className="bg-[#0F4C81]/10 p-2.5 rounded-lg"><BadgeCheck className="w-6 h-6 text-[#0F4C81]" /></div>
-                      <div>
-                        <h2 className="text-base font-bold text-gray-900">Step 2 — Tehsildar Approval</h2>
-                        <p className="text-xs text-gray-500 mt-0.5">{isTehsildar ? 'Review and approve submitted heir nominations.' : 'Waiting for Tehsildar to review and approve your submitted heir nominations.'}</p>
-                      </div>
-                      {isTehsildar && <span className="ml-auto bg-purple-100 text-purple-700 text-xs font-bold px-2.5 py-1 rounded-full border border-purple-200">🏛 Tehsildar View</span>}
-                    </div>
-                    {step2List.length === 0 ? (
-                      <div className="text-center py-10 text-gray-400">
-                        <AlertTriangle className="w-8 h-8 mx-auto mb-2 opacity-40" />
-                        <p className="text-sm">No nominations found.</p>
-                        <button onClick={() => setStep('add_heir')} className="mt-3 btn-primary text-sm py-1.5 px-4">← Back to Add Heir</button>
-                      </div>
-                    ) : (
-                      <div className="space-y-3">
-                        {step2List.map(n => (
-                          <div key={n.nominationId} className={clsx('flex flex-col sm:flex-row items-start sm:items-center gap-3 p-4 rounded-xl border transition-all', n.status === 'APPROVED' ? 'bg-emerald-50 border-emerald-200' : 'bg-gray-50 border-gray-200')}>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2">
-                                <span className="font-bold text-gray-900">{n.inheritorName}</span>
-                                <span className="text-xs text-gray-500 font-mono bg-gray-100 px-1.5 py-0.5 rounded">{n.dlpiId}</span>
-                              </div>
-                              <div className="text-xs text-gray-500 mt-0.5">Aadhaar: XXXX-XXXX-{n.inheritorAadhaarNumber?.slice(8)} · {n.nominatedAt ? format(new Date(n.nominatedAt), 'dd MMM yyyy') : '—'}</div>
-                              {n.status === 'APPROVED' && n.approvedAt && <div className="text-xs text-emerald-700 font-semibold mt-1">✓ Approved on {format(new Date(n.approvedAt), 'dd MMM yyyy, HH:mm')}</div>}
-                            </div>
-                            <div className="shrink-0">
-                              {n.status === 'APPROVED' ? (
-                                <span className="flex items-center gap-1.5 text-sm font-bold text-emerald-700 bg-emerald-100 border border-emerald-300 px-3 py-1.5 rounded-full"><CheckCircle className="w-4 h-4" /> Approved</span>
-                              ) : (
-                                isTehsildar ? (
-                                  <button onClick={() => approveNomination(n.nominationId)} className="bg-[#0F4C81] hover:bg-[#0a3860] text-white text-sm font-bold px-4 py-2 rounded-lg shadow flex items-center gap-1.5 transition-colors"><CheckCircle className="w-4 h-4" /> Approve</button>
-                                ) : (
-                                  <span className="flex items-center gap-1 text-xs font-bold text-amber-700 bg-amber-50 border border-amber-300 px-3 py-1.5 rounded-full"><Clock className="w-3.5 h-3.5" /> Awaiting Tehsildar</span>
-                                )
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    {approvedNoms.length > 0 && (
-                      <div className="mt-5 p-4 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between gap-4">
-                        <div>
-                          <div className="font-bold text-emerald-800 text-sm">{approvedNoms.length} heir(s) Tehsildar-approved!</div>
-                          <div className="text-xs text-emerald-600 mt-0.5">Approved heirs can upload the death certificate.</div>
-                        </div>
-                        <button onClick={() => setStep('upload_document')} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-2.5 rounded-lg flex items-center gap-2 text-sm transition-colors shrink-0">
-                          Next: Upload Document <ArrowRight className="w-4 h-4" />
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
 
-              {/* STEP 3: UPLOAD DOCUMENT */}
+
+              {/* STEP 2: UPLOAD DOCUMENT */}
               {step === 'upload_document' && (
                 <div className="space-y-5">
                   <div className="bg-white rounded-2xl p-5 border border-gray-200 shadow-sm">
@@ -782,7 +722,7 @@ export default function SuccessionPage() {
                     <div className="flex items-center gap-2 mb-5 pb-4 border-b border-gray-100">
                       <Upload className="w-5 h-5 text-[#0F4C81]" />
                       <div>
-                        <h2 className="font-bold text-gray-900">Step 3 — Upload Death Certificate</h2>
+                        <h2 className="font-bold text-gray-900">Step 2 - Upload Death Certificate</h2>
                         <p className="text-xs text-gray-500 mt-0.5">AI will OCR-extract details (Azure Document Intelligence)</p>
                       </div>
                       {crsExtraction && <span className="ml-auto flex items-center gap-1 text-xs text-emerald-700 font-bold bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full"><CheckCircle className="w-3 h-3" /> Verified</span>}
@@ -824,7 +764,7 @@ export default function SuccessionPage() {
                 </div>
               )}
 
-              {/* STEP 4: eSIGN BY ALL HEIRS */}
+              {/* STEP 3: eSIGN BY ALL HEIRS */}
               {step === 'esign_heirs' && (
                 <div className="space-y-5">
                   <div className="flex items-center gap-3 bg-purple-950 border border-purple-700 rounded-xl px-5 py-3.5">
@@ -838,7 +778,7 @@ export default function SuccessionPage() {
                     <div className="flex items-center gap-3 pb-4 border-b border-gray-100">
                       <div className="bg-[#0F4C81]/10 p-2.5 rounded-lg"><Shield className="w-5 h-5 text-[#0F4C81]" /></div>
                       <div>
-                        <h2 className="font-bold text-gray-900">Step 4 — eSign by All Heirs (`Requests Sent`)</h2>
+                        <h2 className="font-bold text-gray-900">Step 3 - eSign by All Heirs (`Requests Sent`)</h2>
                         <p className="text-xs text-gray-500 mt-0.5">e-Sign verification requests are pending across each inheritor's portal.</p>
                       </div>
                       <div className="ml-auto text-sm font-bold text-[#0F4C81]">{heirs.filter(h => h.hasConsented).length}/{heirs.length} Signed</div>
@@ -922,14 +862,14 @@ export default function SuccessionPage() {
                 </div>
               )}
 
-              {/* STEP 5: TEHSILDAR FINAL VERIFICATION */}
+              {/* STEP 4: TEHSILDAR FINAL VERIFICATION */}
               {step === 'tehsildar_final' && (
                 <div className="space-y-5">
                   <div className="card">
                     <div className="flex items-center gap-3 mb-5 pb-4 border-b border-gray-100">
                       <div className="bg-amber-100 p-2.5 rounded-lg"><Landmark className="w-6 h-6 text-amber-600" /></div>
                       <div>
-                        <h2 className="font-bold text-gray-900">Step 5 — Tehsildar Final Verification</h2>
+                        <h2 className="font-bold text-gray-900">Step 4 - Tehsildar Final Verification</h2>
                         <p className="text-xs text-gray-500 mt-0.5">All heirs eSigned. Tehsildar reviews and gives final approval for land division.</p>
                       </div>
                     </div>
@@ -990,14 +930,14 @@ export default function SuccessionPage() {
                 </div>
               )}
 
-              {/* STEP 6: BLOCKCHAIN LAND DIVISION */}
+              {/* STEP 5: BLOCKCHAIN LAND DIVISION */}
               {step === 'blockchain_division' && (
                 <div className="space-y-5">
                   <div className="bg-gradient-to-br from-slate-900 to-[#0F4C81] text-white rounded-xl shadow-xl p-6 border border-blue-400/30">
                     <div className="flex items-center gap-3 mb-5 pb-4 border-b border-white/15">
                       <div className="bg-white/15 p-2.5 rounded-lg border border-white/20"><Database className="w-6 h-6 text-blue-200" /></div>
                       <div>
-                        <h2 className="text-lg font-bold">Step 6 — Blockchain Land Division</h2>
+                        <h2 className="text-lg font-bold">Step 5 - Blockchain Land Division</h2>
                         <p className="text-xs text-blue-200 mt-0.5">Atomic mutation on Hyperledger Fabric — removes deceased, grants each heir their share.</p>
                       </div>
                       <span className="ml-auto bg-emerald-500 text-white text-xs font-bold px-3 py-1 rounded-full uppercase">Ready</span>
