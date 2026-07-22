@@ -606,14 +606,21 @@ router.post(
           fs.writeFileSync('/tmp/bhumichain_mock_transfers.json', JSON.stringify(transfers, null, 2));
         }
 
-        if (transferObj && transferObj.dlpiId && transferObj.buyerAadhaarNumber) {
+        if (transferObj && transferObj.dlpiId) {
+          const buyerName = transferObj.buyerName || 'Buyer';
+          const buyerAadhaar = (transferObj.buyerAadhaarNumber || transferObj.buyerAadhaar || '').replace(/\D/g, '');
+          const sellerName = transferObj.sellerName || 'Seller';
+          const sellerAadhaar = (transferObj.sellerAadhaarNumber || transferObj.sellerAadhaar || '').replace(/\D/g, '');
+
           let claims = {};
           try { claims = JSON.parse(fs.readFileSync('/tmp/bhumichain_atomic_claims.json', 'utf8')); } catch(e) {}
           claims[transferObj.dlpiId] = {
             txHash: req.params.transferId,
             dlpiId: transferObj.dlpiId,
-            claimedBy: transferObj.buyerName,
-            aadhaarNumber: transferObj.buyerAadhaarNumber,
+            claimedBy: buyerName,
+            aadhaarNumber: buyerAadhaar,
+            sellerName,
+            sellerAadhaarNumber: sellerAadhaar,
             claimedAt: new Date().toISOString(),
             status: 'MUTATED_AND_TRANSFERRED'
           };
@@ -628,9 +635,9 @@ router.post(
               foundInSeeded = true;
               return {
                 ...p,
-                claimStatus: 'OWNER_VERIFIED',
-                ownerName: transferObj.buyerName,
-                owners: [{ name: transferObj.buyerName, aadhaarNumber: transferObj.buyerAadhaarNumber }]
+                claimStatus: 'VERIFIED',
+                ownerName: buyerName,
+                owners: [{ name: buyerName, aadhaarNumber: buyerAadhaar }]
               };
             }
             return p;
@@ -640,18 +647,34 @@ router.post(
               dlpiId: transferObj.dlpiId,
               khataNo: '102',
               khasraNo: '1200/102',
-              gram: 'Gharbara',
+              gram: 'Dadri',
               tehsil: 'Dadri',
               district: 'Gautam Buddha Nagar',
               areaHectares: 1.2,
               encumbranceStatus: 'CLEAR',
               landType: 'Bhumidhari',
-              claimStatus: 'OWNER_VERIFIED',
-              ownerName: transferObj.buyerName,
-              owners: [{ name: transferObj.buyerName, aadhaarNumber: transferObj.buyerAadhaarNumber }]
+              claimStatus: 'VERIFIED',
+              ownerName: buyerName,
+              owners: [{ name: buyerName, aadhaarNumber: buyerAadhaar }]
             });
           }
           fs.writeFileSync('/tmp/bhumichain_seeded_parcels.json', JSON.stringify(seeded, null, 2));
+
+          // Also record in dynamic mutations
+          let dMuts = [];
+          try { dMuts = JSON.parse(fs.readFileSync('/tmp/bhumichain_dynamic_mutations.json', 'utf8')); } catch(e) {}
+          if (!Array.isArray(dMuts)) dMuts = [];
+          dMuts = dMuts.filter(m => m.dlpiId !== transferObj.dlpiId);
+          dMuts.push({
+            dlpiId: transferObj.dlpiId,
+            status: 'EXECUTED',
+            newOwnerName: buyerName,
+            newOwnerHash: buyerAadhaar,
+            sellerName,
+            sellerAadhaarHash: sellerAadhaar,
+            executedAt: new Date().toISOString()
+          });
+          fs.writeFileSync('/tmp/bhumichain_dynamic_mutations.json', JSON.stringify(dMuts, null, 2));
         }
       } catch(e) {}
 

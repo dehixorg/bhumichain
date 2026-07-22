@@ -241,6 +241,18 @@ router.get('/my-parcels', authenticate, requireRole(ROLES.CITIZEN), async (req, 
     try { dMuts = JSON.parse(fs.readFileSync('/tmp/bhumichain_dynamic_mutations.json', 'utf8')); } catch(e) {}
     const executedMuts = dMuts.filter(m => m.status === 'EXECUTED');
 
+    // Also read mock transfers to track completed transfers & sellers!
+    let mockTransfers = [];
+    try { mockTransfers = JSON.parse(fs.readFileSync('/tmp/bhumichain_mock_transfers.json', 'utf8')); } catch(e) {}
+    const completedTxMap = new Map();
+    if (Array.isArray(mockTransfers)) {
+      mockTransfers.forEach(t => {
+        if (t && t.dlpiId && (t.status === 'COMPLETED' || t.status === 'MUTATED_AND_TRANSFERRED')) {
+          completedTxMap.set(t.dlpiId, t);
+        }
+      });
+    }
+
     let seededParcels = [];
     try { seededParcels = JSON.parse(fs.readFileSync('/tmp/bhumichain_seeded_parcels.json', 'utf8')); } catch(e) {}
     if (Array.isArray(seededParcels)) {
@@ -290,77 +302,131 @@ router.get('/my-parcels', authenticate, requireRole(ROLES.CITIZEN), async (req, 
       if (Array.isArray(p.owners)) {
         p.owners = p.owners.map(o => ({
           ...o,
-          aadhaarNumber: o.aadhaarNumber || o.aadhaarNumber || '',
+          aadhaarNumber: (o.aadhaarNumber || o.aadhaar || '').replace(/\D/g, ''),
         }));
       }
       if (Array.isArray(p.initialOwners)) {
         p.initialOwners = p.initialOwners.map(o => ({
           ...o,
-          aadhaarNumber: o.aadhaarNumber || o.aadhaarNumber || '',
+          aadhaarNumber: (o.aadhaarNumber || o.aadhaar || '').replace(/\D/g, ''),
         }));
       }
       if (p.owners && p.owners.length > 0 && !p.owner) {
         p.owner = {
           name: p.owners[0].name,
-          aadhaarNumber: p.owners[0].aadhaarNumber || p.owners[0].aadhaarNumber || '',
+          aadhaarNumber: (p.owners[0].aadhaarNumber || '').replace(/\D/g, ''),
         };
       }
-      if (p.initialOwners && p.initialOwners.length > 0 && (!p.owners || p.owners.length === 0)) {
-        p.owners = p.initialOwners;
-        p.owner = { name: p.initialOwners[0].name, aadhaarNumber: p.initialOwners[0].aadhaarNumber || p.initialOwners[0].aadhaarNumber || '' };
-      }
+
       // Override with latest mutation / atomic claim transfer
       if (atomicClaims[p.dlpiId]) {
         const claim = atomicClaims[p.dlpiId];
         p.claimStatus = claim.status === 'MUTATED_AND_TRANSFERRED' ? 'VERIFIED' : 'OWNER_VERIFIED';
         p.atomicLock = claim;
         p.ownerName = claim.claimedBy || p.ownerName;
+        const bAadhaar = (claim.aadhaarNumber || '').replace(/\D/g, '');
+        const sAadhaar = (claim.sellerAadhaarNumber || '').replace(/\D/g, '');
         if (claim.heirs && claim.heirs.length > 0) {
           p.owners = claim.heirs;
           p.owner = claim.heirs[0];
-        } else {
-          p.owner = { name: claim.claimedBy || p.owner?.name, aadhaarNumber: claim.aadhaarNumber || p.owner?.aadhaarNumber };
-          p.owners = [{ name: claim.claimedBy || p.owner?.name, aadhaarNumber: claim.aadhaarNumber || p.owner?.aadhaarNumber }];
+        } else if (bAadhaar) {
+          p.owner = { name: claim.claimedBy || p.ownerName, aadhaarNumber: bAadhaar };
+          p.owners = [{ name: claim.claimedBy || p.ownerName, aadhaarNumber: bAadhaar }];
         }
+        if (sAadhaar) p.sellerAadhaarNumber = sAadhaar;
+      }
+
+      // Override with completed mock transfers
+      const compTx = completedTxMap.get(p.dlpiId);
+      if (compTx) {
+        p.claimStatus = 'VERIFIED';
+        const bAadhaar = (compTx.buyerAadhaarNumber || compTx.buyerAadhaar || '').replace(/\D/g, '');
+        const sAadhaar = (compTx.sellerAadhaarNumber || compTx.sellerAadhaar || '').replace(/\D/g, '');
+        p.ownerName = compTx.buyerName || p.ownerName;
+        if (bAadhaar) {
+          p.owner = { name: compTx.buyerName || p.ownerName, aadhaarNumber: bAadhaar };
+          p.owners = [{ name: compTx.buyerName || p.ownerName, aadhaarNumber: bAadhaar }];
+        }
+        if (sAadhaar) p.sellerAadhaarNumber = sAadhaar;
       }
       
       // Override with dynamic mutation executed transfers
       const execMut = executedMuts.find(m => m.dlpiId === p.dlpiId);
       if (execMut) {
+        p.claimStatus = 'VERIFIED';
+        const newOwnerHash = (execMut.newOwnerHash || execMut.newOwnerAadhaar || '').replace(/\D/g, '');
+        const prevSellerHash = (execMut.sellerAadhaarHash || execMut.sellerAadhaar || '').replace(/\D/g, '');
         p.ownerName = execMut.newOwnerName;
-        p.owner = { name: execMut.newOwnerName, aadhaarNumber: execMut.newOwnerHash };
-        p.owners = [{ name: execMut.newOwnerName, aadhaarNumber: execMut.newOwnerHash }];
+        p.owner = { name: execMut.newOwnerName, aadhaarNumber: newOwnerHash };
+        p.owners = [{ name: execMut.newOwnerName, aadhaarNumber: newOwnerHash }];
+        if (prevSellerHash) p.sellerAadhaarNumber = prevSellerHash;
       }
       return p;
     }).filter(p => {
+      const userHashClean = userHash.replace(/\D/g, '');
+      const userRawClean  = userRaw.replace(/\D/g, '');
+
+      // Check if this parcel has a completed transfer or mutation execution
+      const compTx = completedTxMap.get(p.dlpiId);
+      const claim = atomicClaims[p.dlpiId];
+      const execMut = executedMuts.find(m => m.dlpiId === p.dlpiId);
+      const isCompletedTransfer = (compTx && (compTx.status === 'COMPLETED' || compTx.status === 'MUTATED_AND_TRANSFERRED')) ||
+                                  (claim && claim.status === 'MUTATED_AND_TRANSFERRED') ||
+                                  !!execMut;
+
+      if (isCompletedTransfer) {
+        const buyerAadhaar = (
+          compTx?.buyerAadhaarNumber || compTx?.buyerAadhaar ||
+          claim?.aadhaarNumber || execMut?.newOwnerHash ||
+          p.owner?.aadhaarNumber || ''
+        ).replace(/\D/g, '');
+
+        const sellerAadhaar = (
+          p.sellerAadhaarNumber || compTx?.sellerAadhaarNumber ||
+          compTx?.sellerAadhaar || claim?.sellerAadhaarNumber ||
+          execMut?.sellerAadhaarHash || ''
+        ).replace(/\D/g, '');
+
+        const isBuyer = (buyerAadhaar && (buyerAadhaar === userHashClean || buyerAadhaar === userRawClean));
+        const isSeller = (sellerAadhaar && (sellerAadhaar === userHashClean || sellerAadhaar === userRawClean)) ||
+                         (compTx?.sellerName && userName && compTx.sellerName.toLowerCase().includes(userName));
+
+        // IF THE PROPERTY TRANSFER IS COMPLETED:
+        // Show ONLY to the buyer/new owner, NEVER to the seller!
+        if (isBuyer) return true;
+        if (isSeller) return false;
+
+        const curOwnerAadhaar = (p.owner?.aadhaarNumber || '').replace(/\D/g, '');
+        return curOwnerAadhaar === userHashClean || curOwnerAadhaar === userRawClean;
+      }
+
       // Strictly verify current ownership against logged in citizen
-      // Check both aadhaarNumber AND aadhaarNumber (on-chain DLPIs use aadhaarNumber)
-      const oHash = p.owner?.aadhaarNumber || p.owner?.aadhaarNumber || '';
+      const oHash = (p.owner?.aadhaarNumber || '').replace(/\D/g, '');
       const oName = (p.owner?.name || p.ownerName || '').toLowerCase();
       const ownersList = p.owners || [];
 
-      if (oHash && (oHash === userHash || oHash === userRaw)) return true;
-      if (userName && oName && oName.length > 2 && (oName.includes(userName) || userName.includes(oName))) return true;
-      // Check aadhaarNumber AND aadhaarNumber in owners list (on-chain uses aadhaarNumber)
+      if (oHash && (oHash === userHashClean || oHash === userRawClean)) return true;
+
+      // Check aadhaarNumber in owners list
       if (ownersList.some(o => {
-        const h = (o.aadhaarNumber || o.aadhaarNumber || '').replace(/\D/g, '');
-        return h === userHash || h === userRaw;
+        const h = (o.aadhaarNumber || '').replace(/\D/g, '');
+        return h && (h === userHashClean || h === userRawClean);
       })) return true;
 
-      // Demo citizen fallbacks for initial seeded data
-      if (p.claimStatus !== 'VERIFIED' && (!p.atomicLock || p.atomicLock.status !== 'MUTATED_AND_TRANSFERRED')) {
-        if (userRaw === '999900010010' && oName.includes('priya')) return true;
-        if (userRaw === '999900010015' && oName.includes('sunita')) return true;
-        if (userRaw === '999900010012' && oName.includes('suresh')) return true;
-      }
-
-      // Check if the user is a nominated inheritor for this parcel
+      // Check if user is a nominated inheritor for this parcel
       const noms = global.inheritorNominations || [];
       const isNominated = noms.some(n => 
         n.dlpiId === p.dlpiId && 
-        ((n.inheritorAadhaarNumber || '').replace(/\D/g, '') === userRaw || (n.inheritorAadhaarNumber || '').replace(/\D/g, '') === userHash)
+        ((n.inheritorAadhaarNumber || '').replace(/\D/g, '') === userRawClean || (n.inheritorAadhaarNumber || '').replace(/\D/g, '') === userHashClean)
       );
       if (isNominated) return true;
+
+      // Demo citizen fallbacks for initial seeded data (ONLY if not transferred)
+      if (p.claimStatus !== 'VERIFIED' && (!p.atomicLock || p.atomicLock.status !== 'MUTATED_AND_TRANSFERRED')) {
+        if (userRawClean === '999900010010' && oName.includes('priya')) return true;
+        if (userRawClean === '999900010015' && oName.includes('sunita')) return true;
+        if (userRawClean === '999900010012' && oName.includes('suresh')) return true;
+      }
 
       return false;
     });
