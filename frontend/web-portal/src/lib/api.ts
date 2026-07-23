@@ -54,25 +54,23 @@ export async function initiateTransfer(payload: {
   dlpiId: string;
   sellerName?: string;
   sellerAadhaarNumber?: string;
-  sellerAadhaarNumber?: string;
+  sellerAadhaar?: string;
   buyerName: string;
   buyerAadhaarNumber?: string;
-  buyerAadhaarNumber?: string;
+  buyerAadhaar?: string;
   declaredValueINR: number;
   isTribalBuyer?: boolean;
 }): Promise<Transfer & { tribalCheck?: TribalCheckResult }> {
-  const sellerNum = (payload.sellerAadhaarNumber || payload.sellerAadhaarNumber || '').replace(/\D/g, '') || payload.sellerAadhaarNumber || '';
-  const buyerNum = (payload.buyerAadhaarNumber || payload.buyerAadhaarNumber || '').replace(/\D/g, '') || payload.buyerAadhaarNumber || '';
+  const sellerNum = (payload.sellerAadhaarNumber || payload.sellerAadhaar || '').replace(/\D/g, '') || payload.sellerAadhaarNumber || '';
+  const buyerNum = (payload.buyerAadhaarNumber || payload.buyerAadhaar || '').replace(/\D/g, '') || payload.buyerAadhaarNumber || '';
   const res = await apiFetch('/api/transfer/initiate', {
     method: 'POST',
     body: JSON.stringify({
       ...payload,
       sellerAadhaarNumber: sellerNum,
       sellerAadhaar: sellerNum,
-      sellerAadhaarNumber: sellerNum,
       buyerAadhaarNumber: buyerNum,
       buyerAadhaar: buyerNum,
-      buyerAadhaarNumber: buyerNum,
     }),
   });
   const data = await res.json();
@@ -92,17 +90,16 @@ export async function getMyPendingTransfers(): Promise<any[]> {
 export async function recordConsent(transferId: string, payload: {
   partyType: 'SELLER' | 'BUYER';
   aadhaarNumber?: string;
-  aadhaarNumber?: string;
+  aadhaar?: string;
   eSignTxHash: string;
 }) {
-  const aadhaarNum = ((payload.aadhaarNumber || payload.aadhaarNumber || '').replace(/\D/g, '') || payload.aadhaarNumber || '');
+  const aadhaarNum = ((payload.aadhaarNumber || payload.aadhaar || '').replace(/\D/g, '') || payload.aadhaarNumber || '');
   const res = await apiFetch(`/api/transfer/${transferId}/consent`, {
     method: 'POST',
     body: JSON.stringify({
       ...payload,
       aadhaarNumber: aadhaarNum,
       aadhaar: aadhaarNum,
-      aadhaarNumber: aadhaarNum,
     }),
   });
   const data = await res.json();

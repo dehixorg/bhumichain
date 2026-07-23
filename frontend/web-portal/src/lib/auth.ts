@@ -16,7 +16,7 @@ export interface JWTUser {
   name: string;
   aadhaarNumber: string;
   aadhaarId?: string;
-  aadhaarNumber?: string;
+  aadhaarRaw?: string;
   aadhaar?: string;
   aadhaarNo?: string;
   jurisdictionCode?: string;

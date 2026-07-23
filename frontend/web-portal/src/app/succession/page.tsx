@@ -338,13 +338,13 @@ export default function SuccessionPage() {
       const updated = prev.map(h => h.heirId === heirId ? { ...h, hasConsented: true, consentedAt: new Date().toISOString(), aadhaar: entered, aadhaarNumber: entered } : h);
       if (updated.every(h => h.hasConsented)) {
         // All heirs signed — call mark-ready to guarantee officer queue update
-        const signedAadhaar = updated.map(h => h.aadhaar || h.aadhaarNumber || '').filter(Boolean);
+        const signedAadhaar = updated.map((h: any) => h.aadhaar || h.aadhaarNumber || '').filter(Boolean);
         apiFetch(`/api/succession/${resolvedCaseId}/mark-ready`, {
           method: 'POST',
           body: JSON.stringify({
             dlpiId: resolvedDlpiId,
             deceasedName: caseData?.deceasedName || crsExtraction?.name || 'Deceased',
-            heirs: updated.map(h => ({ name: h.name, aadhaar: h.aadhaar, aadhaarNumber: h.aadhaar })),
+            heirs: updated.map((h: any) => ({ name: h.name, aadhaar: h.aadhaar || h.aadhaarNumber, aadhaarNumber: h.aadhaarNumber || h.aadhaar })),
             heirAadhaarList: signedAadhaar,
             consentedAadhaar: signedAadhaar,
           }),
@@ -378,7 +378,7 @@ export default function SuccessionPage() {
     // If not yet approved by real Tehsildar, check or simulate if demo mode helper clicked
     await delay(600);
     setIsFinalApproving(false);
-    toast.info("⏳ Virasat case is currently pending inside the Tehsildar's queue on the Officer Portal.");
+    toast("⏳ Virasat case is currently pending inside the Tehsildar's queue on the Officer Portal.");
   };
 
   // Step 6 handler
@@ -811,7 +811,7 @@ export default function SuccessionPage() {
                               </div>
                               <div className="text-xs text-gray-500 mt-0.5">{heir.relation || 'Legal Heir'} · HSA 2005 S.6(3) Coparcener</div>
                               {heir.hasConsented && heir.consentedAt ? (
-                                <div className="text-xs text-emerald-600 font-semibold mt-0.5">✓ eSigned via Aadhaar ({heir.aadhaar ? `XXXX-XXXX-${String(heir.aadhaar).slice(-4)}` : 'Verified'}) at {format(new Date(heir.consentedAt), 'HH:mm, dd MMM')}</div>
+                                <div className="text-xs text-emerald-600 font-semibold mt-0.5">✓ eSigned via Aadhaar ({(heir as any).aadhaar || heir.aadhaarNumber ? `XXXX-XXXX-${String((heir as any).aadhaar || heir.aadhaarNumber).slice(-4)}` : 'Verified'}) at {format(new Date(heir.consentedAt), 'HH:mm, dd MMM')}</div>
                               ) : (
                                 <div className="text-xs font-semibold text-amber-700 mt-0.5">⏳ Awaiting Aadhaar eSign — request also sent to {heir.name}&apos;s Home Page</div>
                               )}
