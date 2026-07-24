@@ -475,8 +475,8 @@ export default function CitizenDashboard() {
                         </div>
 
                         <div className="flex flex-wrap gap-2">
-                          <Link href={`/ec/${p.dlpiId}`} className="btn-primary text-xs py-2 px-3 rounded-lg flex-1 text-center justify-center min-w-[100px]">
-                            Download RoR
+                          <Link href={`/verify-deed?dlpiId=${p.dlpiId}`} className="btn-primary text-xs py-2 px-3 rounded-lg flex-1 text-center justify-center min-w-[100px]">
+                            Download RoR Deed
                           </Link>
                           <Link href={`/map?dlpi=${p.dlpiId}`} className="btn-secondary text-xs py-2 px-3 rounded-lg flex-1 text-center justify-center bg-white min-w-[100px]">
                             <Map className="w-4 h-4 mr-1.5 inline" /> View Map
