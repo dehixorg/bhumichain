@@ -136,25 +136,34 @@ async function listenEvents(chaincode, eventName, handler, channel = null) {
     return () => {};
   }
 
-  const ch = channel || process.env.FABRIC_CHANNEL;
-  const gw = await getGateway();
-  const network = gw.getNetwork(ch);
-  const events = await network.getChaincodeEvents(chaincode);
+  try {
+    const ch = channel || process.env.FABRIC_CHANNEL;
+    const gw = await getGateway();
+    const network = gw.getNetwork(ch);
+    const events = await network.getChaincodeEvents(chaincode);
 
-  (async () => {
-    for await (const event of events) {
-      if (event.eventName === eventName || eventName === '*') {
-        try {
-          const payload = event.payload ? JSON.parse(Buffer.from(event.payload).toString()) : {};
-          await handler({ name: event.eventName, payload, txId: event.transactionId });
-        } catch (e) {
-          console.error(`Event handler error for ${event.eventName}:`, e);
+    (async () => {
+      try {
+        for await (const event of events) {
+          if (event.eventName === eventName || eventName === '*') {
+            try {
+              const payload = event.payload ? JSON.parse(Buffer.from(event.payload).toString()) : {};
+              await handler({ name: event.eventName, payload, txId: event.transactionId });
+            } catch (e) {
+              console.error(`Event handler error for ${event.eventName}:`, e);
+            }
+          }
         }
+      } catch (streamErr) {
+        console.warn(`[Fabric Events] Stream for ${chaincode} ended:`, streamErr.message);
       }
-    }
-  })();
+    })();
 
-  return () => events.close();
+    return () => { try { events.close(); } catch (_) {} };
+  } catch (err) {
+    console.warn(`[Fabric Events] Could not subscribe to ${chaincode} events (${err.message}). WebSocket fallback active.`);
+    return () => {};
+  }
 }
 
 async function closeGateway() {
