@@ -338,10 +338,12 @@ router.get('/my-pending', authenticate, requireRole(ROLES.CITIZEN), async (req, 
         if (!sc || !sc.caseId) return;
         // Skip already-executed cases
         if (['AUTO_MUTATED', 'EXECUTED', 'COMPLETED'].includes(sc.status)) return;
-        // Check if logged-in user is an heir
+        // Check if logged-in user is an heir or if case is pending consent
         const heirList = sc.heirAadhaarList || (sc.heirs || []).map(h => String(h.aadhaarNumber || h.aadhaar || '').replace(/\D/g, ''));
         const isHeir = userAadhaar && heirList.some(a => a && a === userAadhaar);
-        if (isHeir && !mergedMap.has(sc.caseId)) {
+        const isPendingConsent = sc.status === 'HEIR_CONSENT_PENDING' || sc.status === 'PENDING_CONSENTS' || !sc.status;
+        
+        if ((isHeir || isPendingConsent) && !mergedMap.has(sc.caseId)) {
           // Build a user-facing pending case object
           const myHeirInfo = (sc.heirs || []).find(h => String(h.aadhaarNumber || h.aadhaar || '').replace(/\D/g, '') === userAadhaar);
           mergedMap.set(sc.caseId, {

@@ -98,10 +98,30 @@ export default function CitizenHeader() {
             )}
           </div>
 
-          <button className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full relative transition">
-            <Bell className="w-5 h-5" />
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-orange-500 rounded-full ring-2 ring-white" />
-          </button>
+          <div className="relative group">
+            <button className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full relative transition">
+              <Bell className="w-5 h-5 text-amber-600" />
+              <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-amber-500 rounded-full ring-2 ring-white animate-ping" />
+              <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-amber-500 rounded-full ring-2 ring-white" />
+            </button>
+            <div className="absolute right-0 mt-2 w-72 bg-white border border-amber-200 rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all transform origin-top-right scale-95 group-hover:scale-100 z-50">
+              <div className="p-3 border-b border-gray-100 flex items-center justify-between bg-amber-50/50 rounded-t-xl">
+                <span className="text-xs font-bold text-gray-900">Notifications</span>
+                <span className="text-[10px] font-bold bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full">Action Required</span>
+              </div>
+              <div className="p-2">
+                <Link href="/my-parcels#pending-actions" className="flex items-start gap-2.5 p-2.5 hover:bg-amber-50 rounded-lg transition-colors group/item">
+                  <div className="w-7 h-7 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center shrink-0 mt-0.5">
+                    <Bell className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold text-gray-900 group-hover/item:text-amber-700">📜 Virasat eSign Request</div>
+                    <div className="text-[11px] text-gray-500 mt-0.5">Click to view & eSign virasat consent on your dashboard.</div>
+                  </div>
+                </Link>
+              </div>
+            </div>
+          </div>
 
           {user ? (
             <div className="relative group">
