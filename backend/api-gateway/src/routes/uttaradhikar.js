@@ -396,7 +396,7 @@ router.get('/pending/all', authenticate, requireRole(ROLES.TEHSILDAR, ROLES.COLL
     } catch (e) {}
 
     const allCases = [...(cases || []), ...Object.values(global.successionCases)];
-    const pendingCases = allCases.filter(c => ['HEIR_CONSENT_PENDING', 'PENDING_TEHSILDAR_APPROVAL', 'ALL_CONSENTED', 'PENDING_TEHSILDAR'].includes(c.status));
+    const pendingCases = allCases.filter(c => ['PENDING_TEHSILDAR_APPROVAL', 'ALL_CONSENTED', 'PENDING_TEHSILDAR', 'SUCCESSION_PENDING_TEHSILDAR', 'COURT_REFERRED'].includes(c.status));
     // deduplicate by caseId
     const uniqueCases = Array.from(new Map(pendingCases.map(c => [c.caseId, c])).values());
     res.json(uniqueCases);
@@ -872,7 +872,7 @@ router.get('/pending/all', authenticate, requireRole(ROLES.TEHSILDAR, ROLES.REVE
     global.successionCases = global.successionCases || {};
     diskList = [...diskList, ...Object.values(global.successionCases)];
 
-    const pendingStatuses = ['AWAITING_CONSENTS', 'HEIR_CONSENT_PENDING', 'PENDING_TEHSILDAR_APPROVAL', 'ALL_CONSENTED', 'PENDING_TEHSILDAR', 'SUCCESSION_PENDING_TEHSILDAR', 'COURT_REFERRED'];
+    const pendingStatuses = ['PENDING_TEHSILDAR_APPROVAL', 'ALL_CONSENTED', 'PENDING_TEHSILDAR', 'SUCCESSION_PENDING_TEHSILDAR', 'COURT_REFERRED'];
     const filteredDisk = diskList.filter(c => c && c.caseId && pendingStatuses.includes(c.status));
 
     const mergedMap = new Map();
