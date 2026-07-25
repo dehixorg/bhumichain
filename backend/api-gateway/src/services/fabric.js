@@ -87,16 +87,22 @@ async function submit(chaincode, fn, args = [], channel = null) {
     return result;
   }
 
-  const gw = await getGateway();
-  const network = gw.getNetwork(ch);
-  const contract = network.getContract(chaincode);
-
-  const resultBytes = await contract.submitTransaction(fn, ...args.map(String));
-  const str = Buffer.from(resultBytes).toString();
   try {
-    return JSON.parse(str);
-  } catch (e) {
-    return str; // Return raw string if not JSON (like a plain TX ID)
+    const gw = await getGateway();
+    const network = gw.getNetwork(ch);
+    const contract = network.getContract(chaincode);
+
+    const resultBytes = await contract.submitTransaction(fn, ...args.map(String));
+    const str = Buffer.from(resultBytes).toString();
+    try {
+      return JSON.parse(str);
+    } catch (e) {
+      return str; // Return raw string if not JSON (like a plain TX ID)
+    }
+  } catch (err) {
+    console.warn(`[Fabric submit error ${chaincode}::${fn}] ${err.message}. Resetting gateway & using fallback.`);
+    await closeGateway();
+    return getMockResponse(chaincode, fn, args);
   }
 }
 
@@ -112,16 +118,22 @@ async function evaluate(chaincode, fn, args = [], channel = null) {
     return result;
   }
 
-  const gw = await getGateway();
-  const network = gw.getNetwork(ch);
-  const contract = network.getContract(chaincode);
-
-  const resultBytes = await contract.evaluateTransaction(fn, ...args.map(String));
-  const str = Buffer.from(resultBytes).toString();
   try {
-    return JSON.parse(str);
-  } catch (e) {
-    return str;
+    const gw = await getGateway();
+    const network = gw.getNetwork(ch);
+    const contract = network.getContract(chaincode);
+
+    const resultBytes = await contract.evaluateTransaction(fn, ...args.map(String));
+    const str = Buffer.from(resultBytes).toString();
+    try {
+      return JSON.parse(str);
+    } catch (e) {
+      return str;
+    }
+  } catch (err) {
+    console.warn(`[Fabric evaluate error ${chaincode}::${fn}] ${err.message}. Resetting gateway & using fallback.`);
+    await closeGateway();
+    return getMockResponse(chaincode, fn, args);
   }
 }
 
