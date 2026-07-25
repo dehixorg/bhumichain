@@ -316,9 +316,9 @@ export default function SuccessionPage() {
   const handleConsent = useCallback(async (heirId: string) => {
     const heir = heirs.find(h => h.heirId === heirId);
     if (!heir || heir.hasConsented || heir.hasObjected) return;
-    const entered = (heirAadhaarInputs[heirId] || '').replace(/\D/g, '');
+    const entered = (heir.aadhaar || heir.aadhaarNumber || '').replace(/\D/g, '');
     if (!entered || entered.length !== 12) {
-      toast.error(`Please enter a valid 12-digit Aadhaar Number for ${heir.name} (` + (entered ? `${entered.length} digits entered` : 'field empty') + `) to digitally verify & eSign.`);
+      toast.error(`Missing valid 12-digit Aadhaar for ${heir.name}. Cannot simulate eSign.`);
       return;
     }
     // Resolve caseId: React state first, then localStorage fallback
@@ -824,28 +824,14 @@ export default function SuccessionPage() {
                               <span className="text-xs font-bold text-red-700 bg-red-100 border border-red-300 px-3.5 py-2 rounded-full">⚖ Objected</span>
                             ) : (
                               <div className="flex flex-col items-end gap-2 w-full sm:w-auto">
-                                <div className="flex items-center gap-2 bg-white border border-amber-300 rounded-xl px-2 py-1.5 shadow-sm w-full sm:w-auto">
-                                  <input
-                                    type="text"
-                                    maxLength={12}
-                                    placeholder="12-digit Aadhaar"
-                                    value={heirAadhaarInputs[heir.heirId] || ''}
-                                    onChange={e => setHeirAadhaarInputs(prev => ({ ...prev, [heir.heirId]: e.target.value.replace(/\D/g, '').slice(0, 12) }))}
-                                    className="px-2 py-1.5 text-sm border border-gray-200 rounded-lg flex-1 font-mono w-36 focus:outline-none focus:ring-2 focus:ring-amber-400 text-gray-900"
-                                  />
+                                <div className="flex items-center gap-2">
                                   <button
                                     onClick={() => handleConsent(heir.heirId)}
-                                    className="bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold py-1.5 px-3 rounded-lg shadow-sm transition-colors flex items-center gap-1 shrink-0"
+                                    className="bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold py-2 px-4 rounded-lg shadow-sm transition-colors flex items-center gap-1.5 shrink-0"
                                   >
-                                    <Shield className="w-3.5 h-3.5" /> eSign
+                                    <Shield className="w-4 h-4" /> eSign
                                   </button>
                                 </div>
-                                {(heirAadhaarInputs[heir.heirId] || '').length > 0 && (heirAadhaarInputs[heir.heirId] || '').length < 12 && (
-                                  <span className="text-xs text-red-500 font-semibold">{12 - (heirAadhaarInputs[heir.heirId] || '').length} more digits needed</span>
-                                )}
-                                {(heirAadhaarInputs[heir.heirId] || '').length === 12 && (
-                                  <span className="text-xs text-emerald-600 font-bold flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Ready to sign</span>
-                                )}
                               </div>
                             )}
                           </div>

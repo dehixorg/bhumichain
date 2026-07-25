@@ -20,37 +20,37 @@ import toast from 'react-hot-toast';
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 interface Parcel {
-  dlpiId:            string;
-  khataNo:           string;
-  khasraNo:          string;
-  tehsil:            string;
-  district:          string;
-  landType:          string;
-  areaHectares:      number;
+  dlpiId: string;
+  khataNo: string;
+  khasraNo: string;
+  tehsil: string;
+  district: string;
+  landType: string;
+  areaHectares: number;
   encumbranceStatus: string;
-  claimStatus:       string;
+  claimStatus: string;
   successionStatus?: string;
-  isTribal?:         boolean;
-  isCoparcenary?:    boolean;
-  owners?:           any[];
-  ownershipType?:    string;
-  valuation:         { circleRateINR: number };
-  updatedAt:         string;
+  isTribal?: boolean;
+  isCoparcenary?: boolean;
+  owners?: any[];
+  ownershipType?: string;
+  valuation: { circleRateINR: number };
+  updatedAt: string;
 }
 
 // ── Mock Data for New Sections ────────────────────────────────────────────────
 
 const TIMELINE = [
-  { date: 'Today, 10:30 AM', title: 'EC Certificate Generated',  sub: 'DLPI-MH-SNN-00142', icon: FileCheck, color: 'text-green-600', bg: 'bg-green-100' },
-  { date: 'Yesterday',       title: 'Succession Claim Filed',    sub: 'Tehsil Dadri, GBN', icon: FileSignature, color: 'text-purple-600', bg: 'bg-purple-100' },
-  { date: '12 June 2026',    title: 'Property Transfer',         sub: 'Approved by Tehsildar', icon: ArrowRight, color: 'text-[#0F4C81]', bg: 'bg-blue-100' },
-  { date: '01 Jan 2026',     title: 'Record Seeded on Chain',    sub: 'Initial Digitization', icon: Database, color: 'text-gray-600', bg: 'bg-gray-100' },
+  { date: 'Today, 10:30 AM', title: 'EC Certificate Generated', sub: 'DLPI-MH-SNN-00142', icon: FileCheck, color: 'text-green-600', bg: 'bg-green-100' },
+  { date: 'Yesterday', title: 'Succession Claim Filed', sub: 'Tehsil Dadri, GBN', icon: FileSignature, color: 'text-purple-600', bg: 'bg-purple-100' },
+  { date: '12 June 2026', title: 'Property Transfer', sub: 'Approved by Tehsildar', icon: ArrowRight, color: 'text-[#0F4C81]', bg: 'bg-blue-100' },
+  { date: '01 Jan 2026', title: 'Record Seeded on Chain', sub: 'Initial Digitization', icon: Database, color: 'text-gray-600', bg: 'bg-gray-100' },
 ];
 
 const VAULT_DOCS = [
-  { name: 'Khatauni (RoR) - 2026',  id: 'DOC-26-4412', size: '1.2 MB', date: 'Jul 9, 2026', icon: FileText,   type: 'PDF' },
-  { name: 'Encumbrance Cert.',      id: 'EC-4412999',  size: '800 KB', date: 'Jul 9, 2026', icon: Shield,     type: 'PDF' },
-  { name: 'Digitally Signed Map',   id: 'MAP-V22-1',   size: '3.4 MB', date: 'May 1, 2026', icon: Map,        type: 'PNG' },
+  { name: 'Khatauni (RoR) - 2026', id: 'DOC-26-4412', size: '1.2 MB', date: 'Jul 9, 2026', icon: FileText, type: 'PDF' },
+  { name: 'Encumbrance Cert.', id: 'EC-4412999', size: '800 KB', date: 'Jul 9, 2026', icon: Shield, type: 'PDF' },
+  { name: 'Digitally Signed Map', id: 'MAP-V22-1', size: '3.4 MB', date: 'May 1, 2026', icon: Map, type: 'PNG' },
 ];
 
 const ANNOUNCEMENTS = [
@@ -62,12 +62,12 @@ const ANNOUNCEMENTS = [
 // ── Status config ─────────────────────────────────────────────────────────────
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; icon: React.ElementType }> = {
-  OWNER_VERIFIED:    { label: 'Verified & Claimed', color: 'text-green-700', bg: 'bg-green-50 border-green-200', icon: CheckCircle },
-  VERIFIED:          { label: 'Verified & Claimed', color: 'text-green-700', bg: 'bg-green-50 border-green-200', icon: CheckCircle },
-  UNDER_REVIEW:      { label: 'Under Review',       color: 'text-blue-700',  bg: 'bg-blue-50 border-blue-200',   icon: Clock },
-  CLAIM_SUBMITTED:   { label: 'Claim Submitted',    color: 'text-orange-700',bg: 'bg-orange-50 border-orange-200', icon: Clock },
-  SEEDED_UNVERIFIED: { label: 'Unverified',         color: 'text-yellow-700',bg: 'bg-yellow-50 border-yellow-200', icon: AlertTriangle },
-  DISPUTED:          { label: 'Disputed',           color: 'text-red-700',   bg: 'bg-red-50 border-red-200',     icon: AlertTriangle },
+  OWNER_VERIFIED: { label: 'Verified & Claimed', color: 'text-green-700', bg: 'bg-green-50 border-green-200', icon: CheckCircle },
+  VERIFIED: { label: 'Verified & Claimed', color: 'text-green-700', bg: 'bg-green-50 border-green-200', icon: CheckCircle },
+  UNDER_REVIEW: { label: 'Under Review', color: 'text-blue-700', bg: 'bg-blue-50 border-blue-200', icon: Clock },
+  CLAIM_SUBMITTED: { label: 'Claim Submitted', color: 'text-orange-700', bg: 'bg-orange-50 border-orange-200', icon: Clock },
+  SEEDED_UNVERIFIED: { label: 'Unverified', color: 'text-yellow-700', bg: 'bg-yellow-50 border-yellow-200', icon: AlertTriangle },
+  DISPUTED: { label: 'Disputed', color: 'text-red-700', bg: 'bg-red-50 border-red-200', icon: AlertTriangle },
 };
 
 export default function CitizenDashboard() {
@@ -137,7 +137,7 @@ export default function CitizenDashboard() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ eSignTxHash: '0xmock_esign_' + Date.now() })
       });
-      
+
       setParcels(prev => prev.map(item => {
         if (item.dlpiId === parcel.dlpiId) {
           return { ...item, claimStatus: 'OWNER_VERIFIED' };
@@ -205,16 +205,16 @@ export default function CitizenDashboard() {
 
   const handleESign = async (caseId: string) => {
     if (!user) return;
-    const entered = (homeAadhaarInputs[caseId] || '').replace(/\D/g, '');
-    if (!entered || entered.length !== 12) {
-      toast.error(`Please enter your valid 12-digit Aadhaar Number right inside the banner (` + (entered ? `${entered.length} digits entered` : 'field empty') + `) to digitally verify & eSign.`);
+    const userAadhaar = ((user as any).aadhaarNumber || user.aadhaarNumber || '').replace(/\D/g, '');
+    if (!userAadhaar || userAadhaar.length !== 12) {
+      toast.error(`Missing valid 12-digit Aadhaar for your account. Please re-login.`);
       return;
     }
     try {
       toast.loading('Verifying identity & executing Aadhaar eSign on-chain...', { id: 'esign' });
       await new Promise(r => setTimeout(r, 1200));
       await recordHeirConsent(caseId, {
-        heirAadhaarNumber: entered,
+        heirAadhaarNumber: userAadhaar,
         eSignTxHash: '0x' + Math.random().toString(16).slice(2)
       });
       toast.success('🎉 Successfully eSigned your virasat consent! Case forwarded for Tehsildar verification.', { id: 'esign' });
@@ -223,7 +223,7 @@ export default function CitizenDashboard() {
       apiFetch('/api/dlpi/my-parcels')
         .then(r => r.json())
         .then(d => { if (Array.isArray(d)) setParcels(d); })
-        .catch(() => {});
+        .catch(() => { });
     } catch (err: any) {
       toast.error('Failed to provide consent: ' + (err?.message || err), { id: 'esign' });
       console.error(err);
@@ -237,7 +237,7 @@ export default function CitizenDashboard() {
       <CitizenHeader />
 
       <main className="flex-1">
-        
+
         {/* ── 1. Hero Section ───────────────────────────────────────────────── */}
         <div className="bg-white border-b border-gray-200 pt-10 pb-12">
           <div className="max-w-[1200px] mx-auto px-6 lg:px-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-8">
@@ -252,7 +252,7 @@ export default function CitizenDashboard() {
               <p className="text-gray-500 text-base md:text-lg max-w-xl leading-relaxed">
                 View, manage and transfer your land records securely on India's national blockchain registry.
               </p>
-              
+
               <div className="flex items-center gap-4 text-xs font-semibold text-gray-500 mt-4">
                 <div className="flex items-center gap-1.5"><MapPin className="w-4 h-4 text-gray-400" /> Uttar Pradesh</div>
                 <div className="w-1 h-1 rounded-full bg-gray-300" />
@@ -261,7 +261,7 @@ export default function CitizenDashboard() {
                 <div suppressHydrationWarning>Last Login: {formatLastLogin()}</div>
               </div>
             </div>
-            
+
             {/* Quick Stats on Hero */}
             <div className="flex gap-4 shrink-0">
               <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm text-center min-w-[120px]">
@@ -280,12 +280,12 @@ export default function CitizenDashboard() {
         <div className="max-w-[1200px] mx-auto px-6 lg:px-10 -mt-6 relative z-10">
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             {[
-              { label: 'View Records',   icon: FileText, href: '#holdings' },
+              { label: 'View Records', icon: FileText, href: '#holdings' },
               { label: 'Apply Mutation', icon: Edit3Icon, href: '/mutation' },
               { label: 'Transfer Title', icon: Send, href: '/transfer' },
-              { label: 'Succession',     icon: Landmark, href: '/succession' },
-              { label: 'Download EC',    icon: Shield, href: '/ec' },
-              { label: 'Ask NyayaAI',    icon: HelpCircle, href: '/nyaya-ai' },
+              { label: 'Succession', icon: Landmark, href: '/succession' },
+              { label: 'Download EC', icon: Shield, href: '/ec' },
+              { label: 'Ask NyayaAI', icon: HelpCircle, href: '/nyaya-ai' },
             ].map((s, i) => (
               <Link key={i} href={s.href} className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-md hover:border-[#0F4C81]/30 transition-all group flex flex-col items-center text-center gap-3">
                 <div className="w-12 h-12 rounded-full bg-[#F8FAFC] group-hover:bg-[#0F4C81]/5 flex items-center justify-center transition-colors">
@@ -298,10 +298,10 @@ export default function CitizenDashboard() {
         </div>
 
         <div className="max-w-[1200px] mx-auto px-6 lg:px-10 py-12 grid grid-cols-1 lg:grid-cols-3 gap-8">
-          
+
           {/* ── Left Column (Main Content) ─────────────────────────────────── */}
           <div className="lg:col-span-2 space-y-10">
-            
+
             {/* Pending Actions Alert (Succession & Transfers) */}
             {(pendingSuccessions.length > 0 || pendingTransfers.length > 0) && (
               <section id="pending-actions" className="mb-8">
@@ -323,27 +323,17 @@ export default function CitizenDashboard() {
                           </div>
                           <p className="text-sm text-amber-900 mt-1.5 leading-relaxed">
                             A virasat (succession) claim (`{scase.caseId || 'SUC-ACTIVE'}`) has been initiated for land parcel <strong className="font-mono">{scase.dlpiId}</strong> following the verification & upload of the Death Certificate for Late <strong className="underline">{scase.deceasedName || scase.deceasedAadhaar || 'Deceased Owner'}</strong>.
-                            You are listed as a legal co-heir with equal coparcenary rights (`Share: {scase.share || 'Equal Share'}`). Please enter your 12-digit Aadhaar below to digitally verify & eSign:
+                            You are listed as a legal co-heir with equal coparcenary rights (`Share: {scase.share || 'Equal Share'}`). Please click the button below to digitally verify & eSign:
                           </p>
                           <div className="mt-4 flex flex-col lg:flex-row items-stretch lg:items-center gap-3">
-                            <div className="flex items-center gap-2 bg-white p-1.5 rounded-xl border border-amber-300 shadow-sm flex-1 max-w-lg">
-                              <input
-                                type="text"
-                                maxLength={12}
-                                placeholder="Your 12-digit Aadhaar No."
-                                value={homeAadhaarInputs[scase.caseId] || ''}
-                                onChange={e => setHomeAadhaarInputs(prev => ({ ...prev, [scase.caseId]: e.target.value.replace(/\D/g, '').slice(0, 12) }))}
-                                className="px-3 py-2 text-sm border border-gray-200 rounded-lg flex-1 font-mono focus:outline-none focus:ring-2 focus:ring-amber-500"
-                              />
-                              <button
-                                onClick={() => handleESign(scase.caseId)}
-                                className="bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold py-2.5 px-4 rounded-lg shadow-sm transition-colors flex items-center gap-1.5 shrink-0"
-                              >
-                                <Shield className="w-4 h-4" /> Verify & eSign on Home Page
-                              </button>
-                            </div>
-                            <Link href="/succession" className="px-4 py-2.5 bg-amber-100 hover:bg-amber-200 text-amber-900 text-xs font-bold rounded-xl transition-colors flex items-center justify-center gap-1.5 shrink-0">
-                              Open Succession Portal <ArrowRight className="w-3.5 h-3.5" />
+                            <button
+                              onClick={() => handleESign(scase.caseId)}
+                              className="bg-amber-600 hover:bg-amber-700 text-white text-sm font-bold py-2.5 px-6 rounded-lg shadow-sm transition-colors flex items-center justify-center gap-2 shrink-0"
+                            >
+                              <Shield className="w-4 h-4" /> Verify & eSign Now
+                            </button>
+                            <Link href="/succession" className="px-4 py-2.5 bg-amber-100 hover:bg-amber-200 text-amber-900 text-sm font-bold rounded-lg transition-colors flex items-center justify-center gap-1.5 shrink-0">
+                              Open Succession Portal <ArrowRight className="w-4 h-4" />
                             </Link>
                           </div>
                         </div>
@@ -418,7 +408,7 @@ export default function CitizenDashboard() {
                       <div key={p.dlpiId} className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
                         {/* Govt Top Strip */}
                         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#0F4C81] to-transparent opacity-50" />
-                        
+
                         <div className="flex justify-between items-start mb-4">
                           <div>
                             <div className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">DLPI ID</div>
@@ -475,8 +465,8 @@ export default function CitizenDashboard() {
                         </div>
 
                         <div className="flex flex-wrap gap-2">
-                          <Link href={`/verify-deed?dlpiId=${p.dlpiId}`} className="btn-primary text-xs py-2 px-3 rounded-lg flex-1 text-center justify-center min-w-[100px]">
-                            Download RoR Deed
+                          <Link href={`/ec/${p.dlpiId}`} className="btn-primary text-xs py-2 px-3 rounded-lg flex-1 text-center justify-center min-w-[100px]">
+                            Download RoR
                           </Link>
                           <Link href={`/map?dlpi=${p.dlpiId}`} className="btn-secondary text-xs py-2 px-3 rounded-lg flex-1 text-center justify-center bg-white min-w-[100px]">
                             <Map className="w-4 h-4 mr-1.5 inline" /> View Map
@@ -538,7 +528,7 @@ export default function CitizenDashboard() {
 
           {/* ── Right Column (Sidebar equivalent) ─────────────────────────── */}
           <div className="space-y-8">
-            
+
             {/* Document Vault */}
             <section>
               <div className="flex items-center justify-between mb-4">
@@ -631,7 +621,7 @@ export default function CitizenDashboard() {
                     <span className={clsx(
                       'text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-sm mb-2 inline-block',
                       ann.badge === 'NEW' ? 'bg-green-100 text-green-700' :
-                      ann.badge === 'ALERT' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-[#0F4C81]'
+                        ann.badge === 'ALERT' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-[#0F4C81]'
                     )}>
                       {ann.badge}
                     </span>
