@@ -797,16 +797,9 @@ export default function SuccessionPage() {
                             ) : heir.hasObjected ? (
                               <span className="text-xs font-bold text-red-700 bg-red-100 border border-red-300 px-3.5 py-2 rounded-full">⚖ Objected</span>
                             ) : (
-                              <div className="flex flex-col items-end gap-2 w-full sm:w-auto">
-                                <div className="flex items-center gap-2">
-                                  <button
-                                    onClick={() => handleConsent(heir.heirId)}
-                                    className="bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold py-2 px-4 rounded-lg shadow-sm transition-colors flex items-center gap-1.5 shrink-0"
-                                  >
-                                    <Shield className="w-4 h-4" /> eSign
-                                  </button>
-                                </div>
-                              </div>
+                              <span className="text-xs font-semibold text-amber-800 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-sm">
+                                <Clock className="w-3.5 h-3.5 text-amber-600 animate-pulse" /> Awaiting eSign on Heir&apos;s Home Screen
+                              </span>
                             )}
                           </div>
                         </div>
