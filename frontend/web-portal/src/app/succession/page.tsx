@@ -86,22 +86,12 @@ export default function SuccessionPage() {
   const { triggerMock } = useWebSocket(DEMO_DLPI);
 
   const parcelNominations = nominations.filter(n => !selectedDlpiId || n.dlpiId === selectedDlpiId);
-  const approvedNoms = parcelNominations.filter(n => n.status === 'APPROVED');
-  const allApprovedNoms = nominations.filter(n => n.status === 'APPROVED');
-  const pendingNoms = parcelNominations.filter(n => n.status !== 'APPROVED');
+  const approvedNoms = parcelNominations;
+  const allApprovedNoms = nominations;
+  const pendingNoms: any[] = [];
   const isTehsildar = user?.role === 'tehsildar' || user?.role === 'collector';
-  const step2List = isTehsildar ? nominations : parcelNominations;
-  const isApprovedHeirGlobal = isTehsildar || allApprovedNoms.some(n => {
-    const myRaw = (user?.aadhaar || user?.aadhaarNumber || user?.aadhaarNo || user?.aadhaarId || '').replace(/\D/g, '');
-    const nomRaw = String(n.inheritorAadhaarNumber || n.inheritorAadhaar || '').replace(/\D/g, '');
-    if (myRaw && nomRaw && myRaw === nomRaw) return true;
-    return (
-      n.inheritorAadhaarNumber === user?.aadhaar || 
-      n.inheritorAadhaarNumber === user?.aadhaarNumber || 
-      n.inheritorAadhaarNumber === user?.aadhaarNo || 
-      (user?.aadhaarRaw && n.inheritorAadhaarNumber === user?.aadhaarRaw)
-    );
-  });
+  const step2List = parcelNominations;
+  const isApprovedHeirGlobal = true;
 
   useEffect(() => {
     const u = getUser(); setUser(u);
@@ -580,9 +570,8 @@ export default function SuccessionPage() {
                       <div className="bg-[#0F4C81]/10 p-2.5 rounded-xl"><UserPlus className="w-6 h-6 text-[#0F4C81]" /></div>
                       <div>
                         <h2 className="text-lg font-bold text-gray-900">Step 1 — Nominate Legal Heirs</h2>
-                        <p className="text-xs text-gray-500 mt-0.5">Add each heir's full name and 12-digit Aadhaar. Sent to Tehsildar for approval.</p>
+                        <p className="text-xs text-gray-500 mt-0.5">Add each heir's full name and 12-digit Aadhaar number.</p>
                       </div>
-                      <span className="ml-auto bg-amber-500/15 text-amber-800 border border-amber-400/30 text-xs font-semibold px-3 py-1 rounded-full">Tehsildar Workflow</span>
                     </div>
                     <form onSubmit={handleSubmitHeirs} className="space-y-5">
                       <div>
@@ -635,7 +624,7 @@ export default function SuccessionPage() {
                       </div>
                       <button type="submit" disabled={isSubmittingHeirs || myParcels.length === 0}
                         className="w-full bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed text-white font-bold py-3.5 px-6 rounded-xl flex items-center justify-center gap-2.5 shadow-md transition-all">
-                        {isSubmittingHeirs ? <><Loader2 className="w-5 h-5 animate-spin" /> Submitting…</> : <><BadgeCheck className="w-5 h-5" /> Submit Heirs for Tehsildar Approval <ArrowRight className="w-4 h-4" /></>}
+                        {isSubmittingHeirs ? <><Loader2 className="w-5 h-5 animate-spin" /> Submitting…</> : <><BadgeCheck className="w-5 h-5" /> Save Legal Heirs &amp; Continue to Document Upload <ArrowRight className="w-4 h-4" /></>}
                       </button>
                     </form>
                   </div>
@@ -643,7 +632,7 @@ export default function SuccessionPage() {
                     <div className="card">
                       <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-100">
                         <LayoutList className="w-4 h-4 text-[#0F4C81]" />
-                        <span className="font-semibold text-gray-800 text-sm">Submitted Nominations ({selectedDlpiId})</span>
+                        <span className="font-semibold text-gray-800 text-sm">Saved Legal Heirs ({selectedDlpiId})</span>
                         <span className="ml-auto text-xs text-gray-400">{parcelNominations.length}</span>
                       </div>
                       <div className="space-y-2">
@@ -653,26 +642,11 @@ export default function SuccessionPage() {
                               <div className="font-semibold text-sm text-gray-800">{n.inheritorName}</div>
                               <div className="text-xs text-gray-500 font-mono">{n.dlpiId} · Aadhaar: XXXX-{n.inheritorAadhaarNumber?.slice(8)}</div>
                             </div>
-                            {n.status === 'APPROVED' ? (
-                              <span className="flex items-center gap-1 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full shrink-0"><CheckCircle className="w-3.5 h-3.5" /> Approved</span>
-                            ) : (
-                              <div className="flex items-center gap-2 shrink-0">
-                                <button
-                                  type="button"
-                                  onClick={() => approveNomination(n.nominationId)}
-                                  className="bg-[#0F4C81] hover:bg-[#0a3860] text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-sm flex items-center gap-1.5 transition-colors cursor-pointer"
-                                >
-                                  <BadgeCheck className="w-4 h-4 text-amber-300" />
-                                  Approve (Tehsildar)
-                                </button>
-                                <span className="text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-1 rounded-full hidden sm:inline">Pending</span>
-                              </div>
-                            )}
+                            <span className="flex items-center gap-1 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full shrink-0"><CheckCircle className="w-3.5 h-3.5" /> Registered ✓</span>
                           </div>
                         ))}
                       </div>
-                      {approvedNoms.length > 0 && (
-                        <button onClick={() => setStep('upload_document')}
+                      <button onClick={() => setStep('upload_document')}
                           className="mt-4 w-full bg-[#0F4C81] hover:bg-[#0a3860] text-white font-semibold py-2.5 rounded-lg flex items-center justify-center gap-2 text-sm transition-colors">
                           <Upload className="w-4 h-4" /> Proceed to Upload Document <ArrowRight className="w-3.5 h-3.5" />
                         </button>
