@@ -413,13 +413,7 @@ router.get('/my-parcels', authenticate, requireRole(ROLES.CITIZEN), async (req, 
         return h && (h === userHashClean || h === userRawClean);
       })) return true;
 
-      // Check if user is a nominated inheritor for this parcel
-      const noms = global.inheritorNominations || [];
-      const isNominated = noms.some(n => 
-        n.dlpiId === p.dlpiId && 
-        ((n.inheritorAadhaarNumber || '').replace(/\D/g, '') === userRawClean || (n.inheritorAadhaarNumber || '').replace(/\D/g, '') === userHashClean)
-      );
-      if (isNominated) return true;
+      // (Nominated inheritors do NOT see parcels in /my-parcels until succession is executed by Tehsildar)
 
       // Demo citizen fallbacks for initial seeded data (ONLY if not transferred)
       if (p.claimStatus !== 'VERIFIED' && (!p.atomicLock || p.atomicLock.status !== 'MUTATED_AND_TRANSFERRED')) {

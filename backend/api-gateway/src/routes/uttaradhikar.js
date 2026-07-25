@@ -598,11 +598,13 @@ router.post(
 
           let claims = {};
           try { claims = JSON.parse(fs.readFileSync('/tmp/bhumichain_atomic_claims.json', 'utf8')); } catch(e) {}
+          const decAadhaarClean = String(sCase.deceasedAadhaar || sCase.deceasedAadhaarNumber || sCase.deceasedAadhaarNo || '').replace(/\D/g, '');
           claims[sCase.dlpiId] = {
             txHash: req.params.caseId,
             dlpiId: sCase.dlpiId,
             claimedBy: heirs.map(h => h.name).join(', '),
             aadhaarNumber: heirs.map(h => h.aadhaarNumber || h.aadhaar || '').join(','),
+            sellerAadhaarNumber: decAadhaarClean,
             heirs: heirs,
             claimedAt: new Date().toISOString(),
             status: 'MUTATED_AND_TRANSFERRED'
@@ -625,6 +627,7 @@ router.post(
               return {
                 ...p,
                 claimStatus: 'OWNER_VERIFIED',
+                sellerAadhaarNumber: decAadhaarClean,
                 ownerName: multiOwners.map(o => `${o.name} (${o.share})`).join(', '),
                 owner: multiOwners[0],
                 owners: multiOwners
@@ -644,6 +647,7 @@ router.post(
               encumbranceStatus: 'CLEAR',
               landType: 'Bhumidhari',
               claimStatus: 'OWNER_VERIFIED',
+              sellerAadhaarNumber: decAadhaarClean,
               ownerName: multiOwners.map(o => `${o.name} (${o.share})`).join(', '),
               owner: multiOwners[0],
               owners: multiOwners
