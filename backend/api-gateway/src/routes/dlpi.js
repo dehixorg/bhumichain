@@ -158,8 +158,9 @@ router.get('/my-parcels', authenticate, requireRole(ROLES.CITIZEN), async (req, 
       const allScans = allScansRes.data || [];
       console.log(`[my-parcels] Total scans from RecordScan: ${allScans.length}`);
       recordScans = allScans.filter(s => {
-        if (!['VERIFIED', 'SEEDED_UNVERIFIED', 'CI_APPROVED', 'SCAN_PENDING_TEHSILDAR', 'SCAN_PENDING_SRO', 'UNDER_REVIEW', 'APPROVED', 'COMPLETED'].includes(s.status)) {
-          console.log(`[my-parcels]   SKIP scan ${s.scanId} (status=${s.status})`);
+        // Under statutory registry rules, draft scanned records ONLY appear in citizen portal after Tehsildar approval
+        if (!['APPROVED', 'VERIFIED', 'COMPLETED'].includes(s.status)) {
+          console.log(`[my-parcels]   SKIP scan ${s.scanId} (status=${s.status} — awaiting Tehsildar approval)`);
           return false;
         }
         const khatedars = s.extraction?.khatedars || [];
