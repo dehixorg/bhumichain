@@ -806,14 +806,14 @@ export default function SuccessionPage() {
                             </div>
                             <div className="min-w-0">
                               <div className="font-bold text-gray-900 flex items-center gap-2">
-                                {heir.name}
+                                {heir.name} <span className="text-gray-500 font-mono font-medium text-xs">(Aadhaar: {heir.aadhaar || heir.aadhaarNumber})</span>
                                 <span className="text-xs bg-blue-100 text-[#0F4C81] px-2 py-0.5 rounded-full font-mono font-semibold">Share: {heir.share || `1/${heirs.length}`}</span>
                               </div>
                               <div className="text-xs text-gray-500 mt-0.5">{heir.relation || 'Legal Heir'} · HSA 2005 S.6(3) Coparcener</div>
                               {heir.hasConsented && heir.consentedAt ? (
                                 <div className="text-xs text-emerald-600 font-semibold mt-0.5">✓ eSigned via Aadhaar ({(heir as any).aadhaar || heir.aadhaarNumber ? `XXXX-XXXX-${String((heir as any).aadhaar || heir.aadhaarNumber).slice(-4)}` : 'Verified'}) at {format(new Date(heir.consentedAt), 'HH:mm, dd MMM')}</div>
                               ) : (
-                                <div className="text-xs font-semibold text-amber-700 mt-0.5">⏳ Awaiting Aadhaar eSign — request also sent to {heir.name}&apos;s Home Page</div>
+                                <div className="text-xs font-semibold text-amber-700 mt-0.5">⏳ Awaiting Aadhaar eSign — request also sent to Aadhaar <strong>{heir.aadhaar || heir.aadhaarNumber || 'Verified'}</strong>&apos;s Home Page</div>
                               )}
                             </div>
                           </div>
