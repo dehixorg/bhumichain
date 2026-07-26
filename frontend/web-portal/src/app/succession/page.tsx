@@ -421,6 +421,9 @@ export default function SuccessionPage() {
           <Users className="w-4 h-4 text-[#0F4C81]" />
           <span className="text-sm font-semibold text-gray-700">Succession & Coparcenary</span>
           <span className="text-xs text-gray-400">— Virasat (उत्तराधिकार)</span>
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-purple-50 border border-purple-200 text-purple-800 text-xs font-bold">
+            📜 Hindu Succession Act 1956/2005 (Sec 6) & Bihar Mutation Act 2011 (Sec 6(10) Probate & Sec 6(11) Co-Sharer Consent)
+          </span>
           <div className="ml-auto flex items-center gap-1">
             {STEPS.map((s, i) => (
               <div key={s.id} title={s.label} className={clsx('h-1.5 rounded-full transition-all duration-300', i < stepIdx ? 'w-6 bg-[#0F4C81]' : i === stepIdx ? 'w-8 bg-amber-500 animate-pulse' : 'w-4 bg-gray-300')} />

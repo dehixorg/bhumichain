@@ -91,6 +91,9 @@ export default function ECPage() {
         <div className="h-12 bg-white border-b border-gray-200 flex items-center px-6 gap-3 shrink-0">
           <ScrollText className="w-4 h-4 text-[#0F4C81]" />
           <span className="text-sm font-semibold text-gray-700">Encumbrance Certificate</span>
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-blue-50 border border-blue-200 text-[#0F4C81] text-xs font-bold">
+            📜 Transfer of Property Act 1882 (Sec 58) & Bihar Mutation Act 2011 (Sec 10(2)(iii) CERSAI Charge)
+          </span>
           <div className="ml-auto flex items-center gap-1.5 text-xs text-gray-500">
             <Shield className="w-3.5 h-3.5" />
             Multi-source cross-verification · IGRS Bihar

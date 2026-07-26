@@ -178,7 +178,12 @@ export default function MutationListPage() {
           {/* Header */}
           <div className="flex items-start justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Mutation Manager</h1>
+              <div className="flex items-center gap-3">
+                <h1 className="text-2xl font-bold text-gray-900">Mutation Manager</h1>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-amber-900 text-xs font-bold">
+                  📜 Bihar Land Mutation Act 2011 — Sec 5, Sec 6(12) Litigation Lock, Sec 6(13) Khabza, Sec 12 SLAs & Sec 16 CPC Powers
+                </span>
+              </div>
               <p className="text-gray-400 text-sm mt-1">
                 {isCitizen
                   ? 'Mutations initiated on your parcels — consent, object, or track status'

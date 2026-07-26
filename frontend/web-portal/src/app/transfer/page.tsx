@@ -91,6 +91,9 @@ export default function TransferPage() {
         <div className="h-12 bg-white border-b border-gray-200 flex items-center px-6 gap-3 shrink-0">
           <ArrowLeftRight className="w-4 h-4 text-[#0F4C81]" />
           <span className="text-sm font-semibold text-gray-700">Property Transfer</span>
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-blue-50 border border-blue-200 text-[#0F4C81] text-xs font-bold">
+            📜 Indian Registration Act 1908 (Sec 17) & Bihar Mutation Act 2011 (Sec 6(9) & 4(1))
+          </span>
 
           {/* Scene toggle */}
           <div className="ml-4 flex rounded-lg overflow-hidden border border-gray-200 text-xs">
