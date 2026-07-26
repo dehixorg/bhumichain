@@ -181,7 +181,10 @@ export default function MutationListPage() {
               <div className="flex items-center gap-3">
                 <h1 className="text-2xl font-bold text-gray-900">Mutation Manager</h1>
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-amber-900 text-xs font-bold">
-                  📜 Bihar Land Mutation Act 2011 — Sec 5, Sec 6(12) Litigation Lock, Sec 6(13) Khabza, Sec 12 SLAs & Sec 16 CPC Powers
+                  📍 State Pilot: Bihar Mutation Act 2011 (Sec 5 Inquiry, Sec 6(12) Litigation Lock, Sec 6(13) Khabza & Sec 12 SLAs)
+                </span>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-slate-50 border border-slate-200 text-slate-700 text-xs font-bold">
+                  🇮🇳 CPC 1908 (Sec 16 Court Powers)
                 </span>
               </div>
               <p className="text-gray-400 text-sm mt-1">

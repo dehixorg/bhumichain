@@ -243,12 +243,12 @@ export default function CitizenDashboard() {
           <div className="max-w-[1200px] mx-auto px-6 lg:px-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-8">
             <div className="space-y-4">
               <div className="flex flex-wrap items-center gap-2">
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-50 border border-green-200 text-green-700 text-xs font-bold uppercase tracking-wider">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-50 border border-green-200 text-green-700 text-xs font-bold uppercase tracking-wider">
                   <CheckCircle className="w-3.5 h-3.5" />
                   Aadhaar KYC Verified
                 </div>
-                <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-200 text-[#0F4C81] text-xs font-bold shadow-xs">
-                  📜 Bihar Land Mutation Act 2011 — Sec 2(3), 2(4), 2(26) & Sec 10 (Digital Khatta-Pustika / Continuous Khatian)
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-[#0F4C81] text-xs font-bold shadow-xs">
+                  📍 State Pilot: Bihar Mutation Act 2011 (Sec 2, 10 - Digital Khatta-Pustika / Continuous Khatian)
                 </div>
               </div>
               <h1 className="text-3xl md:text-4xl font-black text-gray-900 tracking-tight">

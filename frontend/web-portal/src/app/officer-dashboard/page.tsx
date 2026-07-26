@@ -368,7 +368,10 @@ export default function OfficerDashboardPage() {
                   </span>
                 )}
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-blue-50 border border-blue-200 text-[#0F4C81] text-xs font-bold">
-                  📜 Bihar Land Mutation Act 2011 (Sec 5, 6, 12 SLAs & Sec 16 CPC Revenue Court Powers)
+                  📍 State Pilot: Bihar Mutation Act 2011 (Sec 5 Inquiry, Sec 6 Approval, Sec 12 SLAs)
+                </span>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-slate-50 border border-slate-200 text-slate-700 text-xs font-bold">
+                  🇮🇳 CPC 1908 (Sec 16 Revenue Court Powers)
                 </span>
               </div>
               <p className="text-gray-500 text-sm mt-1">
