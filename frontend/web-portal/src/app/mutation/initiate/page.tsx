@@ -20,9 +20,9 @@ export default function InitiateMutationPage() {
   const [error, setError] = useState('');
 
   // Form State
-  const [dlpiId, setDlpiId] = useState('DLPI-Bihar-GBN-2026-0045');
+  const [dlpiId, setDlpiId] = useState('DLPI-Bihar-PHU-00100');
   const [mutationType, setMutationType] = useState('Sale');
-  const [currentOwnerName, setCurrentOwnerName] = useState('Ram Prasad Sharma');
+  const [currentOwnerName, setCurrentOwnerName] = useState('Priya Kumar');
   const [newOwnerName, setNewOwnerName] = useState('Amit Saxena');
   const [newOwnerAadhaar, setNewOwnerAadhaar] = useState('999988887777');
   const [reason, setReason] = useState('Registered Sale Deed No. 4412/2026 executed at Sub-Registrar Patna');
@@ -38,29 +38,46 @@ export default function InitiateMutationPage() {
     setUser(u);
   }, [router]);
 
+  // Auto-fetch land parcel owner mapped to Aadhaar whenever dlpiId changes
+  useEffect(() => {
+    if (!dlpiId || dlpiId.trim().length < 4) return;
+    const timer = setTimeout(async () => {
+      try {
+        const res = await apiFetch(`/api/dlpi/${dlpiId.trim()}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data && (data.ownerName || data.owner?.name)) {
+            setCurrentOwnerName(data.ownerName || data.owner?.name);
+          }
+        }
+      } catch (e) {}
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [dlpiId]);
+
   const handleQuickFill = (preset: 'Sale' | 'Inheritance' | 'Court_Order') => {
     if (preset === 'Sale') {
-      setDlpiId('DLPI-Bihar-GBN-2026-0045');
+      setDlpiId('DLPI-Bihar-PHU-00100');
       setMutationType('Sale');
-      setCurrentOwnerName('Ram Prasad Sharma');
+      setCurrentOwnerName('Priya Kumar');
       setNewOwnerName('Amit Saxena');
       setNewOwnerAadhaar('999988887777');
       setReason('Registered Sale Deed No. 4412/2026 executed at Sub-Registrar Patna.');
       setSupportingCID('QmSaleDeedGBN2026Hash99182x');
       setCourtOrderNo('');
     } else if (preset === 'Inheritance') {
-      setDlpiId('DLPI-Bihar-GBN-2026-0089');
+      setDlpiId('DLPI-Bihar-PHU-00100');
       setMutationType('Inheritance');
-      setCurrentOwnerName('Late Suresh Chandra');
+      setCurrentOwnerName('Late Ramesh Kumar');
       setNewOwnerName('Priya Kumar');
-      setNewOwnerAadhaar('999900010012');
+      setNewOwnerAadhaar('999900010010');
       setReason('Succession claim finalized following verification of Death Certificate CRS Reg. No. Bihar-2026-8812.');
       setSupportingCID('QmSuccessionCertificate2026');
       setCourtOrderNo('');
     } else if (preset === 'Court_Order') {
-      setDlpiId('DLPI-Bihar-GBN-2026-0112');
+      setDlpiId('DLPI-Bihar-PHU-00100');
       setMutationType('Court_Order');
-      setCurrentOwnerName('Vijay Pal Singh');
+      setCurrentOwnerName('Priya Kumar');
       setNewOwnerName('Ankur Singh');
       setNewOwnerAadhaar('888877776666');
       setReason('Execution of Civil Court Decree dated 12/06/2026 ordering title transfer.');
