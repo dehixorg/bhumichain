@@ -219,6 +219,10 @@ export default function InitiateMutationPage() {
                     <option value="Partition">Partition / Batwara (बँटवारा)</option>
                     <option value="Court_Order">Court Order / Decree (न्यायालय आदेश)</option>
                     <option value="Will">Will / Wasiyat (वसीयत)</option>
+                    <option value="Exchange">Exchange / Vinimay (विनिमय / अदला-बदली)</option>
+                    <option value="Govt_Acquisition">Govt Allotment / Bandobasti (सरकारी बंदोबस्ती / लीज)</option>
+                    <option value="Bhudan">Bhudan / Vasgit Parcha (भूदान / वासगीत पर्चा)</option>
+                    <option value="Mortgage_Lien">Bank Mortgage Lien / Release (बैंक बंधक / सरफेसी)</option>
                   </select>
                   <span className="text-[11px] text-gray-400 mt-1 block">Select statutory classification under Bihar Revenue Code</span>
                 </div>

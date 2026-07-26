@@ -26,7 +26,7 @@ const validate = (req, res, next) => {
 
 const MUTATION_TYPES = [
   'Sale', 'Gift', 'Inheritance', 'Partition', 'Court_Order',
-  'Govt_Acquisition', 'Exchange', 'Will',
+  'Govt_Acquisition', 'Exchange', 'Will', 'Bhudan', 'Mortgage_Lien',
 ];
 
 // POST /api/mutation/initiate — officer initiates; 60-sec alert SLA starts
