@@ -35,9 +35,9 @@ const MOCK_IDENTITIES = {
   '999900010013': { role: 'citizen',          name: 'Meena Devi',   phone: '9999000013' },
   '999900010014': { role: 'citizen',          name: 'Arun Kumar',   phone: '9999000014' },
   '999900010015': { role: 'citizen',          name: 'Sunita Kumar', phone: '9999000015' },
-  '999900010001': { role: 'tehsildar',        name: 'Amit Saxena',  phone: '9999000001', jurisdictionCode: 'GBN-DAD', tehsilCode: 'DAD' },
-  '999900010002': { role: 'circle_inspector', name: 'Rajesh Verma', phone: '9999000002', jurisdictionCode: 'GBN-DAD', circleCode: 'DAD-C1', patwariCodes: ['DAD-P1','DAD-P2','DAD-P3'], tehsilCode: 'DAD' },
-  '999900010003': { role: 'patwari',          name: 'Vijay Singh',  phone: '9999000003', jurisdictionCode: 'GBN-DAD', patwariCode: 'DAD-P1', villageCodes: ['DAD-001','DAD-002','DAD-003'], tehsilCode: 'DAD' },
+  '999900010001': { role: 'anchalAdhikari',        name: 'Amit Saxena',  phone: '9999000001', jurisdictionCode: 'GBN-DAD', tehsilCode: 'DAD' },
+  '999900010002': { role: 'anchalNirikshak', name: 'Rajesh Verma', phone: '9999000002', jurisdictionCode: 'GBN-DAD', circleCode: 'DAD-C1', patwariCodes: ['DAD-P1','DAD-P2','DAD-P3'], tehsilCode: 'DAD' },
+  '999900010003': { role: 'karmachari',          name: 'Vijay Singh',  phone: '9999000003', jurisdictionCode: 'GBN-DAD', patwariCode: 'DAD-P1', villageCodes: ['DAD-001','DAD-002','DAD-003'], tehsilCode: 'DAD' },
 };
 
 async function callOracle(aadhaarNumber) {
@@ -281,18 +281,18 @@ router.post('/demo-token', (req, res) => {
       aadhaarNumber: '999900010099'
     },
     tehsildar: {
-      role: 'tehsildar', name: 'Amit Saxena',
+      role: 'anchalAdhikari', name: 'Amit Saxena',
       aadhaarNumber: '999900010001',
       jurisdictionCode: 'GBN-DAD', tehsilCode: 'DAD',
     },
     circle_inspector: {
-      role: 'circle_inspector', name: 'Rajesh Verma',
+      role: 'anchalNirikshak', name: 'Rajesh Verma',
       aadhaarNumber: '999900010002',
       jurisdictionCode: 'GBN-DAD', circleCode: 'DAD-C1',
       patwariCodes: ['DAD-P1', 'DAD-P2', 'DAD-P3'], tehsilCode: 'DAD',
     },
     patwari: {
-      role: 'patwari', name: 'Vijay Singh',
+      role: 'karmachari', name: 'Vijay Singh',
       aadhaarNumber: '999900010003',
       jurisdictionCode: 'GBN-DAD', patwariCode: 'DAD-P1',
       villageCodes: ['DAD-001', 'DAD-002', 'DAD-003'], tehsilCode: 'DAD',

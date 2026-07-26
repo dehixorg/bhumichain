@@ -437,13 +437,13 @@ router.get('/my-parcels', authenticate, requireRole(ROLES.CITIZEN), async (req, 
 router.get(
   '/pending-review',
   authenticate,
-  requireRole(...CAN_APPROVE_MUTATION, ROLES.PATWARI),
+  requireRole(...CAN_APPROVE_MUTATION, ROLES.KARMACHARI),
   async (req, res) => {
     try {
       let status = '';
-      if (req.user.role === ROLES.CIRCLE_INSPECTOR) {
+      if (req.user.role === ROLES.ANCHAL_NIRIKSHAK) {
         status = 'SCAN_PENDING_SRO';
-      } else if (req.user.role === ROLES.TEHSILDAR) {
+      } else if (req.user.role === ROLES.ANCHAL_ADHIKARI) {
         status = 'SCAN_PENDING_TEHSILDAR';
       }
 
@@ -506,13 +506,13 @@ router.post(
     const secret = process.env.SERVICE_SECRET || 'bhumichain-internal-service-secret';
     const providedSecret = req.headers['x-service-secret'];
     if (providedSecret && providedSecret === secret) {
-      req.user = { role: 'patwari', name: 'RecordScan-Service', aadhaarNumber: 'sha256:' + '0'.repeat(64) };
+      req.user = { role: 'karmachari', name: 'RecordScan-Service', aadhaarNumber: 'sha256:' + '0'.repeat(64) };
       return next();
     }
     authenticate(req, res, () => {
       requireRole(
-        ROLES.PATWARI, ROLES.CITIZEN,
-        ROLES.CIRCLE_INSPECTOR, ROLES.TEHSILDAR, ROLES.COLLECTOR, ROLES.SUPER_ADMIN
+        ROLES.KARMACHARI, ROLES.CITIZEN,
+        ROLES.ANCHAL_NIRIKSHAK, ROLES.ANCHAL_ADHIKARI, ROLES.COLLECTOR, ROLES.SUPER_ADMIN
       )(req, res, next);
     });
   },
@@ -539,8 +539,8 @@ router.post(
   '/',
   authenticate,
   requireRole(
-    ROLES.PATWARI, ROLES.CITIZEN,
-    ROLES.CIRCLE_INSPECTOR, ROLES.TEHSILDAR, ROLES.COLLECTOR, ROLES.SUPER_ADMIN
+    ROLES.KARMACHARI, ROLES.CITIZEN,
+    ROLES.ANCHAL_NIRIKSHAK, ROLES.ANCHAL_ADHIKARI, ROLES.COLLECTOR, ROLES.SUPER_ADMIN
   ),
   body('dlpiId').matches(/^DLPI-[A-Z0-9-]+$/),
   validate,
@@ -563,7 +563,7 @@ router.post(
 router.post(
   '/bulk-seed',
   authenticate,
-  requireRole(ROLES.TEHSILDAR, ROLES.COLLECTOR, ROLES.SUPER_ADMIN),
+  requireRole(ROLES.ANCHAL_ADHIKARI, ROLES.COLLECTOR, ROLES.SUPER_ADMIN),
   body('parcels').isArray({ min: 1, max: 500 }),
   body('parcels.*.dlpiId').matches(/^DLPI-[A-Z0-9-]+$/),
   validate,
@@ -741,7 +741,7 @@ router.post(
 router.post(
   '/:dlpiId/tehsildar-approve',
   authenticate,
-  requireRole(ROLES.TEHSILDAR),
+  requireRole(ROLES.ANCHAL_ADHIKARI),
   dlpiParam,
   body('eSignTxHash').notEmpty(),
   validate,
@@ -759,7 +759,7 @@ router.post(
 router.post(
   '/:dlpiId/scan-approve-sro',
   authenticate,
-  requireRole(ROLES.CIRCLE_INSPECTOR),
+  requireRole(ROLES.ANCHAL_NIRIKSHAK),
   dlpiParam,
   validate,
   async (req, res) => {
@@ -806,7 +806,7 @@ router.post(
 router.post(
   '/:dlpiId/scan-approve-tehsildar',
   authenticate,
-  requireRole(ROLES.TEHSILDAR),
+  requireRole(ROLES.ANCHAL_ADHIKARI),
   dlpiParam,
   validate,
   async (req, res) => {
@@ -968,7 +968,7 @@ router.post(
 router.post(
   '/:dlpiId/ci-review',
   authenticate,
-  requireRole(ROLES.CIRCLE_INSPECTOR, ROLES.TEHSILDAR, ROLES.COLLECTOR, ROLES.SUPER_ADMIN),
+  requireRole(ROLES.ANCHAL_NIRIKSHAK, ROLES.ANCHAL_ADHIKARI, ROLES.COLLECTOR, ROLES.SUPER_ADMIN),
   dlpiParam,
   checkJurisdiction,
   body('approved').isBoolean(),
@@ -987,7 +987,7 @@ router.post(
 router.post(
   '/:dlpiId/tehsildar-approve',
   authenticate,
-  requireRole(ROLES.TEHSILDAR, ROLES.COLLECTOR, ROLES.SUPER_ADMIN),
+  requireRole(ROLES.ANCHAL_ADHIKARI, ROLES.COLLECTOR, ROLES.SUPER_ADMIN),
   dlpiParam,
   checkJurisdiction,
   body('eSignTxHash').notEmpty(),
@@ -1006,7 +1006,7 @@ router.post(
 router.post(
   '/:dlpiId/reject',
   authenticate,
-  requireRole(...CAN_APPROVE_MUTATION, ROLES.PATWARI),
+  requireRole(...CAN_APPROVE_MUTATION, ROLES.KARMACHARI),
   dlpiParam,
   checkJurisdiction,
   body('reason').notEmpty().trim().isLength({ max: 500 }),
@@ -1126,7 +1126,7 @@ router.post(
 router.post(
   '/:dlpiId/initiate-succession',
   authenticate,
-  requireRole(ROLES.ORACLE, ROLES.PATWARI, ROLES.CIRCLE_INSPECTOR, ROLES.TEHSILDAR),
+  requireRole(ROLES.ORACLE, ROLES.KARMACHARI, ROLES.ANCHAL_NIRIKSHAK, ROLES.ANCHAL_ADHIKARI),
   dlpiParam,
   body('deceasedAadhaar').notEmpty(),
   validate,

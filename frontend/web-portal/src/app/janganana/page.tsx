@@ -19,7 +19,7 @@ const ANOMALIES = [
     severity:      'HIGH',
     gps:           [19.7234, 73.6891] as [number, number],
     dlpiId:        null,
-    tehsil:        'Igatpuri',
+    anchal:        'Igatpuri',
     casteCategory: 'ST',
     desc:          'Household of 6 found on Forest Reserve land near Igatpuri. No legal patta exists.',
     action:        'Revenue Department field survey. Verify if FRA claim pending.',
@@ -31,7 +31,7 @@ const ANOMALIES = [
     severity:      'HIGH',
     gps:           [19.9812, 73.7823] as [number, number],
     dlpiId:        'DLPI-MH-NSK-02891',
-    tehsil:        'Nashik City',
+    anchal:        'Nashik City',
     casteCategory: 'General',
     desc:          'No household found at registered address. Owner holds 5 similar parcels — benami pattern.',
     action:        'Escalate to I-T Department. FraudSense score: 0.87.',
@@ -43,7 +43,7 @@ const ANOMALIES = [
     severity:      'MEDIUM',
     gps:           [20.1456, 73.9234] as [number, number],
     dlpiId:        'DLPI-MH-NSK-04512',
-    tehsil:        'Nashik City',
+    anchal:        'Nashik City',
     casteCategory: 'OBC',
     desc:          'Census occupant name does not match DLPI owner. Possible unauthorised transfer without mutation.',
     action:        'Cross-check with Revenue Records Office. Issue mutation notice.',
@@ -55,7 +55,7 @@ const ANOMALIES = [
     severity:      'MEDIUM',
     gps:           [19.8345, 74.0123] as [number, number],
     dlpiId:        'DLPI-MH-SNN-00789',
-    tehsil:        'Sinnar',
+    anchal:        'Sinnar',
     casteCategory: 'SC',
     desc:          'DLPI shows owner but Janganana enumerator found abandoned land for 8 years. No occupant.',
     action:        'Check if owner deceased — trigger succession process if confirmed.',
@@ -115,7 +115,7 @@ function JangananaMap({ anomalies }: { anomalies: typeof ANOMALIES }) {
               <div style="color:#9ca3af;margin-bottom:2px">${a.householdId}</div>
               ${a.dlpiId ? `<div style="font-family:monospace;color:#6b7280;margin-bottom:4px">${a.dlpiId}</div>` : ''}
               <div style="margin-bottom:2px">${a.desc.slice(0, 80)}…</div>
-              <div style="color:#6b7280;margin-top:4px">${a.tehsil} tehsil</div>
+              <div style="color:#6b7280;margin-top:4px">${a.anchal} anchal</div>
             </div>
           `);
       }
@@ -230,7 +230,7 @@ export default function JangananaPage() {
                   <Info className="w-3.5 h-3.5 text-[#0F4C81] shrink-0 mt-0.5" />
                   <div className="text-xs text-gray-500 space-y-1.5">
                     <p>Janganana GPS data is cross-referenced with the BhumiChain DLPI registry in real-time.</p>
-                    <p>Anomalies are auto-prioritised by severity and forwarded to the relevant tehsildar.</p>
+                    <p>Anomalies are auto-prioritised by severity and forwarded to the relevant circle_officer.</p>
                     <p className="text-[#0F4C81]">SVAMITVA scheme: 3.10 crore property cards issued across 3.29 lakh villages.</p>
                   </div>
                 </div>
@@ -274,7 +274,7 @@ export default function JangananaPage() {
                     </div>
                     <div className="text-right text-xs text-gray-600 shrink-0">
                       <div className="font-mono">{a.dlpiId || '—'}</div>
-                      <div>{a.tehsil}</div>
+                      <div>{a.anchal}</div>
                     </div>
                   </div>
 

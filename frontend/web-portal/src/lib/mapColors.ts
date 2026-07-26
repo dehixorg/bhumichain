@@ -1,12 +1,12 @@
 import type { LandType, EncumbranceStatus } from '@/types';
 
-// Fill colour by land type (UP primary + Maharashtra legacy)
+// Fill colour by land type (Bihar primary + Maharashtra legacy)
 export const LAND_TYPE_COLOR: Record<LandType, string> = {
-  // UP types
-  Bhumidhari:   '#22c55e',  // green — permanent occupancy
-  Sirdar:       '#a3e635',  // lime — hereditary tenancy
-  Asamiyadar:   '#84cc16',  // yellow-green — sub-tenancy
-  Residential:  '#6366f1',  // indigo — residential
+  // Bihar types
+  'Raiyati':      '#22c55e',  // green — permanent occupancy
+  'Gair Mazarua': '#a3e635',  // lime — hereditary tenancy
+  'Asamiyadar':   '#84cc16',  // yellow-green — sub-tenancy
+  'Residential':  '#6366f1',  // indigo — residential
   Commercial:   '#f59e0b',  // amber — commercial
   Tribal_FRA:   '#d97706',  // deep amber — tribal FRA protected
   Govt_Reserved:'#3b82f6',  // blue — government
@@ -33,7 +33,7 @@ export function getParcelStyle(properties: {
   const fillColor = LAND_TYPE_COLOR[landType] || '#6b7280';
 
   // Demo parcels get special styling
-  const isDemoParcel = dlpiId === 'DLPI-UP-DAD-00100' || dlpiId === 'DLPI-UP-DAD-00006';
+  const isDemoParcel = dlpiId === 'DLPI-Bihar-PHU-00100' || dlpiId === 'DLPI-Bihar-PHU-00006';
 
   let color = '#1f2937';      // default border — dark grey
   let weight = 0.8;
@@ -66,11 +66,11 @@ export function getParcelStyle(properties: {
 }
 
 export const LAND_TYPE_LABELS: Record<LandType, string> = {
-  // UP types
-  Bhumidhari:   'Bhumidhari (Permanent Occupancy)',
-  Sirdar:       'Sirdar (Hereditary Tenancy)',
-  Asamiyadar:   'Asamiyadar (Sub-tenancy)',
-  Residential:  'Residential',
+  // Bihar types
+  'Raiyati':      'Raiyati (Permanent Occupancy)',
+  'Gair Mazarua': 'Gair Mazarua (Hereditary Tenancy)',
+  'Asamiyadar':   'Asamiyadar (Sub-tenancy)',
+  'Residential':  'Residential',
   Commercial:   'Commercial',
   Tribal_FRA:   'Tribal / FRA Protected',
   Govt_Reserved:'Government Reserved',

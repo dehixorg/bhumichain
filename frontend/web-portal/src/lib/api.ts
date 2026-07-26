@@ -27,8 +27,8 @@ api.interceptors.request.use((config) => {
 export async function getDemoToken(role: string, name: string): Promise<string> {
   // Real backend does not accept role/name payload, it expects { persona: 'oracle' }
   // We need to send persona, not role/name, to match demo-token endpoint
-  const persona = role === 'oracle' ? 'tehsildar' : role; // Fallback for oracle if no persona
-  const res = await api.post(`/api/auth/demo-token`, { persona: 'tehsildar' }); // Use a real persona for the oracle
+  const persona = role === 'oracle' ? 'circle_officer' : role; // Fallback for oracle if no persona
+  const res = await api.post(`/api/auth/demo-token`, { persona: 'circle_officer' }); // Use a real persona for the oracle
   const token = res.data.token as string;
   if (typeof window !== 'undefined') {
     localStorage.setItem('bhumichain_token', token);
@@ -119,7 +119,7 @@ export async function confirmStampDuty(transferId: string, payload: {
 }
 
 export async function approveTransferByPatwari(transferId: string) {
-  const res = await apiFetch(`/api/transfer/${transferId}/approve/patwari`, { method: 'POST' });
+  const res = await apiFetch(`/api/transfer/${transferId}/approve/karmachari`, { method: 'POST' });
   return res.json();
 }
 
@@ -146,7 +146,7 @@ export async function approveTransferBySRO(transferId: string, newTitleCID: stri
 }
 
 export async function approveTransferByTehsildar(transferId: string) {
-  const res = await apiFetch(`/api/transfer/${transferId}/approve/tehsildar`, { method: 'POST' });
+  const res = await apiFetch(`/api/transfer/${transferId}/approve/circle_officer`, { method: 'POST' });
   return res.json();
 }
 

@@ -62,7 +62,7 @@ function saveNominations() {
 router.post(
   '/add-inheritor',
   authenticate,
-  requireRole(ROLES.CITIZEN, ROLES.PATWARI, ROLES.TEHSILDAR, ROLES.SUPER_ADMIN),
+  requireRole(ROLES.CITIZEN, ROLES.KARMACHARI, ROLES.ANCHAL_ADHIKARI, ROLES.SUPER_ADMIN),
   async (req, res) => {
     try {
       const { dlpiId, inheritorName, inheritorAadhaarNumber } = req.body;
@@ -99,7 +99,7 @@ router.get('/nominations', authenticate, (req, res) => {
 });
 
 // POST /api/succession/nomination/:id/approve — Tehsildar approves nomination
-router.post('/nomination/:id/approve', authenticate, requireRole(ROLES.TEHSILDAR, ROLES.COLLECTOR, ROLES.SUPER_ADMIN, ROLES.CITIZEN), (req, res) => {
+router.post('/nomination/:id/approve', authenticate, requireRole(ROLES.ANCHAL_ADHIKARI, ROLES.COLLECTOR, ROLES.SUPER_ADMIN, ROLES.CITIZEN), (req, res) => {
   const nom = global.inheritorNominations.find(n => n.nominationId === req.params.id);
   if (nom) {
     nom.status = 'APPROVED';
@@ -115,7 +115,7 @@ router.post('/nomination/:id/approve', authenticate, requireRole(ROLES.TEHSILDAR
 router.post(
   '/initiate',
   authenticate,
-  requireRole(ROLES.ORACLE, ROLES.TEHSILDAR, ROLES.COLLECTOR, ROLES.CITIZEN),
+  requireRole(ROLES.ORACLE, ROLES.ANCHAL_ADHIKARI, ROLES.COLLECTOR, ROLES.CITIZEN),
   body('dlpiId').matches(/^DLPI-[A-Z0-9-]+$/),
   body('familyId').notEmpty(),
   body('deceasedName').notEmpty().trim(),
@@ -376,7 +376,7 @@ router.get('/my-pending', authenticate, requireRole(ROLES.CITIZEN), async (req, 
 
 
 // GET /api/succession/pending/all — Officer queue
-router.get('/pending/all', authenticate, requireRole(ROLES.TEHSILDAR, ROLES.COLLECTOR), async (req, res) => {
+router.get('/pending/all', authenticate, requireRole(ROLES.ANCHAL_ADHIKARI, ROLES.COLLECTOR), async (req, res) => {
   try {
     const fs = require('fs');
     if (fs.existsSync('/tmp/bhumichain_history_cleared.json')) return res.json([]);
@@ -499,7 +499,7 @@ router.get('/:caseId', authenticate, async (req, res) => {
 router.post(
   '/:caseId/execute',
   authenticate,
-  requireRole(ROLES.TEHSILDAR, ROLES.COLLECTOR, ROLES.CIRCLE_INSPECTOR),
+  requireRole(ROLES.ANCHAL_ADHIKARI, ROLES.COLLECTOR, ROLES.ANCHAL_NIRIKSHAK),
   async (req, res) => {
     try {
       let result;
@@ -847,7 +847,7 @@ router.post(
 );
 
 // GET /api/succession/pending/all — officer dashboard: all pending cases
-router.get('/pending/all', authenticate, requireRole(ROLES.TEHSILDAR, ROLES.REVENUE_OFFICER, ROLES.COLLECTOR, ROLES.CIRCLE_INSPECTOR), async (req, res) => {
+router.get('/pending/all', authenticate, requireRole(ROLES.ANCHAL_ADHIKARI, ROLES.REVENUE_OFFICER, ROLES.COLLECTOR, ROLES.ANCHAL_NIRIKSHAK), async (req, res) => {
   try {
     const fs = require('fs');
     if (fs.existsSync('/tmp/bhumichain_history_cleared.json')) return res.json([]);

@@ -46,7 +46,7 @@ const DEMO_BUYER = {
 };
 
 const MOCK_COMPLIANCE: ComplianceResult = {
-  tribal:    { pass: true, detail: 'ALLOWED_NOT_TRIBAL — Bhumidhari parcel, non-scheduled area', ms: 118 },
+  tribal:    { pass: true, detail: 'ALLOWED_NOT_TRIBAL — Raiyati parcel, non-scheduled area', ms: 118 },
   valuation: { oracleValue: 5_200_000, stampDuty: 208_000 },
   fraud:     { score: 0.12, pass: true },
 };
@@ -57,7 +57,7 @@ const STEP_LABELS: { id: WizardStep; label: string }[] = [
   { id: 'lock',       label: 'Parcel Lock' },
   { id: 'consent',    label: 'Consent' },
   { id: 'payment',    label: 'Stamp Duty' },
-  { id: 'sro',        label: 'Patwari Review' },
+  { id: 'sro',        label: 'Karmachari Review' },
 ];
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -130,7 +130,7 @@ export default function TransferWizard({ dlpiId, sellerName, sellerAadhaarNumber
   const [buyerConsented, setBuyerConsented]   = useState(false);
 
   const handleConsent = useCallback(async (signerId: string) => {
-    const tid = transfer?.transferId || 'TXF-DLPI-UP-DAD-00100-b2c3d4e5';
+    const tid = transfer?.transferId || 'TXF-DLPI-Bihar-PHU-00100-b2c3d4e5';
     const isSeller = signerId === 'seller';
     try {
       await recordConsent(tid, {
@@ -174,7 +174,7 @@ export default function TransferWizard({ dlpiId, sellerName, sellerAadhaarNumber
     setBusy(true);
     toast('Processing UPI payment…');
     await delay(2800);
-    const tid = transfer?.transferId || 'TXF-DLPI-UP-DAD-00100-b2c3d4e5';
+    const tid = transfer?.transferId || 'TXF-DLPI-Bihar-PHU-00100-b2c3d4e5';
     try {
       await confirmStampDuty(tid, {
         upiRefNo:         `UPI-SBI-NSK-${Date.now()}`,
@@ -191,7 +191,7 @@ export default function TransferWizard({ dlpiId, sellerName, sellerAadhaarNumber
     setTimeout(() => setStep('sro'), 800);
   };
 
-  // ── Step 6: Patwari Review (End of flow for buyer) ───────────
+  // ── Step 6: Karmachari Review (End of flow for buyer) ───────────
 
   const finishWizard = async () => {
     onComplete?.({
@@ -454,7 +454,7 @@ export default function TransferWizard({ dlpiId, sellerName, sellerAadhaarNumber
             </div>
             <div className="text-xs text-gray-400 mb-1">Scan to pay via UPI</div>
             <div className="text-xl font-bold text-gray-900 font-mono">{formatINR(transfer.stampDutyINR ?? compliance?.valuation.stampDuty ?? 0)}</div>
-            <div className="text-xs text-gray-500 mt-1">UP Stamp Duty — 5%</div>
+            <div className="text-xs text-gray-500 mt-1">Bihar Stamp Duty — 5%</div>
           </div>
 
           <div className="flex items-center gap-3 text-xs text-gray-500 mb-4">
@@ -487,21 +487,21 @@ export default function TransferWizard({ dlpiId, sellerName, sellerAadhaarNumber
         </div>
       )}
 
-      {/* ── Step 6: Patwari Review ───────────────────────────────────────── */}
+      {/* ── Step 6: Karmachari Review ───────────────────────────────────────── */}
       {step === 'sro' && (
         <div className="card space-y-4">
           <div className="flex items-center gap-2 mb-1">
             <Clock className="w-4 h-4 text-amber-400" />
-            <span className="text-sm font-semibold text-gray-700">Pending Patwari Review</span>
+            <span className="text-sm font-semibold text-gray-700">Pending Karmachari Review</span>
           </div>
           <div className="bg-[#F8FAFC] rounded-xl p-3 text-xs space-y-1.5">
             <InfoRow label="Status" value="Stamp Duty Paid" />
-            <InfoRow label="Next Step" value="Patwari verification in Officer Dashboard" />
+            <InfoRow label="Next Step" value="Karmachari verification in Officer Dashboard" />
             <InfoRow label="Transfer ID" value={transfer?.transferId || '—'} mono />
           </div>
           <div className="flex items-center gap-2 bg-amber-950/30 border border-amber-900/50 rounded-lg px-3 py-2.5 text-xs text-amber-300">
             <AlertTriangle className="w-4 h-4 shrink-0" />
-            The transfer has been submitted to the Patwari. Please log in to the Officer Dashboard to continue the workflow.
+            The transfer has been submitted to the Karmachari. Please log in to the Officer Dashboard to continue the workflow.
           </div>
           <button
             onClick={finishWizard}

@@ -10,7 +10,7 @@ import Link from 'next/link';
 
 function VerifyDeedContent() {
   const searchParams = useSearchParams();
-  const dlpiId = searchParams.get('dlpiId') || searchParams.get('id') || 'DLPI-UP-DAD-00100';
+  const dlpiId = searchParams.get('dlpiId') || searchParams.get('id') || 'DLPI-Bihar-PHU-00100';
   const txHash = searchParams.get('txHash') || '0x' + Array.from({ length: 40 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
 
   const [timestamp, setTimestamp] = useState('');
@@ -95,13 +95,13 @@ function VerifyDeedContent() {
             </div>
 
             <div className="bg-slate-950/60 p-4 rounded-xl border border-slate-800 space-y-1">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Jurisdiction & Tehsil</span>
-              <div className="font-extrabold text-slate-200 text-sm">Dadri, Gautam Buddha Nagar (UP)</div>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Jurisdiction & Anchal</span>
+              <div className="font-extrabold text-slate-200 text-sm">Phulwari Sharif, Patna (Bihar)</div>
             </div>
 
             <div className="bg-slate-950/60 p-4 rounded-xl border border-slate-800 space-y-1">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Khasra / Plot Number</span>
-              <div className="font-mono text-sm font-bold text-slate-200">Khasra 142/102 (0.5000 Hectares)</div>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Khesra / Plot Number</span>
+              <div className="font-mono text-sm font-bold text-slate-200">Khesra 142/102 (0.5000 Hectares)</div>
             </div>
 
             <div className="bg-slate-950/60 p-4 rounded-xl border border-slate-800 space-y-1">
@@ -135,7 +135,7 @@ function VerifyDeedContent() {
           <div className="flex flex-col sm:flex-row items-center justify-between pt-4 border-t border-slate-800 text-center sm:text-left gap-3">
             <div className="flex items-center gap-2 text-xs text-slate-400">
               <Award className="w-4 h-4 text-amber-400 shrink-0" />
-              <span>Digitally Signed & Endorsed by Tehsildar Dadri</span>
+              <span>Digitally Signed & Endorsed by Circle Officer Phulwari Sharif</span>
             </div>
             <div className="text-[11px] text-slate-400 font-mono">
               Proof Hash: SHA256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855

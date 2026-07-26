@@ -18,38 +18,38 @@ const AUCTION_END = new Date(Date.now() + 3 * 60 * 60 * 1000 + 24 * 60 * 1000); 
 
 const DEMO_AUCTIONS: DemoAuction[] = [
   {
-    auctionId:       'AUC-DLPI-UP-DAD-00088-f1a2b3c4',
-    dlpiId:          'DLPI-UP-DAD-00088',
+    auctionId:       'AUC-DLPI-Bihar-PHU-00088-f1a2b3c4',
+    dlpiId:          'DLPI-Bihar-PHU-00088',
     auctionType:     'COURT_ORDERED',
-    title:           'Khasra 312/2A — Dadri Tehsil',
-    description:     'Court-ordered sale pursuant to SBI loan foreclosure. Khasra 312/2A, village Dankaur, Dadri tehsil. Bhumidhari title.',
+    title:           'Khesra 312/2A — Phulwari Sharif Anchal',
+    description:     'Court-ordered sale pursuant to SBI loan foreclosure. Khesra 312/2A, village Dankaur, Phulwari Sharif anchal. Raiyati title.',
     ownerName:       'Rajan Mishra',
-    khasraNo:        '312/2A',
+    khesraNo:        '312/2A',
     areaHectares:    0.25,
-    landType:        'Bhumidhari',
+    landType:        'Raiyati',
     reservePrice:    2_500_000,
     currentBid:      2_750_000,
     totalBids:       4,
     auctionEnd:      AUCTION_END.toISOString(),
     status:          'ACTIVE',
-    authorizedBy:    'Civil Judge (Sr. Div.), Gautam Buddha Nagar — Order No. CS/2025/0471',
+    authorizedBy:    'Civil Judge (Sr. Div.), Patna — Order No. CS/2025/0471',
     caseRef:         'CS No. 2025/0471, GBN Civil Court',
     encumbranceSince:'2024-03-15',
     encumbranceType: 'MORTGAGE',
-    lender:          'State Bank of India, Dadri Branch',
+    lender:          'State Bank of India, Phulwari Sharif Branch',
     loanAmountINR:   2_200_000,
-    cersaiRegNo:     'CERSAI-UP-DAD-2024-00781',
+    cersaiRegNo:     'CERSAI-Bihar-PHU-2024-00781',
     isAntiCollude:   true,
     sealedBidReveal: AUCTION_END.toISOString(),
   },
   {
-    auctionId:       'AUC-DLPI-UP-DAD-00115-g2b3c4d5',
-    dlpiId:          'DLPI-UP-DAD-00115',
+    auctionId:       'AUC-DLPI-Bihar-PHU-00115-g2b3c4d5',
+    dlpiId:          'DLPI-Bihar-PHU-00115',
     auctionType:     'GOVT_DISPOSAL',
-    title:           'Govt. Reserved — Plot 7, Sector 12, Dadri',
-    description:     'UP Government disposal of surplus agricultural land. Khasra 598, village Jewar, Dadri tehsil. Government Reserved parcel.',
-    ownerName:       'Government of Uttar Pradesh',
-    khasraNo:        '598',
+    title:           'Govt. Reserved — Plot 7, Sector 12, Phulwari Sharif',
+    description:     'Bihar Government disposal of surplus agricultural land. Khesra 598, village Jewar, Phulwari Sharif anchal. Government Reserved parcel.',
+    ownerName:       'Government of Bihar',
+    khesraNo:        '598',
     areaHectares:    2.10,
     landType:        'Govt_Reserved',
     reservePrice:    8_500_000,
@@ -57,7 +57,7 @@ const DEMO_AUCTIONS: DemoAuction[] = [
     totalBids:       0,
     auctionEnd:      new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
     status:          'UPCOMING',
-    authorizedBy:    'District Collector, Gautam Buddha Nagar — Order DM/2026/0234',
+    authorizedBy:    'District Collector, Patna — Order DM/2026/0234',
     caseRef:         'DM Order 2026/0234',
     encumbranceSince:null,
     encumbranceType: null,
@@ -76,7 +76,7 @@ interface DemoAuction {
   title:            string;
   description:      string;
   ownerName:        string;
-  khasraNo:         string;
+  khesraNo:         string;
   areaHectares:     number;
   landType:         string;
   reservePrice:     number;
@@ -178,7 +178,7 @@ export default function AuctionPage() {
                 >
                   <div className="flex items-center gap-2 mb-1">
                     <StatusBadge status={auction.status} />
-                    <span className="text-xs text-gray-500 ml-auto font-mono">{auction.khasraNo}</span>
+                    <span className="text-xs text-gray-500 ml-auto font-mono">{auction.khesraNo}</span>
                   </div>
                   <div className="text-sm font-semibold text-gray-900 truncate">{auction.title}</div>
                   <div className="text-xs text-gray-500 mt-0.5 truncate">{auction.dlpiId}</div>
@@ -258,9 +258,9 @@ export default function AuctionPage() {
                 </div>
                 <div className="grid grid-cols-2 gap-x-8 gap-y-2.5">
                   <InfoRow label="DLPI"          value={selected.dlpiId} mono />
-                  <InfoRow label="Khasra No."    value={selected.khasraNo} mono />
+                  <InfoRow label="Khesra No."    value={selected.khesraNo} mono />
                   <InfoRow label="Land Type"     value={selected.landType} />
-                  <InfoRow label="Area"          value={`${selected.areaHectares} hectares`} />
+                  <InfoRow label="Area"          value={`${selected.areaHectares} Ha`} />
                   <InfoRow label="Current Owner" value={selected.ownerName} />
                   <InfoRow label="Reserve Price" value={`₹ ${fmtINR(selected.reservePrice)}`} />
                 </div>

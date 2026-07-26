@@ -1,6 +1,6 @@
 """
-BhumiChain — Synthetic Gautam Buddha Nagar (Noida) Parcel Generator
-Generates 500 realistic land parcels for Dadri tehsil, GBN district demo
+BhumiChain — Synthetic Patna Parcel Generator
+Generates 500 realistic land parcels for Phulwari Sharif anchal, PAT district demo
 """
 
 import json
@@ -12,19 +12,19 @@ from typing import List
 
 random.seed(42)
 
-# ─── GBN / Noida Geography ────────────────────────────────────────────────────
-# Bounding box for Gautam Buddha Nagar: 28.45°N–28.70°N, 77.40°E–77.75°E
-GBN_BOUNDS = {
-    "min_lat": 28.45, "max_lat": 28.70,
-    "min_lon": 77.40, "max_lon": 77.75,
+# ─── PAT / Patna Geography ────────────────────────────────────────────────────
+# Bounding box for Gautam Buddha Nagar: 25.55°N–25.65°N, 85.05°E–85.25°E
+PAT_BOUNDS = {
+    "min_lat": 25.55, "max_lat": 25.65,
+    "min_lon": 85.05, "max_lon": 85.25,
 }
 
-TEHSIL = {"name": "Dadri", "code": "DAD", "urban_ratio": 0.55}
+TEHSIL = {"name": "Phulwari Sharif", "code": "PHU", "urban_ratio": 0.55}
 
 # UP land tenure types
 LAND_TYPES = [
-    {"type": "Bhumidhari",    "desc": "Hereditary tenant with full rights",   "weight": 40},
-    {"type": "Sirdar",        "desc": "Hereditary tenant with limited rights", "weight": 20},
+    {"type": "Raiyati",    "desc": "Hereditary tenant with full rights",   "weight": 40},
+    {"type": "Gair Mazarua",        "desc": "Hereditary tenant with limited rights", "weight": 20},
     {"type": "Residential",   "desc": "Residential plot / abadi",             "weight": 18},
     {"type": "Commercial",    "desc": "Commercial / industrial plot",          "weight": 8},
     {"type": "Tribal_FRA",    "desc": "Tribal / forest rights patta",         "weight": 4},
@@ -49,13 +49,13 @@ CLAIM_STATUS_WEIGHTS = [
     {"status": "REJECTED",          "weight": 1},
 ]
 
-UP_FIRST_NAMES = [
+BIHAR_FIRST_NAMES = [
     "Ramesh", "Suresh", "Arun", "Vijay", "Sanjay", "Rajesh", "Mahesh",
     "Sunita", "Priya", "Kavita", "Anita", "Rekha", "Meena", "Lata",
     "Mohan", "Sohan", "Girish", "Dinesh", "Naresh", "Umesh", "Ganesh",
     "Savita", "Geeta", "Seema", "Pushpa", "Saroj", "Usha", "Kamla",
 ]
-UP_SURNAMES = [
+BIHAR_SURNAMES = [
     "Sharma", "Verma", "Gupta", "Singh", "Yadav", "Chaudhary", "Saxena",
     "Mishra", "Pandey", "Tripathi", "Srivastava", "Agarwal", "Jain",
     "Rawat", "Kumar", "Prasad", "Dubey", "Tiwari", "Shukla", "Bajpai",
@@ -87,7 +87,7 @@ def weighted_choice(items, key="weight"):
 def random_name(is_tribal=False):
     if is_tribal:
         return f"{random.choice(TRIBAL_FIRST_NAMES)} {random.choice(TRIBAL_SURNAMES)}"
-    return f"{random.choice(UP_FIRST_NAMES)} {random.choice(UP_SURNAMES)}"
+    return f"{random.choice(BIHAR_FIRST_NAMES)} {random.choice(BIHAR_SURNAMES)}"
 
 
 def sim_aadhaar_number(name: str, seed: str) -> str:
@@ -102,7 +102,7 @@ def random_dob():
 
 
 def generate_polygon(lat: float, lon: float, area_ha: float) -> dict:
-    # 1° lat ≈ 111 km, 1° lon ≈ 96 km at Noida latitude
+    # 1° lat ≈ 111 km, 1° lon ≈ 96 km at Patna latitude
     side_m  = (area_ha * 10000) ** 0.5
     dlat    = (side_m / 111000) * random.uniform(0.8, 1.2)
     dlon    = (side_m / 96000)  * random.uniform(0.8, 1.2)
@@ -118,8 +118,8 @@ def generate_polygon(lat: float, lon: float, area_ha: float) -> dict:
 
 def random_valuation(land_type: str, area_ha: float) -> int:
     base_rates = {
-        "Bhumidhari":    1_200_000,
-        "Sirdar":          900_000,
+        "Raiyati":    1_200_000,
+        "Gair Mazarua":          900_000,
         "Residential":   5_000_000,
         "Commercial":   12_000_000,
         "Tribal_FRA":      300_000,
@@ -140,22 +140,22 @@ def generate_parcel(index: int) -> dict:
         area_ha = round(random.uniform(0.005, 0.06), 4)
     elif land_type == "Commercial":
         area_ha = round(random.uniform(0.01, 0.25), 4)
-    elif land_type in ["Bhumidhari", "Sirdar"]:
+    elif land_type in ["Raiyati", "Gair Mazarua"]:
         area_ha = round(random.uniform(0.5, 5.0), 4)
     elif land_type == "Tribal_FRA":
         area_ha = round(random.uniform(1.0, 3.5), 4)
     else:
         area_ha = round(random.uniform(2.0, 30.0), 4)
 
-    lat = random.uniform(GBN_BOUNDS["min_lat"], GBN_BOUNDS["max_lat"])
-    lon = random.uniform(GBN_BOUNDS["min_lon"], GBN_BOUNDS["max_lon"])
+    lat = random.uniform(PAT_BOUNDS["min_lat"], PAT_BOUNDS["max_lat"])
+    lon = random.uniform(PAT_BOUNDS["min_lon"], PAT_BOUNDS["max_lon"])
 
     owner_name = random_name(is_tribal)
     owner_dob  = random_dob()
     owner_hash = sim_aadhaar_number(owner_name, owner_dob)
 
     is_coparcenary = (
-        land_type in ["Bhumidhari", "Sirdar", "Tribal_FRA"]
+        land_type in ["Raiyati", "Gair Mazarua", "Tribal_FRA"]
         and random.random() < 0.35
     )
 
@@ -174,19 +174,19 @@ def generate_parcel(index: int) -> dict:
         mutation_history.append({
             "type":        random.choice(["Vikray (Sale)", "Virasat (Inheritance)", "Vibhajan (Partition)", "Daan (Gift)"]),
             "date":        mutation_date.strftime("%Y-%m-%d"),
-            "officerName": f"Lekhpal {random_name()}",
+            "officerName": f"Karmachari {random_name()}",
             "mutationNo":  f"DM/DAD/{random.randint(1000, 9999)}/{mutation_date.year}",
         })
 
     return {
-        "dlpiId":            f"DLPI-UP-DAD-{str(index).zfill(5)}",
-        "khataNo":           str(khata),
-        "khasraNo":          survey_number,
+        "dlpiId":            f"DLPI-BR-PHU-{str(index).zfill(5)}",
+        "jamabandiNo":           str(khata),
+        "khesraNo":          survey_number,
         "tehsil":            TEHSIL["name"],
         "tehsilCode":        TEHSIL["code"],
         "district":          "Gautam Buddha Nagar",
-        "districtCode":      "UP-GBN",
-        "state":             "Uttar Pradesh",
+        "districtCode":      "UP-PAT",
+        "state":             "Bihar",
         "landType":          land_type,
         "landTypeDesc":      land_type_obj["desc"],
         "areaHectares":      area_ha,
@@ -219,49 +219,49 @@ def generate_parcel(index: int) -> dict:
 
 
 def generate_demo_parcels() -> List[dict]:
-    """Fixed parcels for the demo citizen personas — all in Dadri tehsil."""
+    """Fixed parcels for the demo citizen personas — all in Phulwari Sharif anchal."""
     demo_centers = [
-        (28.5706, 77.5413),  # Priya 1 — Sector 62 Noida
-        (28.5480, 77.5620),  # Priya 2 — Noida Extension
+        (28.5706, 77.5413),  # Priya 1 — Sector 62 Patna
+        (28.5480, 77.5620),  # Priya 2 — Patna Extension
         (28.6010, 77.4850),  # Arun — Dadri town
-        (28.5280, 77.6100),  # Suresh — Greater Noida
+        (28.5280, 77.6100),  # Suresh — Greater Patna
         (28.5900, 77.4700),  # Meena — Jewar area
         (28.6300, 77.4500),  # Ramkali (tribal) — Sikandrabad area
     ]
 
     return [
         {
-            "dlpiId": "DLPI-UP-DAD-00001", "khataNo": "101", "khasraNo": "1842/101",
-            "tehsil": "Dadri", "tehsilCode": "DAD",
-            "district": "Gautam Buddha Nagar", "districtCode": "UP-GBN", "state": "Uttar Pradesh",
+            "dlpiId": "DLPI-BR-PHU-00001", "jamabandiNo": "101", "khesraNo": "1842/101",
+            "tehsil": "Phulwari Sharif", "tehsilCode": "PHU",
+            "district": "Gautam Buddha Nagar", "districtCode": "UP-PAT", "state": "Bihar",
             "landType": "Residential", "landTypeDesc": "Residential plot / abadi",
             "areaHectares": 0.025, "isTribal": False, "isCoparcenary": False,
             "encumbranceStatus": "CLEAR", "claimStatus": "VERIFIED",
             "owner": {"name": "Priya Kumar", "aadhaarNumber": DEMO_CITIZEN_PLACEHOLDERS["999900010010"], "dob": "1990-04-15", "isTribal": False},
             "location": {"latitude": demo_centers[0][0], "longitude": demo_centers[0][1], "boundaryPolygon": generate_polygon(demo_centers[0][0], demo_centers[0][1], 0.025)},
             "valuation": {"circleRateINR": 3_750_000, "lastAssessedDate": "2025-04-01"},
-            "mutationHistory": [{"type": "Vikray (Sale)", "date": "2019-03-10", "officerName": "Lekhpal Anil Verma", "mutationNo": "DM/DAD/4521/2019"}],
+            "mutationHistory": [{"type": "Vikray (Sale)", "date": "2019-03-10", "officerName": "Karmachari Anil Verma", "mutationNo": "DM/DAD/4521/2019"}],
             "ipfsCID": "QmPriyaKumarResidentialDadri2019", "createdAt": "2026-06-01T00:00:00Z",
             "sourceType": "DILRMP_MIGRATION", "blockNumber": 1, "txHash": "0xdemo_priya1_tx", "isDemoParcel": True,
         },
         {
-            "dlpiId": "DLPI-UP-DAD-00002", "khataNo": "102", "khasraNo": "1200/102",
-            "tehsil": "Dadri", "tehsilCode": "DAD",
-            "district": "Gautam Buddha Nagar", "districtCode": "UP-GBN", "state": "Uttar Pradesh",
-            "landType": "Bhumidhari", "landTypeDesc": "Hereditary tenant with full rights",
+            "dlpiId": "DLPI-BR-PHU-00002", "jamabandiNo": "102", "khesraNo": "1200/102",
+            "tehsil": "Phulwari Sharif", "tehsilCode": "PHU",
+            "district": "Gautam Buddha Nagar", "districtCode": "UP-PAT", "state": "Bihar",
+            "landType": "Raiyati", "landTypeDesc": "Hereditary tenant with full rights",
             "areaHectares": 1.2, "isTribal": False, "isCoparcenary": True,
             "encumbranceStatus": "MORTGAGED", "claimStatus": "UNDER_REVIEW",
             "owner": {"name": "Priya Kumar", "aadhaarNumber": DEMO_CITIZEN_PLACEHOLDERS["999900010010"], "dob": "1990-04-15", "isTribal": False},
             "location": {"latitude": demo_centers[1][0], "longitude": demo_centers[1][1], "boundaryPolygon": generate_polygon(demo_centers[1][0], demo_centers[1][1], 1.2)},
             "valuation": {"circleRateINR": 1_440_000, "lastAssessedDate": "2025-04-01"},
-            "mutationHistory": [], "ipfsCID": "QmPriyaKumarBhumidhari2026", "createdAt": "2026-06-01T00:00:00Z",
+            "mutationHistory": [], "ipfsCID": "QmPriyaKumarRaiyati2026", "createdAt": "2026-06-01T00:00:00Z",
             "sourceType": "DILRMP_MIGRATION", "blockNumber": 2, "txHash": "0xdemo_priya2_tx", "isDemoParcel": True,
         },
         {
-            "dlpiId": "DLPI-UP-DAD-00003", "khataNo": "201", "khasraNo": "740/201",
-            "tehsil": "Dadri", "tehsilCode": "DAD",
-            "district": "Gautam Buddha Nagar", "districtCode": "UP-GBN", "state": "Uttar Pradesh",
-            "landType": "Bhumidhari", "landTypeDesc": "Hereditary tenant with full rights",
+            "dlpiId": "DLPI-BR-PHU-00003", "jamabandiNo": "201", "khesraNo": "740/201",
+            "tehsil": "Phulwari Sharif", "tehsilCode": "PHU",
+            "district": "Gautam Buddha Nagar", "districtCode": "UP-PAT", "state": "Bihar",
+            "landType": "Raiyati", "landTypeDesc": "Hereditary tenant with full rights",
             "areaHectares": 2.4, "isTribal": False, "isCoparcenary": True,
             "encumbranceStatus": "CLEAR", "claimStatus": "SEEDED_UNVERIFIED",
             "owner": {"name": "Arun Sharma", "aadhaarNumber": DEMO_CITIZEN_PLACEHOLDERS["999900010011"], "dob": "1985-09-22", "isTribal": False},
@@ -275,14 +275,14 @@ def generate_demo_parcels() -> List[dict]:
             },
             "location": {"latitude": demo_centers[2][0], "longitude": demo_centers[2][1], "boundaryPolygon": generate_polygon(demo_centers[2][0], demo_centers[2][1], 2.4)},
             "valuation": {"circleRateINR": 2_880_000, "lastAssessedDate": "2025-04-01"},
-            "mutationHistory": [{"type": "Virasat (Inheritance)", "date": "2015-08-11", "officerName": "Lekhpal Ramesh Yadav", "mutationNo": "DM/DAD/3890/2015"}],
-            "ipfsCID": "QmArunSharmaBhumidhari2024", "createdAt": "2026-06-01T00:00:00Z",
+            "mutationHistory": [{"type": "Virasat (Inheritance)", "date": "2015-08-11", "officerName": "Karmachari Ramesh Yadav", "mutationNo": "DM/DAD/3890/2015"}],
+            "ipfsCID": "QmArunSharmaRaiyati2024", "createdAt": "2026-06-01T00:00:00Z",
             "sourceType": "DILRMP_MIGRATION", "blockNumber": 3, "txHash": "0xdemo_arun_tx", "isDemoParcel": True,
         },
         {
-            "dlpiId": "DLPI-UP-DAD-00004", "khataNo": "301", "khasraNo": "999/301",
-            "tehsil": "Dadri", "tehsilCode": "DAD",
-            "district": "Gautam Buddha Nagar", "districtCode": "UP-GBN", "state": "Uttar Pradesh",
+            "dlpiId": "DLPI-BR-PHU-00004", "jamabandiNo": "301", "khesraNo": "999/301",
+            "tehsil": "Phulwari Sharif", "tehsilCode": "PHU",
+            "district": "Gautam Buddha Nagar", "districtCode": "UP-PAT", "state": "Bihar",
             "landType": "Residential", "landTypeDesc": "Residential plot / abadi",
             "areaHectares": 0.04, "isTribal": False, "isCoparcenary": False,
             "encumbranceStatus": "COURT_INJUNCTION", "claimStatus": "DISPUTED",
@@ -294,26 +294,26 @@ def generate_demo_parcels() -> List[dict]:
             "sourceType": "DILRMP_MIGRATION", "blockNumber": 4, "txHash": "0xdemo_suresh_tx", "isDemoParcel": True,
         },
         {
-            "dlpiId": "DLPI-UP-DAD-00005", "khataNo": "401", "khasraNo": "380/401",
-            "tehsil": "Dadri", "tehsilCode": "DAD",
-            "district": "Gautam Buddha Nagar", "districtCode": "UP-GBN", "state": "Uttar Pradesh",
-            "landType": "Sirdar", "landTypeDesc": "Hereditary tenant with limited rights",
+            "dlpiId": "DLPI-BR-PHU-00005", "jamabandiNo": "401", "khesraNo": "380/401",
+            "tehsil": "Phulwari Sharif", "tehsilCode": "PHU",
+            "district": "Gautam Buddha Nagar", "districtCode": "UP-PAT", "state": "Bihar",
+            "landType": "Gair Mazarua", "landTypeDesc": "Hereditary tenant with limited rights",
             "areaHectares": 0.8, "isTribal": False, "isCoparcenary": False,
             "encumbranceStatus": "CLEAR", "claimStatus": "CLAIM_SUBMITTED",
             "owner": {"name": "Meena Devi", "aadhaarNumber": DEMO_CITIZEN_PLACEHOLDERS["999900010013"], "dob": "1972-06-18", "isTribal": False},
             "location": {"latitude": demo_centers[4][0], "longitude": demo_centers[4][1], "boundaryPolygon": generate_polygon(demo_centers[4][0], demo_centers[4][1], 0.8)},
             "valuation": {"circleRateINR": 720_000, "lastAssessedDate": "2025-04-01"},
-            "mutationHistory": [], "ipfsCID": "QmMeenaDeviSirdar2026", "createdAt": "2026-06-01T00:00:00Z",
+            "mutationHistory": [], "ipfsCID": "QmMeenaDeviGair Mazarua2026", "createdAt": "2026-06-01T00:00:00Z",
             "sourceType": "DILRMP_MIGRATION", "blockNumber": 5, "txHash": "0xdemo_meena_tx", "isDemoParcel": True,
         },
         {
-            "dlpiId": "DLPI-UP-DAD-00006", "khataNo": "501", "khasraNo": "120/501",
-            "tehsil": "Dadri", "tehsilCode": "DAD",
-            "district": "Gautam Buddha Nagar", "districtCode": "UP-GBN", "state": "Uttar Pradesh",
+            "dlpiId": "DLPI-BR-PHU-00006", "jamabandiNo": "501", "khesraNo": "120/501",
+            "tehsil": "Phulwari Sharif", "tehsilCode": "PHU",
+            "district": "Gautam Buddha Nagar", "districtCode": "UP-PAT", "state": "Bihar",
             "landType": "Tribal_FRA", "landTypeDesc": "Tribal / forest rights patta",
             "areaHectares": 2.1, "isTribal": True, "isCoparcenary": False,
             "encumbranceStatus": "CLEAR", "claimStatus": "VERIFIED",
-            "owner": {"name": "Ramkali Gond", "aadhaarNumber": DEMO_CITIZEN_PLACEHOLDERS["999900010020"], "dob": "1968-02-10", "isTribal": True, "community": "Gond", "tribeId": "GOND-UP-GBN-002481"},
+            "owner": {"name": "Ramkali Gond", "aadhaarNumber": DEMO_CITIZEN_PLACEHOLDERS["999900010020"], "dob": "1968-02-10", "isTribal": True, "community": "Gond", "tribeId": "GOND-UP-PAT-002481"},
             "tribalProtection": {
                 "scheduleType": "Schedule V", "fraPatteNumber": "FRA/DAD/2011/0088",
                 "gramSabhaVillage": "Roja Yakubpur", "gramSabhaId": "GSBH-DAD-0007",
@@ -329,7 +329,7 @@ def generate_demo_parcels() -> List[dict]:
 
 
 def main():
-    print("Generating BhumiChain synthetic Noida/GBN parcel dataset...")
+    print("Generating BhumiChain synthetic Patna/PAT parcel dataset...")
 
     demo_parcels = generate_demo_parcels()
     demo_ids     = {p["dlpiId"] for p in demo_parcels}
@@ -342,7 +342,7 @@ def main():
             parcels.append(p)
         i += 1
 
-    out = "noida_parcels.json"
+    out = "patna_parcels.json"
     with open(out, "w", encoding="utf-8") as f:
         json.dump(parcels, f, ensure_ascii=False, indent=2)
     print(f"✓ {len(parcels)} parcels → {out}")
@@ -361,13 +361,13 @@ def main():
                 "isTribal":          p["isTribal"],
                 "isCoparcenary":     p["isCoparcenary"],
                 "tehsil":            p["tehsil"],
-                "khasraNo":          p["khasraNo"],
+                "khesraNo":          p["khesraNo"],
                 "circleRateINR":     p["valuation"]["circleRateINR"],
             },
             "geometry": p["location"]["boundaryPolygon"],
         })
 
-    geojson_out = "noida_parcels.geojson"
+    geojson_out = "patna_parcels.geojson"
     with open(geojson_out, "w", encoding="utf-8") as f:
         json.dump({"type": "FeatureCollection", "features": features}, f, ensure_ascii=False)
     print(f"✓ GeoJSON → {geojson_out}")

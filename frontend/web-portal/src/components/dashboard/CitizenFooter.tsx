@@ -25,7 +25,7 @@ export default function CitizenFooter() {
             <h4 className="text-sm font-bold text-gray-900 uppercase tracking-widest">Help & Support</h4>
             <ul className="text-xs text-gray-500 space-y-2">
               <li><a href="#" className="hover:text-[#0F4C81] transition-colors">Citizen Helpdesk</a></li>
-              <li><a href="#" className="hover:text-[#0F4C81] transition-colors">Contact Tehsildar</a></li>
+              <li><a href="#" className="hover:text-[#0F4C81] transition-colors">Contact Circle Officer</a></li>
               <li><a href="#" className="hover:text-[#0F4C81] transition-colors">FAQs</a></li>
               <li><a href="#" className="hover:text-[#0F4C81] transition-colors">Grievance Redressal</a></li>
             </ul>

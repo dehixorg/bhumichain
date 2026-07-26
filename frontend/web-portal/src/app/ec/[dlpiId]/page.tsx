@@ -13,23 +13,23 @@ import { format } from 'date-fns';
 
 // ─── Demo constants ───────────────────────────────────────────────────────────
 
-const DEMO_DLPI = 'DLPI-UP-DAD-00100';
+const DEMO_DLPI = 'DLPI-Bihar-PHU-00100';
 
 const EC_PIPELINE_STEPS = [
   { label: 'BhumiChain ledger scan',            detail: 'Reading all on-chain transactions for parcel',       ms: 2100 },
   { label: 'CERSAI mortgage registry query',    detail: 'Central Registry of Securitisation — loan check',   ms: 4200 },
-  { label: 'eCourts injunction database',       detail: 'Scanning UP & National court orders',               ms: 5800 },
+  { label: 'eCourts injunction database',       detail: 'Scanning Bihar & National court orders',               ms: 5800 },
   { label: 'IT Department attachment registry', detail: 'Income Tax demand / PMLA attachment check',         ms: 3700 },
-  { label: 'Stamp & Registration records',      detail: 'UP IGRS — historical deed verification',            ms: 2600 },
+  { label: 'Stamp & Registration records',      detail: 'Bihar IGRS — historical deed verification',            ms: 2600 },
 ];
 
 const DEMO_EC_RESULT = {
-  ecId:              'EC-DLPI-UP-DAD-00100-e5f6a7b8',
-  dlpiId:            'DLPI-UP-DAD-00100',
+  ecId:              'EC-DLPI-Bihar-PHU-00100-e5f6a7b8',
+  dlpiId:            'DLPI-Bihar-PHU-00100',
   ownerName:         'Deepak Narayan Singh',
-  khasraNo:          '402/1',
+  khesraNo:          '402/1',
   areaHectares:      1.25,
-  landType:          'Bhumidhari',
+  landType:          'Raiyati',
   reportPeriodFrom:  '2010-01-01',
   reportPeriodTo:    '2026-06-30',
   encumbrances:      [] as { type: string; detail: string; since: string }[],
@@ -38,7 +38,7 @@ const DEMO_EC_RESULT = {
   validUntil:        '2026-07-31T23:59:59Z',
   generatedAt:       new Date().toISOString(),
   generationTimeMs:  18_400,
-  issuedBy:          'Sub-Registrar Office, Dadri (UP IGRS)',
+  issuedBy:          'Sub-Registrar Office, Phulwari Sharif (Bihar IGRS)',
   blockchainTxHash:  '0x7b4a1c5d8e9f2a0d3b6c4e1f7a5d9c8b1a2f3e4d',
 };
 
@@ -93,7 +93,7 @@ export default function ECPage() {
           <span className="text-sm font-semibold text-gray-700">Encumbrance Certificate</span>
           <div className="ml-auto flex items-center gap-1.5 text-xs text-gray-500">
             <Shield className="w-3.5 h-3.5" />
-            Multi-source cross-verification · IGRS UP
+            Multi-source cross-verification · IGRS Bihar
           </div>
         </div>
 
@@ -111,7 +111,7 @@ export default function ECPage() {
               <div className="bg-[#F8FAFC] rounded-xl p-4 space-y-2 mb-4">
                 <InfoRow label="DLPI"         value={DEMO_DLPI} mono />
                 <InfoRow label="Parcel Owner" value="Deepak Narayan Singh" />
-                <InfoRow label="Khasra No."   value="402/1" mono />
+                <InfoRow label="Khesra No."   value="402/1" mono />
                 <InfoRow label="Report Period" value="01 Jan 2010 → 30 Jun 2026" />
                 <InfoRow label="Purpose"      value="Succession / Title Verification" />
               </div>
@@ -200,7 +200,7 @@ export default function ECPage() {
                   ['CERSAI',               'Central mortgage registry'],
                   ['eCourts Portal',       'Court orders & injunctions'],
                   ['IT Department (CBDT)', 'Tax attachment registry'],
-                  ['IGRS UP',              'Stamp & Registration deeds'],
+                  ['IGRS Bihar',              'Stamp & Registration deeds'],
                 ].map(([name, desc]) => (
                   <div key={name}>
                     <div className="text-gray-600 font-medium">{name}</div>
@@ -275,9 +275,9 @@ function ECCertificate({ ec }: { ec: typeof DEMO_EC_RESULT }) {
           <InfoRow label="EC Number"     value={ec.ecId} mono />
           <InfoRow label="DLPI"          value={ec.dlpiId} mono />
           <InfoRow label="Owner"         value={ec.ownerName} />
-          <InfoRow label="Khasra No."    value={ec.khasraNo || '402/1'} mono />
-          <InfoRow label="Land Type"     value={ec.landType || 'Bhumidhari'} />
-          <InfoRow label="Area"          value={`${ec.areaHectares || 1.25} hectares`} />
+          <InfoRow label="Khesra No."    value={ec.khesraNo || '402/1'} mono />
+          <InfoRow label="Land Type"     value={ec.landType || 'Raiyati'} />
+          <InfoRow label="Area"          value={`${ec.areaHectares || 1.25} Ha`} />
           <InfoRow
             label="Report Period"
             value={`${format(new Date(ec.reportPeriodFrom), 'dd MMM yyyy')} — ${format(new Date(ec.reportPeriodTo), 'dd MMM yyyy')}`}
@@ -286,7 +286,7 @@ function ECCertificate({ ec }: { ec: typeof DEMO_EC_RESULT }) {
             label="Valid Until"
             value={format(new Date(ec.validUntil), 'dd MMM yyyy')}
           />
-          <InfoRow label="Issued By"     value={ec.issuedBy || 'Sub-Registrar Office, Dadri'} />
+          <InfoRow label="Issued By"     value={ec.issuedBy || 'Sub-Registrar Office, Phulwari Sharif'} />
           <InfoRow
             label="Generated"
             value={format(new Date(ec.generatedAt), 'dd MMM yyyy, HH:mm:ss')}

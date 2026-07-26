@@ -20,12 +20,12 @@ export default function InitiateMutationPage() {
   const [error, setError] = useState('');
 
   // Form State
-  const [dlpiId, setDlpiId] = useState('DLPI-UP-GBN-2026-0045');
+  const [dlpiId, setDlpiId] = useState('DLPI-Bihar-GBN-2026-0045');
   const [mutationType, setMutationType] = useState('Sale');
   const [currentOwnerName, setCurrentOwnerName] = useState('Ram Prasad Sharma');
   const [newOwnerName, setNewOwnerName] = useState('Amit Saxena');
   const [newOwnerAadhaar, setNewOwnerAadhaar] = useState('999988887777');
-  const [reason, setReason] = useState('Registered Sale Deed No. 4412/2026 executed at Sub-Registrar Gautam Buddha Nagar');
+  const [reason, setReason] = useState('Registered Sale Deed No. 4412/2026 executed at Sub-Registrar Patna');
   const [supportingCID, setSupportingCID] = useState('QmSaleDeedGBN2026Hash99182x');
   const [courtOrderNo, setCourtOrderNo] = useState('');
 
@@ -40,25 +40,25 @@ export default function InitiateMutationPage() {
 
   const handleQuickFill = (preset: 'Sale' | 'Inheritance' | 'Court_Order') => {
     if (preset === 'Sale') {
-      setDlpiId('DLPI-UP-GBN-2026-0045');
+      setDlpiId('DLPI-Bihar-GBN-2026-0045');
       setMutationType('Sale');
       setCurrentOwnerName('Ram Prasad Sharma');
       setNewOwnerName('Amit Saxena');
       setNewOwnerAadhaar('999988887777');
-      setReason('Registered Sale Deed No. 4412/2026 executed at Sub-Registrar Gautam Buddha Nagar.');
+      setReason('Registered Sale Deed No. 4412/2026 executed at Sub-Registrar Patna.');
       setSupportingCID('QmSaleDeedGBN2026Hash99182x');
       setCourtOrderNo('');
     } else if (preset === 'Inheritance') {
-      setDlpiId('DLPI-UP-GBN-2026-0089');
+      setDlpiId('DLPI-Bihar-GBN-2026-0089');
       setMutationType('Inheritance');
       setCurrentOwnerName('Late Suresh Chandra');
       setNewOwnerName('Priya Kumar');
       setNewOwnerAadhaar('999900010012');
-      setReason('Succession claim finalized following verification of Death Certificate CRS Reg. No. UP-2026-8812.');
+      setReason('Succession claim finalized following verification of Death Certificate CRS Reg. No. Bihar-2026-8812.');
       setSupportingCID('QmSuccessionCertificate2026');
       setCourtOrderNo('');
     } else if (preset === 'Court_Order') {
-      setDlpiId('DLPI-UP-GBN-2026-0112');
+      setDlpiId('DLPI-Bihar-GBN-2026-0112');
       setMutationType('Court_Order');
       setCurrentOwnerName('Vijay Pal Singh');
       setNewOwnerName('Ankur Singh');
@@ -86,7 +86,7 @@ export default function InitiateMutationPage() {
         mutationType,
         officerName: user.name || 'Revenue Officer',
         officerAadhaar: officerAadhaar,
-        officerRank: user.role || 'tehsildar',
+        officerRank: user.role || 'circle_officer',
         newOwnerName: newOwnerName.trim(),
         newOwnerAadhaar: cleanAadhaar,
         reason: reason.trim(),
@@ -198,7 +198,7 @@ export default function InitiateMutationPage() {
                     required
                     value={dlpiId}
                     onChange={(e) => setDlpiId(e.target.value.toUpperCase())}
-                    placeholder="DLPI-UP-GBN-2026-0045"
+                    placeholder="DLPI-Bihar-GBN-2026-0045"
                     className="w-full bg-white border border-gray-300 rounded-xl px-4 py-2.5 text-sm font-mono text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0F4C81]"
                   />
                   <span className="text-[11px] text-gray-400 mt-1 block">National 16-digit land parcel unique identifier</span>
@@ -220,7 +220,7 @@ export default function InitiateMutationPage() {
                     <option value="Court_Order">Court Order / Decree (न्यायालय आदेश)</option>
                     <option value="Will">Will / Wasiyat (वसीयत)</option>
                   </select>
-                  <span className="text-[11px] text-gray-400 mt-1 block">Select statutory classification under UP Revenue Code</span>
+                  <span className="text-[11px] text-gray-400 mt-1 block">Select statutory classification under Bihar Revenue Code</span>
                 </div>
               </div>
 

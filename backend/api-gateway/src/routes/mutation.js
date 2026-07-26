@@ -33,7 +33,7 @@ const MUTATION_TYPES = [
 router.post(
   '/initiate',
   authenticate,
-  requireRole(ROLES.CIRCLE_INSPECTOR, ROLES.KANUNGO, ROLES.TEHSILDAR, ROLES.COLLECTOR, ROLES.SUPER_ADMIN, ROLES.PATWARI, ROLES.CITIZEN),
+  requireRole(ROLES.ANCHAL_NIRIKSHAK, ROLES.KANUNGO, ROLES.ANCHAL_ADHIKARI, ROLES.COLLECTOR, ROLES.SUPER_ADMIN, ROLES.KARMACHARI, ROLES.CITIZEN),
   body('dlpiId').notEmpty(),
   body('mutationType').isIn(MUTATION_TYPES),
   body('officerName').notEmpty().trim(),
@@ -414,7 +414,7 @@ router.post(
 router.post(
   '/:mutationId/execute',
   authenticate,
-  requireRole(ROLES.CIRCLE_INSPECTOR, ROLES.KANUNGO, ROLES.TEHSILDAR, ROLES.COLLECTOR, ROLES.SUPER_ADMIN),
+  requireRole(ROLES.ANCHAL_NIRIKSHAK, ROLES.KANUNGO, ROLES.ANCHAL_ADHIKARI, ROLES.COLLECTOR, ROLES.SUPER_ADMIN),
   body('finalDocCID').notEmpty(),
   validate,
   async (req, res) => {
@@ -422,7 +422,7 @@ router.post(
     let fabricErr = null;
     try {
       result = await submit('mutation-manager', 'ExecuteMutation', [
-        req.params.mutationId, req.body.finalDocCID,
+        req.params.mutationId, req.body.finalDocCID, req.body.delayReason || "",
       ]);
     } catch (e) {
       fabricErr = e;

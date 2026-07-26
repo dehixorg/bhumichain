@@ -21,7 +21,7 @@ const TRIBAL_PARCEL = {
   dlpiId:       TRIBAL_DLPI,
   ownerName:    'Mangal Ramji Bhil',
   surveyNo:     'T-23',
-  tehsil:       'Igatpuri',
+  anchal:       'Igatpuri',
   village:      'Ghoti Budrukh',
   district:     'Nashik',
   landType:     'Tribal FRA Patta',
@@ -49,7 +49,7 @@ const MOCK_REJECTION: TribalCheckResult = {
   rejectionCode: 'SCHEDULE_V_NON_TRIBAL',
   rejectionReason:
     'HARD REJECT — Parcel DLPI-MH-IGT-T0023 is located in a Fifth Schedule (Scheduled Area) in ' +
-    'Igatpuri tehsil, Nashik district, Maharashtra. Buyer is not a registered Scheduled Tribe member. ' +
+    'Igatpuri anchal, Nashik district, Maharashtra. Buyer is not a registered Scheduled Tribe member. ' +
     'Transfer of tribal land to non-tribal persons in Scheduled Areas is VOID AB INITIO per Supreme ' +
     'Court ruling in Samatha v. State of AP (1997) 8 SCC 191. No revenue officer, SRO, or digital ' +
     'signature can authorise this transaction.',
@@ -221,7 +221,7 @@ export default function TribalPage() {
                 <InfoRow label="DLPI"     value={TRIBAL_PARCEL.dlpiId} mono />
                 <InfoRow label="Owner"    value={TRIBAL_PARCEL.ownerName} />
                 <InfoRow label="Survey"   value={TRIBAL_PARCEL.surveyNo} mono />
-                <InfoRow label="Village"  value={`${TRIBAL_PARCEL.village}, ${TRIBAL_PARCEL.tehsil}`} />
+                <InfoRow label="Village"  value={`${TRIBAL_PARCEL.village}, ${TRIBAL_PARCEL.anchal}`} />
                 <InfoRow label="Area"     value={TRIBAL_PARCEL.area} />
                 <InfoRow label="Land type" value={TRIBAL_PARCEL.landType} />
                 <InfoRow label="Community" value={TRIBAL_PARCEL.community} />
@@ -229,7 +229,7 @@ export default function TribalPage() {
               </div>
               <div className="mt-3 flex items-center gap-2 text-xs text-amber-400 bg-amber-950 border border-amber-800 rounded-lg px-3 py-2">
                 <MapPin className="w-3 h-3 shrink-0" />
-                Igatpuri tehsil — designated Fifth Schedule (Scheduled Area) under Article 244(1) of the Constitution
+                Igatpuri anchal — designated Fifth Schedule (Scheduled Area) under Article 244(1) of the Constitution
               </div>
             </div>
 

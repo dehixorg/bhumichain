@@ -182,7 +182,7 @@ export default function MutationListPage() {
               <p className="text-gray-400 text-sm mt-1">
                 {isCitizen
                   ? 'Mutations initiated on your parcels — consent, object, or track status'
-                  : 'All mutations in Dadri tehsil — initiate, monitor, execute'}
+                  : 'All dakhil-kharij cases in Phulwari Sharif anchal — initiate, monitor, execute'}
               </p>
             </div>
             <div className="flex items-center gap-2">

@@ -21,9 +21,9 @@ type AuthMethod = 'digilocker' | 'aadhaar' | 'mobile' | 'janparichay';
 
 // ── Demo personas ─────────────────────────────────────────────────────────────
 const DEMO_PERSONAS = [
-  { persona: 'tehsildar',        label: 'Tehsildar',  name: 'Amit Saxena',  color: '#7C3AED', aadhaar: '9999-0001-0001' },
+  { persona: 'circle_officer',        label: 'Circle Officer',  name: 'Amit Saxena',  color: '#7C3AED', aadhaar: '9999-0001-0001' },
   { persona: 'circle_inspector', label: 'Kanungo',    name: 'Rajesh Verma', color: '#1D4ED8', aadhaar: '9999-0001-0002' },
-  { persona: 'patwari',          label: 'Patwari',    name: 'Vijay Singh',  color: '#0F766E', aadhaar: '9999-0001-0003' },
+  { persona: 'karmachari',          label: 'Karmachari',    name: 'Vijay Singh',  color: '#0F766E', aadhaar: '9999-0001-0003' },
   { persona: 'citizen',          label: 'Citizen 1',  name: 'Priya Kumar',  color: '#6D28D9', aadhaar: '9999-0001-0010' },
   { persona: 'suresh_yadav',     label: 'Citizen 2',  name: 'Suresh Yadav', color: '#B45309', aadhaar: '9999-0001-0012' },
   { persona: 'citizen_heir2',    label: 'Citizen 3',  name: 'Sunita Kumar', color: '#BE185D', aadhaar: '9999-0001-0015' },
@@ -165,7 +165,7 @@ export default function LoginPage() {
             <div className="space-y-5">
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[#0F4C81]/20 bg-[#0F4C81]/5 text-[#0F4C81] text-xs font-bold uppercase tracking-widest">
                 <div className="w-1.5 h-1.5 rounded-full bg-[#138808] animate-pulse" />
-                Live on Hyperledger Fabric · UP Pilot
+                Live on Hyperledger Fabric · Bihar Pilot
               </div>
 
               <h1 className="text-[3rem] font-black text-gray-900 leading-[1.1] tracking-tight">
@@ -453,7 +453,7 @@ export default function LoginPage() {
                         <ChevronRight className="w-4 h-4" /> Continue with JanParichay
                       </button>
                       <button className="w-full flex items-center justify-center gap-2 py-3 border border-gray-200 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-50 transition-all">
-                        🏛️ Continue with State SSO (UP)
+                        🏛️ Continue with State SSO (Bihar)
                       </button>
                     </div>
                   )}
@@ -474,10 +474,10 @@ export default function LoginPage() {
                               value={email}
                               onChange={e => setEmail(e.target.value)}
                               disabled={loading}
-                              placeholder="name@up.gov.in"
+                              placeholder="name@bihar.gov.in"
                               className="input"
                             />
-                            <p className="text-[11px] text-gray-400 mt-1">Accepted: @up.gov.in · @gov.in · @nic.in</p>
+                            <p className="text-[11px] text-gray-400 mt-1">Accepted: @bihar.gov.in · @gov.in · @nic.in</p>
                           </div>
                           <button
                             onClick={handleRequestOTP}
@@ -543,7 +543,7 @@ export default function LoginPage() {
               <span>·</span>
               <span>Digital India</span>
               <span>·</span>
-              <span>Revenue Department, UP</span>
+              <span>Revenue Department, Bihar</span>
             </div>
             <div className="text-center text-[10px] text-gray-400 mt-1">
               © 2026 · v2.5 Hyperledger Fabric · Secured under IT Act 2000 & DPDPA 2023

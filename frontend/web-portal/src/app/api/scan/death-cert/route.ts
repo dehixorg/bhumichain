@@ -106,15 +106,15 @@ function ensureEnglish(obj: any): any {
         'पूर्ण': 'Full (1/1)',
         'बैंक नाम अपठनीय': 'Bank Name Damaged/Illegible',
         'अपठनीय': 'Illegible',
-        'खतौनी': 'Khatauni',
+        'खतौनी': 'Jamabandi',
         'खाता संख्या': 'Khata No.',
         'खाता': 'Khata',
-        'खसरा': 'Khasra',
+        'खसरा': 'Khesra',
         'ग्राम': 'Village',
-        'तहसील': 'Tehsil',
+        'तहसील': 'Anchal',
         'जिला': 'District',
         'ज़िला': 'District',
-        'उत्तर प्रदेश': 'Uttar Pradesh',
+        'उत्तर प्रदेश': 'Bihar',
         'पति': 'Husband',
         'पिता': 'Father',
         'गेहूं': 'Wheat',
@@ -148,7 +148,7 @@ function ensureEnglish(obj: any): any {
       name,
       dod: dod || undefined, // undefined lets frontend use default if missing
       crsRegistrationNo: reg_no,
-      dlpiId: "DLPI-UP-DAD-00100",
+      dlpiId: "DLPI-Bihar-PHU-00100",
       aadhaarNumber: aadhaar || "XXXX-XXXX-1234",
       rawText: text
     }));

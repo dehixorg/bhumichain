@@ -4,10 +4,10 @@ const jwt = require('jsonwebtoken');
 
 const ROLES = {
   CITIZEN:          'citizen',
-  PATWARI:          'patwari',
-  CIRCLE_INSPECTOR: 'circle_inspector',
+  KARMACHARI:       'karmachari',
+  ANCHAL_NIRIKSHAK: 'anchalNirikshak',
   KANUNGO:          'kanungo',
-  TEHSILDAR:        'tehsildar',
+  ANCHAL_ADHIKARI:  'anchalAdhikari',
   KOTWAL:           'kotwal',
   // Production roles — wired but not demoed
   SRO:              'sro',
@@ -18,9 +18,9 @@ const ROLES = {
   SUPER_ADMIN:      'super_admin',
 };
 
-const OFFICER_ROLES = ['patwari', 'circle_inspector', 'kanungo', 'tehsildar', 'kotwal', 'sro', 'collector', 'super_admin'];
-const CAN_CREATE_DLPI    = ['patwari', 'tehsildar', 'collector', 'super_admin'];
-const CAN_APPROVE_MUTATION = ['circle_inspector', 'kanungo', 'tehsildar', 'collector', 'super_admin'];
+const OFFICER_ROLES = ['karmachari', 'anchalNirikshak', 'kanungo', 'anchalAdhikari', 'kotwal', 'sro', 'collector', 'super_admin'];
+const CAN_CREATE_DLPI    = ['karmachari', 'anchalAdhikari', 'collector', 'super_admin'];
+const CAN_APPROVE_MUTATION = ['anchalNirikshak', 'kanungo', 'anchalAdhikari', 'collector', 'super_admin'];
 
 function authenticate(req, res, next) {
   const header = req.headers.authorization;

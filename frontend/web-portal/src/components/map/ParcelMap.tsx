@@ -282,7 +282,7 @@ function getEventToast(event: string, payload: Record<string, unknown>): string 
     case 'TribalTransferHardRejected': return `🚫 TRIBAL BLOCK — ${payload.rejectionCode}`;
     case 'HeirNotificationRequired': return `⚖️ Succession initiated — 3 heirs notified`;
     case 'AllHeirsConsented': return `✅ All heirs consented — mutation executing`;
-    case 'MutationInitiated': return `⚠️ Mutation alert sent in 64 seconds`;
+    case 'DakhilKharijInitiated': return `⚠️ Mutation alert sent in 64 seconds`;
     case 'SuccessionDisputeFiled': return `⚖️ Dispute filed — case referred to court`;
     default: return null;
   }

@@ -248,7 +248,7 @@ function ObjectionModal({ onConfirm, onCancel, busy }: { onConfirm: (reason: str
           <h3 className="text-gray-900 font-semibold">File Objection</h3>
         </div>
         <p className="text-sm text-gray-400">
-          Your objection will be recorded on Hyperledger Fabric and the Tehsil office will be notified within 60 seconds via Telegram.
+          Your objection will be recorded on Hyperledger Fabric and the Anchal office will be notified within 60 seconds via Telegram.
         </p>
         <div>
           <label className="block text-xs text-gray-400 mb-1">Objection Reason *</label>

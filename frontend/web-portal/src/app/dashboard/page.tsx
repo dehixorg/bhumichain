@@ -40,7 +40,7 @@ const STATS = [
 ];
 
 const QUICK_ACTIONS = [
-  { label: 'View Land Records', icon: MapPin, desc: 'Search by Khasra/Khatauni' },
+  { label: 'View Land Records', icon: MapPin, desc: 'Search by Khesra/Jamabandi' },
   { label: 'Download RoR', icon: Download, desc: 'Get digitally signed copy' },
   { label: 'Apply Mutation', icon: FileEdit, desc: 'Initiate name change' },
   { label: 'Transfer Property', icon: ArrowRightLeft, desc: 'Start transfer process' },
@@ -100,10 +100,10 @@ export default function DashboardPage() {
                 <CheckCircle2 className="w-4 h-4" /> Aadhaar Verified
               </div>
               <div className="px-3 py-1.5 rounded-lg bg-gray-50 text-gray-700 border border-gray-200">
-                <span className="text-gray-500">District:</span> Gautam Buddha Nagar
+                <span className="text-gray-500">District:</span> Patna
               </div>
               <div className="px-3 py-1.5 rounded-lg bg-gray-50 text-gray-700 border border-gray-200">
-                <span className="text-gray-500">State:</span> Uttar Pradesh
+                <span className="text-gray-500">State:</span> Bihar
               </div>
             </div>
           </div>

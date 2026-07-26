@@ -16,15 +16,15 @@ import { demoLogin } from '@/lib/auth';
 
 // ─── Demo constants ───────────────────────────────────────────────────────────
 
-const DEMO_DLPI         = 'DLPI-UP-DAD-00100';
+const DEMO_DLPI         = 'DLPI-Bihar-PHU-00100';
 const DEMO_SELLER_NAME  = 'Priya';
 const DEMO_SELLER_HASH  = 'sha256:56a083a15c0f4e3069fac285c6df67471c162a11ada941243c56d579fde7050f';
 
 const ORIGINAL_TRANSFER = {
-  transferId: 'TXF-DLPI-UP-DAD-00100-b2c3d4e5',
+  transferId: 'TXF-DLPI-Bihar-PHU-00100-b2c3d4e5',
   initiatedAt: new Date(Date.now() - 12 * 60_000).toISOString(),
   buyerName: 'Rakesh Agarwal',
-  sroName: 'Sub-Registrar Office, Dadri',
+  sroName: 'Sub-Registrar Office, Phulwari Sharif',
 };
 
 type Scene = 4 | 5;
@@ -41,7 +41,7 @@ export default function TransferPage() {
   const { on: onWs, triggerMock } = useWebSocket(DEMO_DLPI);
 
   useEffect(() => {
-    demoLogin('tehsildar').catch(() => {});
+    demoLogin('circle_officer').catch(() => {});
   }, []);
 
   // WS event listeners
@@ -164,7 +164,7 @@ export default function TransferPage() {
                     <span className="text-sm font-semibold text-gray-700">
                       Second Terminal — Fraud Attempt
                     </span>
-                    <span className="ml-auto text-xs text-gray-500">Dadri SRO Terminal 2</span>
+                    <span className="ml-auto text-xs text-gray-500">Phulwari Sharif SRO Terminal 2</span>
                   </div>
                   <div className="text-gray-500 text-xs mb-4">
                     A second operator at a different terminal tries to sell the same parcel to a different buyer.
@@ -245,13 +245,13 @@ function SceneInfo({ scene, completedTransfer }: { scene: Scene; completedTransf
         {scene === 5 && (
           <ol className="space-y-2.5 text-xs text-gray-400">
             {[
-              ['Scene 4 completes',    'Parcel lock acquired at Dadri SRO 1'],
-              ['Second terminal',      'Operator at Dadri SRO 2 tries same parcel'],
+              ['Scene 4 completes',    'Parcel lock acquired at Phulwari Sharif SRO 1'],
+              ['Second terminal',      'Operator at Phulwari Sharif SRO 2 tries same parcel'],
               ['Lock check',           'Fabric checks national lock — ACTIVE'],
               ['FraudSense',           '0.94 → auto-reject threshold exceeded'],
               ['Instant rejection',    '<28ms — no on-chain write occurs'],
               ['Audit trail',          'Attempt permanently logged on BhumiChain'],
-              ['Regulator alert',      'IG Registration, UP notified'],
+              ['Regulator alert',      'IG Registration, Bihar notified'],
             ].map(([title, desc], i) => (
               <li key={i} className="flex gap-2">
                 <span className="w-4 h-4 rounded-full bg-[#F8FAFC] text-gray-500 flex items-center justify-center shrink-0 font-mono text-xs">{i + 1}</span>
@@ -288,7 +288,7 @@ function SceneInfo({ scene, completedTransfer }: { scene: Scene; completedTransf
           </div>
           <div className="text-xs space-y-1.5">
             <InfoRow label="TX ID" value={completedTransfer.transferId.slice(0, 28) + '…'} mono />
-            <InfoRow label="Status" value="Pending Patwari Review" />
+            <InfoRow label="Status" value="Pending Karmachari Review" />
           </div>
         </div>
       )}

@@ -32,13 +32,13 @@ const STEPS: { id: WStep; label: string }[] = [
   { id: 'add_heir',           label: 'Add Heir' },
   { id: 'upload_document',    label: 'Upload Document' },
   { id: 'esign_heirs',        label: 'eSign by All Heirs' },
-  { id: 'tehsildar_final',    label: 'Tehsildar Verification' },
+  { id: 'tehsildar_final',    label: 'Circle Officer Verification' },
   { id: 'blockchain_division',label: 'Land Division' },
 ];
 const STEP_ORDER: WStep[] = STEPS.map(s => s.id);
 
-const DEMO_DLPI = 'DLPI-UP-DAD-00100';
-const DEMO_FAMILY_ID = 'FAM-UP-DAD-00100-001';
+const DEMO_DLPI = 'DLPI-Bihar-PHU-00100';
+const DEMO_FAMILY_ID = 'FAM-Bihar-PHU-00100-001';
 const DEMO_DECEASED = {
   name: 'Ramesh Kumar',
   aadhaar: '999988887777',
@@ -50,7 +50,7 @@ const CRS_AI_STEPS = [
   'Uploading Death Certificate to secure IPFS vault',
   'Azure Document Intelligence OCR extraction',
   'LayoutLM NER — locating deceased name & Aadhaar',
-  'Cross-referencing CRS Registration No. with UP database',
+  'Cross-referencing CRS Registration No. with Bihar database',
   'Validation successful',
 ];
 
@@ -86,12 +86,22 @@ export default function SuccessionPage() {
   const { triggerMock } = useWebSocket(DEMO_DLPI);
 
   const parcelNominations = nominations.filter(n => !selectedDlpiId || n.dlpiId === selectedDlpiId);
-  const approvedNoms = parcelNominations;
-  const allApprovedNoms = nominations;
-  const pendingNoms: any[] = [];
-  const isTehsildar = user?.role === 'tehsildar' || user?.role === 'collector';
-  const step2List = parcelNominations;
-  const isApprovedHeirGlobal = true;
+  const approvedNoms = parcelNominations.filter(n => n.status === 'APPROVED');
+  const allApprovedNoms = nominations.filter(n => n.status === 'APPROVED');
+  const pendingNoms = parcelNominations.filter(n => n.status !== 'APPROVED');
+  const isTehsildar = user?.role === 'anchalAdhikari' || user?.role === 'collector';
+  const step2List = isTehsildar ? nominations : parcelNominations;
+  const isApprovedHeirGlobal = isTehsildar || allApprovedNoms.some(n => {
+    const myRaw = (user?.aadhaar || user?.aadhaarNumber || user?.aadhaarNo || user?.aadhaarId || '').replace(/\D/g, '');
+    const nomRaw = String(n.inheritorAadhaarNumber || n.inheritorAadhaar || '').replace(/\D/g, '');
+    if (myRaw && nomRaw && myRaw === nomRaw) return true;
+    return (
+      n.inheritorAadhaarNumber === user?.aadhaar || 
+      n.inheritorAadhaarNumber === user?.aadhaarNumber || 
+      n.inheritorAadhaarNumber === user?.aadhaarNo || 
+      (user?.aadhaarRaw && n.inheritorAadhaarNumber === user?.aadhaarRaw)
+    );
+  });
 
   useEffect(() => {
     const u = getUser(); setUser(u);
@@ -216,7 +226,7 @@ export default function SuccessionPage() {
     setFrontendError('');
     try {
       await approveInheritorNomination(id);
-      toast.success('Tehsildar Approved! Heir can now upload documents.');
+      toast.success('Circle Officer Approved! Heir can now upload documents.');
       const noms = await getInheritorNominations();
       const nomArr = Array.isArray(noms) ? noms : (Array.isArray(noms?.nominations) ? noms.nominations : []);
       setNominations(nomArr);
@@ -339,7 +349,7 @@ export default function SuccessionPage() {
             consentedAadhaar: signedAadhaar,
           }),
         }).catch(e => console.warn('[mark-ready]', e));
-        toast.success('🎉 All heirs have eSigned via Aadhaar! Case forwarded to Tehsildar Portal for virasat execution.');
+        toast.success('🎉 All heirs have eSigned via Aadhaar! Case forwarded to Circle Officer Portal for virasat execution.');
         setStep('tehsildar_final');
       } else {
         toast.success(`${heir.name} successfully eSigned via Aadhaar ✓`);
@@ -348,7 +358,7 @@ export default function SuccessionPage() {
     });
   }, [heirs, caseData, crsExtraction, heirAadhaarInputs]);
 
-  // Step 5 handler (Check status from Tehsildar Portal OR demo approve if requested)
+  // Step 5 handler (Check status from Circle Officer Portal OR demo approve if requested)
   const handleTehsildarFinalApprove = async () => {
     setIsFinalApproving(true);
     try {
@@ -358,17 +368,17 @@ export default function SuccessionPage() {
         if (sc && (sc.status === 'AUTO_MUTATED' || sc.status === 'EXECUTED' || sc.status === 'COMPLETED' || sc.status === 'TEHSILDAR_APPROVED')) {
           setFinalApproved(true);
           setExecutionResult(sc);
-          toast.success("🎉 Tehsildar has executed your virasat! Land division is now on-chain.");
+          toast.success("🎉 Circle Officer has executed your virasat! Land division is now on-chain.");
           setIsFinalApproving(false);
           setStep('blockchain_division');
           return;
         }
       }
     } catch {}
-    // If not yet approved by real Tehsildar, check or simulate if demo mode helper clicked
+    // If not yet approved by real Circle Officer, check or simulate if demo mode helper clicked
     await delay(600);
     setIsFinalApproving(false);
-    toast("⏳ Virasat case is currently pending inside the Tehsildar's queue on the Officer Portal.");
+    toast("⏳ Virasat case is currently pending inside the Circle Officer's queue on the Officer Portal.");
   };
 
   // Step 6 handler
@@ -397,7 +407,7 @@ export default function SuccessionPage() {
     add_heir: 'Select your property and add all legal heirs with their Aadhaar numbers.',
     upload_document: 'Upload the CRS death certificate — AI will extract details.',
     esign_heirs: 'Each heir must click eSign to consent to their land share.',
-    tehsildar_final: 'Tehsildar reviews all eSigns and gives final approval.',
+    tehsildar_final: 'Circle Officer reviews all eSigns and gives final approval.',
     blockchain_division: 'Execute the atomic land division on Hyperledger Fabric.',
   };
 
@@ -549,8 +559,8 @@ export default function SuccessionPage() {
                         </div>
                         <p className={clsx("text-xs leading-relaxed", step === 'upload_document' ? "text-emerald-100" : isApprovedHeirGlobal ? "text-emerald-900/80" : "text-gray-500")}>
                           {isApprovedHeirGlobal
-                            ? "Tehsildar has verified your heir status! Upload official Death Certificate for AI OCR & equal coparcenary share division."
-                            : "🔒 Requires Tehsildar approval from Option 1 first. Once verified, this card unlocks to allow Death Certificate upload."}
+                            ? "Circle Officer has verified your heir status! Upload official Death Certificate for AI OCR & equal coparcenary share division."
+                            : "🔒 Requires Circle Officer approval from Option 1 first. Once verified, this card unlocks to allow Death Certificate upload."}
                         </p>
                       </div>
                       <div className={clsx("mt-4 flex items-center justify-between text-xs font-bold pt-3 border-t", step === 'upload_document' ? "border-emerald-400/30 text-emerald-300" : isApprovedHeirGlobal ? "border-emerald-200 text-emerald-800" : "border-gray-200 text-gray-400")}>
@@ -570,8 +580,9 @@ export default function SuccessionPage() {
                       <div className="bg-[#0F4C81]/10 p-2.5 rounded-xl"><UserPlus className="w-6 h-6 text-[#0F4C81]" /></div>
                       <div>
                         <h2 className="text-lg font-bold text-gray-900">Step 1 — Nominate Legal Heirs</h2>
-                        <p className="text-xs text-gray-500 mt-0.5">Add each heir's full name and 12-digit Aadhaar number.</p>
+                        <p className="text-xs text-gray-500 mt-0.5">Add each heir's full name and 12-digit Aadhaar. Sent to Circle Officer for approval.</p>
                       </div>
+                      <span className="ml-auto bg-amber-500/15 text-amber-800 border border-amber-400/30 text-xs font-semibold px-3 py-1 rounded-full">Circle Officer Workflow</span>
                     </div>
                     <form onSubmit={handleSubmitHeirs} className="space-y-5">
                       <div>
@@ -642,7 +653,21 @@ export default function SuccessionPage() {
                               <div className="font-semibold text-sm text-gray-800">{n.inheritorName}</div>
                               <div className="text-xs text-gray-500 font-mono">{n.dlpiId} · Aadhaar: XXXX-{n.inheritorAadhaarNumber?.slice(8)}</div>
                             </div>
-                            <span className="flex items-center gap-1 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full shrink-0"><CheckCircle className="w-3.5 h-3.5" /> Registered ✓</span>
+                            {n.status === 'APPROVED' ? (
+                              <span className="flex items-center gap-1 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full shrink-0"><CheckCircle className="w-3.5 h-3.5" /> Approved</span>
+                            ) : (
+                              <div className="flex items-center gap-2 shrink-0">
+                                <button
+                                  type="button"
+                                  onClick={() => approveNomination(n.nominationId)}
+                                  className="bg-[#0F4C81] hover:bg-[#0a3860] text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-sm flex items-center gap-1.5 transition-colors cursor-pointer"
+                                >
+                                  <BadgeCheck className="w-4 h-4 text-amber-300" />
+                                  Approve (Circle Officer)
+                                </button>
+                                <span className="text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-1 rounded-full hidden sm:inline">Pending</span>
+                              </div>
+                            )}
                           </div>
                         ))}
                       </div>
@@ -677,7 +702,7 @@ export default function SuccessionPage() {
                           const isApprovedForParcel = nominations.some(n => n.dlpiId === p.dlpiId && n.status === 'APPROVED');
                           return (
                             <option key={p.dlpiId} value={p.dlpiId} className="text-gray-900 font-medium">
-                              {p.label} {isApprovedForParcel ? '— (Tehsildar Approved ✓)' : ''}
+                              {p.label} {isApprovedForParcel ? '— (Circle Officer Approved ✓)' : ''}
                             </option>
                           );
                         })}
@@ -763,7 +788,7 @@ export default function SuccessionPage() {
                       <div className="text-xs text-blue-950 leading-relaxed">
                         <span className="font-bold">📤 Document Uploaded & e-Sign Requests Dispatched to All Inheritors' Home Pages!</span>
                         <div className="mt-1">
-                          We have verified the Death Certificate and initiated virasat claim <strong className="font-mono">{caseData?.caseId || 'SUC-ACTIVE'}</strong>. Digital verification prompts have been sent directly to the <strong>Home Page (`/my-parcels`)</strong> of every legal co-heir listed below (`Suresh Yadav`, `Priya Kumar`, etc.). Once all co-heirs verify their Aadhaar from their home portal (`or right below if on a shared device`), the case automatically forwards to the <strong>Tehsildar Portal (`/officer-dashboard`)</strong>.
+                          We have verified the Death Certificate and initiated virasat claim <strong className="font-mono">{caseData?.caseId || 'SUC-ACTIVE'}</strong>. Digital verification prompts have been sent directly to the <strong>Home Page (`/my-parcels`)</strong> of every legal co-heir listed below (`Suresh Yadav`, `Priya Kumar`, etc.). Once all co-heirs verify their Aadhaar from their home portal (`or right below if on a shared device`), the case automatically forwards to the <strong>Circle Officer Portal (`/officer-dashboard`)</strong>.
                         </div>
                       </div>
                     </div>
@@ -807,8 +832,8 @@ export default function SuccessionPage() {
                     </div>
                     {heirs.length > 0 && heirs.every(h => h.hasConsented) && (
                       <div className="mt-4 p-4 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between gap-4">
-                        <div><div className="font-bold text-emerald-800">All heirs have eSigned!</div><div className="text-xs text-emerald-600 mt-0.5">Forwarding to Tehsildar…</div></div>
-                        <button onClick={() => setStep('tehsildar_final')} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-2.5 rounded-lg flex items-center gap-2 text-sm transition-colors shrink-0">Tehsildar Verify <ArrowRight className="w-4 h-4" /></button>
+                        <div><div className="font-bold text-emerald-800">All heirs have eSigned!</div><div className="text-xs text-emerald-600 mt-0.5">Forwarding to Circle Officer…</div></div>
+                        <button onClick={() => setStep('tehsildar_final')} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-2.5 rounded-lg flex items-center gap-2 text-sm transition-colors shrink-0">Circle Officer Verify <ArrowRight className="w-4 h-4" /></button>
                       </div>
                     )}
                   </div>
@@ -822,8 +847,8 @@ export default function SuccessionPage() {
                     <div className="flex items-center gap-3 mb-5 pb-4 border-b border-gray-100">
                       <div className="bg-amber-100 p-2.5 rounded-lg"><Landmark className="w-6 h-6 text-amber-600" /></div>
                       <div>
-                        <h2 className="font-bold text-gray-900">Step 4 - Tehsildar Final Verification</h2>
-                        <p className="text-xs text-gray-500 mt-0.5">All heirs eSigned. Tehsildar reviews and gives final approval for land division.</p>
+                        <h2 className="font-bold text-gray-900">Step 4 - Circle Officer Final Verification</h2>
+                        <p className="text-xs text-gray-500 mt-0.5">All heirs eSigned. Circle Officer reviews and gives final approval for land division.</p>
                       </div>
                     </div>
                     <div className="grid grid-cols-2 gap-2 text-sm mb-5">
@@ -856,27 +881,27 @@ export default function SuccessionPage() {
                         <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-3">
                           <Clock className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
                           <div>
-                            <div className="font-bold text-amber-900 text-sm">⏳ Forwarded to Tehsildar's Officer Portal (`/officer-dashboard`)</div>
+                            <div className="font-bold text-amber-900 text-sm">⏳ Forwarded to Circle Officer's Officer Portal (`/officer-dashboard`)</div>
                             <div className="text-xs text-amber-800 mt-1 leading-relaxed">
-                              All {heirs.length} legal heir(s) have successfully e-Signed with their Aadhaar numbers (`HSA 2005 S.6(3)` verified). Your virasat case is now inside the Tehsildar's official review queue waiting for final verification & on-chain land division.
+                              All {heirs.length} legal heir(s) have successfully e-Signed with their Aadhaar numbers (`HSA 2005 S.6(3)` verified). Your virasat case is now inside the Circle Officer's official review queue waiting for final verification & on-chain land division.
                             </div>
                           </div>
                         </div>
                         <div className="flex flex-col sm:flex-row gap-3">
                           <button onClick={handleTehsildarFinalApprove} disabled={isFinalApproving}
                             className="flex-1 bg-[#0F4C81] hover:bg-[#0a3860] disabled:opacity-60 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 shadow transition-all text-sm">
-                            {isFinalApproving ? <><Loader2 className="w-4 h-4 animate-spin" /> Checking Tehsildar Status…</> : <><CheckCircle className="w-4 h-4" /> Check Tehsildar Approval Status</>}
+                            {isFinalApproving ? <><Loader2 className="w-4 h-4 animate-spin" /> Checking Circle Officer Status…</> : <><CheckCircle className="w-4 h-4" /> Check Circle Officer Approval Status</>}
                           </button>
-                          <button onClick={() => { setFinalApproved(true); toast.success('Simulated Tehsildar Final Approval'); setStep('blockchain_division'); }}
+                          <button onClick={() => { setFinalApproved(true); toast.success('Simulated Circle Officer Final Approval'); setStep('blockchain_division'); }}
                             className="px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5 shrink-0">
-                            ⚡ Demo: Simulate Tehsildar Approval →
+                            ⚡ Demo: Simulate Circle Officer Approval →
                           </button>
                         </div>
                       </div>
                     ) : (
                       <div className="flex items-center gap-3 bg-emerald-50 border border-emerald-200 rounded-xl p-4">
                         <CheckCircle className="w-6 h-6 text-emerald-600 shrink-0" />
-                        <div><div className="font-bold text-emerald-800">Final Verification Complete by Tehsildar!</div><div className="text-xs text-emerald-600 mt-0.5">Proceeding to blockchain land division…</div></div>
+                        <div><div className="font-bold text-emerald-800">Final Verification Complete by Circle Officer!</div><div className="text-xs text-emerald-600 mt-0.5">Proceeding to blockchain land division…</div></div>
                       </div>
                     )}
                   </div>
@@ -898,7 +923,7 @@ export default function SuccessionPage() {
                     {!executionResult ? (
                       <>
                         <div className="space-y-2 mb-5 text-sm text-blue-100">
-                          {['Death Certificate OCR Verified', 'All Heirs eSigned Consent', 'Tehsildar Final Verification Complete'].map(t => (
+                          {['Death Certificate OCR Verified', 'All Heirs eSigned Consent', 'Circle Officer Final Verification Complete'].map(t => (
                             <div key={t} className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-emerald-400" /> {t}</div>
                           ))}
                           <div className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-emerald-400" /> Property: <strong className="text-white font-mono">{crsExtraction?.dlpiId || selectedDlpiId || DEMO_DLPI}</strong></div>

@@ -37,7 +37,7 @@ const validate = (req, res, next) => {
 router.post(
   '/initiate',
   authenticate,
-  requireRole(ROLES.SRO, ROLES.TEHSILDAR, ROLES.CITIZEN),
+  requireRole(ROLES.SRO, ROLES.ANCHAL_ADHIKARI, ROLES.CITIZEN),
   body('dlpiId').matches(/^DLPI-[A-Z0-9-]+$/),
   body('sellerAadhaarNumber').optional().trim(),
   body('sellerAadhaar').optional().trim(),
@@ -358,7 +358,7 @@ router.get(
 router.get(
   '/pending/all',
   authenticate,
-  requireRole(ROLES.PATWARI, ROLES.CIRCLE_INSPECTOR, ROLES.KANUNGO, ROLES.SRO, ROLES.TEHSILDAR, ROLES.SUPER_ADMIN),
+  requireRole(ROLES.KARMACHARI, ROLES.ANCHAL_NIRIKSHAK, ROLES.KANUNGO, ROLES.SRO, ROLES.ANCHAL_ADHIKARI, ROLES.SUPER_ADMIN),
   async (req, res) => {
     try {
       let transfers = [];
@@ -449,7 +449,7 @@ router.post(
 router.post(
   '/:transferId/stamp-duty',
   authenticate,
-  requireRole(ROLES.SRO, ROLES.TEHSILDAR, ROLES.CITIZEN),
+  requireRole(ROLES.SRO, ROLES.ANCHAL_ADHIKARI, ROLES.CITIZEN),
   body('upiRefNo').notEmpty(),
   body('saleAgreementCID').notEmpty(),
   validate,
@@ -484,7 +484,7 @@ router.post(
 router.post(
   '/:transferId/approve/patwari',
   authenticate,
-  requireRole(ROLES.PATWARI, ROLES.TEHSILDAR, ROLES.SUPER_ADMIN),
+  requireRole(ROLES.KARMACHARI, ROLES.ANCHAL_ADHIKARI, ROLES.SUPER_ADMIN),
   async (req, res) => {
     try {
       let result = { success: true, status: 'PENDING_CI_APPROVAL' };
@@ -516,7 +516,7 @@ router.post(
 router.post(
   '/:transferId/approve/ci',
   authenticate,
-  requireRole(ROLES.CIRCLE_INSPECTOR, ROLES.KANUNGO, ROLES.TEHSILDAR, ROLES.SUPER_ADMIN),
+  requireRole(ROLES.ANCHAL_NIRIKSHAK, ROLES.KANUNGO, ROLES.ANCHAL_ADHIKARI, ROLES.SUPER_ADMIN),
   async (req, res) => {
     try {
       let result = { success: true, status: 'PENDING_SRO_EXECUTION' };
@@ -548,7 +548,7 @@ router.post(
 router.post(
   '/:transferId/approve/sro',
   authenticate,
-  requireRole(ROLES.SRO, ROLES.TEHSILDAR, ROLES.SUPER_ADMIN),
+  requireRole(ROLES.SRO, ROLES.ANCHAL_ADHIKARI, ROLES.SUPER_ADMIN),
   async (req, res) => {
     try {
       const newTitleCID = req.body.newTitleCID || 'QmAtomicMutationTitleDeedCID' + Date.now();
@@ -581,7 +581,7 @@ router.post(
 router.post(
   '/:transferId/approve/tehsildar',
   authenticate,
-  requireRole(ROLES.TEHSILDAR, ROLES.SUPER_ADMIN),
+  requireRole(ROLES.ANCHAL_ADHIKARI, ROLES.SUPER_ADMIN),
   async (req, res) => {
     try {
       let result = { success: true, status: 'COMPLETED' };

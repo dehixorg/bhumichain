@@ -1,15 +1,24 @@
 export const DEMO_MY_PARCELS = [
   {
-    dlpiId:            'DLPI-UP-DAD-00001',
-    khataNo:           '101',
-    khasraNo:          '1842/101',
-    tehsil:            'Dadri',
-    tehsilCode:        'DAD',
-    district:          'Gautam Buddha Nagar',
-    state:             'Uttar Pradesh',
+    dlpiId:            'DLPI-Bihar-PHU-00001',
+    jamabandiNo: '101',
+    khesraNo:          '1842/101',
+    anchal:            'Phulwari Sharif',
+    tehsilCode:        'PHU',
+    district:          'Patna',
+    state:             'Bihar',
+    zila: 'Patna',
+    anchal: 'Phulwari Sharif',
+    halka: '3',
+    rajaswaGram: 'Kurji',
+    revenueThanaNo: '142',
     landType:          'Residential',
     landTypeDesc:      'Residential plot / abadi',
-    areaHectares:      0.025,
+    areaHectares: 0.025,
+    rakbaBigha: 0,
+    rakbaKatha: 1,
+    rakbaDhur: 10,
+    rakbaDecimal: 6,
     encumbranceStatus: 'CLEAR',
     claimStatus:       'VERIFIED',
     owner:             { name: 'Priya Kumar', aadhaarNumber: '999900010010' },
@@ -20,16 +29,25 @@ export const DEMO_MY_PARCELS = [
     updatedAt:         '2026-05-10T10:00:00Z',
   },
   {
-    dlpiId:            'DLPI-UP-DAD-00002',
-    khataNo:           '102',
-    khasraNo:          '1200/102',
-    tehsil:            'Dadri',
-    tehsilCode:        'DAD',
-    district:          'Gautam Buddha Nagar',
-    state:             'Uttar Pradesh',
-    landType:          'Bhumidhari',
+    dlpiId:            'DLPI-Bihar-PHU-00002',
+    jamabandiNo: '102',
+    khesraNo:          '1200/102',
+    anchal:            'Phulwari Sharif',
+    tehsilCode:        'PHU',
+    district:          'Patna',
+    state:             'Bihar',
+    zila: 'Patna',
+    anchal: 'Phulwari Sharif',
+    halka: '3',
+    rajaswaGram: 'Kurji',
+    revenueThanaNo: '142',
+    landType:          'Raiyati',
     landTypeDesc:      'Hereditary tenant with full rights',
-    areaHectares:      1.2,
+    areaHectares: 1.2,
+    rakbaBigha: 4,
+    rakbaKatha: 16,
+    rakbaDhur: 0,
+    rakbaDecimal: 296,
     encumbranceStatus: 'MORTGAGED',
     claimStatus:       'UNDER_REVIEW',
     owner:             { name: 'Priya Kumar', aadhaarNumber: '999900010010' },
@@ -40,16 +58,25 @@ export const DEMO_MY_PARCELS = [
     updatedAt:         '2026-06-15T08:00:00Z',
   },
   {
-    dlpiId:            'DLPI-UP-DAD-00003',
-    khataNo:           '201',
-    khasraNo:          '740/201',
-    tehsil:            'Dadri',
-    tehsilCode:        'DAD',
-    district:          'Gautam Buddha Nagar',
-    state:             'Uttar Pradesh',
-    landType:          'Bhumidhari',
+    dlpiId:            'DLPI-Bihar-PHU-00003',
+    jamabandiNo: '201',
+    khesraNo:          '740/201',
+    anchal:            'Phulwari Sharif',
+    tehsilCode:        'PHU',
+    district:          'Patna',
+    state:             'Bihar',
+    zila: 'Patna',
+    anchal: 'Phulwari Sharif',
+    halka: '3',
+    rajaswaGram: 'Kurji',
+    revenueThanaNo: '142',
+    landType:          'Raiyati',
     landTypeDesc:      'Hereditary tenant with full rights',
-    areaHectares:      2.4,
+    areaHectares: 2.4,
+    rakbaBigha: 9,
+    rakbaKatha: 12,
+    rakbaDhur: 0,
+    rakbaDecimal: 593,
     encumbranceStatus: 'CLEAR',
     claimStatus:       'SEEDED_UNVERIFIED',
     owner:             { name: 'Rakesh Agarwal', aadhaarNumber: '999900010009' },
@@ -60,19 +87,28 @@ export const DEMO_MY_PARCELS = [
     updatedAt:         '2026-06-01T00:00:00Z',
   },
   {
-    dlpiId:            'DLPI-UP-DAD-00004',
-    khataNo:           '301',
-    khasraNo:          '999/301',
-    tehsil:            'Dadri',
-    tehsilCode:        'DAD',
-    district:          'Gautam Buddha Nagar',
-    state:             'Uttar Pradesh',
+    dlpiId:            'DLPI-Bihar-PHU-00004',
+    jamabandiNo: '301',
+    khesraNo:          '999/301',
+    anchal:            'Phulwari Sharif',
+    tehsilCode:        'PHU',
+    district:          'Patna',
+    state:             'Bihar',
+    zila: 'Patna',
+    anchal: 'Phulwari Sharif',
+    halka: '3',
+    rajaswaGram: 'Kurji',
+    revenueThanaNo: '142',
     landType:          'Residential',
     landTypeDesc:      'Residential plot / abadi',
-    areaHectares:      0.04,
+    areaHectares: 0.04,
+    rakbaBigha: 0,
+    rakbaKatha: 3,
+    rakbaDhur: 4,
+    rakbaDecimal: 10,
     encumbranceStatus: 'COURT_INJUNCTION',
     claimStatus:       'DISPUTED',
-    disputeNote:       'Boundary encroachment alleged by adjacent plot owner. Civil suit filed in Dadri court (CS/2025/0441).',
+    disputeNote:       'Boundary encroachment alleged by adjacent plot owner. Civil suit filed in Phulwari Sharif court (CS/2025/0441).',
     owner:             { name: 'Suresh Yadav', aadhaarNumber: '999900010012' },
     owners:            [{ name: 'Suresh Yadav', aadhaarNumber: '999900010012', aadhaarNumber: '999900010012', share: '1/1', shareDecimal: 1.0, isVerified: true }],
     location:          { latitude: 28.5280, longitude: 77.6100 },
@@ -81,16 +117,25 @@ export const DEMO_MY_PARCELS = [
     updatedAt:         '2026-04-20T14:00:00Z',
   },
   {
-    dlpiId:            'DLPI-UP-DAD-00005',
-    khataNo:           '401',
-    khasraNo:          '380/401',
-    tehsil:            'Dadri',
-    tehsilCode:        'DAD',
-    district:          'Gautam Buddha Nagar',
-    state:             'Uttar Pradesh',
-    landType:          'Sirdar',
+    dlpiId:            'DLPI-Bihar-PHU-00005',
+    jamabandiNo: '401',
+    khesraNo:          '380/401',
+    anchal:            'Phulwari Sharif',
+    tehsilCode:        'PHU',
+    district:          'Patna',
+    state:             'Bihar',
+    zila: 'Patna',
+    anchal: 'Phulwari Sharif',
+    halka: '3',
+    rajaswaGram: 'Kurji',
+    revenueThanaNo: '142',
+    landType:          'Gair Mazarua',
     landTypeDesc:      'Hereditary tenant with limited rights',
-    areaHectares:      0.8,
+    areaHectares: 0.8,
+    rakbaBigha: 3,
+    rakbaKatha: 4,
+    rakbaDhur: 0,
+    rakbaDecimal: 197,
     encumbranceStatus: 'CLEAR',
     claimStatus:       'CLAIM_SUBMITTED',
     owner:             { name: 'Meena Devi', aadhaarNumber: '999900010005' },
@@ -104,15 +149,19 @@ export const DEMO_MY_PARCELS = [
 
 export const DEMO_PENDING_REVIEW = [
   {
-    dlpiId:           'DLPI-UP-DAD-00002',
-    khataNo:          '102',
-    khasraNo:         '1200/102',
+    dlpiId:           'DLPI-Bihar-PHU-00002',
+    jamabandiNo: '102',
+    khesraNo:         '1200/102',
     gram:             'Gharbara',
-    tehsil:           'Dadri',
-    district:         'Gautam Buddha Nagar',
+    anchal:           'Phulwari Sharif',
+    district:         'Patna',
     ownerName:        'Priya Kumar',
-    landType:         'Bhumidhari',
-    areaHectares:     1.2,
+    landType:         'Raiyati',
+    areaHectares: 1.2,
+    rakbaBigha: 4,
+    rakbaKatha: 16,
+    rakbaDhur: 0,
+    rakbaDecimal: 296,
     encumbranceStatus:'CLEAR',
     claimStatus:      'UNDER_REVIEW',
     submittedAt:      '2026-06-15T08:00:00Z',
@@ -128,15 +177,19 @@ export const DEMO_PENDING_REVIEW = [
     },
   },
   {
-    dlpiId:           'DLPI-UP-DAD-00005',
-    khataNo:          '401',
-    khasraNo:         '380/401',
+    dlpiId:           'DLPI-Bihar-PHU-00005',
+    jamabandiNo: '401',
+    khesraNo:         '380/401',
     gram:             'Sadarpur',
-    tehsil:           'Dadri',
-    district:         'Gautam Buddha Nagar',
+    anchal:           'Phulwari Sharif',
+    district:         'Patna',
     ownerName:        'Meena Devi',
-    landType:         'Sirdar',
-    areaHectares:     0.8,
+    landType:         'Gair Mazarua',
+    areaHectares: 0.8,
+    rakbaBigha: 3,
+    rakbaKatha: 4,
+    rakbaDhur: 0,
+    rakbaDecimal: 197,
     encumbranceStatus:'CLEAR',
     claimStatus:      'CLAIM_SUBMITTED',
     submittedAt:      '2026-06-20T09:00:00Z',
@@ -154,18 +207,22 @@ export const DEMO_PENDING_REVIEW = [
 ];
 
 export const DEMO_DLPI = {
-  dlpiId:            'DLPI-UP-DAD-00100',
-  khataNo:           '100',
-  khasraNo:          '740/100',
-  tehsilCode:        'DAD',
-  districtCode:      'UP-GBN',
+  dlpiId:            'DLPI-Bihar-PHU-00100',
+  jamabandiNo: '100',
+  khesraNo:          '740/100',
+  tehsilCode:        'PHU',
+  districtCode:      'Bihar-GBN',
   ownerName:         'Hi User',
   owner:             { name: 'Hi User', aadhaarNumber: '111122223333' },
   owners:            [{ name: 'Hi User', aadhaarNumber: '111122223333', aadhaarNumber: '111122223333', share: '1/1', shareDecimal: 1.0, isVerified: true }],
   ownerAadhaarNumber:  '111122223333',
-  landType:          'Bhumidhari',
+  landType:          'Raiyati',
   landTypeDesc:      'Hereditary tenant with full rights',
-  areaHectares:      2.4,
+  areaHectares: 2.4,
+    rakbaBigha: 9,
+    rakbaKatha: 12,
+    rakbaDhur: 0,
+    rakbaDecimal: 593,
   encumbranceStatus: 'CLEAR',
   claimStatus:       'VERIFIED',
   transferLocked:    false,
@@ -177,22 +234,22 @@ export const DEMO_DLPI = {
 };
 
 const DEMO_PERSONAS: Record<string, any> = {
-  tehsildar: {
-    role: 'tehsildar', name: 'Amit Saxena',
+  circle_officer: {
+    role: 'circle_officer', name: 'Amit Saxena',
     aadhaarNumber: '999900010001', aadhaar: '999900010001', aadhaarNumber: '999900010001',
-    jurisdictionCode: 'GBN-DAD', tehsilCode: 'DAD',
+    jurisdictionCode: 'GBN-PHU', tehsilCode: 'PHU',
   },
   circle_inspector: {
     role: 'circle_inspector', name: 'Rajesh Verma',
     aadhaarNumber: '999900010002', aadhaar: '999900010002', aadhaarNumber: '999900010002',
-    jurisdictionCode: 'GBN-DAD', circleCode: 'DAD-C1',
-    patwariCodes: ['DAD-P1', 'DAD-P2', 'DAD-P3'], tehsilCode: 'DAD',
+    jurisdictionCode: 'GBN-PHU', circleCode: 'PHU-C1',
+    patwariCodes: ['PHU-P1', 'PHU-P2', 'PHU-P3'], tehsilCode: 'PHU',
   },
-  patwari: {
-    role: 'patwari', name: 'Vijay Singh',
+  karmachari: {
+    role: 'karmachari', name: 'Vijay Singh',
     aadhaarNumber: '999900010003', aadhaar: '999900010003', aadhaarNumber: '999900010003',
-    jurisdictionCode: 'GBN-DAD', patwariCode: 'DAD-P1',
-    villageCodes: ['DAD-001', 'DAD-002', 'DAD-003'], tehsilCode: 'DAD',
+    jurisdictionCode: 'GBN-PHU', patwariCode: 'PHU-P1',
+    villageCodes: ['PHU-001', 'PHU-002', 'PHU-003'], tehsilCode: 'PHU',
   },
   citizen: {
     role: 'citizen', name: 'Priya Kumar',
@@ -219,9 +276,9 @@ const DEMO_PERSONAS: Record<string, any> = {
 const DEMO_MUTATIONS = [
   {
     mutationId: 'MUT-2026-001',
-    dlpiId: 'DLPI-UP-DAD-00100',
+    dlpiId: 'DLPI-Bihar-PHU-00100',
     mutationType: 'Virasat (Inheritance)',
-    officerName: 'Vijay Singh - Patwari',
+    officerName: 'Vijay Singh - Karmachari',
     currentOwnerName: 'Deceased Ramesh Kumar',
     newOwnerName: 'Priya Kumar (Daughter - 1/1)',
     status: 'ALERT_SENT',
@@ -230,11 +287,11 @@ const DEMO_MUTATIONS = [
     slaMet: true,
     requiresPublicNotice: true,
     supportingDoc: 'Death Certificate (CRS-2026-889)',
-    notes: 'Virasat claim verified under UP Revenue Code Sec 33. 30-day proclamation active.'
+    notes: 'Virasat claim verified under Bihar Land Mutation Act 2011 Sec 12(1). 30-day proclamation active.'
   },
   {
     mutationId: 'MUT-2026-002',
-    dlpiId: 'DLPI-UP-DAD-00002',
+    dlpiId: 'DLPI-Bihar-PHU-00002',
     mutationType: 'Bikri (Sale)',
     officerName: 'Rajesh Verma - Circle Inspector',
     currentOwnerName: 'Arun Kumar',
@@ -244,8 +301,8 @@ const DEMO_MUTATIONS = [
     objectionDeadline: new Date(Date.now() + 20 * 86400000).toISOString(),
     slaMet: true,
     requiresPublicNotice: true,
-    supportingDoc: 'Registered Sale Deed (SRO Dadri #4412)',
-    notes: 'Both seller and buyer eSigned consent via Aadhaar OTP. Pending Tehsildar final execution.'
+    supportingDoc: 'Registered Sale Deed (SRO Phulwari Sharif #4412)',
+    notes: 'Both seller and buyer eSigned consent via Aadhaar OTP. Pending Circle Officer final execution.'
   }
 ];
 
@@ -280,7 +337,7 @@ export async function handleMockApi(path: string, options: RequestInit): Promise
 
   if (path === '/api/auth/verify-otp' || path === '/api/auth/officer-login') {
     const isOfficer = path.includes('officer-login');
-    let user = isOfficer ? DEMO_PERSONAS['patwari'] : DEMO_PERSONAS['citizen'];
+    let user = isOfficer ? DEMO_PERSONAS['karmachari'] : DEMO_PERSONAS['citizen'];
     if (!isOfficer) {
       const digits = (body.aadhaarNumber || '').replace(/\D/g, '');
       if (digits) {
@@ -348,16 +405,21 @@ export async function handleMockApi(path: string, options: RequestInit): Promise
   }
 
   if ((path === '/api/dlpi/seed' || path === '/api/dlpi') && method === 'POST') {
-    const { dlpiId, surveyNumber, khasraNo, gram, tehsil, district, areaHectares, landType, owners, ownerName, ownerAadhaar } = body;
+    const { dlpiId, surveyNumber, khesraNo, gram, anchal, district, areaHectares, landType, owners, ownerName, ownerAadhaar } = body;
     const cleanAadhaar = (ownerAadhaar || '').replace(/\D/g, '');
     const newParcel = {
-      dlpiId: dlpiId || `DLPI-UP-${tehsil || 'DAD'}-${Math.floor(10000 + Math.random() * 90000)}`,
+      dlpiId: dlpiId || `DLPI-Bihar-${anchal || 'PHU'}-${Math.floor(10000 + Math.random() * 90000)}`,
       surveyNumber: surveyNumber || '101/2',
-      khasraNo: khasraNo || '101',
+      khesraNo: khesraNo || '101',
       gram: gram || 'Bhangel',
-      tehsil: tehsil || 'Dadri',
-      district: district || 'Gautam Buddha Nagar',
-      state: 'Uttar Pradesh',
+      anchal: anchal || 'Phulwari Sharif',
+      district: district || 'Patna',
+      state: 'Bihar',
+    zila: 'Patna',
+    anchal: 'Phulwari Sharif',
+    halka: '3',
+    rajaswaGram: 'Kurji',
+    revenueThanaNo: '142',
       areaHectares: Number(areaHectares || 1.25),
       landType: landType || 'Agricultural',
       encumbranceStatus: 'CLEAR',
@@ -449,7 +511,7 @@ export async function handleMockApi(path: string, options: RequestInit): Promise
     return jsonResponse({ dlpiId, claimStatus: 'CI_APPROVED' });
   }
 
-  if (path.match(/^\/api\/dlpi\/[^\/]+\/tehsildar-approve$/)) {
+  if (path.match(/^\/api\/dlpi\/[^\/]+\/circle_officer-approve$/)) {
     const dlpiId = path.split('/')[3];
     state.pendingReview = state.pendingReview.filter(p => p.dlpiId !== dlpiId);
     return jsonResponse({ dlpiId, claimStatus: 'VERIFIED' });
@@ -459,9 +521,9 @@ export async function handleMockApi(path: string, options: RequestInit): Promise
     const { dlpiId, mutationType, officerName, newOwnerName, reason, supportingCID } = body;
     const newMut = {
       mutationId: 'MUT-2026-' + Math.floor(100 + Math.random() * 900),
-      dlpiId: dlpiId || 'DLPI-UP-DAD-00100',
+      dlpiId: dlpiId || 'DLPI-Bihar-PHU-00100',
       mutationType: mutationType || 'Administrative Correction',
-      officerName: officerName || 'Vijay Singh - Patwari',
+      officerName: officerName || 'Vijay Singh - Karmachari',
       currentOwnerName: 'Deceased Ramesh Kumar',
       newOwnerName: newOwnerName || 'New Owner',
       status: 'ALERT_SENT',
@@ -470,7 +532,7 @@ export async function handleMockApi(path: string, options: RequestInit): Promise
       slaMet: true,
       requiresPublicNotice: true,
       supportingDoc: supportingCID || 'Govt Order / Application',
-      notes: reason || 'Mutation initiated under UP Revenue Code.'
+      notes: reason || 'Mutation initiated under Bihar Revenue Code.'
     };
     state.mutations.unshift(newMut);
     return jsonResponse(newMut, 201);
@@ -580,7 +642,7 @@ export async function handleMockApi(path: string, options: RequestInit): Promise
     const { dlpiId, deceasedName, heirs } = body;
     const parcel = state.myParcels.find(p => p.dlpiId === dlpiId);
 
-    // Strict Check: Only the Tehsildar-approved Registered Inheritor can upload death cert & initiate
+    // Strict Check: Only the Circle Officer-approved Registered Inheritor can upload death cert & initiate
     if (parcel && (parcel as any).inheritorNomination && (parcel as any).inheritorNomination.status === 'APPROVED') {
       const nom = (parcel as any).inheritorNomination;
       const authHeader = (options.headers as Record<string, string>)?.['Authorization'] || '';
@@ -589,7 +651,7 @@ export async function handleMockApi(path: string, options: RequestInit): Promise
       if (myAadhaar && myAadhaar !== nom.inheritorAadhaarNumber) {
         return jsonResponse({
           error: 'FORBIDDEN_INHERITOR_ONLY',
-          message: `Access Blocked: Only the Tehsildar-approved Registered Inheritor (${nom.inheritorName} — Aadhaar ending in ${nom.inheritorAadhaarNumber.slice(8)}) is authorized to upload the death certificate and claim this property.`
+          message: `Access Blocked: Only the Circle Officer-approved Registered Inheritor (${nom.inheritorName} — Aadhaar ending in ${nom.inheritorAadhaarNumber.slice(8)}) is authorized to upload the death certificate and claim this property.`
         }, 403);
       }
     }
@@ -776,7 +838,7 @@ export async function handleMockApi(path: string, options: RequestInit): Promise
     if (!transfer) return jsonResponse({ error: 'TRANSFER_NOT_FOUND' }, 404);
 
     if (partyType === 'BUYER' || !partyType) {
-      transfer.status = 'PENDING_PATWARI_APPROVAL'; // Moves to Patwari
+      transfer.status = 'PENDING_PATWARI_APPROVAL'; // Moves to Karmachari
       transfer.history.push({
         action: 'BUYER_ESIGNED',
         actor: transfer.buyerName,
@@ -788,7 +850,7 @@ export async function handleMockApi(path: string, options: RequestInit): Promise
     return jsonResponse(transfer);
   }
 
-  if (path.match(/^\/api\/transfer\/[^\/]+\/approve\/patwari$/) && method === 'POST') {
+  if (path.match(/^\/api\/transfer\/[^\/]+\/approve\/karmachari$/) && method === 'POST') {
     const transferId = path.split('/')[3];
     const transfer = state.pendingTransfers.find(t => t.transferId === transferId);
     if (!transfer) return jsonResponse({ error: 'TRANSFER_NOT_FOUND' }, 404);
@@ -796,10 +858,10 @@ export async function handleMockApi(path: string, options: RequestInit): Promise
     transfer.status = 'PENDING_KANUNGO_APPROVAL'; // Moves to Kanungo
     transfer.history.push({
       action: 'PATWARI_APPROVED',
-      actor: 'Patwari (Officer)',
+      actor: 'Karmachari (Officer)',
       timestamp: new Date().toISOString(),
       status: 'PENDING_KANUNGO_APPROVAL',
-      note: 'Patwari verified land records and physical boundaries.'
+      note: 'Karmachari verified land records and physical boundaries.'
     });
     return jsonResponse(transfer);
   }
@@ -809,7 +871,7 @@ export async function handleMockApi(path: string, options: RequestInit): Promise
     const transfer = state.pendingTransfers.find(t => t.transferId === transferId);
     if (!transfer) return jsonResponse({ error: 'TRANSFER_NOT_FOUND' }, 404);
 
-    transfer.status = 'PENDING_TEHSILDAR_APPROVAL'; // Moves to Tehsildar
+    transfer.status = 'PENDING_TEHSILDAR_APPROVAL'; // Moves to Circle Officer
     transfer.history.push({
       action: 'KANUNGO_APPROVED',
       actor: 'Kanungo / CI (Officer)',
@@ -820,7 +882,7 @@ export async function handleMockApi(path: string, options: RequestInit): Promise
     return jsonResponse(transfer);
   }
 
-  if ((path.match(/^\/api\/transfer\/[^\/]+\/approve\/tehsildar$/) || path.match(/^\/api\/transfer\/[^\/]+\/approve\/sro$/)) && method === 'POST') {
+  if ((path.match(/^\/api\/transfer\/[^\/]+\/approve\/circle_officer$/) || path.match(/^\/api\/transfer\/[^\/]+\/approve\/sro$/)) && method === 'POST') {
     const transferId = path.split('/')[3];
     const transfer = state.pendingTransfers.find(t => t.transferId === transferId);
     if (!transfer) return jsonResponse({ error: 'TRANSFER_NOT_FOUND' }, 404);
@@ -846,7 +908,7 @@ export async function handleMockApi(path: string, options: RequestInit): Promise
     transfer.status = 'COMPLETED';
     transfer.history.push({
       action: 'TEHSILDAR_EXECUTED',
-      actor: 'Tehsildar (Magistrate)',
+      actor: 'Circle Officer (Magistrate)',
       timestamp: new Date().toISOString(),
       status: 'COMPLETED',
       note: `Atomic mutation complete. Ownership transferred to ${transfer.buyerName}.`

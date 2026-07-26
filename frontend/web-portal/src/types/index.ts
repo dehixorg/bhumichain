@@ -1,15 +1,15 @@
 // ─── Core domain types matching chaincode structs ─────────────────────────────
 
-// UP land types (primary) + Maharashtra legacy
+// Bihar land types (primary) + Maharashtra legacy
 export type LandType =
-  | 'Bhumidhari' | 'Sirdar' | 'Asamiyadar' | 'Residential' | 'Commercial'
+  | 'Raiyati' | 'Gair Mazarua' | 'Asamiyadar' | 'Residential' | 'Commercial'
   | 'Tribal_FRA' | 'Govt_Reserved'
   | 'Bagayat' | 'Jirayat' | 'Kharaba' | 'Government' | 'Forest';
 
 export type EncumbranceStatus = 'CLEAR' | 'MORTGAGED' | 'COURT_INJUNCTION' | 'IT_ATTACHMENT' | 'MULTIPLE';
 
-// UP tehsil codes (primary) + Maharashtra legacy
-export type TehsilCode = 'DAD' | 'NDA' | 'JWR' | 'BSK' | 'SNN' | 'IGT' | 'NSK' | 'DIN' | 'NIK';
+// Bihar anchal codes (primary) + Maharashtra legacy
+export type TehsilCode = 'PHU' | 'NDA' | 'JWR' | 'BSK' | 'SNN' | 'IGT' | 'NSK' | 'DIN' | 'NIK';
 
 export interface ParcelOwner {
   name: string;
@@ -45,13 +45,17 @@ export interface ParcelLocation {
 export interface Parcel {
   dlpiId: string;
   surveyNumber: string;
-  tehsil: string;
+  anchal: string;
   tehsilCode: TehsilCode;
   district: string;
   state: string;
   landType: LandType;
   landTypeDescription: string;
   areaHectares: number;
+  rakbaBigha?: number;
+  rakbaKatha?: number;
+  rakbaDhur?: number;
+  rakbaDecimal?: number;
   isTribal: boolean;
   isCoparcenary: boolean;
   scheduleVArea: boolean;
@@ -76,10 +80,14 @@ export interface GeoFeature {
     owner: string;
     landType: LandType;
     areaHectares: number;
+  rakbaBigha?: number;
+  rakbaKatha?: number;
+  rakbaDhur?: number;
+  rakbaDecimal?: number;
     encumbranceStatus: EncumbranceStatus;
     isTribal: boolean;
     isCoparcenary: boolean;
-    tehsil: string;
+    anchal: string;
     surveyNumber: string;
     circleRateINR: number;
   };

@@ -247,7 +247,7 @@ export default function SuccessionDetailPage() {
                   <div className="text-[#0F4C81] font-bold text-sm">Auto-Mutation Executing</div>
                   <div className="text-[#0F4C81] text-xs mt-0.5">
                     All 3 heirs consented · Fabric transaction submitted · New title written to BhumiChain ledger ·
-                    Ankur, Nitin &amp; Neeta each hold 1/3 Bhumidhari share
+                    Ankur, Nitin &amp; Neeta each hold 1/3 Raiyati share
                   </div>
                 </div>
                 <CheckCircle className="w-6 h-6 text-[#0F4C81] ml-auto shrink-0" />

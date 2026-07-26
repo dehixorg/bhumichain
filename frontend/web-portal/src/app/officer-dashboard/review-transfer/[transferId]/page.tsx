@@ -45,10 +45,10 @@ export default function ReviewTransferPage() {
   const handleApprove = async () => {
     setBusy(true);
     try {
-      if (user?.role === 'patwari') {
-        toast('Patwari approving...');
+      if (user?.role === 'karmachari') {
+        toast('Karmachari approving...');
         await approveTransferByPatwari(transferId);
-        toast.success('Patwari Approved');
+        toast.success('Karmachari Approved');
       } else if (user?.role === 'circle_inspector' || user?.role === 'kanungo') {
         toast('CI / Kanungo approving...');
         await approveTransferByCI(transferId);
@@ -57,8 +57,8 @@ export default function ReviewTransferPage() {
         toast('SRO executing...');
         await approveTransferBySRO(transferId, 'QmTitleDeedNew' + Date.now());
         toast.success('SRO Executed');
-      } else if (user?.role === 'tehsildar') {
-        toast('Tehsildar finalizing mutation...');
+      } else if (user?.role === 'circle_officer') {
+        toast('Circle Officer finalizing mutation...');
         await approveTransferByTehsildar(transferId);
         toast.success('Transfer Completed & Title Mutated');
       } else {
@@ -90,18 +90,18 @@ export default function ReviewTransferPage() {
   let canApprove = false;
   let actionLabel = 'Approve';
   
-  if (user?.role === 'patwari' && ['INITIATED', 'AWAITING_CONSENT', 'CONSENT_RECORDED', 'PENDING_PATWARI_VERIFICATION', 'STAMP_DUTY_PAID', 'PENDING_PATWARI_APPROVAL', 'PENDING_BUYER_CONSENT'].includes(transfer.status)) {
+  if (user?.role === 'karmachari' && ['INITIATED', 'AWAITING_CONSENT', 'CONSENT_RECORDED', 'PENDING_PATWARI_VERIFICATION', 'STAMP_DUTY_PAID', 'PENDING_PATWARI_APPROVAL', 'PENDING_BUYER_CONSENT'].includes(transfer.status)) {
     canApprove = true;
-    actionLabel = 'Approve & Forward to Kanungo (Patwari)';
+    actionLabel = 'Approve & Forward to Kanungo (Karmachari)';
   } else if ((user?.role === 'circle_inspector' || user?.role === 'kanungo') && ['PATWARI_APPROVED', 'PENDING_KANUNGO_APPROVAL', 'PENDING_CI_APPROVAL'].includes(transfer.status)) {
     canApprove = true;
-    actionLabel = 'Verify & Forward to Tehsildar (Kanungo / CI)';
+    actionLabel = 'Verify & Forward to Circle Officer (Kanungo / CI)';
   } else if (user?.role === 'sro' && ['CI_APPROVED', 'PENDING_SRO_EXECUTION', 'PENDING_TEHSILDAR_APPROVAL', 'PENDING_KANUNGO_APPROVAL'].includes(transfer.status)) {
     canApprove = true;
     actionLabel = 'Execute Deed (SRO)';
-  } else if (user?.role === 'tehsildar' && ['CI_APPROVED', 'PENDING_SRO_EXECUTION', 'PENDING_TEHSILDAR_APPROVAL', 'PENDING_KANUNGO_APPROVAL', 'PATWARI_APPROVED', 'PENDING_CI_APPROVAL', 'PENDING_PATWARI_VERIFICATION'].includes(transfer.status)) {
+  } else if (user?.role === 'circle_officer' && ['CI_APPROVED', 'PENDING_SRO_EXECUTION', 'PENDING_TEHSILDAR_APPROVAL', 'PENDING_KANUNGO_APPROVAL', 'PATWARI_APPROVED', 'PENDING_CI_APPROVAL', 'PENDING_PATWARI_VERIFICATION'].includes(transfer.status)) {
     canApprove = true;
-    actionLabel = 'Finalize Mutation & Atomic Transfer (Tehsildar)';
+    actionLabel = 'Finalize Mutation & Atomic Transfer (Circle Officer)';
   }
 
   return (
@@ -175,8 +175,8 @@ export default function ReviewTransferPage() {
            </div>
          )}
 
-        {/* RecordScan AI Requirement for Patwari */}
-        {user?.role === 'patwari' && transfer.status === 'STAMP_DUTY_PAID' && !scanCID && (
+        {/* RecordScan AI Requirement for Karmachari */}
+        {user?.role === 'karmachari' && transfer.status === 'STAMP_DUTY_PAID' && !scanCID && (
            <div className="card border-amber-900/50 space-y-4">
              <div className="flex items-center gap-2 mb-4">
                <AlertTriangle className="w-5 h-5 text-amber-400" />

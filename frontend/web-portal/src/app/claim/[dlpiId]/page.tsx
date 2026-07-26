@@ -20,8 +20,8 @@ import {
 interface Parcel {
   dlpiId:            string;
   khataNo:           string;
-  khasraNo:          string;
-  tehsil:            string;
+  khesraNo:          string;
+  anchal:            string;
   district:          string;
   state:             string;
   landType:          string;
@@ -164,7 +164,7 @@ function ESignClaimForm({
       <div className="card flex flex-col items-center gap-3 py-6">
         <CheckCircle className="w-10 h-10 text-green-400" />
         <p className="text-green-300 font-semibold">Claim submitted successfully!</p>
-        <p className="text-gray-400 text-sm text-center">Your eSign is recorded on BhumiChain. A patwari will verify your claim.</p>
+        <p className="text-gray-400 text-sm text-center">Your eSign is recorded on BhumiChain. A karmachari will verify your claim.</p>
       </div>
     );
   }
@@ -265,7 +265,7 @@ function SubmitReviewButton({ dlpiId, onSuccess }: { dlpiId: string; onSuccess: 
       <div>
         <h3 className="font-semibold text-gray-700">Next Step: Field Verification</h3>
         <p className="text-sm text-gray-400 mt-1">
-          Submit your claim for patwari field verification. The patwari will visit the site and verify your possession.
+          Submit your claim for karmachari field verification. The karmachari will visit the site and verify your possession.
         </p>
       </div>
       {error && <p className="text-sm text-red-400">{error}</p>}
@@ -383,10 +383,10 @@ function ParcelDetail({ parcel }: { parcel: Parcel }) {
       <div className="flex items-start justify-between gap-3">
         <div>
           <div className="font-mono text-[#0F4C81] text-sm font-semibold">{parcel.dlpiId}</div>
-          <div className="text-gray-700 font-semibold mt-1">Khasra {parcel.khasraNo}</div>
+          <div className="text-gray-700 font-semibold mt-1">Khesra {parcel.khesraNo}</div>
           <div className="flex items-center gap-1 text-gray-500 text-xs mt-0.5">
             <MapPin className="w-3 h-3" />
-            {parcel.tehsil}, {parcel.district}, {parcel.state}
+            {parcel.anchal}, {parcel.district}, {parcel.state}
           </div>
         </div>
         <Link
@@ -401,7 +401,7 @@ function ParcelDetail({ parcel }: { parcel: Parcel }) {
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
         {[
           { label: 'Land Type',    value: parcel.landType },
-          { label: 'Area',         value: formatArea(parcel.areaHectares) },
+          { label: 'Area',         value: parcel.rakbaBigha ? `${parcel.rakbaBigha} Bigha, ${parcel.rakbaKatha} Katha, ${parcel.rakbaDhur} Dhur` : `${parcel.areaHectares} Ha` },
           { label: 'Circle Rate',  value: formatValue(parcel.valuation.circleRateINR) },
           { label: 'Encumbrance',  value: parcel.encumbranceStatus.replace('_', ' '),
             color: parcel.encumbranceStatus === 'CLEAR' ? 'text-green-400' : 'text-red-400' },
@@ -550,7 +550,7 @@ export default function ClaimPage() {
                     <AlertTriangle className="w-5 h-5" />
                     <span className="font-semibold">Dispute Active</span>
                   </div>
-                  <p className="text-sm text-gray-400">{parcel.disputeNote || 'A dispute has been raised on this parcel. Contact your Patwari (Vijay Singh, DAD-P1) for resolution.'}</p>
+                  <p className="text-sm text-gray-400">{parcel.disputeNote || 'A dispute has been raised on this parcel. Contact your Karmachari (Vijay Singh, PHU-P1) for resolution.'}</p>
                   <p className="text-xs text-gray-600">Parcel locked until dispute is resolved. 30-day notice period applies.</p>
                 </div>
               )}
@@ -591,13 +591,13 @@ export default function ClaimPage() {
                   <div className="flex items-center gap-2 text-blue-400">
                     <Clock className="w-5 h-5" />
                     <span className="font-semibold">
-                      {parcel.claimStatus === 'CI_APPROVED' ? 'Awaiting Tehsildar Final Approval' : 'Field Verification in Progress'}
+                      {parcel.claimStatus === 'CI_APPROVED' ? 'Awaiting Circle Officer Final Approval' : 'Field Verification in Progress'}
                     </span>
                   </div>
                   <p className="text-sm text-gray-400">
                     {parcel.claimStatus === 'CI_APPROVED'
-                      ? 'Circle Inspector has approved. Tehsildar will issue final VERIFIED status with eSign.'
-                      : 'Patwari Vijay Singh (DAD-P1) will conduct a field visit to verify possession. You will be notified via SMS.'}
+                      ? 'Circle Inspector has approved. Circle Officer will issue final VERIFIED status with eSign.'
+                      : 'Karmachari Vijay Singh (PHU-P1) will conduct a field visit to verify possession. You will be notified via SMS.'}
                   </p>
                 </div>
               )}

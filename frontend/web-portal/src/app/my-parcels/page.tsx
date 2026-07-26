@@ -20,13 +20,13 @@ import toast from 'react-hot-toast';
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 interface Parcel {
-  dlpiId: string;
-  khataNo: string;
-  khasraNo: string;
-  tehsil: string;
-  district: string;
-  landType: string;
-  areaHectares: number;
+  dlpiId:            string;
+  khataNo:           string;
+  khesraNo:          string;
+  anchal:            string;
+  district:          string;
+  landType:          string;
+  areaHectares:      number;
   encumbranceStatus: string;
   claimStatus: string;
   successionStatus?: string;
@@ -41,20 +41,20 @@ interface Parcel {
 // ── Mock Data for New Sections ────────────────────────────────────────────────
 
 const TIMELINE = [
-  { date: 'Today, 10:30 AM', title: 'EC Certificate Generated', sub: 'DLPI-MH-SNN-00142', icon: FileCheck, color: 'text-green-600', bg: 'bg-green-100' },
-  { date: 'Yesterday', title: 'Succession Claim Filed', sub: 'Tehsil Dadri, GBN', icon: FileSignature, color: 'text-purple-600', bg: 'bg-purple-100' },
-  { date: '12 June 2026', title: 'Property Transfer', sub: 'Approved by Tehsildar', icon: ArrowRight, color: 'text-[#0F4C81]', bg: 'bg-blue-100' },
-  { date: '01 Jan 2026', title: 'Record Seeded on Chain', sub: 'Initial Digitization', icon: Database, color: 'text-gray-600', bg: 'bg-gray-100' },
+  { date: 'Today, 10:30 AM', title: 'EC Certificate Generated',  sub: 'DLPI-MH-SNN-00142', icon: FileCheck, color: 'text-green-600', bg: 'bg-green-100' },
+  { date: 'Yesterday',       title: 'Succession Claim Filed',    sub: 'Anchal Phulwari Sharif, GBN', icon: FileSignature, color: 'text-purple-600', bg: 'bg-purple-100' },
+  { date: '12 June 2026',    title: 'Property Transfer',         sub: 'Approved by Circle Officer', icon: ArrowRight, color: 'text-[#0F4C81]', bg: 'bg-blue-100' },
+  { date: '01 Jan 2026',     title: 'Record Seeded on Chain',    sub: 'Initial Digitization', icon: Database, color: 'text-gray-600', bg: 'bg-gray-100' },
 ];
 
 const VAULT_DOCS = [
-  { name: 'Khatauni (RoR) - 2026', id: 'DOC-26-4412', size: '1.2 MB', date: 'Jul 9, 2026', icon: FileText, type: 'PDF' },
-  { name: 'Encumbrance Cert.', id: 'EC-4412999', size: '800 KB', date: 'Jul 9, 2026', icon: Shield, type: 'PDF' },
-  { name: 'Digitally Signed Map', id: 'MAP-V22-1', size: '3.4 MB', date: 'May 1, 2026', icon: Map, type: 'PNG' },
+  { name: 'Jamabandi (RoR) - 2026',  id: 'DOC-26-4412', size: '1.2 MB', date: 'Jul 9, 2026', icon: FileText,   type: 'PDF' },
+  { name: 'Encumbrance Cert.',      id: 'EC-4412999',  size: '800 KB', date: 'Jul 9, 2026', icon: Shield,     type: 'PDF' },
+  { name: 'Digitally Signed Map',   id: 'MAP-V22-1',   size: '3.4 MB', date: 'May 1, 2026', icon: Map,        type: 'PNG' },
 ];
 
 const ANNOUNCEMENTS = [
-  { badge: 'NEW', title: 'BhumiChain Pilot expands to 500 villages in Gautam Buddha Nagar.' },
+  { badge: 'NEW', title: 'BhumiChain Pilot expands to 500 villages in Patna.' },
   { badge: 'ALERT', title: 'Schedule V (Tribal) land transfers strictly require Collector NOC.' },
   { badge: 'INFO', title: 'Link Aadhaar before 31st August 2026 to claim unverified parcels.' },
 ];
@@ -119,7 +119,7 @@ export default function CitizenDashboard() {
         aadhaarNumber: ((user as any).aadhaarNumber || user.aadhaarNumber || '').replace(/\D/g, ''),
         eSignTxHash: '0x' + Math.random().toString(16).slice(2)
       });
-      toast.success('🎉 Purchase Agreement eSigned! Sent to Patwari officer queue.', { id: 'buyer-esign' });
+      toast.success('🎉 Purchase Agreement eSigned! Sent to Karmachari officer queue.', { id: 'buyer-esign' });
       setPendingTransfers(prev => prev.filter(t => t.transferId !== transferId));
     } catch (e: any) {
       toast.error(e.message || 'Failed to submit eSign', { id: 'buyer-esign' });
@@ -217,9 +217,9 @@ export default function CitizenDashboard() {
         heirAadhaarNumber: userAadhaar,
         eSignTxHash: '0x' + Math.random().toString(16).slice(2)
       });
-      toast.success('🎉 Successfully eSigned your virasat consent! Case forwarded for Tehsildar verification.', { id: 'esign' });
+      toast.success('🎉 Successfully eSigned your virasat consent! Case forwarded for Circle Officer verification.', { id: 'esign' });
       setPendingSuccessions(prev => prev.filter(c => c.caseId !== caseId));
-      // Refresh parcels so inherited land appears if Tehsildar already executed
+      // Refresh parcels so inherited land appears if Circle Officer already executed
       apiFetch('/api/dlpi/my-parcels')
         .then(r => r.json())
         .then(d => { if (Array.isArray(d)) setParcels(d); })
@@ -254,7 +254,7 @@ export default function CitizenDashboard() {
               </p>
 
               <div className="flex items-center gap-4 text-xs font-semibold text-gray-500 mt-4">
-                <div className="flex items-center gap-1.5"><MapPin className="w-4 h-4 text-gray-400" /> Uttar Pradesh</div>
+                <div className="flex items-center gap-1.5"><MapPin className="w-4 h-4 text-gray-400" /> Bihar</div>
                 <div className="w-1 h-1 rounded-full bg-gray-300" />
                 <div>ID: {formatMaskedAadhaar(user)}</div>
                 <div className="w-1 h-1 rounded-full bg-gray-300" />
@@ -393,7 +393,7 @@ export default function CitizenDashboard() {
                   <Database className="w-12 h-12 text-[#0F4C81] mx-auto mb-3 opacity-80" />
                   <p className="text-gray-900 font-bold text-lg">Clean Slate — No Verified Records Found</p>
                   <p className="text-gray-500 text-sm mt-1 max-w-md mx-auto">
-                    Under statutory registry rules, citizens cannot self-create land titles. New records or digitized Khataunis only appear here after <span className="font-bold text-[#0F4C81]">Tehsildar (`Revenue Judge`) verification and approval</span>.
+                    Under statutory registry rules, citizens cannot self-create land titles. New records or digitized Khataunis only appear here after <span className="font-bold text-[#0F4C81]">Circle Officer (`Revenue Judge`) verification and approval</span>.
                   </p>
                   <div className="mt-5 inline-flex items-center gap-2 px-4 py-2 bg-blue-50 border border-blue-200 text-[#0F4C81] text-xs font-bold rounded-xl">
                     <Shield className="w-4 h-4 text-blue-600" /> Statutory Zero-Trust Title Verification Active
@@ -413,7 +413,7 @@ export default function CitizenDashboard() {
                           <div>
                             <div className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">DLPI ID</div>
                             <div className="text-lg font-black text-[#0F4C81] font-mono tracking-tight">{p.dlpiId}</div>
-                            <div className="text-sm font-semibold text-gray-600 mt-0.5">{p.district}, {p.tehsil}</div>
+                            <div className="text-sm font-semibold text-gray-600 mt-0.5">{p.district}, {p.anchal}</div>
                           </div>
                           <div className="flex flex-col items-end gap-1">
                             <div className={clsx('flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-bold shadow-sm', status.bg, status.color)}>
@@ -430,12 +430,12 @@ export default function CitizenDashboard() {
 
                         <div className="grid grid-cols-4 gap-4 mb-5 p-3 bg-gray-50 rounded-xl border border-gray-100">
                           <div>
-                            <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Khasra No.</div>
-                            <div className="text-sm font-bold text-gray-900">{p.khasraNo}</div>
+                            <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Khesra No.</div>
+                            <div className="text-sm font-bold text-gray-900">{p.khesraNo}</div>
                           </div>
                           <div>
                             <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Area</div>
-                            <div className="text-sm font-bold text-gray-900">{Number(p?.areaHectares || 0).toFixed(4)} Ha</div>
+                            <div className="text-sm font-bold text-gray-900">{p?.rakbaBigha} Bigha, {p?.rakbaKatha} Katha</div>
                           </div>
                           <div>
                             <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Ownership</div>

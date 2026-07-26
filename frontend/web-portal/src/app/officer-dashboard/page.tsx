@@ -18,9 +18,9 @@ import toast from 'react-hot-toast';
 interface QueueItem {
   dlpiId:            string;
   khataNo:           string;
-  khasraNo:          string;
+  khesraNo:          string;
   gram:              string;
-  tehsil:            string;
+  anchal:            string;
   district:          string;
   ownerName:         string;
   landType:          string;
@@ -45,16 +45,16 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; 
   VERIFIED:        { label: 'Verified',        color: 'text-green-700',  bg: 'bg-green-50 border-green-200',   icon: CheckCircle },
   DISPUTED:        { label: 'Disputed',        color: 'text-red-700',    bg: 'bg-red-50 border-red-200',       icon: AlertTriangle },
   SCAN_PENDING_SRO: { label: 'Pending SRO',    color: 'text-amber-700',  bg: 'bg-amber-50 border-amber-200',   icon: Clock },
-  SCAN_PENDING_TEHSILDAR: { label: 'Pending Tehsildar', color: 'text-orange-700', bg: 'bg-orange-50 border-orange-200', icon: Clock },
+  SCAN_PENDING_TEHSILDAR: { label: 'Pending Circle Officer', color: 'text-orange-700', bg: 'bg-orange-50 border-orange-200', icon: Clock },
   SUCCESSION_PENDING_TEHSILDAR: { label: 'Pending Succession', color: 'text-purple-700', bg: 'bg-purple-50 border-purple-200', icon: Clock },
 };
 
 // Role → which statuses this officer should act on
 // Role → which statuses this officer should act on
 const ROLE_ACTION_STATUSES: Record<string, string[]> = {
-  patwari:          ['CLAIM_SUBMITTED'],
+  karmachari:          ['CLAIM_SUBMITTED'],
   circle_inspector: ['UNDER_REVIEW', 'SCAN_PENDING_SRO'],
-  tehsildar:        ['CI_APPROVED', 'SCAN_PENDING_TEHSILDAR', 'SUCCESSION_PENDING_TEHSILDAR'],
+  circle_officer:        ['CI_APPROVED', 'SCAN_PENDING_TEHSILDAR', 'SUCCESSION_PENDING_TEHSILDAR'],
   kotwal:           ['CLAIM_SUBMITTED', 'UNDER_REVIEW', 'CI_APPROVED'],
 };
 
@@ -92,11 +92,11 @@ function formatArea(ha?: number): string {
 }
 
 function roleLabel(role: string): string {
-  return { tehsildar: 'Tehsildar', circle_inspector: 'Kanungo / CI', patwari: 'Patwari', kotwal: 'Kotwal' }[role] ?? role;
+  return { circle_officer: 'Circle Officer', circle_inspector: 'Kanungo / CI', karmachari: 'Karmachari', kotwal: 'Kotwal' }[role] ?? role;
 }
 
 function actionLabel(role: string): string {
-  return { patwari: 'Send to CI', circle_inspector: 'CI Review', tehsildar: 'Final Approve' }[role] ?? 'Review';
+  return { karmachari: 'Send to CI', circle_inspector: 'CI Review', circle_officer: 'Final Approve' }[role] ?? 'Review';
 }
 
 // ── Queue Row ─────────────────────────────────────────────────────────────────
@@ -121,7 +121,7 @@ function QueueRow({ item, userRole, fetchQueue }: { item: QueueItem; userRole: s
         // Special case: PROPERTY_NOT_SEEN — show very prominent warning
         if (data.error === 'PROPERTY_NOT_SEEN') {
           toast.error(
-            `⚠️ CANNOT COMMIT: ${data.message || 'Owner Aadhaar is invalid or a dummy value. The citizen will NOT be able to see this property. Ask the Patwari to re-upload with the correct Aadhaar number.'}`,
+            `⚠️ CANNOT COMMIT: ${data.message || 'Owner Aadhaar is invalid or a dummy value. The citizen will NOT be able to see this property. Ask the Karmachari to re-upload with the correct Aadhaar number.'}`,
             { duration: 10000 }
           );
         } else {
@@ -160,13 +160,13 @@ function QueueRow({ item, userRole, fetchQueue }: { item: QueueItem; userRole: s
       <td className="px-4 py-3">
         <div className="font-mono text-[#0F4C81] text-xs font-semibold">{item.dlpiId}</div>
         <div className="text-gray-900 text-sm font-medium mt-0.5">{item.ownerName}</div>
-        <div className="text-gray-500 text-xs">{item.gram}, {item.tehsil}</div>
+        <div className="text-gray-500 text-xs">{item.gram}, {item.anchal}</div>
       </td>
 
-      {/* Khasra + type */}
+      {/* Khesra + type */}
       <td className="px-4 py-3 text-sm">
-        <div className="text-gray-900 font-mono">{item.khasraNo}</div>
-        <div className="text-gray-500 text-xs">{item.landType} · {formatArea(item.areaHectares)}</div>
+        <div className="text-gray-900 font-mono">{item.khesraNo}</div>
+        <div className="text-gray-500 text-xs">{item.landType} · {item.rakbaBigha ? `${item.rakbaBigha} Bigha, ${item.rakbaKatha} Katha` : `${item.areaHectares} Ha`}</div>
       </td>
 
       {/* Status */}
@@ -225,12 +225,12 @@ function QueueRow({ item, userRole, fetchQueue }: { item: QueueItem; userRole: s
              {busy ? <RefreshCw className="w-3 h-3 animate-spin" /> : <CheckCircle className="w-3 h-3" />}
              Approve Scan
           </button>
-        ) : item.claimStatus === 'SCAN_PENDING_TEHSILDAR' && userRole === 'tehsildar' ? (
-          <button onClick={() => handleScanApprove('/scan-approve-tehsildar')} disabled={busy} className="bg-[#0F4C81] hover:bg-[#0c3d67] px-3 py-1.5 text-xs font-semibold text-white rounded-lg flex items-center gap-1.5 transition-colors disabled:opacity-50">
+        ) : item.claimStatus === 'SCAN_PENDING_TEHSILDAR' && userRole === 'circle_officer' ? (
+          <button onClick={() => handleScanApprove('/scan-approve-circle_officer')} disabled={busy} className="bg-[#0F4C81] hover:bg-[#0c3d67] px-3 py-1.5 text-xs font-semibold text-white rounded-lg flex items-center gap-1.5 transition-colors disabled:opacity-50">
              {busy ? <RefreshCw className="w-3 h-3 animate-spin" /> : <CheckCircle className="w-3 h-3" />}
              Final Approve
           </button>
-        ) : item.claimStatus === 'SUCCESSION_PENDING_TEHSILDAR' && userRole === 'tehsildar' ? (
+        ) : item.claimStatus === 'SUCCESSION_PENDING_TEHSILDAR' && userRole === 'circle_officer' ? (
           <button onClick={() => handleSuccessionApprove(item.dlpiId)} disabled={busy} className="bg-purple-600 hover:bg-purple-700 px-3 py-1.5 text-xs font-semibold text-white rounded-lg flex items-center gap-1.5 transition-colors disabled:opacity-50">
              {busy ? <RefreshCw className="w-3 h-3 animate-spin" /> : <CheckCircle className="w-3 h-3" />}
              Execute Succession
@@ -370,7 +370,7 @@ export default function OfficerDashboardPage() {
               </div>
               <p className="text-gray-500 text-sm mt-1">
                 {user?.name && <span>{user.name} · </span>}
-                Dadri Tehsil, Gautam Buddha Nagar · BhumiChain
+                Phulwari Sharif Anchal, Patna · BhumiChain
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -394,10 +394,10 @@ export default function OfficerDashboardPage() {
 
           {/* Stats */}
           <div className="grid grid-cols-4 gap-4">
-            <StatCard label="Total in Queue"    value={queue.length}  sub="Dadri tehsil" />
+            <StatCard label="Total in Queue"    value={queue.length}  sub="Phulwari Sharif anchal" />
             <StatCard label="Needs Your Action" value={myTurnCount}   sub="awaiting review" color={myTurnCount > 0 ? 'text-[#0F4C81]' : 'text-gray-900'} />
             <StatCard label="Urgent"            value={urgentCount}   sub=">7 days pending" color={urgentCount > 0 ? 'text-red-600' : 'text-gray-900'} />
-            <StatCard label="CI Approved"       value={counts.ci_approved} sub="awaiting tehsildar" color={counts.ci_approved > 0 ? 'text-purple-600' : 'text-gray-900'} />
+            <StatCard label="CI Approved"       value={counts.ci_approved} sub="awaiting circle_officer" color={counts.ci_approved > 0 ? 'text-purple-600' : 'text-gray-900'} />
           </div>
 
           {/* Error */}
@@ -445,7 +445,7 @@ export default function OfficerDashboardPage() {
                 <thead>
                   <tr className="border-b border-gray-100 bg-gray-50">
                     <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">DLPI / Owner</th>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Khasra / Land</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Khesra / Land</th>
                     <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
                     <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Date</th>
                     <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Flags</th>
@@ -465,7 +465,7 @@ export default function OfficerDashboardPage() {
                     </tr>
                   ) : (
                     filtered.map(item => (
-                      <QueueRow key={item.dlpiId} item={item} userRole={user?.role ?? 'patwari'} fetchQueue={fetchQueue} />
+                      <QueueRow key={item.dlpiId} item={item} userRole={user?.role ?? 'karmachari'} fetchQueue={fetchQueue} />
                     ))
                   )}
                 </tbody>
@@ -474,7 +474,7 @@ export default function OfficerDashboardPage() {
 
             {!loading && filtered.length > 0 && (
               <div className="px-4 py-3 border-t border-gray-100 text-xs text-gray-500 flex items-center justify-between">
-                <span>Showing {filtered.length} of {queue.length} items · Dadri tehsil</span>
+                <span>Showing {filtered.length} of {queue.length} items · Phulwari Sharif anchal</span>
                 <span className="flex items-center gap-1">
                   <Zap className="w-3 h-3 text-[#0F4C81]" />
                   BhumiChain · Hyperledger Fabric v2.5
@@ -612,7 +612,7 @@ export default function OfficerDashboardPage() {
                   {successionsQueue.length === 0 ? (
                     <tr>
                       <td colSpan={6} className="px-4 py-8 text-center text-gray-400 text-sm">
-                        No pending virasat cases currently awaiting Tehsildar final execution. When 2, 3, or 4 legal heirs complete e-Sign with their Aadhaar numbers on the citizen portal (`/succession`), their virasat mutation case will appear right here for your one-click approval & division.
+                        No pending virasat cases currently awaiting Circle Officer final execution. When 2, 3, or 4 legal heirs complete e-Sign with their Aadhaar numbers on the citizen portal (`/succession`), their virasat mutation case will appear right here for your one-click approval & division.
                       </td>
                     </tr>
                   ) : (
@@ -641,11 +641,11 @@ export default function OfficerDashboardPage() {
                             'px-2.5 py-1 text-xs font-semibold rounded-full inline-block',
                             item.status === 'PENDING_TEHSILDAR' || item.status === 'PENDING_TEHSILDAR_APPROVAL' || item.status === 'SUCCESSION_PENDING_TEHSILDAR' ? 'bg-[#138808]/10 text-[#138808] border border-[#138808]/20' : 'bg-amber-50 text-amber-700 border border-amber-200'
                           )}>
-                            {item.status === 'PENDING_TEHSILDAR' || item.status === 'PENDING_TEHSILDAR_APPROVAL' || item.status === 'SUCCESSION_PENDING_TEHSILDAR' ? 'Pending Tehsildar Final Approval' : (item.status || 'Awaiting Consents')}
+                            {item.status === 'PENDING_TEHSILDAR' || item.status === 'PENDING_TEHSILDAR_APPROVAL' || item.status === 'SUCCESSION_PENDING_TEHSILDAR' ? 'Pending Circle Officer Final Approval' : (item.status || 'Awaiting Consents')}
                           </span>
                         </td>
                         <td className="px-4 py-3">
-                           {(user?.role === 'tehsildar' || user?.role === 'revenue_officer' || user?.role === 'collector' || user?.role === 'circle_inspector' || user?.role !== 'citizen') && (
+                           {(user?.role === 'circle_officer' || user?.role === 'revenue_officer' || user?.role === 'collector' || user?.role === 'circle_inspector' || user?.role !== 'citizen') && (
                              <button
                                onClick={async () => {
                                  try {

@@ -146,7 +146,7 @@ export default function FraudReject({
             <Shield className="w-3.5 h-3.5 shrink-0 mt-0.5" />
             <span>
               This attempt has been logged to the BhumiChain audit trail and flagged to the
-              Inspector General of Registration, Uttar Pradesh. Persistent attempts may trigger
+              Inspector General of Registration, Bihar. Persistent attempts may trigger
               FIR under IPC Section 420 (cheating) and Section 465 (forgery).
             </span>
           </div>

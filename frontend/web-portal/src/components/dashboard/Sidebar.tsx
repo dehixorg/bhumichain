@@ -38,9 +38,9 @@ const NAV_OFFICER = [
 ];
 
 const ROLE_LABEL: Record<string, string> = {
-  tehsildar:        'Tehsildar',
+  circle_officer:        'Circle Officer',
   circle_inspector: 'Kanungo / CI',
-  patwari:          'Patwari',
+  karmachari:          'Karmachari',
   citizen:          'Citizen',
   kotwal:           'Kotwal',
 };
@@ -70,7 +70,7 @@ export default function Sidebar({ demoMode }: Props = {}) {
           </div>
           <div className="min-w-0">
             <div className="font-bold text-gray-900 text-sm leading-tight">BhumiChain</div>
-            <div className="text-[10px] text-gray-400 font-medium leading-tight mt-0.5">Uttar Pradesh · Pilot</div>
+            <div className="text-[10px] text-gray-400 font-medium leading-tight mt-0.5">Bihar · Pilot</div>
           </div>
         </div>
         {/* Tricolor accent */}
@@ -139,7 +139,7 @@ export default function Sidebar({ demoMode }: Props = {}) {
             {fabricMode}
           </span>
         </div>
-        <div className="text-[10px] text-gray-400 text-center font-medium">Noida · 500 Khataunis</div>
+        <div className="text-[10px] text-gray-400 text-center font-medium">Phulwari Sharif · 500 Khataunis</div>
         {user && (
           <button
             onClick={logout}

@@ -86,10 +86,10 @@ const SEVERITY_DOT = {
 
 // Janganana anomaly summary
 const JANGANANA_ANOMALIES = [
-  { type: 'ENCROACHMENT',   count: 89,  severity: 'HIGH',   icon: '🚨', tehsil: 'Igatpuri' },
-  { type: 'BENAMI_SUSPECT', count: 47,  severity: 'HIGH',   icon: '🕵️', tehsil: 'Nashik City' },
-  { type: 'MISMATCH',       count: 134, severity: 'MEDIUM', icon: '⚠️', tehsil: 'Various' },
-  { type: 'GHOST_RECORD',   count: 32,  severity: 'MEDIUM', icon: '👻', tehsil: 'Sinnar' },
+  { type: 'ENCROACHMENT',   count: 89,  severity: 'HIGH',   icon: '🚨', anchal: 'Igatpuri' },
+  { type: 'BENAMI_SUSPECT', count: 47,  severity: 'HIGH',   icon: '🕵️', anchal: 'Nashik City' },
+  { type: 'MISMATCH',       count: 134, severity: 'MEDIUM', icon: '⚠️', anchal: 'Various' },
+  { type: 'GHOST_RECORD',   count: 32,  severity: 'MEDIUM', icon: '👻', anchal: 'Sinnar' },
 ];
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
@@ -288,7 +288,7 @@ export default function AnalyticsPage() {
                     {a.count}
                   </div>
                   <div className="text-xs text-gray-600 font-semibold">{a.type.replace(/_/g, ' ')}</div>
-                  <div className="text-xs text-gray-500 mt-0.5">Primarily {a.tehsil}</div>
+                  <div className="text-xs text-gray-500 mt-0.5">Primarily {a.anchal}</div>
                 </div>
               ))}
             </div>

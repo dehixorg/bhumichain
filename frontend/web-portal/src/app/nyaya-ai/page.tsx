@@ -13,9 +13,9 @@ import clsx from 'clsx';
 // ─── Demo data ────────────────────────────────────────────────────────────────
 
 const DEMO_INPUT = {
-  dlpiId:       'DLPI-UP-DAD-00100',
+  dlpiId:       'DLPI-Bihar-PHU-00100',
   disputeType:  'Succession',
-  facts:        'Succession dispute following death of Deepak Narayan Singh (CRS-GBN-2026-00541). Three heirs — two sons and one daughter — claim equal 1/3 Bhumidhari shares under Mitakshara coparcenary. Lekhpal has delayed mutation for 45 days beyond statutory limit without cause.',
+  facts:        'Succession dispute following death of Deepak Narayan Singh (CRS-GBN-2026-00541). Three heirs — two sons and one daughter — claim equal 1/3 Raiyati shares under Mitakshara coparcenary. Karmachari has delayed mutation for 45 days beyond statutory limit without cause.',
 };
 
 const AI_PIPELINE = [
@@ -52,9 +52,9 @@ const DEMO_PREDICTION = {
       year:      2021,
     },
     {
-      caseNo:    'UP Revenue Case 2023-GBN-0471',
-      court:     'Board of Revenue, Uttar Pradesh',
-      ruling:    'Lekhpal bound to execute Virasat mutation within 30 days of verified CRS death certificate. Unexplained delay is misconduct under UP Revenue Code 2006.',
+      caseNo:    'Bihar Revenue Case 2023-GBN-0471',
+      court:     'Board of Revenue, Bihar',
+      ruling:    'Karmachari bound to execute Virasat mutation within 30 days of verified CRS death certificate. Unexplained delay is misconduct under Bihar Revenue Code 2006.',
       relevance: 0.79,
       year:      2023,
     },
@@ -328,7 +328,7 @@ export default function NyayaAIPage() {
                 <InfoRow label="Base"     value="XGBoost + BERT" mono />
                 <InfoRow label="Dataset"  value="18.42 Cr eCourts cases" />
                 <InfoRow label="Port"     value="8012" mono />
-                <InfoRow label="Training" value="UP + National HC corpus" />
+                <InfoRow label="Training" value="Bihar + National HC corpus" />
               </div>
             </div>
 
@@ -357,7 +357,7 @@ export default function NyayaAIPage() {
               <div className="text-xs text-gray-500 space-y-1.5">
                 <p>
                   Land disputes account for <span className="text-red-400 font-medium">66%</span> of
-                  all civil litigation in UP, with avg case duration of <span className="text-red-400 font-medium">11 years</span>.
+                  all civil litigation in Bihar, with avg case duration of <span className="text-red-400 font-medium">11 years</span>.
                 </p>
                 <p>
                   NyayaAI helps citizens identify <span className="text-[#0F4C81] font-medium">strong precedents</span> before

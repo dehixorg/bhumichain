@@ -17,8 +17,8 @@ import { getUser, apiFetch, submitESign, type JWTUser } from '@/lib/auth';
 interface Parcel {
   dlpiId:            string;
   khataNo:           string;
-  khasraNo:          string;
-  tehsil:            string;
+  khesraNo:          string;
+  anchal:            string;
   district:          string;
   landType:          string;
   landTypeDesc:      string;
@@ -39,7 +39,7 @@ interface QueueItem {
   dlpiId:      string;
   ownerName:   string;
   gram:        string;
-  tehsil:      string;
+  anchal:      string;
   claimStatus: string;
   submittedAt: string;
   claimedAt:   string;
@@ -61,9 +61,9 @@ interface QueueItem {
 const STEPS = [
   { key: 'SEEDED_UNVERIFIED', label: 'Seeded',          sub: 'Record in BhumiChain' },
   { key: 'CLAIM_SUBMITTED',   label: 'Claim Submitted', sub: 'eSign by citizen' },
-  { key: 'UNDER_REVIEW',      label: 'Under Review',    sub: 'Patwari field visit' },
+  { key: 'UNDER_REVIEW',      label: 'Under Review',    sub: 'Karmachari field visit' },
   { key: 'CI_APPROVED',       label: 'CI Approved',     sub: 'Circle Inspector sign-off' },
-  { key: 'VERIFIED',          label: 'Verified',        sub: 'Tehsildar final approval' },
+  { key: 'VERIFIED',          label: 'Verified',        sub: 'Circle Officer final approval' },
 ];
 
 const ORDER = ['SEEDED_UNVERIFIED', 'CLAIM_SUBMITTED', 'UNDER_REVIEW', 'CI_APPROVED', 'VERIFIED'];
@@ -184,7 +184,7 @@ function RejectModal({
         <textarea
           value={reason}
           onChange={e => setReason(e.target.value)}
-          placeholder="e.g. Document mismatch — Aadhaar name differs from Khatauni record. Claimant should visit tehsil office with original papers."
+          placeholder="e.g. Document mismatch — Aadhaar name differs from Jamabandi record. Claimant should visit anchal office with original papers."
           rows={4}
           maxLength={500}
           className="w-full bg-[#F8FAFC] border border-gray-200 rounded-xl px-4 py-3 text-gray-700 placeholder-gray-400 text-sm resize-none focus:outline-none focus:border-brand-500"
@@ -211,7 +211,7 @@ function RejectModal({
   );
 }
 
-// ── eSign Modal (Tehsildar) ───────────────────────────────────────────────────
+// ── eSign Modal (Circle Officer) ───────────────────────────────────────────────────
 
 function ESignModal({
   dlpiId,
@@ -252,7 +252,7 @@ function ESignModal({
       const { eSignTxHash } = await submitESign(
         aadhaar,
         otp,
-        `Tehsildar final approval — DLPI ${dlpiId}`,
+        `Circle Officer final approval — DLPI ${dlpiId}`,
       );
       onSuccess(eSignTxHash);
     } catch (e: unknown) {
@@ -267,7 +267,7 @@ function ESignModal({
       <div className="bg-white border border-gray-200 rounded-2xl p-6 w-full max-w-md">
         <div className="flex items-center gap-3 mb-4">
           <Zap className="w-5 h-5 text-[#0F4C81]" />
-          <h3 className="text-gray-900 font-semibold">Tehsildar eSign — Final Approval</h3>
+          <h3 className="text-gray-900 font-semibold">Circle Officer eSign — Final Approval</h3>
         </div>
         <p className="text-sm text-gray-400 mb-5">
           eSign will record SHA-256(aadhaarNumber:otp:action:timestamp) on-chain as irrevocable consent proof. DPDPA 2023 compliant — raw Aadhaar not stored.
@@ -369,7 +369,7 @@ function ActionPanel({
     }
   }
 
-  // Patwari → send to CI
+  // Karmachari → send to CI
   async function handleSubmitForReview() {
     const data = await postAction('/submit-for-review');
     if (data) onActionDone('UNDER_REVIEW');
@@ -381,10 +381,10 @@ function ActionPanel({
     if (data) onActionDone('CI_APPROVED');
   }
 
-  // Tehsildar → final approve (needs eSign)
+  // Circle Officer → final approve (needs eSign)
   async function handleTehsildarApprove(eSignTxHash: string) {
     setShowESign(false);
-    const data = await postAction('/tehsildar-approve', { eSignTxHash });
+    const data = await postAction('/circle_officer-approve', { eSignTxHash });
     if (data) onActionDone('VERIFIED');
   }
 
@@ -396,9 +396,9 @@ function ActionPanel({
 
   // Determine what this officer can do
   const canAct = {
-    patwari:          ['CLAIM_SUBMITTED', 'UNDER_REVIEW', 'CI_APPROVED'].includes(claimStatus),
+    karmachari:          ['CLAIM_SUBMITTED', 'UNDER_REVIEW', 'CI_APPROVED'].includes(claimStatus),
     circle_inspector: claimStatus === 'UNDER_REVIEW',
-    tehsildar:        ['CLAIM_SUBMITTED', 'UNDER_REVIEW', 'CI_APPROVED'].includes(claimStatus),
+    circle_officer:        ['CLAIM_SUBMITTED', 'UNDER_REVIEW', 'CI_APPROVED'].includes(claimStatus),
     kotwal:           ['CLAIM_SUBMITTED', 'UNDER_REVIEW', 'CI_APPROVED'].includes(claimStatus),
   }[userRole] ?? false;
 
@@ -444,15 +444,15 @@ function ActionPanel({
         )}
 
         {/* Checklist warning */}
-        {!allChecked && (userRole === 'patwari' || userRole === 'circle_inspector') && (
+        {!allChecked && (userRole === 'karmachari' || userRole === 'circle_inspector') && (
           <div className="flex items-start gap-2 p-3 rounded-xl bg-yellow-900/20 border border-yellow-800 text-yellow-400 text-xs">
             <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
             Complete the verification checklist before approving to maintain audit trail.
           </div>
         )}
 
-        {/* Patwari */}
-        {['patwari', 'circle_inspector', 'tehsildar'].includes(userRole) && claimStatus === 'CLAIM_SUBMITTED' && (
+        {/* Karmachari */}
+        {['karmachari', 'circle_inspector', 'circle_officer'].includes(userRole) && claimStatus === 'CLAIM_SUBMITTED' && (
           <button
             onClick={handleSubmitForReview}
             disabled={busy}
@@ -464,19 +464,19 @@ function ActionPanel({
         )}
 
         {/* CI */}
-        {['patwari', 'circle_inspector', 'tehsildar'].includes(userRole) && claimStatus === 'UNDER_REVIEW' && (
+        {['karmachari', 'circle_inspector', 'circle_officer'].includes(userRole) && claimStatus === 'UNDER_REVIEW' && (
           <button
             onClick={handleCIApprove}
             disabled={busy}
             className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-[#0F4C81] hover:bg-[#0a3566] text-white font-semibold transition-colors disabled:opacity-50"
           >
             {busy ? <RotateCcw className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
-            {busy ? 'Approving…' : 'CI Approve — Send to Tehsildar'}
+            {busy ? 'Approving…' : 'CI Approve — Send to Circle Officer'}
           </button>
         )}
 
-        {/* Tehsildar */}
-        {['patwari', 'circle_inspector', 'tehsildar'].includes(userRole) && claimStatus === 'CI_APPROVED' && (
+        {/* Circle Officer */}
+        {['karmachari', 'circle_inspector', 'circle_officer'].includes(userRole) && claimStatus === 'CI_APPROVED' && (
           <button
             onClick={() => setShowESign(true)}
             disabled={busy}
@@ -657,7 +657,7 @@ export default function ReviewPage() {
                     <div className="text-xl font-bold text-gray-900 mt-1">{parcel.ownerName || queueItem?.ownerName}</div>
                     <div className="flex items-center gap-1 text-gray-500 text-sm mt-0.5">
                       <MapPin className="w-3.5 h-3.5" />
-                      {queueItem?.gram ?? '—'}, {parcel.tehsil}, {parcel.district}
+                      {queueItem?.gram ?? '—'}, {parcel.anchal}, {parcel.district}
                     </div>
                   </div>
                   <div className="flex flex-col items-end gap-2">
@@ -677,10 +677,10 @@ export default function ReviewPage() {
                 {/* Details grid */}
                 <div className="grid grid-cols-3 gap-3 text-xs">
                   {[
-                    ['Khasra No.',   parcel.khasraNo],
+                    ['Khesra No.',   parcel.khesraNo],
                     ['Khata No.',    parcel.khataNo],
                     ['Land Type',    parcel.landType],
-                    ['Area',         `${parcel.areaHectares} ha`],
+                    ['Area',         parcel.rakbaBigha ? `${parcel.rakbaBigha} Bigha, ${parcel.rakbaKatha} Katha, ${parcel.rakbaDhur} Dhur` : `${parcel.areaHectares} Ha`],
                     ['Encumbrance',  parcel.encumbranceStatus],
                     ['eSign TX',     queueItem?.eSignTxHash ? queueItem.eSignTxHash.slice(0, 18) + '…' : '—'],
                   ].map(([label, value]) => (
@@ -747,8 +747,8 @@ export default function ReviewPage() {
                   <div className="text-xs text-gray-500 uppercase tracking-wider font-semibold mb-2">Reviewing As</div>
                   <div className="text-gray-700 font-semibold">{user.name}</div>
                   <div className="text-xs text-gray-500 mt-0.5">
-                    {(({ tehsildar: 'Tehsildar', circle_inspector: 'Kanungo / CI', patwari: 'Patwari' } as Record<string, string>)[user.role] ?? user.role)}
-                    {' · '}Dadri
+                    {(({ circle_officer: 'Circle Officer', circle_inspector: 'Kanungo / CI', karmachari: 'Karmachari' } as Record<string, string>)[user.role] ?? user.role)}
+                    {' · '}Phulwari Sharif
                   </div>
                   <div className="mt-3 text-xs text-gray-600">
                     Submitted: {queueItem ? new Date(queueItem.submittedAt).toLocaleDateString('en-IN') : '—'}
@@ -766,7 +766,7 @@ export default function ReviewPage() {
                 <ActionPanel
                   dlpiId={dlpiId}
                   claimStatus={parcel.claimStatus}
-                  userRole={user?.role ?? 'patwari'}
+                  userRole={user?.role ?? 'karmachari'}
                   checklist={checklist}
                   onActionDone={handleActionDone}
                 />

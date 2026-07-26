@@ -22,7 +22,7 @@ export default function ParcelPopup({ parcel, onViewFull }: Props) {
           <div className="font-mono text-xs text-[#0F4C81] mb-0.5">{parcel.dlpiId}</div>
           <div className="font-semibold text-gray-900 text-base leading-tight">{parcel.owner.name}</div>
           <div className="text-gray-400 text-xs mt-0.5">
-            Survey No. {parcel.surveyNumber} · {parcel.tehsil} Tehsil
+            Survey No. {parcel.surveyNumber} · {parcel.anchal} Anchal
           </div>
         </div>
         {isDemo && (
@@ -108,7 +108,7 @@ export default function ParcelPopup({ parcel, onViewFull }: Props) {
       {/* Location */}
       <div className="flex items-center gap-1 text-xs text-gray-500 mb-3">
         <MapPin className="w-3 h-3" />
-        {parcel.location?.villageName || parcel.tehsil}, {parcel.district}
+        {parcel.location?.villageName || parcel.anchal}, {parcel.district}
       </div>
 
       {/* Registered */}

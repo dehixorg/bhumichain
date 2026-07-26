@@ -59,14 +59,14 @@ type Stage = 'idle' | 'uploading' | 'processing' | 'review' | 'approving' | 'don
 const DEMO_PRESETS = [
   {
     id:    'demo_clear',
-    label: 'Dadri Gata 740/201 — Clean scan',
-    sub:   'Arun Sharma · Bhumidhari · 2.4 Ha',
+    label: 'Phulwari Sharif Gata 740/201 — Clean scan',
+    sub:   'Arun Sharma · Raiyati · 2.4 Ha',
     color: 'brand',
     icon:  CheckCircle,
   },
   {
     id:    'demo_degraded',
-    label: 'Dadri Gata 312 — 1994 torn register',
+    label: 'Phulwari Sharif Gata 312 — 1994 torn register',
     sub:   'Old record · partial damage · review needed',
     color: 'amber',
     icon:  AlertTriangle,
@@ -76,8 +76,8 @@ const DEMO_PRESETS = [
 const STEP_LABELS = [
   { step: 'UPLOAD',        label: 'Document uploaded' },
   { step: 'AZURE_OCR',     label: 'Azure Document Intelligence OCR' },
-  { step: 'LAYOUT_LM_NER', label: 'LayoutLM NER — Khatauni field extraction' },
-  { step: 'VALIDATION',    label: 'Cross-validation vs Bhulekh UP portal' },
+  { step: 'LAYOUT_LM_NER', label: 'LayoutLM NER — Jamabandi field extraction' },
+  { step: 'VALIDATION',    label: 'Cross-validation vs Bhumi Bihar portal' },
   { step: 'IPFS',          label: 'Pinning to IPFS' },
 ];
 
@@ -110,15 +110,15 @@ function ensureEnglish(obj: any): any {
         'पूर्ण': 'Full (1/1)',
         'बैंक नाम अपठनीय': 'Bank Name Damaged/Illegible',
         'अपठनीय': 'Illegible',
-        'खतौनी': 'Khatauni',
+        'खतौनी': 'Jamabandi',
         'खाता संख्या': 'Khata No.',
         'खाता': 'Khata',
-        'खसरा': 'Khasra',
+        'खसरा': 'Khesra',
         'ग्राम': 'Village',
-        'तहसील': 'Tehsil',
+        'तहसील': 'Anchal',
         'जिला': 'District',
         'ज़िला': 'District',
-        'उत्तर प्रदेश': 'Uttar Pradesh',
+        'उत्तर प्रदेश': 'Bihar',
         'पति': 'Husband',
         'पिता': 'Father',
         'गेहूं': 'Wheat',
@@ -129,7 +129,7 @@ function ensureEnglish(obj: any): any {
         'प्रकार': 'Type',
         'संक्रमणशील': 'Transferable',
         'असंक्रमणशील': 'Non-transferable',
-        'सीरदार': 'Sirdar',
+        'सीरदार': 'Gair Mazarua',
         'भूमिका': 'Role',
         'बंजर': 'Barren Land',
         'आबादी': 'Abadi',
@@ -305,12 +305,12 @@ function ensureEnglish(obj: any): any {
         body:    JSON.stringify({
           scanId:              result.scanId,
           dlpiId,
-          officerAadhaarNumber: '999900010003', // mock patwari for now
+          officerAadhaarNumber: '999900010003', // mock karmachari for now
           officerAadhaarNumber:  'sha256:' + '0'.repeat(64),
           ownerAadhaarNumbers: ownerAadhaarNumbers,
           ownerAadhaarNumberes:  ownerAadhaarNumbers,
           owners:              legacyOwners.length > 0 ? legacyOwners : [],  // Fallback for older remote backend versions
-          officerName:         'Vijay Singh (Patwari DAD-P1)',
+          officerName:         'Vijay Singh (Karmachari PHU-P1)',
           correctedFields:     Object.keys(edited).length ? edited : undefined,
           token,
         }),
@@ -345,7 +345,7 @@ function ensureEnglish(obj: any): any {
       <div>
         <h1 className="text-xl font-bold text-gray-900">RecordScan AI</h1>
         <p className="text-gray-500 text-sm mt-1">
-          Upload a UP Khatauni Land Record → Azure OCR + LayoutLM NER → DLPI on Hyperledger Fabric
+          Upload a Bihar Jamabandi Land Record → Azure OCR + LayoutLM NER → DLPI on Hyperledger Fabric
         </p>
       </div>
 
@@ -390,7 +390,7 @@ function ensureEnglish(obj: any): any {
             )}
           >
             <Upload className="w-8 h-8 text-gray-500 mx-auto mb-3" />
-            <p className="text-gray-600 font-medium text-sm">Drop Khatauni scan here</p>
+            <p className="text-gray-600 font-medium text-sm">Drop Jamabandi scan here</p>
             <p className="text-gray-600 text-xs mt-1">JPEG, PNG, TIFF, PDF · Max 20 MB</p>
             <input ref={fileRef} type="file" accept="image/*,.pdf" className="hidden" onChange={onFileChange} />
           </div>
@@ -416,7 +416,7 @@ function ensureEnglish(obj: any): any {
           <div className="card">
             <div className="flex items-center gap-2 mb-4">
               <FileText className="w-4 h-4 text-[#0F4C81]" />
-              <span className="font-semibold text-gray-700 text-sm">Extracted Khatauni Fields</span>
+              <span className="font-semibold text-gray-700 text-sm">Extracted Jamabandi Fields</span>
               <span className="ml-auto text-xs text-gray-500">{result.fileName} · {result.fileSizeKB} KB</span>
             </div>
 
@@ -562,7 +562,7 @@ function ensureEnglish(obj: any): any {
                 className="w-full bg-[#F8FAFC] border border-gray-200 rounded-lg px-3 py-2 text-[#0F4C81] font-mono text-sm focus:outline-none focus:border-[#0F4C81]/60"
               />
               <p className="text-gray-600 text-xs mt-1">
-                Auto-generated from Gata No. + tehsil code (DAD).
+                Auto-generated from Gata No. + anchal code (PHU).
               </p>
             </div>
             
@@ -692,7 +692,7 @@ function ConfidenceBanner({ extraction, storedInDynamo }: { extraction: Extracti
       </div>
       <div className="flex-1">
         <div className={clsx('text-sm font-semibold mb-0.5', high ? 'text-gray-700' : 'text-amber-50')}>
-          {high ? 'High confidence — ready for patwari approval'
+          {high ? 'High confidence — ready for karmachari approval'
            : 'Low confidence — manual verification required'}
         </div>
         <div className={clsx('flex items-center gap-4 text-xs', high ? 'text-gray-500' : 'text-amber-200/70')}>

@@ -59,12 +59,12 @@ export default function ScanPage() {
               </div>
               <ol className="space-y-3 text-xs text-gray-500">
                 {[
-                  ['Upload', 'Drop UP Khatauni Land Record image or PDF — any year'],
-                  ['OCR', 'Azure Document Intelligence reads tabular Khatauni format and translates to English'],
-                  ['NER', 'LayoutLM extracts khata no., khasra, area, bhumi prakar, khatedar in English'],
-                  ['Validate', 'Cross-checks vs Bhulekh UP portal (bhulekh.up.gov.in)'],
+                  ['Upload', 'Drop Bihar Jamabandi Land Record image or PDF — any year'],
+                  ['OCR', 'Azure Document Intelligence reads tabular Jamabandi format and translates to English'],
+                  ['NER', 'LayoutLM extracts khata no., khesra, area, bhumi prakar, khatedar in English'],
+                  ['Validate', 'Cross-checks vs Bhumi Bihar portal (biharbhumi.bihar.gov.in)'],
                   ['DynamoDB', 'Scan job persisted to AWS DynamoDB (testArpit, ap-south-1)'],
-                  ['Approve', 'Patwari reviews → DLPI created on Hyperledger Fabric ledger'],
+                  ['Approve', 'Karmachari reviews → DLPI created on Hyperledger Fabric ledger'],
                 ].map(([title, desc], i) => (
                   <li key={i} className="flex gap-2">
                     <span className="w-5 h-5 rounded-full bg-gray-100 text-gray-600 text-xs flex items-center justify-center shrink-0 font-mono">
@@ -85,7 +85,7 @@ export default function ScanPage() {
               </div>
               <div className="space-y-2 text-xs text-gray-500">
                 <p>
-                  UP has <span className="text-gray-600 font-medium">2.3 crore+</span> Khataunis,
+                  Bihar has <span className="text-gray-600 font-medium">2.3 crore+</span> Khataunis,
                   many written in 1970s–90s handwritten registers. Digitisation is ongoing but slow.
                 </p>
                 <p>
@@ -93,7 +93,7 @@ export default function ScanPage() {
                   without manual data entry — eliminating transcription-based mutation fraud by Lekhpals.
                 </p>
                 <p className="text-[#0F4C81]">
-                  SVAMITVA scheme: 3.29 lakh villages targeted. GBN pilot covers 500 Khataunis in Dadri tehsil.
+                  SVAMITVA scheme: 3.29 lakh villages targeted. GBN pilot covers 500 Khataunis in Phulwari Sharif anchal.
                 </p>
               </div>
             </div>

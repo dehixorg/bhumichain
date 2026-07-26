@@ -25,9 +25,9 @@ export default function MapPreview() {
 
       if (mapRef.current) return;
 
-      // Initialize map over Gautam Buddha Nagar (Noida)
+      // Initialize map over Patna (Phulwari Sharif)
       mapInstance = L.map(containerRef.current, {
-        center: [28.4744, 77.5040], // Gautam Buddha Nagar coordinates
+        center: [28.4744, 77.5040], // Patna coordinates
         zoom: 11,
         zoomControl: true,
       });
@@ -41,7 +41,7 @@ export default function MapPreview() {
 
       // Add a couple of sample markers/polygons for visual effect
       L.marker([28.4744, 77.5040]).addTo(mapInstance)
-        .bindPopup('<b>BhuNaksha Area</b><br>Gautam Buddha Nagar')
+        .bindPopup('<b>BhuNaksha Area</b><br>Patna')
         .openPopup();
 
       L.circle([28.5355, 77.3910], {
@@ -49,7 +49,7 @@ export default function MapPreview() {
         fillColor: '#FF9933',
         fillOpacity: 0.5,
         radius: 2000
-      }).addTo(mapInstance).bindPopup('Sector 15, Noida Parcels');
+      }).addTo(mapInstance).bindPopup('Sector 15, Phulwari Sharif Parcels');
 
       mapRef.current = mapInstance;
     })();
