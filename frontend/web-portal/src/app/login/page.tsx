@@ -353,30 +353,8 @@ export default function LoginPage() {
                     <div className="h-px flex-1 bg-gray-200" />
                   </div>
 
-                  {/* ── AUTH METHOD SELECTOR ─────────────────────────────── */}
-                  <div className="grid grid-cols-2 gap-2">
-                    {[
-                      { key: 'aadhaar',     icon: Fingerprint, label: 'Aadhaar OTP'  },
-                      { key: 'janparichay', icon: Award,       label: 'JanParichay'  },
-                    ].map(m => (
-                      <button
-                        key={m.key}
-                        onClick={() => { setAuthMethod(m.key as AuthMethod); reset(); }}
-                        className={clsx(
-                          'flex flex-col items-center gap-1.5 py-3 px-2 rounded-xl border text-xs font-semibold transition-all',
-                          authMethod === m.key
-                            ? 'border-[#0F4C81] bg-[#0F4C81]/5 text-[#0F4C81] shadow-sm'
-                            : 'border-gray-200 text-gray-500 hover:border-gray-300 bg-white'
-                        )}
-                      >
-                        <m.icon className="w-4.5 h-4.5" style={{ width: 18, height: 18 }} />
-                        {m.label}
-                      </button>
-                    ))}
-                  </div>
-
-                  {/* ── AADHAAR OTP FLOW ─────────────────────────────────── */}
-                  {authMethod === 'aadhaar' && tab === 'citizen' && (
+                  {/* ── AADHAAR OTP FLOW (CITIZEN) ─────────────────────────────────── */}
+                  {tab === 'citizen' && (
                     <div className="space-y-3">
                       {step === 'aadhaar' ? (
                         <>
@@ -418,25 +396,8 @@ export default function LoginPage() {
                     </div>
                   )}
 
-                  {/* ── JANPARICHAY ──────────────────────────────────────── */}
-                  {authMethod === 'janparichay' && (
-                    <div className="space-y-3">
-                      <div className="p-4 rounded-xl border border-dashed border-[#0F4C81]/30 bg-[#0F4C81]/3 text-center space-y-2">
-                        <Award className="w-8 h-8 text-[#0F4C81] mx-auto" />
-                        <div className="text-sm font-bold text-gray-800">JanParichay / State SSO</div>
-                        <p className="text-xs text-gray-500">Single Sign-On via National Identity Platform or your State Government portal</p>
-                      </div>
-                      <button className="w-full flex items-center justify-center gap-2 py-3.5 border-2 border-[#0F4C81] text-[#0F4C81] rounded-xl text-sm font-bold hover:bg-[#0F4C81]/5 transition-all">
-                        <ChevronRight className="w-4 h-4" /> Continue with JanParichay
-                      </button>
-                      <button className="w-full flex items-center justify-center gap-2 py-3 border border-gray-200 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-50 transition-all">
-                        🏛️ Continue with State SSO (Bihar)
-                      </button>
-                    </div>
-                  )}
-
                   {/* ── OFFICER FLOW ─────────────────────────────────────── */}
-                  {tab === 'officer' && authMethod === 'aadhaar' && (
+                  {tab === 'officer' && (
                     <div className="space-y-3">
                       {step === 'aadhaar' ? (
                         <>
