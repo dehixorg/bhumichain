@@ -17,7 +17,7 @@ import {
 
 type Tab  = 'citizen' | 'officer';
 type Step = 'aadhaar' | 'otp';
-type AuthMethod = 'digilocker' | 'aadhaar' | 'mobile' | 'janparichay';
+type AuthMethod = 'digilocker' | 'aadhaar' | 'janparichay';
 
 // ── Demo personas ─────────────────────────────────────────────────────────────
 const DEMO_PERSONAS = [
@@ -354,10 +354,9 @@ export default function LoginPage() {
                   </div>
 
                   {/* ── AUTH METHOD SELECTOR ─────────────────────────────── */}
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-2 gap-2">
                     {[
                       { key: 'aadhaar',     icon: Fingerprint, label: 'Aadhaar OTP'  },
-                      { key: 'mobile',      icon: Smartphone,  label: 'Mobile OTP'   },
                       { key: 'janparichay', icon: Award,       label: 'JanParichay'  },
                     ].map(m => (
                       <button
@@ -416,32 +415,6 @@ export default function LoginPage() {
                           <button onClick={reset} className="w-full text-xs text-gray-400 hover:text-gray-600 transition-colors">← Change Aadhaar</button>
                         </>
                       )}
-                    </div>
-                  )}
-
-                  {/* ── MOBILE OTP ───────────────────────────────────────── */}
-                  {authMethod === 'mobile' && (
-                    <div className="space-y-3">
-                      <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Registered Mobile Number</div>
-                      <div className="flex gap-2">
-                        <div className="flex items-center px-3 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold text-gray-600">
-                          +91
-                        </div>
-                        <input
-                          type="tel"
-                          maxLength={10}
-                          value={mobile}
-                          onChange={e => setMobile(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                          placeholder="XXXXX XXXXX"
-                          className="flex-1 input font-mono tracking-widest"
-                        />
-                      </div>
-                      <button
-                        disabled={mobile.length < 10 || loading}
-                        className="w-full flex items-center justify-center gap-2 py-3.5 bg-[#0F4C81] hover:bg-[#0a3566] disabled:opacity-50 text-white rounded-xl text-sm font-bold transition-all shadow-sm"
-                      >
-                        <Smartphone className="w-4 h-4" /> Send Mobile OTP
-                      </button>
                     </div>
                   )}
 
