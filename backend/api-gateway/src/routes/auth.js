@@ -286,13 +286,35 @@ router.post('/demo-token', (req, res) => {
       aadhaarNumber: '999900010001',
       jurisdictionCode: 'GBN-DAD', tehsilCode: 'DAD',
     },
+    circle_officer: {
+      role: 'anchalAdhikari', name: 'Amit Saxena',
+      aadhaarNumber: '999900010001',
+      jurisdictionCode: 'GBN-DAD', tehsilCode: 'DAD',
+    },
+    anchalAdhikari: {
+      role: 'anchalAdhikari', name: 'Amit Saxena',
+      aadhaarNumber: '999900010001',
+      jurisdictionCode: 'GBN-DAD', tehsilCode: 'DAD',
+    },
     circle_inspector: {
       role: 'anchalNirikshak', name: 'Rajesh Verma',
       aadhaarNumber: '999900010002',
       jurisdictionCode: 'GBN-DAD', circleCode: 'DAD-C1',
       patwariCodes: ['DAD-P1', 'DAD-P2', 'DAD-P3'], tehsilCode: 'DAD',
     },
+    anchalNirikshak: {
+      role: 'anchalNirikshak', name: 'Rajesh Verma',
+      aadhaarNumber: '999900010002',
+      jurisdictionCode: 'GBN-DAD', circleCode: 'DAD-C1',
+      patwariCodes: ['DAD-P1', 'DAD-P2', 'DAD-P3'], tehsilCode: 'DAD',
+    },
     patwari: {
+      role: 'karmachari', name: 'Vijay Singh',
+      aadhaarNumber: '999900010003',
+      jurisdictionCode: 'GBN-DAD', patwariCode: 'DAD-P1',
+      villageCodes: ['DAD-001', 'DAD-002', 'DAD-003'], tehsilCode: 'DAD',
+    },
+    karmachari: {
       role: 'karmachari', name: 'Vijay Singh',
       aadhaarNumber: '999900010003',
       jurisdictionCode: 'GBN-DAD', patwariCode: 'DAD-P1',
