@@ -9,7 +9,7 @@ const { broadcast } = require('../services/websocket');
 const { authenticate, requireRole, ROLES } = require('../middleware/auth');
 
 const router = Router();
-
+  
 const validate = (req, res, next) => {
   const errs = validationResult(req);
   if (!errs.isEmpty()) {
