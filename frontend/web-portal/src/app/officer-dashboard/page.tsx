@@ -92,7 +92,7 @@ function formatArea(ha?: number): string {
 }
 
 function roleLabel(role: string): string {
-  return { circle_officer: 'Circle Officer', circle_inspector: 'Kanungo / CI', karmachari: 'Karmachari', kotwal: 'Kotwal' }[role] ?? role;
+  return { circle_officer: 'Circle Officer', circle_inspector: 'Kanungo / CI', karmachari: 'Patwari (Karmachari)', kotwal: 'Kotwal' }[role] ?? role;
 }
 
 function actionLabel(role: string): string {

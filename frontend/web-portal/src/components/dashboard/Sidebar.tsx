@@ -40,7 +40,7 @@ const NAV_OFFICER = [
 const ROLE_LABEL: Record<string, string> = {
   circle_officer:        'Circle Officer',
   circle_inspector: 'Kanungo / CI',
-  karmachari:          'Karmachari',
+  karmachari:          'Patwari (Karmachari)',
   citizen:          'Citizen',
   kotwal:           'Kotwal',
 };

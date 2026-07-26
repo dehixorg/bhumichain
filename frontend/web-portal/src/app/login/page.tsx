@@ -23,7 +23,7 @@ type AuthMethod = 'digilocker' | 'aadhaar' | 'janparichay';
 const DEMO_PERSONAS = [
   { persona: 'circle_officer',        label: 'Circle Officer',  name: 'Amit Saxena',  color: '#7C3AED', aadhaar: '9999-0001-0001' },
   { persona: 'circle_inspector', label: 'Kanungo',    name: 'Rajesh Verma', color: '#1D4ED8', aadhaar: '9999-0001-0002' },
-  { persona: 'karmachari',          label: 'Karmachari',    name: 'Vijay Singh',  color: '#0F766E', aadhaar: '9999-0001-0003' },
+  { persona: 'karmachari',          label: 'Patwari (Karmachari)',    name: 'Vijay Singh',  color: '#0F766E', aadhaar: '9999-0001-0003' },
   { persona: 'citizen',          label: 'Citizen 1',  name: 'Priya Kumar',  color: '#6D28D9', aadhaar: '9999-0001-0010' },
   { persona: 'suresh_yadav',     label: 'Citizen 2',  name: 'Suresh Yadav', color: '#B45309', aadhaar: '9999-0001-0012' },
   { persona: 'citizen_heir2',    label: 'Citizen 3',  name: 'Sunita Kumar', color: '#BE185D', aadhaar: '9999-0001-0015' },
