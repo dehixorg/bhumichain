@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, Suspense } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Eye, EyeOff, CheckCircle, AlertCircle, ChevronRight, FileCheck } from 'lucide-react';
 import { verifyOTP, demoLogin, getRedirectPath } from '@/lib/auth';
 
@@ -20,6 +20,7 @@ function maskAadhaar(value: string) {
 
 function DigiLockerForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const [step, setStep]         = useState<'signin' | 'otp' | 'success'>('signin');
   const [aadhaar, setAadhaar]   = useState('');
@@ -28,6 +29,15 @@ function DigiLockerForm() {
   const [otp, setOtp]           = useState('');
   const [error, setError]       = useState('');
   const [loading, setLoading]   = useState(false);
+
+  useEffect(() => {
+    const paramVal = searchParams?.get('aadhaar') || searchParams?.get('aadhaarNumber') || searchParams?.get('mobile') || '';
+    const storedVal = typeof window !== 'undefined' ? localStorage.getItem('bhumichain_login_aadhaar') || localStorage.getItem('bhumichain_aadhaar') || '' : '';
+    const clean = (paramVal || storedVal).replace(/\D/g, '').slice(0, 12);
+    if (clean) {
+      setAadhaar(clean);
+    }
+  }, [searchParams]);
 
   function handleSignIn() {
     const raw = aadhaar.replace(/\D/g, '');

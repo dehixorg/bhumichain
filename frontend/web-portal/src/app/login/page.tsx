@@ -328,7 +328,11 @@ export default function LoginPage() {
                   <div>
                     <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Primary Login</div>
                     <button
-                      onClick={() => router.push('/digilocker-login')}
+                      onClick={() => {
+                        const target = (aadhaar || '').replace(/\D/g, '');
+                        if (target) localStorage.setItem('bhumichain_login_aadhaar', target);
+                        router.push(target ? `/digilocker-login?aadhaar=${target}` : '/digilocker-login');
+                      }}
                       className="w-full flex items-center gap-3 px-5 py-4 rounded-xl border-2 border-[#0F4C81] bg-[#0F4C81] hover:bg-[#0a3566] text-white font-bold text-sm transition-all shadow-md shadow-[#0F4C81]/20 group"
                     >
                       <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
