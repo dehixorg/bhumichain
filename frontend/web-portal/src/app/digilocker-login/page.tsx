@@ -8,7 +8,13 @@ import { verifyOTP, demoLogin, getRedirectPath } from '@/lib/auth';
 function formatAadhaar(value: string) {
   const clean = value.replace(/\D/g, '').slice(0, 12);
   if (clean.length <= 4) return clean;
-  if (clean.length <= 8) return `XXXX-${clean.slice(4)}`;
+  if (clean.length <= 8) return `${clean.slice(0, 4)}-${clean.slice(4)}`;
+  return `${clean.slice(0, 4)}-${clean.slice(4, 8)}-${clean.slice(8)}`;
+}
+
+function maskAadhaar(value: string) {
+  const clean = value.replace(/\D/g, '').slice(0, 12);
+  if (clean.length < 8) return clean;
   return `XXXX-XXXX-${clean.slice(8)}`;
 }
 
@@ -25,8 +31,8 @@ function DigiLockerForm() {
 
   function handleSignIn() {
     const raw = aadhaar.replace(/\D/g, '');
-    if (raw.length !== 12) {
-      setError('Please enter a valid 12-digit Aadhaar Number');
+    if (raw.length < 10 || raw.length > 12) {
+      setError('Please enter a valid 10-digit Mobile or 12-digit Aadhaar Number');
       return;
     }
     if (pin.length < 4) {
@@ -263,7 +269,7 @@ function DigiLockerForm() {
                 </div>
                 <div className="flex justify-between items-center pb-3 border-b border-gray-200">
                   <span className="text-gray-500 font-semibold">Aadhaar Number:</span>
-                  <span className="font-mono font-bold text-gray-900">{formatAadhaar(aadhaar) || 'XXXX-XXXX-XXXX'}</span>
+                  <span className="font-mono font-bold text-gray-900">{maskAadhaar(aadhaar) || 'XXXX-XXXX-XXXX'}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-500 font-semibold">Authorization Status:</span>
