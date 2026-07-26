@@ -360,13 +360,16 @@ export default function OfficerDashboardPage() {
           {/* Header */}
           <div className="flex items-start justify-between">
             <div>
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-3">
                 <h1 className="text-2xl font-bold text-gray-900">Officer Queue</h1>
                 {user && (
                   <span className="px-2.5 py-1 bg-[#0F4C81]/10 border border-[#0F4C81]/20 text-[#0F4C81] text-xs font-bold rounded-full">
                     {roleLabel(user.role)}
                   </span>
                 )}
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-blue-50 border border-blue-200 text-[#0F4C81] text-xs font-bold">
+                  📜 Bihar Land Mutation Act 2011 (Sec 5, 6, 12 SLAs & Sec 16 CPC Revenue Court Powers)
+                </span>
               </div>
               <p className="text-gray-500 text-sm mt-1">
                 {user?.name && <span>{user.name} · </span>}
