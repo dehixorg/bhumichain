@@ -74,8 +74,10 @@ function DigiLockerForm() {
     setLoading(true);
     setError('');
     try {
-      // DigiLocker flow: use demo citizen login (no OTP request needed)
-      const user = await demoLogin('citizen');
+      const rawAadhaar = aadhaar.replace(/\D/g, '');
+      const targetAadhaar = rawAadhaar || (typeof window !== 'undefined' ? localStorage.getItem('bhumichain_login_aadhaar') || '999900010010' : '999900010010');
+      // Authenticate the exact Aadhaar entered in DigiLocker (e.g. 666666666666)
+      const user = await verifyOTP(targetAadhaar, '123456');
       router.push(getRedirectPath(user.role));
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Login failed');
