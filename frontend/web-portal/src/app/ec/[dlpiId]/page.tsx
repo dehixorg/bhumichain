@@ -595,13 +595,8 @@ function ECCertificate({ ec, onDownloadPDF }: { ec: ECResult; onDownloadPDF?: ()
         {/* Signatures & Realistic Rubber Stamp Seal Footer */}
         <div className="pt-6 border-t-2 border-slate-300 flex items-center justify-between font-sans">
           {/* Realistic Rubber Stamp Seal */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center">
             <RealisticSubRegistrarSeal />
-            <div>
-              <div className="text-xs font-extrabold text-slate-800">OFFICIAL RUBBER STAMP SEAL</div>
-              <div className="text-[11px] text-slate-500">Sub-Registrar Office, Phulwari Sharif</div>
-              <div className="text-[10px] text-slate-400 mt-0.5">Govt. of Bihar Land Registration Service</div>
-            </div>
           </div>
 
           {/* Digital Signature */}
