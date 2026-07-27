@@ -289,7 +289,6 @@ export default function CitizenDashboard() {
               { label: 'Apply Mutation', icon: Edit3Icon, href: '/mutation' },
               { label: 'Sell Property', icon: Send, href: '/transfer' },
               { label: 'Succession', icon: Landmark, href: '/succession' },
-              { label: 'Download EC', icon: Shield, href: '/ec' },
               { label: 'Ask NyayaAI', icon: HelpCircle, href: '/nyaya-ai' },
             ].map((s, i) => (
               <Link key={i} href={s.href} className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-md hover:border-[#0F4C81]/30 transition-all group flex flex-col items-center text-center gap-3">

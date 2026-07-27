@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   Map, FileText, Users, Shield, MessageSquare,
-  BarChart3, Layers, LogOut, ScrollText, Gavel, Home, GitMerge,
+  BarChart3, Layers, LogOut, Gavel, Home, GitMerge,
   Building2,
 } from 'lucide-react';
 import clsx from 'clsx';
@@ -17,7 +17,6 @@ const NAV_CITIZEN = [
   { href: '/mutation',   icon: GitMerge,       label: 'Mutations'          },
   { href: '/succession', icon: Users,          label: 'Succession'         },
   { href: '/nyaya-ai',   icon: MessageSquare,  label: 'NyayaAI'           },
-  { href: '/ec',         icon: ScrollText,     label: 'EC Certificate'     },
   { href: '/auction',    icon: Gavel,          label: 'BhumiAuction'       },
   { href: '/tribal',     icon: Shield,         label: 'TribalGuard'        },
 ];
