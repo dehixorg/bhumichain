@@ -215,12 +215,11 @@ export async function executeSuccession(caseId: string) {
   return res.json();
 }
 
-export async function addInheritorNomination(payload: {
+export async function nominateHeirs(payload: {
   dlpiId: string;
-  inheritorName: string;
-  inheritorAadhaarNumber: string;
+  heirs: { name: string; aadhaarNumber: string; }[];
 }) {
-  const res = await apiFetch(`/api/succession/add-inheritor`, {
+  const res = await apiFetch(`/api/succession/nominate`, {
     method: 'POST',
     body: JSON.stringify(payload),
   });
@@ -232,8 +231,23 @@ export async function getInheritorNominations() {
   return res.json();
 }
 
-export async function approveInheritorNomination(nominationId: string) {
-  const res = await apiFetch(`/api/succession/nomination/${nominationId}/approve`, { method: 'POST' });
+export async function acceptNomination(nominationId: string) {
+  const res = await apiFetch(`/api/succession/accept-nomination`, {
+    method: 'POST',
+    body: JSON.stringify({ nominationId }),
+  });
+  return res.json();
+}
+
+export async function executeSuccessionClaim(payload: {
+  dlpiId: string;
+  nominationId: string;
+  deathCertCID: string;
+}) {
+  const res = await apiFetch(`/api/succession/execute-claim`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
   return res.json();
 }
 
