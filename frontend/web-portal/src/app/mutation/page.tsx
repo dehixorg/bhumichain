@@ -175,6 +175,26 @@ export default function MutationListPage() {
       <main className="flex-1 overflow-y-auto">
         <div className="max-w-5xl mx-auto px-6 py-8 space-y-6">
 
+          {/* Active User Session Banner */}
+          {user && (
+            <div className={clsx(
+              "flex items-center justify-between px-4 py-2.5 rounded-xl border text-xs font-semibold shadow-sm",
+              isCitizen ? "bg-purple-50 border-purple-200 text-purple-900" : "bg-blue-50 border-blue-200 text-blue-900"
+            )}>
+              <div className="flex items-center gap-2">
+                <Shield className="w-4 h-4" />
+                <span>
+                  {isCitizen
+                    ? `Logged in as Citizen: ${user.name} (Aadhaar Verified)`
+                    : `Logged in as Officer: ${user.name} (${user.role === 'circle_officer' ? 'Circle Officer / Tehsildar' : user.role})`}
+                </span>
+              </div>
+              <span className="text-[11px] font-mono opacity-80">
+                {isCitizen ? 'Citizen Self-Service Portal' : 'Anchal Officer Review Queue'}
+              </span>
+            </div>
+          )}
+
           {/* Header */}
           <div className="flex items-start justify-between">
             <div>
