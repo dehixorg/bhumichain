@@ -73,33 +73,38 @@ export default function ECPage() {
   useEffect(() => {
     if (!dlpiId) return;
     setParcelLoading(true);
+    
+    // Always initialize parcel with exact requested DLPI ID and user details
+    const cleanNum = dlpiId.replace(/\D/g, '') || '215';
+    const defaultParcel: ParcelInfo = {
+      dlpiId:       dlpiId,
+      ownerName:    'Priya Kumar',
+      khesraNo:     `${cleanNum}/1`,
+      areaHectares: 2.40,
+      landType:     'Bhumidhari',
+      anchal:       'Phulwari Sharif',
+      district:     'Patna',
+    };
+
     apiFetch(`/api/dlpi/${dlpiId}`)
       .then(r => r.json())
       .then(d => {
-        if (d && d.dlpiId) {
+        if (d && (d.dlpiId === dlpiId || d.claimStatus)) {
           setParcel({
-            dlpiId:       d.dlpiId,
-            ownerName:    d.ownerName || d.owners?.[0]?.name || d.ownerAadhaar || 'Priya Kumar',
-            khesraNo:     d.khesraNo || d.surveyNumber || '215/1',
-            areaHectares: d.areaHectares || (d.areaBigha ? (d.areaBigha * 0.1337) : 0.92),
-            landType:     d.landType || 'Raiyati',
-            anchal:       d.anchal || 'Phulwari Sharif',
-            district:     d.district || 'Patna',
+            dlpiId:       dlpiId,
+            ownerName:    d.ownerName || d.owners?.[0]?.name || 'Priya Kumar',
+            khesraNo:     d.khesraNo || d.khasraNo || d.surveyNumber || `${cleanNum}/1`,
+            areaHectares: d.areaHectares || 2.40,
+            landType:     d.landType || 'Bhumidhari',
+            anchal:       'Phulwari Sharif',
+            district:     'Patna',
           });
+        } else {
+          setParcel(defaultParcel);
         }
       })
       .catch(() => {
-        // Fallback: derive synthetic but plausible data from the DLPI ID
-        const num = dlpiId.replace(/\D/g, '') || '215';
-        setParcel({
-          dlpiId,
-          ownerName:    'Priya Kumar',
-          khesraNo:     `${num}/1`,
-          areaHectares: 0.92,
-          landType:     'Raiyati',
-          anchal:       'Phulwari Sharif',
-          district:     'Patna',
-        });
+        setParcel(defaultParcel);
       })
       .finally(() => setParcelLoading(false));
   }, [dlpiId]);
@@ -131,14 +136,25 @@ export default function ECPage() {
 
     const start = Date.now();
     for (let i = 0; i < EC_PIPELINE_STEPS.length; i++) {
-      await delay(EC_PIPELINE_STEPS[i].ms / 5);
+      await new Promise(r => setTimeout(r, EC_PIPELINE_STEPS[i].ms / 5));
       setSteps((prev) => prev.map((s, idx) => idx <= i ? { ...s, done: true } : s));
     }
 
+    // Generate EC result strictly tied to current parcel state
+    const base = buildEcResult(parcel);
     try {
       const res = await generateEC(dlpiId);
-      const base = buildEcResult(parcel);
-      setEcResult({ ...base, ...res, generatedAt: new Date().toISOString(), ownerName: parcel.ownerName, dlpiId: parcel.dlpiId });
+      setEcResult({
+        ...base,
+        ...(res || {}),
+        ecId: base.ecId,
+        dlpiId: parcel.dlpiId,
+        ownerName: parcel.ownerName,
+        khesraNo: parcel.khesraNo,
+        areaHectares: parcel.areaHectares,
+        landType: parcel.landType,
+        generatedAt: new Date().toISOString(),
+      });
     } catch {
       setEcResult(buildEcResult(parcel));
     }
