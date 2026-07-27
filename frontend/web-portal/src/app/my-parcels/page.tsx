@@ -87,8 +87,14 @@ export default function CitizenDashboard() {
   const [sellBusy, setSellBusy] = useState(false);
   const [claimingId, setClaimingId] = useState<string | null>(null);
   const [homeAadhaarInputs, setHomeAadhaarInputs] = useState<Record<string, string>>({});
+  const [generatedEcs, setGeneratedEcs] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
+    try {
+      const saved = localStorage.getItem('bhumichain_generated_ecs');
+      if (saved) setGeneratedEcs(JSON.parse(saved));
+    } catch (e) {}
+
     const u = getUser();
     if (!u) { router.replace('/login'); return; }
     // Officers should be on /officer-dashboard, not here
@@ -469,8 +475,20 @@ export default function CitizenDashboard() {
                         </div>
 
                         <div className="flex flex-wrap gap-2">
-                          <Link href={`/ec/${p.dlpiId}`} className="btn-primary text-xs py-2 px-3 rounded-lg flex-1 text-center justify-center min-w-[100px]">
-                            Download RoR
+                          <Link
+                            href={`/ec/${p.dlpiId}`}
+                            className={clsx(
+                              "btn-primary text-xs py-2 px-3 rounded-lg flex-1 text-center justify-center min-w-[120px] flex items-center gap-1.5",
+                              generatedEcs[p.dlpiId] && "bg-emerald-700 hover:bg-emerald-800 border-emerald-600 text-white font-bold"
+                            )}
+                          >
+                            {generatedEcs[p.dlpiId] ? (
+                              <>
+                                <CheckCircle className="w-3.5 h-3.5 inline" /> View EC Certificate
+                              </>
+                            ) : (
+                              <>Download RoR</>
+                            )}
                           </Link>
                           <Link href={`/map?dlpi=${p.dlpiId}`} className="btn-secondary text-xs py-2 px-3 rounded-lg flex-1 text-center justify-center bg-white min-w-[100px]">
                             <Map className="w-4 h-4 mr-1.5 inline" /> View Map

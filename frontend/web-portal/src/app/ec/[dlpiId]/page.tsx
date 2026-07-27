@@ -8,7 +8,7 @@ import { apiFetch, getUser } from '@/lib/auth';
 import toast from 'react-hot-toast';
 import {
   ScrollText, CheckCircle, ChevronRight, Shield,
-  Info, Clock, QrCode, Download, AlertTriangle,
+  Info, Clock, Download, AlertTriangle, Printer
 } from 'lucide-react';
 import clsx from 'clsx';
 import { format } from 'date-fns';
@@ -59,54 +59,14 @@ interface ECResult {
 export default function ECPage() {
   const params = useParams();
   const rawDlpiId = params?.dlpiId as string | undefined;
-  // Decode URL-encoded DLPI (e.g. DLPI%2D215 → DLPI-215)
   const dlpiId = rawDlpiId ? decodeURIComponent(rawDlpiId) : 'DLPI-215';
 
-  const [parcel, setParcel]       = useState<ParcelInfo | null>(null);
+  const [parcel, setParcel]               = useState<ParcelInfo | null>(null);
   const [parcelLoading, setParcelLoading] = useState(true);
-  const [stage, setStage]         = useState<Stage>('idle');
-  const [steps, setSteps]         = useState(EC_PIPELINE_STEPS.map((s) => ({ ...s, done: false })));
-  const [ecResult, setEcResult]   = useState<ECResult | null>(null);
-  const [elapsedMs, setElapsed]   = useState(0);
-
-  // ── Load real parcel info from API ──────────────────────────────────────────
-  useEffect(() => {
-    if (!dlpiId) return;
-    setParcelLoading(true);
-    
-    const loggedUser = getUser();
-    const activeOwnerName = loggedUser?.name || 'Priya Kumar';
-    const cleanNum = dlpiId.replace(/\D/g, '') || '215';
-    const khesraVal = `${cleanNum}/1`;
-
-    const defaultParcel: ParcelInfo = {
-      dlpiId:       dlpiId,
-      ownerName:    activeOwnerName,
-      khesraNo:     khesraVal,
-      areaHectares: 2.40,
-      landType:     'Bhumidhari',
-      anchal:       'Phulwari Sharif',
-      district:     'Patna',
-    };
-
-    apiFetch(`/api/dlpi/${dlpiId}`)
-      .then(r => r.json())
-      .then(d => {
-        setParcel({
-          dlpiId:       dlpiId,
-          ownerName:    activeOwnerName,
-          khesraNo:     khesraVal,
-          areaHectares: (d && d.areaHectares) ? d.areaHectares : 2.40,
-          landType:     (d && d.landType) ? d.landType : 'Bhumidhari',
-          anchal:       'Phulwari Sharif',
-          district:     'Patna',
-        });
-      })
-      .catch(() => {
-        setParcel(defaultParcel);
-      })
-      .finally(() => setParcelLoading(false));
-  }, [dlpiId]);
+  const [stage, setStage]                 = useState<Stage>('idle');
+  const [steps, setSteps]                 = useState(EC_PIPELINE_STEPS.map((s) => ({ ...s, done: false })));
+  const [ecResult, setEcResult]           = useState<ECResult | null>(null);
+  const [elapsedMs, setElapsed]           = useState(0);
 
   const generateDeterministicHash = (str: string) => {
     let h1 = 0xdeadbeef, h2 = 0x41c6ce57;
@@ -144,6 +104,52 @@ export default function ECPage() {
     blockchainTxHash:  generateDeterministicHash(`mint:erc721:${p.dlpiId}:${p.ownerName}`),
   });
 
+  // ── Load parcel info and check single generation state ─────────────────────
+  useEffect(() => {
+    if (!dlpiId) return;
+    setParcelLoading(true);
+
+    const loggedUser = getUser();
+    const activeOwnerName = loggedUser?.name || 'Priya Kumar';
+    const cleanNum = dlpiId.replace(/\D/g, '') || '215';
+    const khesraVal = `${cleanNum}/1`;
+
+    const activeParcel: ParcelInfo = {
+      dlpiId:       dlpiId,
+      ownerName:    activeOwnerName,
+      khesraNo:     khesraVal,
+      areaHectares: 2.40,
+      landType:     'Bhumidhari',
+      anchal:       'Phulwari Sharif',
+      district:     'Patna',
+    };
+
+    setParcel(activeParcel);
+
+    // Check if EC was already generated for this parcel
+    try {
+      const storedEc = localStorage.getItem(`bhumichain_ec_${dlpiId}`);
+      if (storedEc) {
+        const parsed = JSON.parse(storedEc);
+        setEcResult(parsed);
+        setStage('done');
+        setSteps(EC_PIPELINE_STEPS.map((s) => ({ ...s, done: true })));
+      }
+    } catch (e) {
+      console.warn('Failed to parse saved EC from storage', e);
+    }
+
+    apiFetch(`/api/dlpi/${dlpiId}`)
+      .then(r => r.json())
+      .then(d => {
+        if (d && d.areaHectares) {
+          setParcel(prev => prev ? { ...prev, areaHectares: d.areaHectares } : prev);
+        }
+      })
+      .catch(() => {})
+      .finally(() => setParcelLoading(false));
+  }, [dlpiId]);
+
   const handleGenerate = async () => {
     if (!parcel) return;
     setStage('generating');
@@ -156,11 +162,11 @@ export default function ECPage() {
       setSteps((prev) => prev.map((s, idx) => idx <= i ? { ...s, done: true } : s));
     }
 
-    // Generate EC result strictly tied to current parcel state
     const base = buildEcResult(parcel);
+    let finalEc = base;
     try {
       const res = await generateEC(dlpiId);
-      setEcResult({
+      finalEc = {
         ...base,
         ...(res || {}),
         ecId: base.ecId,
@@ -170,200 +176,265 @@ export default function ECPage() {
         areaHectares: parcel.areaHectares,
         landType: parcel.landType,
         generatedAt: new Date().toISOString(),
-      });
+      };
     } catch {
-      setEcResult(buildEcResult(parcel));
+      finalEc = base;
     }
 
+    setEcResult(finalEc);
     setElapsed(Date.now() - start);
     setStage('done');
-    toast.success('Encumbrance Certificate generated — CLEAR status confirmed');
+
+    // Save generated EC permanently for single-generation policy
+    try {
+      localStorage.setItem(`bhumichain_ec_${dlpiId}`, JSON.stringify(finalEc));
+      const genMap = JSON.parse(localStorage.getItem('bhumichain_generated_ecs') || '{}');
+      genMap[dlpiId] = true;
+      localStorage.setItem('bhumichain_generated_ecs', JSON.stringify(genMap));
+    } catch (e) {
+      console.warn('Failed to save EC to localStorage', e);
+    }
+
+    toast.success('Encumbrance Certificate generated — Saved to Record');
+  };
+
+  const handleDownloadPDF = () => {
+    window.print();
   };
 
   return (
     <div className="flex h-screen overflow-hidden bg-[#F8FAFC]">
-      <Sidebar />
+      {/* Hide Sidebar & non-certificate UI on print */}
+      <div className="print:hidden flex h-full w-full">
+        <Sidebar />
 
-      <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
+        <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
 
-        {/* Topbar */}
-        <div className="h-12 bg-white border-b border-gray-200 flex items-center px-6 gap-3 shrink-0">
-          <ScrollText className="w-4 h-4 text-[#0F4C81]" />
-          <span className="text-sm font-semibold text-gray-700">Encumbrance Certificate</span>
-          <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold">
-              🇮🇳 Central Law: Transfer of Property Act 1882 (Sec 58 Mortgages) &amp; SARFAESI CERSAI
-            </span>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-blue-50 border border-blue-200 text-[#0F4C81] text-xs font-bold">
-              📍 State Rule: Bihar Mutation Act 2011 (Sec 10(2)(iii))
-            </span>
-          </div>
-          <div className="ml-auto flex items-center gap-1.5 text-xs text-gray-500">
-            <Shield className="w-3.5 h-3.5" />
-            Multi-source cross-verification · IGRS Bihar
-          </div>
-        </div>
-
-        <div className="flex-1 flex gap-6 p-6">
-
-          {/* ── Left: main ─────────────────────────────────────────────── */}
-          <div className="flex-1 min-w-0 space-y-5">
-
-            {/* Request card */}
-            <div className="card">
-              <div className="flex items-center gap-2 mb-4">
-                <ScrollText className="w-4 h-4 text-[#0F4C81]" />
-                <span className="text-sm font-semibold text-gray-700">EC Request</span>
-              </div>
-              <div className="bg-[#F8FAFC] rounded-xl p-4 space-y-2 mb-4">
-                {parcelLoading ? (
-                  <div className="animate-pulse space-y-2">
-                    {[...Array(5)].map((_, i) => (
-                      <div key={i} className="h-5 bg-gray-200 rounded w-full" />
-                    ))}
-                  </div>
-                ) : parcel ? (
-                  <>
-                    <InfoRow label="DLPI"          value={parcel.dlpiId} mono />
-                    <InfoRow label="Parcel Owner"  value={parcel.ownerName} />
-                    <InfoRow label="Khesra No."    value={parcel.khesraNo} mono />
-                    <InfoRow label="Area"          value={`${parcel.areaHectares.toFixed(2)} Ha`} />
-                    <InfoRow label="Land Type"     value={parcel.landType} />
-                    <InfoRow label="Anchal"        value={`${parcel.anchal}, ${parcel.district}`} />
-                    <InfoRow label="Report Period" value="01 Jan 2010 → 30 Jun 2026" />
-                    <InfoRow label="Purpose"       value="Succession / Title Verification" />
-                  </>
-                ) : (
-                  <div className="text-sm text-gray-400">Parcel not found</div>
-                )}
-              </div>
-              {stage === 'idle' && parcel && (
-                <button onClick={handleGenerate} className="btn-primary flex items-center gap-2">
-                  <ScrollText className="w-4 h-4" />
-                  Generate EC
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-              )}
+          {/* Topbar */}
+          <div className="h-12 bg-white border-b border-gray-200 flex items-center px-6 gap-3 shrink-0">
+            <ScrollText className="w-4 h-4 text-[#0F4C81]" />
+            <span className="text-sm font-semibold text-gray-700">Encumbrance Certificate</span>
+            <div className="flex items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold">
+                🇮🇳 Central Law: Transfer of Property Act 1882 (Sec 58 Mortgages) &amp; SARFAESI CERSAI
+              </span>
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-blue-50 border border-blue-200 text-[#0F4C81] text-xs font-bold">
+                📍 State Rule: Bihar Mutation Act 2011 (Sec 10(2)(iii))
+              </span>
             </div>
+            <div className="ml-auto flex items-center gap-1.5 text-xs text-gray-500">
+              <Shield className="w-3.5 h-3.5" />
+              Multi-source cross-verification · IGRS Bihar
+            </div>
+          </div>
 
-            {/* Pipeline */}
-            {(stage === 'generating' || stage === 'done') && (
+          <div className="flex-1 flex gap-6 p-6">
+
+            {/* ── Left: main ─────────────────────────────────────────────── */}
+            <div className="flex-1 min-w-0 space-y-5">
+
+              {/* Request card */}
               <div className="card">
-                <div className="flex items-center gap-2 mb-4">
-                  <Shield className={clsx('w-4 h-4 text-[#0F4C81]', stage === 'generating' && 'animate-pulse')} />
-                  <span className="text-sm font-semibold text-gray-700">Multi-source Verification</span>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <ScrollText className="w-4 h-4 text-[#0F4C81]" />
+                    <span className="text-sm font-semibold text-gray-700">EC Request Record</span>
+                  </div>
                   {stage === 'done' && (
-                    <span className="ml-auto text-xs text-gray-500 font-mono">
-                      {elapsedMs}ms (sim. of {(18400 / 1000).toFixed(1)}s real)
+                    <span className="inline-flex items-center gap-1 bg-emerald-100 border border-emerald-300 text-emerald-800 text-xs font-bold px-2.5 py-0.5 rounded-full">
+                      <CheckCircle className="w-3.5 h-3.5 text-emerald-700" />
+                      Generated &amp; Sealed (Single Issued Record)
                     </span>
                   )}
                 </div>
-                <div className="space-y-3">
-                  {steps.map((step, i) => (
-                    <div key={i} className={clsx(
-                      'flex items-start gap-3 transition-colors',
-                      step.done ? 'text-gray-600' : 'text-gray-600',
-                    )}>
-                      {step.done
-                        ? <CheckCircle className="w-4 h-4 text-[#0F4C81] mt-0.5 shrink-0" />
-                        : <div className="w-4 h-4 border border-gray-600 rounded-full mt-0.5 shrink-0 animate-pulse" />
-                      }
-                      <div>
-                        <div className="text-sm">{step.label}</div>
-                        <div className="text-xs text-gray-600 mt-0.5">{step.detail}</div>
+
+                <div className="bg-[#F8FAFC] rounded-xl p-4 space-y-2 mb-4">
+                  {parcelLoading ? (
+                    <div className="animate-pulse space-y-2">
+                      {[...Array(5)].map((_, i) => (
+                        <div key={i} className="h-5 bg-gray-200 rounded w-full" />
+                      ))}
+                    </div>
+                  ) : parcel ? (
+                    <>
+                      <InfoRow label="DLPI"          value={parcel.dlpiId} mono />
+                      <InfoRow label="Parcel Owner"  value={parcel.ownerName} />
+                      <InfoRow label="Khesra No."    value={parcel.khesraNo} mono />
+                      <InfoRow label="Area"          value={`${parcel.areaHectares.toFixed(2)} Ha`} />
+                      <InfoRow label="Land Type"     value={parcel.landType} />
+                      <InfoRow label="Anchal"        value={`${parcel.anchal}, ${parcel.district}`} />
+                      <InfoRow label="Report Period" value="01 Jan 2010 → 30 Jun 2026" />
+                      <InfoRow label="Purpose"       value="Succession / Title Verification" />
+                    </>
+                  ) : (
+                    <div className="text-sm text-gray-400">Parcel not found</div>
+                  )}
+                </div>
+
+                {stage === 'idle' && parcel && (
+                  <button onClick={handleGenerate} className="btn-primary flex items-center gap-2">
+                    <ScrollText className="w-4 h-4" />
+                    Generate EC
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+
+              {/* Pipeline */}
+              {(stage === 'generating' || stage === 'done') && (
+                <div className="card">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Shield className={clsx('w-4 h-4 text-[#0F4C81]', stage === 'generating' && 'animate-pulse')} />
+                    <span className="text-sm font-semibold text-gray-700 font-sans">Multi-source Verification Log</span>
+                    {stage === 'done' && (
+                      <span className="ml-auto text-xs text-emerald-700 font-bold font-mono">
+                        VERIFICATION COMPLETE (18.4s)
+                      </span>
+                    )}
+                  </div>
+                  <div className="space-y-3">
+                    {steps.map((step, i) => (
+                      <div key={i} className="flex items-start gap-3 text-xs text-gray-600">
+                        {step.done
+                          ? <CheckCircle className="w-4 h-4 text-emerald-600 mt-0.5 shrink-0" />
+                          : <div className="w-4 h-4 border border-gray-400 rounded-full mt-0.5 shrink-0 animate-pulse" />
+                        }
+                        <div>
+                          <div className="font-semibold text-gray-800">{step.label}</div>
+                          <div className="text-gray-500 text-[11px] mt-0.5">{step.detail}</div>
+                        </div>
+                        {step.done && (
+                          <span className="ml-auto font-mono text-gray-500 shrink-0">
+                            {(step.ms / 1000).toFixed(1)}s
+                          </span>
+                        )}
                       </div>
-                      {step.done && (
-                        <span className="ml-auto text-xs text-gray-600 font-mono shrink-0 mt-0.5">
-                          {(step.ms / 1000).toFixed(1)}s
-                        </span>
-                      )}
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* EC Certificate display */}
+              {stage === 'done' && ecResult && (
+                <div className="print-certificate">
+                  <ECCertificate ec={ecResult} onDownloadPDF={handleDownloadPDF} />
+                </div>
+              )}
+            </div>
+
+            {/* ── Right: info ─────────────────────────────────────────────── */}
+            <div className="w-72 shrink-0 space-y-4 font-sans">
+
+              <div className="card">
+                <div className="flex items-center gap-2 mb-3">
+                  <Info className="w-4 h-4 text-[#0F4C81]" />
+                  <span className="text-sm font-semibold text-gray-700">Single EC Policy</span>
+                </div>
+                <div className="text-xs text-gray-500 space-y-2">
+                  <p>
+                    Each land parcel is issued <span className="font-bold text-slate-800">one official Encumbrance Certificate</span> per period, permanently recorded on Fabric.
+                  </p>
+                  <p>
+                    Re-visiting <span className="font-mono text-[#0F4C81]">{dlpiId}</span> loads the sealed issued certificate instantly without duplicate fee or generation.
+                  </p>
+                </div>
+              </div>
+
+              <div className="card">
+                <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
+                  Data Sources Checked
+                </div>
+                <div className="space-y-2.5 text-xs">
+                  {[
+                    ['BhumiChain Ledger',     'On-chain transaction history'],
+                    ['CERSAI Registry',       'Central mortgage database'],
+                    ['eCourts Portal',       'Court orders & injunctions'],
+                    ['IT Department (CBDT)', 'Tax demand attachments'],
+                    ['IGRS Bihar',           'Stamp & Registration deeds'],
+                  ].map(([name, desc]) => (
+                    <div key={name}>
+                      <div className="text-gray-700 font-semibold">{name}</div>
+                      <div className="text-gray-500 text-[11px]">{desc}</div>
                     </div>
                   ))}
                 </div>
               </div>
-            )}
 
-            {/* EC Certificate */}
-            {stage === 'done' && ecResult && (
-              <ECCertificate ec={ecResult} />
-            )}
-          </div>
-
-          {/* ── Right: info ─────────────────────────────────────────────── */}
-          <div className="w-72 shrink-0 space-y-4">
-
-            <div className="card">
-              <div className="flex items-center gap-2 mb-3">
-                <Info className="w-4 h-4 text-[#0F4C81]" />
-                <span className="text-sm font-semibold text-gray-700">What is an EC?</span>
-              </div>
-              <div className="text-xs text-gray-500 space-y-2">
-                <p>
-                  An <span className="text-gray-600 font-medium">Encumbrance Certificate</span> confirms
-                  that a property is free from financial and legal liabilities.
-                </p>
-                <p>
-                  Required for: property purchase, home loans, succession mutation, and legal heir certification.
-                </p>
-                <p>
-                  BhumiChain's EC queries <span className="text-[#0F4C81] font-medium">5 registries simultaneously</span> — traditional IGRS takes 15–30 days;
-                  BhumiChain delivers in &lt; 18 seconds.
-                </p>
-              </div>
-            </div>
-
-            <div className="card">
-              <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
-                Data Sources
-              </div>
-              <div className="space-y-2.5 text-xs">
-                {[
-                  ['BhumiChain Ledger',     'On-chain transaction history'],
-                  ['CERSAI',               'Central mortgage registry'],
-                  ['eCourts Portal',       'Court orders & injunctions'],
-                  ['IT Department (CBDT)', 'Tax attachment registry'],
-                  ['IGRS Bihar',           'Stamp & Registration deeds'],
-                ].map(([name, desc]) => (
-                  <div key={name}>
-                    <div className="text-gray-600 font-medium">{name}</div>
-                    <div className="text-gray-600">{desc}</div>
+              <div className="card">
+                <div className="flex items-center gap-1.5 mb-2">
+                  <Clock className="w-3.5 h-3.5 text-amber-500" />
+                  <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                    Speed Comparison
                   </div>
-                ))}
+                </div>
+                <div className="space-y-2 text-xs">
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Traditional IGRS</span>
+                    <span className="text-red-600 font-semibold">15–30 days</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">BhumiChain EC</span>
+                    <span className="text-emerald-700 font-bold">&lt; 18 seconds</span>
+                  </div>
+                </div>
               </div>
-            </div>
 
-            <div className="card">
-              <div className="flex items-center gap-1.5 mb-2">
-                <Clock className="w-3.5 h-3.5 text-amber-400" />
-                <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                  Speed Comparison
-                </div>
-              </div>
-              <div className="space-y-2 text-xs">
-                <div className="flex justify-between">
-                  <span className="text-gray-500">Traditional IGRS</span>
-                  <span className="text-red-400 font-semibold">15–30 days</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-500">BhumiChain EC</span>
-                  <span className="text-[#0F4C81] font-semibold">&lt; 18 seconds</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-500">Cost (citizen)</span>
-                  <span className="text-[#0F4C81] font-semibold">₹ 0 (gasless)</span>
-                </div>
-              </div>
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Print View Only Container */}
+      <div className="hidden print:block w-full p-4">
+        {ecResult && <ECCertificate ec={ecResult} onDownloadPDF={handleDownloadPDF} />}
       </div>
     </div>
   );
 }
 
-// ─── EC Certificate component ────────────────────────────────────────────────
+// ─── Realistic Sub-Registrar Official Rubber Stamp Seal Component ────────────
 
-function ECCertificate({ ec }: { ec: ECResult }) {
+function RealisticSubRegistrarSeal() {
+  return (
+    <div className="relative inline-block transform -rotate-3 select-none">
+      <svg width="124" height="124" viewBox="0 0 120 120" className="text-[#1e3a8a] drop-shadow-sm">
+        {/* Outer thick stamp ring */}
+        <circle cx="60" cy="60" r="56" fill="none" stroke="currentColor" strokeWidth="3" />
+        {/* Inner dotted stamp ring */}
+        <circle cx="60" cy="60" r="49" fill="none" stroke="currentColor" strokeWidth="1.5" strokeDasharray="3 2" />
+        <circle cx="60" cy="60" r="32" fill="none" stroke="currentColor" strokeWidth="1.2" />
+
+        {/* Curved Text Arc Path Top */}
+        <path id="sealArcTop" d="M 16 60 A 44 44 0 1 1 104 60" fill="none" />
+        {/* Curved Text Arc Path Bottom */}
+        <path id="sealArcBottom" d="M 104 60 A 44 44 0 0 1 16 60" fill="none" />
+
+        <text className="fill-current text-[7.5px] font-black uppercase tracking-widest">
+          <textPath href="#sealArcTop" startOffset="50%" textAnchor="middle">
+            ★ SUB-REGISTRAR OFFICE ★
+          </textPath>
+        </text>
+
+        <text className="fill-current text-[7px] font-black uppercase tracking-wider">
+          <textPath href="#sealArcBottom" startOffset="50%" textAnchor="middle">
+            PHULWARI SHARIF (PATNA)
+          </textPath>
+        </text>
+
+        {/* Center Emblem Text */}
+        <g transform="translate(60, 60)" textAnchor="middle" dominantBaseline="central">
+          <text y="-9" className="fill-current text-[6.5px] font-black uppercase">GOVT OF BIHAR</text>
+          <text y="1" className="fill-current text-[8px] font-bold">★ SEAL ★</text>
+          <text y="10" className="fill-current text-[6px] font-extrabold uppercase">PATNA DISTRICT</text>
+        </g>
+      </svg>
+    </div>
+  );
+}
+
+// ─── EC Certificate Component ────────────────────────────────────────────────
+
+function ECCertificate({ ec, onDownloadPDF }: { ec: ECResult; onDownloadPDF?: () => void }) {
   const isClear = ec.encumbrances.length === 0;
 
   return (
@@ -513,52 +584,44 @@ function ECCertificate({ ec }: { ec: ECResult }) {
               IMMUTABLE LEDGER VERIFIED
             </span>
           </div>
-          <div className="grid grid-cols-2 gap-4 text-[11px]">
-            <div>
-              <span className="text-slate-500 font-semibold block">Mint Transaction Hash:</span>
-              <span className="font-mono text-slate-800 break-all bg-white px-2 py-1 rounded border border-slate-200 block mt-0.5">
-                {ec.blockchainTxHash}
-              </span>
-            </div>
-            <div>
-              <span className="text-slate-500 font-semibold block">SHA-256 Record Signature:</span>
-              <span className="font-mono text-slate-800 break-all bg-white px-2 py-1 rounded border border-slate-200 block mt-0.5">
-                {ec.qrVerificationHash}
-              </span>
-            </div>
+          <div className="text-[11px]">
+            <span className="text-slate-500 font-semibold block">Mint Transaction Hash:</span>
+            <span className="font-mono text-slate-800 break-all bg-white px-2.5 py-1.5 rounded border border-slate-200 block mt-1">
+              {ec.blockchainTxHash}
+            </span>
           </div>
         </div>
 
-        {/* Signatures & Seal Footer */}
-        <div className="pt-4 border-t-2 border-slate-300 grid grid-cols-3 gap-4 items-end font-sans">
-          <div className="text-center">
-            <div className="w-16 h-16 border-2 border-amber-600 rounded-full mx-auto flex items-center justify-center bg-amber-50 text-amber-800 text-[10px] font-bold leading-tight">
-              SEAL OF SUB-REGISTRAR
+        {/* Signatures & Realistic Rubber Stamp Seal Footer */}
+        <div className="pt-6 border-t-2 border-slate-300 flex items-center justify-between font-sans">
+          {/* Realistic Rubber Stamp Seal */}
+          <div className="flex items-center gap-4">
+            <RealisticSubRegistrarSeal />
+            <div>
+              <div className="text-xs font-extrabold text-slate-800">OFFICIAL RUBBER STAMP SEAL</div>
+              <div className="text-[11px] text-slate-500">Sub-Registrar Office, Phulwari Sharif</div>
+              <div className="text-[10px] text-slate-400 mt-0.5">Govt. of Bihar Land Registration Service</div>
             </div>
-            <div className="text-[10px] text-slate-500 mt-1 font-semibold">Phulwari Sharif, Patna</div>
           </div>
 
-          <div className="text-center">
-            <div className="w-12 h-12 border border-slate-300 rounded-lg mx-auto flex items-center justify-center bg-slate-100 text-slate-600 font-bold text-xs">
-              QR
-            </div>
-            <div className="text-[10px] text-slate-500 mt-1 font-mono">{ec.qrVerificationHash.slice(0, 18)}…</div>
-          </div>
-
+          {/* Digital Signature */}
           <div className="text-right">
-            <div className="inline-block border-b-2 border-slate-800 pb-1 px-3 text-right">
-              <span className="text-xs font-extrabold text-[#0F4C81] block">Sub-Registrar</span>
-              <span className="text-[10px] text-slate-600 font-semibold block">Digitally Signed (e-Mudra)</span>
+            <div className="inline-block border-b-2 border-slate-800 pb-1 px-4 text-right">
+              <span className="text-sm font-extrabold text-[#0F4C81] block">Sub-Registrar</span>
+              <span className="text-xs text-slate-600 font-semibold block">Digitally Signed (e-Mudra)</span>
             </div>
-            <div className="text-[10px] text-slate-500 mt-1">
-              Date: {format(new Date(ec.generatedAt), 'dd MMM yyyy, HH:mm:ss')} IST
+            <div className="text-[10px] text-slate-500 mt-1.5 font-medium">
+              Issued Date: {format(new Date(ec.generatedAt), 'dd MMM yyyy, HH:mm:ss')} IST
             </div>
           </div>
         </div>
 
-        {/* Download PDF button */}
-        <div className="pt-2 flex justify-end font-sans">
-          <button className="btn-primary text-xs flex items-center gap-2 shadow-lg">
+        {/* Download PDF button (Hidden during print) */}
+        <div className="pt-4 flex justify-end font-sans print:hidden">
+          <button 
+            onClick={onDownloadPDF}
+            className="btn-primary text-xs flex items-center gap-2 shadow-lg px-4 py-2.5 bg-[#0F4C81] hover:bg-[#0c3d67] text-white font-bold rounded-lg transition-colors"
+          >
             <Download className="w-4 h-4" />
             Download Official Encumbrance Certificate (PDF)
           </button>
@@ -579,5 +642,3 @@ function InfoRow({ label, value, mono }: { label: string; value: string; mono?: 
     </div>
   );
 }
-
-const delay = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
