@@ -372,8 +372,12 @@ function ECCertificate({ ec }: { ec: ECResult }) {
       <div className="bg-[#0F4C81] text-white px-8 py-5 border-b-4 border-amber-500 relative">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 bg-white/10 rounded-full border border-amber-400/40 flex items-center justify-center text-amber-300 font-bold text-xl shrink-0">
-              🏛️
+            <div className="w-14 h-14 bg-white p-1 rounded-full border-2 border-amber-400/80 flex items-center justify-center shrink-0 shadow-md">
+              <img 
+                src="/Government_of_India_logo.svg.webp" 
+                alt="Emblem of India" 
+                className="h-11 w-auto object-contain"
+              />
             </div>
             <div>
               <div className="text-amber-300 font-bold text-xs uppercase tracking-widest font-sans">
