@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Sidebar from '@/components/dashboard/Sidebar';
 import { generateEC } from '@/lib/api';
-import { apiFetch } from '@/lib/auth';
+import { apiFetch, getUser } from '@/lib/auth';
 import toast from 'react-hot-toast';
 import {
   ScrollText, CheckCircle, ChevronRight, Shield,
@@ -74,12 +74,15 @@ export default function ECPage() {
     if (!dlpiId) return;
     setParcelLoading(true);
     
-    // Always initialize parcel with exact requested DLPI ID and user details
+    const loggedUser = getUser();
+    const activeOwnerName = loggedUser?.name || 'Priya Kumar';
     const cleanNum = dlpiId.replace(/\D/g, '') || '215';
+    const khesraVal = `${cleanNum}/1`;
+
     const defaultParcel: ParcelInfo = {
       dlpiId:       dlpiId,
-      ownerName:    'Priya Kumar',
-      khesraNo:     `${cleanNum}/1`,
+      ownerName:    activeOwnerName,
+      khesraNo:     khesraVal,
       areaHectares: 2.40,
       landType:     'Bhumidhari',
       anchal:       'Phulwari Sharif',
@@ -89,19 +92,15 @@ export default function ECPage() {
     apiFetch(`/api/dlpi/${dlpiId}`)
       .then(r => r.json())
       .then(d => {
-        if (d && (d.dlpiId === dlpiId || d.claimStatus)) {
-          setParcel({
-            dlpiId:       dlpiId,
-            ownerName:    d.ownerName || d.owners?.[0]?.name || 'Priya Kumar',
-            khesraNo:     d.khesraNo || d.khasraNo || d.surveyNumber || `${cleanNum}/1`,
-            areaHectares: d.areaHectares || 2.40,
-            landType:     d.landType || 'Bhumidhari',
-            anchal:       'Phulwari Sharif',
-            district:     'Patna',
-          });
-        } else {
-          setParcel(defaultParcel);
-        }
+        setParcel({
+          dlpiId:       dlpiId,
+          ownerName:    activeOwnerName,
+          khesraNo:     khesraVal,
+          areaHectares: (d && d.areaHectares) ? d.areaHectares : 2.40,
+          landType:     (d && d.landType) ? d.landType : 'Bhumidhari',
+          anchal:       'Phulwari Sharif',
+          district:     'Patna',
+        });
       })
       .catch(() => {
         setParcel(defaultParcel);
