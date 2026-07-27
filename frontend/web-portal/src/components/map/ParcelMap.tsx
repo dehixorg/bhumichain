@@ -149,6 +149,8 @@ export default function ParcelMap({ geojson, initialDlpiId, onParcelSelect }: Pr
   }, [highlightedDlpiId, filterType, searchQuery]);
 
   const renderGeoJSON = useCallback(async (L: typeof import('leaflet'), map: LeafletMap) => {
+    if (!geojson || !geojson.features || !Array.isArray(geojson.features)) return;
+
     if (geoLayerRef.current) {
       geoLayerRef.current.remove();
     }
@@ -157,19 +159,21 @@ export default function ParcelMap({ geojson, initialDlpiId, onParcelSelect }: Pr
     // Ensure target DLPI ID exists in features collection
     const targetDlpi = initialDlpiId || highlightedDlpiId;
     let processedFeatures = [...geojson.features];
-    if (targetDlpi) {
-      const exists = processedFeatures.some(f => f.properties.dlpiId === targetDlpi);
+    if (targetDlpi && typeof targetDlpi === 'string') {
+      const exists = processedFeatures.some(f => f?.properties?.dlpiId === targetDlpi);
       if (!exists && processedFeatures.length > 0) {
         const charSum = targetDlpi.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
         const idx = charSum % processedFeatures.length;
-        processedFeatures[idx] = {
-          ...processedFeatures[idx],
-          properties: {
-            ...processedFeatures[idx].properties,
-            dlpiId: targetDlpi,
-            owner: 'Priya Kumar (Aadhaar Verified)',
-          }
-        };
+        if (processedFeatures[idx] && processedFeatures[idx].properties) {
+          processedFeatures[idx] = {
+            ...processedFeatures[idx],
+            properties: {
+              ...processedFeatures[idx].properties,
+              dlpiId: targetDlpi,
+              owner: 'Priya Kumar (Aadhaar Verified)',
+            }
+          };
+        }
       }
     }
 
