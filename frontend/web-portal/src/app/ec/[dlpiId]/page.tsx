@@ -108,8 +108,25 @@ export default function ECPage() {
       .finally(() => setParcelLoading(false));
   }, [dlpiId]);
 
+  const generateDeterministicHash = (str: string) => {
+    let h1 = 0xdeadbeef, h2 = 0x41c6ce57;
+    for (let i = 0, ch; i < str.length; i++) {
+      ch = str.charCodeAt(i);
+      h1 = Math.imul(h1 ^ ch, 2654435761);
+      h2 = Math.imul(h2 ^ ch, 1597334677);
+    }
+    h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+    h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+    const part1 = (h1 >>> 0).toString(16).padStart(8, '0');
+    const part2 = (h2 >>> 0).toString(16).padStart(8, '0');
+    const part3 = (Math.imul(h1, h2) >>> 0).toString(16).padStart(8, '0');
+    const part4 = (Math.imul(h2 + 13, h1 + 37) >>> 0).toString(16).padStart(8, '0');
+    const part5 = (Math.imul(h1 + 101, h2 + 409) >>> 0).toString(16).padStart(8, '0');
+    return `0x${part1}${part2}${part3}${part4}${part5}`;
+  };
+
   const buildEcResult = (p: ParcelInfo): ECResult => ({
-    ecId:              `EC-${p.dlpiId.replace(/\W/g, '-')}-${Math.random().toString(36).slice(2, 10)}`,
+    ecId:              `EC-${p.dlpiId.replace(/\W/g, '-')}-${generateDeterministicHash(`ec:${p.dlpiId}`).slice(2, 10)}`,
     dlpiId:            p.dlpiId,
     ownerName:         p.ownerName,
     khesraNo:          p.khesraNo,
@@ -119,12 +136,12 @@ export default function ECPage() {
     reportPeriodTo:    '2026-06-30',
     encumbrances:      [],
     summary:           `CLEAR — No active encumbrances, mortgages, injunctions, income-tax attachments, or PMLA freezes on parcel ${p.dlpiId} for the period 2010–2026.`,
-    qrVerificationHash:`ec-qr-sha256:${Math.random().toString(36).slice(2)}${Math.random().toString(36).slice(2)}`,
+    qrVerificationHash:`ec-qr-sha256:${generateDeterministicHash(`qr:${p.dlpiId}`).slice(2)}`,
     validUntil:        '2026-08-01T23:59:59Z',
     generatedAt:       new Date().toISOString(),
     generationTimeMs:  18_400,
     issuedBy:          `Sub-Registrar Office, ${p.anchal} (Bihar IGRS)`,
-    blockchainTxHash:  '0x' + Array.from({length: 40}, () => Math.floor(Math.random()*16).toString(16)).join(''),
+    blockchainTxHash:  generateDeterministicHash(`mint:erc721:${p.dlpiId}:${p.ownerName}`),
   });
 
   const handleGenerate = async () => {
