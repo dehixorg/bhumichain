@@ -25,15 +25,30 @@ api.interceptors.request.use((config) => {
 // ─── Demo auth ────────────────────────────────────────────────────────────────
 
 export async function getDemoToken(role: string, name: string): Promise<string> {
-  // Real backend does not accept role/name payload, it expects { persona: 'oracle' }
-  // We need to send persona, not role/name, to match demo-token endpoint
-  const persona = role === 'oracle' ? 'circle_officer' : role; // Fallback for oracle if no persona
-  const res = await api.post(`/api/auth/demo-token`, { persona: 'circle_officer' }); // Use a real persona for the oracle
-  const token = res.data.token as string;
+  // CRITICAL FIX: Never overwrite the currently logged-in user's token.
+  // If a valid session exists, return the existing token and do NOT switch identity.
   if (typeof window !== 'undefined') {
-    localStorage.setItem('bhumichain_token', token);
+    const existingToken = localStorage.getItem('bhumichain_token');
+    if (existingToken) {
+      // Return existing token — preserve citizen/officer session as-is
+      return existingToken;
+    }
   }
-  return token;
+  // Only fetch a demo token if no session exists (e.g. direct API page access)
+  const persona = role === 'oracle' ? 'circle_officer' : (role || 'citizen');
+  try {
+    const res = await api.post(`/api/auth/demo-token`, { persona });
+    const token = res.data.token as string;
+    if (typeof window !== 'undefined') {
+      // Only store if still no token (double-check race condition)
+      if (!localStorage.getItem('bhumichain_token')) {
+        localStorage.setItem('bhumichain_token', token);
+      }
+    }
+    return token;
+  } catch {
+    return '';
+  }
 }
 
 // ─── DLPI ─────────────────────────────────────────────────────────────────────
