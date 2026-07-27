@@ -194,15 +194,13 @@ export default function MutationListPage() {
               </p>
             </div>
             <div className="flex items-center gap-2">
-              {!isCitizen && (
-                <Link
-                  href="/mutation/initiate"
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold bg-[#0F4C81] hover:bg-[#0a3566] text-white transition-colors"
-                >
-                  <ArrowLeftRight className="w-4 h-4" />
-                  Initiate Mutation
-                </Link>
-              )}
+              <Link
+                href="/mutation/initiate"
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold bg-[#0F4C81] hover:bg-[#0a3566] text-white transition-colors"
+              >
+                <ArrowLeftRight className="w-4 h-4" />
+                {isCitizen ? 'Apply for Dakhil-Kharij' : 'Initiate Mutation'}
+              </Link>
               <button
                 onClick={fetchMutations}
                 disabled={loading}

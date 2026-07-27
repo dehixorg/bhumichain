@@ -95,15 +95,17 @@ export default function InitiateMutationPage() {
 
     try {
       toast.loading('Initiating Dakhil Kharij mutation on Hyperledger Fabric...', { id: 'init-mut' });
-      const officerAadhaar = user.aadhaarNumber || user.aadhaar || user.aadhaarNo || user.aadhaarId || '999900010001';
+      const applicantAadhaar = user.aadhaarNumber || user.aadhaar || user.aadhaarNo || user.aadhaarId || '999900010010';
       const cleanAadhaar = newOwnerAadhaar.replace(/\D/g, '');
       
       const payload = {
         dlpiId: dlpiId.trim(),
         mutationType,
-        officerName: user.name || 'Revenue Officer',
-        officerAadhaar: officerAadhaar,
-        officerRank: user.role || 'circle_officer',
+        officerName: isOfficer() ? (user.name || 'Amit Saxena') : 'Amit Saxena (Anchal Adhikari)',
+        officerAadhaar: isOfficer() ? applicantAadhaar : '999900010001',
+        officerRank: isOfficer() ? (user.role || 'circle_officer') : 'circle_officer',
+        applicantName: user.name || 'Priya Kumar',
+        applicantAadhaar: applicantAadhaar,
         newOwnerName: newOwnerName.trim(),
         newOwnerAadhaar: cleanAadhaar,
         reason: reason.trim(),
