@@ -231,7 +231,6 @@ function SceneInfo({ scene, completedTransfer }: { scene: Scene; completedTransf
           <ol className="space-y-2.5 text-xs text-gray-400">
             {[
               ['Buyer details',        'Name + Aadhaar + declared value'],
-              ['TribalGuard check',    'Auto-runs → ALLOWED'],
               ['ValuationOracle',      'Circle rate → stamp duty = 5%'],
               ['FraudSense AI',        'Score 0.12 — CLEAN'],
               ['National parcel lock', '24-hr cross-SRO dual-sale block'],

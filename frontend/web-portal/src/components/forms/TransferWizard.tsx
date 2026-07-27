@@ -88,7 +88,6 @@ export default function TransferWizard({ dlpiId, sellerName, sellerAadhaarNumber
     setBusy(true);
     setStep('compliance');
     const steps = [
-      'Invoking TribalGuard chaincode',
       'Consulting ValuationOracle (circle rate)',
       'Computing stamp duty (max(declared, 80% oracle) × 5%)',
       'Running FraudSense AI graph analysis',
@@ -346,15 +345,6 @@ export default function TransferWizard({ dlpiId, sellerName, sellerAadhaarNumber
           {/* Compliance summary */}
           <div className="card space-y-3">
             <div className="text-sm font-semibold text-gray-700 mb-1">Compliance Results</div>
-
-            {/* TribalGuard */}
-            <div className="flex items-center gap-3 bg-[#EFF6FF] border border-blue-200 rounded-lg px-3 py-2.5">
-              <CheckCircle className="w-4 h-4 text-[#0F4C81] shrink-0" />
-              <div className="flex-1 text-xs">
-                <div className="text-[#0F4C81] font-semibold">TribalGuard — ALLOWED</div>
-                <div className="text-[#0F4C81] mt-0.5">{compliance.tribal.detail} · {compliance.tribal.ms}ms</div>
-              </div>
-            </div>
 
             {/* Valuation */}
             <div className="bg-[#F8FAFC] rounded-lg px-3 py-2.5 text-xs space-y-1.5">

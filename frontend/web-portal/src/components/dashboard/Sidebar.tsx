@@ -18,7 +18,6 @@ const NAV_CITIZEN = [
   { href: '/succession', icon: Users,          label: 'Succession'         },
   { href: '/nyaya-ai',   icon: MessageSquare,  label: 'NyayaAI'           },
   { href: '/auction',    icon: Gavel,          label: 'BhumiAuction'       },
-  { href: '/tribal',     icon: Shield,         label: 'TribalGuard'        },
 ];
 
 const NAV_OFFICER = [
@@ -28,7 +27,6 @@ const NAV_OFFICER = [
   { href: '/mutation',          icon: GitMerge,       label: 'Mutation Manager'   },
   { href: '/succession',        icon: Users,          label: 'Succession'         },
   { href: '/nyaya-ai',          icon: MessageSquare,  label: 'NyayaAI'           },
-  { href: '/tribal',            icon: Shield,         label: 'TribalGuard'        },
   { href: '/auction',           icon: Gavel,          label: 'BhumiAuction'       },
   { href: '/analytics',         icon: BarChart3,      label: 'Analytics'          },
   { href: '/janganana',         icon: Layers,         label: 'Janganana'          },
