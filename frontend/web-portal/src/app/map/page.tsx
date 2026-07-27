@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import Sidebar from '@/components/dashboard/Sidebar';
 import type { GeoFeatureCollection } from '@/types';
@@ -9,15 +10,16 @@ import { Layers, Eye, EyeOff } from 'lucide-react';
 
 // Dynamic import — Leaflet needs the browser, can't SSR
 const ParcelMap = dynamic(() => import('@/components/map/ParcelMap'), { ssr: false });
-const CensusLayer = dynamic(() => import('@/components/map/CensusLayer'), { ssr: false });
 
-export default function MapPage() {
+function MapContent() {
+  const searchParams = useSearchParams();
+  const initialDlpiId = searchParams.get('dlpi');
+  
   const [geojson, setGeojson] = useState<GeoFeatureCollection | null>(null);
   const [censusData, setCensusData] = useState<unknown[]>([]);
   const [showCensus, setShowCensus] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [selectedDlpiId, setSelectedDlpiId] = useState<string | null>(null);
-  const mapRef = useRef(null);
+  const [selectedDlpiId, setSelectedDlpiId] = useState<string | null>(initialDlpiId);
 
   useEffect(() => {
     // Acquire demo token on mount
@@ -31,7 +33,6 @@ export default function MapPage() {
         setLoading(false);
       })
       .catch(() => {
-        // Fallback: load directly from the data directory path (dev only)
         setLoading(false);
       });
 
@@ -102,6 +103,7 @@ export default function MapPage() {
             <Suspense fallback={<div className="absolute inset-0 bg-[#F8FAFC]" />}>
               <ParcelMap
                 geojson={geojson}
+                initialDlpiId={initialDlpiId}
                 onParcelSelect={setSelectedDlpiId}
               />
             </Suspense>
@@ -125,5 +127,13 @@ export default function MapPage() {
         <span className="ml-auto">Hyperledger Fabric v2.5 · CouchDB · IPFS</span>
       </div>
     </div>
+  );
+}
+
+export default function MapPage() {
+  return (
+    <Suspense fallback={<div className="h-screen w-screen bg-[#F8FAFC]" />}>
+      <MapContent />
+    </Suspense>
   );
 }
