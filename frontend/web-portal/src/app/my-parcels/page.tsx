@@ -287,7 +287,7 @@ export default function CitizenDashboard() {
             {[
               { label: 'View Records', icon: FileText, href: '#holdings' },
               { label: 'Apply Mutation', icon: Edit3Icon, href: '/mutation' },
-              { label: 'Transfer Title', icon: Send, href: '/transfer' },
+              { label: 'Sell Property', icon: Send, href: '/transfer' },
               { label: 'Succession', icon: Landmark, href: '/succession' },
               { label: 'Download EC', icon: Shield, href: '/ec' },
               { label: 'Ask NyayaAI', icon: HelpCircle, href: '/nyaya-ai' },

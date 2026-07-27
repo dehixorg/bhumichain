@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
-  Map, FileText, ArrowLeftRight, Users, Shield, MessageSquare,
+  Map, FileText, Users, Shield, MessageSquare,
   BarChart3, Layers, LogOut, ScrollText, Gavel, Home, GitMerge,
   Building2,
 } from 'lucide-react';
@@ -15,7 +15,6 @@ const NAV_CITIZEN = [
   { href: '/my-parcels', icon: Home,           label: 'My Parcels'         },
   { href: '/map',        icon: Map,            label: 'GIS Map'            },
   { href: '/mutation',   icon: GitMerge,       label: 'Mutations'          },
-  { href: '/transfer',   icon: ArrowLeftRight, label: 'Property Transfer'  },
   { href: '/succession', icon: Users,          label: 'Succession'         },
   { href: '/nyaya-ai',   icon: MessageSquare,  label: 'NyayaAI'           },
   { href: '/ec',         icon: ScrollText,     label: 'EC Certificate'     },
@@ -29,7 +28,6 @@ const NAV_OFFICER = [
   { href: '/scan',              icon: FileText,       label: 'RecordScan AI'      },
   { href: '/mutation',          icon: GitMerge,       label: 'Mutation Manager'   },
   { href: '/succession',        icon: Users,          label: 'Succession'         },
-  { href: '/transfer',          icon: ArrowLeftRight, label: 'Property Transfer'  },
   { href: '/nyaya-ai',          icon: MessageSquare,  label: 'NyayaAI'           },
   { href: '/tribal',            icon: Shield,         label: 'TribalGuard'        },
   { href: '/auction',           icon: Gavel,          label: 'BhumiAuction'       },
