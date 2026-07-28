@@ -105,11 +105,13 @@ export function getRole(): string | null {
 }
 
 export function isOfficer(): boolean {
-  return ['karmachari', 'circle_inspector', 'circle_officer', 'kotwal'].includes(getRole() ?? '');
+  const role = getRole() ?? '';
+  return ['karmachari', 'circle_inspector', 'circle_officer', 'anchalAdhikari', 'tehsildar', 'kotwal'].includes(role);
 }
 
 export function isTehsildar(): boolean {
-  return getRole() === 'circle_officer';
+  const role = getRole() ?? '';
+  return ['circle_officer', 'anchalAdhikari', 'tehsildar'].includes(role);
 }
 
 export function getRedirectPath(role: string): string {

@@ -33,9 +33,11 @@ const NAV_OFFICER = [
 ];
 
 const ROLE_LABEL: Record<string, string> = {
-  circle_officer:        'Circle Officer',
+  circle_officer:   'Circle Officer',
+  anchalAdhikari:   'Circle Officer (Tehsildar)',
+  tehsildar:        'Tehsildar',
   circle_inspector: 'Kanungo / CI',
-  karmachari:          'Patwari (Karmachari)',
+  karmachari:       'Patwari (Karmachari)',
   citizen:          'Citizen',
   kotwal:           'Kotwal',
 };
@@ -52,10 +54,14 @@ export default function Sidebar({ demoMode }: Props = {}) {
   useEffect(() => { setUser(getUser()); }, []);
 
   let nav = user && isOfficer() ? NAV_OFFICER : NAV_CITIZEN;
+  const isTehsildarUser = user?.role && ['circle_officer', 'anchalAdhikari', 'tehsildar'].includes(user.role);
+
   if (user?.role === 'karmachari') {
     nav = nav.filter((item) => !['Mutation Manager', 'Mutations', 'Succession', 'Analytics', 'Janganana'].includes(item.label));
   } else if (user?.role === 'circle_inspector') {
     nav = nav.filter((item) => !['Analytics', 'Janganana'].includes(item.label));
+  } else if (isTehsildarUser) {
+    nav = nav.filter((item) => item.label !== 'Succession');
   }
   const initials = user?.name?.split(' ').filter(Boolean).map(w => w[0]).slice(0, 2).join('').toUpperCase() || 'U';
 
