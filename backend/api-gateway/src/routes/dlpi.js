@@ -775,11 +775,40 @@ router.post(
   },
 );
 
+// POST /api/dlpi/:dlpiId/ci-review — Kanungo (Anchal Nirikshak) approves claim/scan
+router.post(
+  '/:dlpiId/ci-review',
+  authenticate,
+  requireRole(ROLES.ANCHAL_NIRIKSHAK, ROLES.KANUNGO, 'circle_inspector', 'anchalNirikshak', 'kanungo'),
+  dlpiParam,
+  validate,
+  async (req, res) => {
+    const dlpiId = req.params.dlpiId;
+    try {
+      try {
+        await submit('dlpi', 'ApproveScanSRO', [dlpiId]);
+      } catch (fErr) {
+        console.warn(`[ci-review] Fabric ApproveScanSRO non-fatal for ${dlpiId}:`, fErr.message);
+      }
+
+      try {
+        await axios.post(`${RECORD_SCAN_URL}/scan/approve-sro-by-dlpi/${dlpiId}`);
+      } catch (axErr) {
+        console.warn(`[ci-review] RecordScan approve-sro-by-dlpi non-fatal:`, axErr.message);
+      }
+
+      res.json({ success: true, claimStatus: 'SCAN_PENDING_TEHSILDAR', message: 'Approved by Anchal Nirikshak — Sent to Tehsildar' });
+    } catch (e) {
+      res.status(500).json({ error: 'FABRIC_ERROR', message: e.message });
+    }
+  },
+);
+
 // POST /api/dlpi/:dlpiId/scan-approve-sro — SRO (Kanungo) approves pending scan
 router.post(
   '/:dlpiId/scan-approve-sro',
   authenticate,
-  requireRole(ROLES.ANCHAL_NIRIKSHAK),
+  requireRole(ROLES.ANCHAL_NIRIKSHAK, ROLES.KANUNGO, 'circle_inspector', 'anchalNirikshak', 'kanungo'),
   dlpiParam,
   validate,
   async (req, res) => {

@@ -375,10 +375,11 @@ function ActionPanel({
     if (data) onActionDone('UNDER_REVIEW');
   }
 
-  // CI → approve
+  // CI / Kanungo → approve
   async function handleCIApprove() {
-    const data = await postAction('/ci-review', { approved: true });
-    if (data) onActionDone('CI_APPROVED');
+    let data = await postAction('/scan-approve-sro');
+    if (!data) data = await postAction('/ci-review', { approved: true });
+    if (data) onActionDone('SCAN_PENDING_TEHSILDAR');
   }
 
   // Circle Officer → final approve (needs eSign)
