@@ -337,7 +337,7 @@ router.get(
 router.get(
   '/pending/all',
   authenticate,
-  requireRole(ROLES.KARMACHARI, ROLES.ANCHAL_NIRIKSHAK, ROLES.KANUNGO, ROLES.SRO, ROLES.ANCHAL_ADHIKARI, ROLES.SUPER_ADMIN),
+  requireRole(ROLES.KARMACHARI, ROLES.ANCHAL_NIRIKSHAK, ROLES.KANUNGO, ROLES.SRO, ROLES.ANCHAL_ADHIKARI, ROLES.SUPER_ADMIN, 'patwari', 'circle_inspector', 'circle_officer', 'tehsildar'),
   async (req, res) => {
     try {
       let transfers = [];
@@ -360,15 +360,10 @@ router.get(
       
       let transferList = Array.from(mergedMap.values());
 
-      // Group by dlpiId and only return the most recently initiated transfer
-      const latestTransfers = new Map();
-      for (const t of transferList) {
-        if (!latestTransfers.has(t.dlpiId) || new Date(t.initiatedAt) > new Date(latestTransfers.get(t.dlpiId).initiatedAt)) {
-          latestTransfers.set(t.dlpiId, t);
-        }
-      }
-      
-      res.json(Array.from(latestTransfers.values()));
+      // Return all transfers including pending buyer consent so officer can see full queue
+      // Filter out COMPLETED and REJECTED; keep PENDING_BUYER_CONSENT visible too for awareness
+      const allTransfers = transferList.filter(t => !['COMPLETED', 'REJECTED'].includes(t.status));
+      res.json(allTransfers);
     } catch (e) {
       res.json([]);
     }
@@ -401,19 +396,34 @@ router.post(
         const fs = require('fs');
         let transfers = [];
         try { transfers = JSON.parse(fs.readFileSync('/tmp/bhumichain_mock_transfers.json', 'utf8')); } catch(e) {}
-        if (Array.isArray(transfers)) {
+        if (!Array.isArray(transfers)) transfers = [];
+        const newStatus = partyType === 'BUYER' ? 'PENDING_PATWARI_VERIFICATION' : 'PENDING_BUYER_CONSENT';
+        const found = transfers.some(t => t.transferId === req.params.transferId || t.dlpiId === req.params.transferId);
+        if (found) {
           transfers = transfers.map(t => {
             if (t.transferId === req.params.transferId || t.dlpiId === req.params.transferId) {
               return {
                 ...t,
-                status: partyType === 'BUYER' ? 'PENDING_PATWARI_VERIFICATION' : 'PENDING_BUYER_CONSENT',
+                status: newStatus,
+                buyerConsentAt: partyType === 'BUYER' ? new Date().toISOString() : t.buyerConsentAt,
                 [`${partyType.toLowerCase()}Consent`]: { aadhaarNumber, eSignTxHash, timestamp: new Date().toISOString() }
               };
             }
             return t;
           });
-          fs.writeFileSync('/tmp/bhumichain_mock_transfers.json', JSON.stringify(transfers, null, 2));
+        } else {
+          // Upsert: create a new mock record if not found — covers cases where transfer was
+          // initiated via a different path (e.g. citizen portal using dlpiId as transferId)
+          transfers.push({
+            transferId: req.params.transferId,
+            dlpiId: req.params.transferId, // may be dlpiId used as key
+            status: newStatus,
+            buyerConsentAt: partyType === 'BUYER' ? new Date().toISOString() : undefined,
+            initiatedAt: new Date(Date.now() - 3600000).toISOString(),
+            [`${partyType.toLowerCase()}Consent`]: { aadhaarNumber, eSignTxHash, timestamp: new Date().toISOString() }
+          });
         }
+        fs.writeFileSync('/tmp/bhumichain_mock_transfers.json', JSON.stringify(transfers, null, 2));
       } catch(e) {}
 
       broadcast('ConsentRecorded', { transferId: req.params.transferId, partyType });

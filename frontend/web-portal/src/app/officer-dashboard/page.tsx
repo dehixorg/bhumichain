@@ -394,8 +394,13 @@ export default function OfficerDashboardPage() {
         safeTransfers.forEach((t: any) => {
           const tId = getStr(t.transferId || t);
           const dId = getStr(t.dlpiId);
-          if (['PENDING_PATWARI_VERIFICATION', 'PENDING_PATWARI_APPROVAL', 'STAMP_DUTY_PAID', 'PENDING_CI_APPROVAL', 'PATWARI_APPROVED', 'PENDING_SRO_EXECUTION', 'PENDING_TEHSILDAR_APPROVAL'].includes(t.status)) {
-            if (!mergedQueue.some(q => getStr((q as any).transferId) === tId)) {
+          const OFFICER_TRANSFER_STATUSES = [
+            'PENDING_PATWARI_VERIFICATION', 'PENDING_PATWARI_APPROVAL', 'STAMP_DUTY_PAID',
+            'PENDING_CI_APPROVAL', 'PATWARI_APPROVED', 'PENDING_SRO_EXECUTION',
+            'PENDING_TEHSILDAR_APPROVAL', 'PENDING_TEHSILDAR', 'CI_APPROVED',
+          ];
+          if (OFFICER_TRANSFER_STATUSES.includes(t.status)) {
+            if (!mergedQueue.some(q => getStr((q as any).transferId) === tId || (getStr((q as any).dlpiId) === dId && (q as any).claimStatus === t.status))) {
               mergedQueue.push({
                 dlpiId:            dId,
                 khataNo:           '108',
