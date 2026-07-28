@@ -46,8 +46,17 @@ const isMock = () => process.env.FABRIC_MODE === 'mock' || !_fabricConfigured;
 let _gateway = null;
 let _client = null;
 
+async function closeGateway() {
+  try { if (_gateway) { _gateway.close(); } } catch (e) {}
+  try { if (_client) { _client.close(); } } catch (e) {}
+  _gateway = null;
+  _client = null;
+}
+
 async function getGateway() {
-  if (_gateway) return _gateway;
+  if (_gateway && _client) return _gateway;
+
+  await closeGateway();
 
   const tlsRootCert = fs.readFileSync(process.env.FABRIC_PEER_TLS_ROOT_CERT);
   const certPem = fs.readFileSync(process.env.FABRIC_CERT_PATH).toString();
@@ -60,13 +69,21 @@ async function getGateway() {
   _client = new grpc.Client(
     process.env.FABRIC_PEER_ENDPOINT,
     grpc.credentials.createSsl(tlsRootCert),
-    { 'grpc.ssl_target_name_override': 'peer0.revenuedept.bhumichain.in' }
+    {
+      'grpc.ssl_target_name_override': 'peer0.revenuedept.bhumichain.in',
+      'grpc.keepalive_time_ms': 120000,
+      'grpc.keepalive_timeout_ms': 20000,
+      'grpc.keepalive_permit_without_calls': 1,
+      'grpc.http2.max_pings_without_data': 0,
+    }
   );
 
   _gateway = connect({
     client: _client,
     identity: { mspId: process.env.FABRIC_MSP_ID, credentials: Buffer.from(certPem) },
     signer: signers.newPrivateKeySigner(privateKey),
+    evaluateOptions: () => ({ deadline: Date.now() + 5000 }),
+    submitOptions: () => ({ deadline: Date.now() + 10000 }),
   });
 
   return _gateway;
@@ -100,7 +117,7 @@ async function submit(chaincode, fn, args = [], channel = null) {
       return str; // Return raw string if not JSON (like a plain TX ID)
     }
   } catch (err) {
-    console.warn(`[Fabric submit error ${chaincode}::${fn}] ${err.message}. Resetting gateway & using fallback.`);
+    console.warn(`[Fabric submit ${chaincode}::${fn}] ${err.message}. Auto-resetting gateway & using fallback.`);
     await closeGateway();
     return getMockResponse(chaincode, fn, args);
   }
@@ -131,7 +148,7 @@ async function evaluate(chaincode, fn, args = [], channel = null) {
       return str;
     }
   } catch (err) {
-    console.warn(`[Fabric evaluate error ${chaincode}::${fn}] ${err.message}. Resetting gateway & using fallback.`);
+    console.warn(`[Fabric evaluate ${chaincode}::${fn}] ${err.message}. Auto-resetting gateway & using fallback.`);
     await closeGateway();
     return getMockResponse(chaincode, fn, args);
   }
