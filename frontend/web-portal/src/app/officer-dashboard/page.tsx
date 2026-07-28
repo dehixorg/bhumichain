@@ -107,6 +107,20 @@ function formatSubmittedDate(dateStr?: string): string {
   }
 }
 
+function getRelevantTimestamp(item: any, userRole: string): string {
+  const status = item.claimStatus || item.status || '';
+  if (['COMPLETED', 'MUTATED_AND_TRANSFERRED', 'VERIFIED'].includes(status)) {
+    return item.completedAt || item.tehsildarApprovedAt || item.reviewedAt || item.submittedAt || item.claimedAt;
+  }
+  if (['circle_officer', 'anchalAdhikari', 'tehsildar'].includes(userRole)) {
+    return item.kanungoApprovedAt || item.ciApprovedAt || item.patwariApprovedAt || item.submittedAt || item.claimedAt;
+  }
+  if (['circle_inspector', 'anchalNirikshak', 'kanungo', 'sro'].includes(userRole)) {
+    return item.patwariApprovedAt || item.karmachariApprovedAt || item.submittedAt || item.claimedAt;
+  }
+  return item.submittedAt || item.claimedAt || item.initiatedAt || item.createdAt;
+}
+
 function getStr(val: any): string {
   if (val === null || val === undefined) return '';
   if (typeof val === 'string') return val;
@@ -234,7 +248,7 @@ function QueueRow({ item, userRole, fetchQueue }: { item: QueueItem; userRole: s
       {/* Date */}
       <td className="px-4 py-3 text-sm" suppressHydrationWarning>
         <span className="font-medium text-gray-700">
-          {formatSubmittedDate(item.submittedAt)}
+          {formatSubmittedDate(getRelevantTimestamp(item, userRole))}
         </span>
         {item.priority === 'URGENT' && (
           <span className="ml-2 px-1.5 py-0.5 bg-red-50 border border-red-200 text-red-600 text-xs rounded-full font-semibold">
