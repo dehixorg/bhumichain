@@ -45,19 +45,25 @@ export default function ReviewTransferPage() {
   const handleApprove = async () => {
     setBusy(true);
     try {
-      if (user?.role === 'karmachari' || user?.role === 'patwari') {
+      const role = user?.role || '';
+      const isPatwari = ['karmachari', 'patwari', 'revenue_officer'].includes(role);
+      const isKanungo = ['circle_inspector', 'kanungo', 'anchalNirikshak', 'anchal_nirikshak'].includes(role);
+      const isSRO = ['sro'].includes(role);
+      const isTehsildar = ['circle_officer', 'anchalAdhikari', 'anchal_adhikari', 'tehsildar', 'collector', 'super_admin'].includes(role);
+
+      if (isPatwari) {
         toast('Karmachari approving...');
         await approveTransferByPatwari(transferId);
         toast.success('Karmachari Approved');
-      } else if (user?.role === 'circle_inspector' || user?.role === 'kanungo') {
+      } else if (isKanungo) {
         toast('CI / Kanungo approving...');
         await approveTransferByCI(transferId);
         toast.success('CI / Kanungo Approved');
-      } else if (user?.role === 'sro') {
+      } else if (isSRO) {
         toast('SRO executing...');
         await approveTransferBySRO(transferId, 'QmTitleDeedNew' + Date.now());
         toast.success('SRO Executed');
-      } else if (user?.role === 'circle_officer' || user?.role === 'anchalAdhikari' || user?.role === 'tehsildar') {
+      } else if (isTehsildar) {
         toast('Circle Officer finalizing mutation...');
         await approveTransferByTehsildar(transferId);
         toast.success('Transfer Completed & Title Mutated');
@@ -89,17 +95,23 @@ export default function ReviewTransferPage() {
 
   let canApprove = false;
   let actionLabel = 'Approve';
+
+  const role = user?.role || '';
+  const isPatwari = ['karmachari', 'patwari', 'revenue_officer'].includes(role);
+  const isKanungo = ['circle_inspector', 'kanungo', 'anchalNirikshak', 'anchal_nirikshak'].includes(role);
+  const isSRO = ['sro'].includes(role);
+  const isTehsildar = ['circle_officer', 'anchalAdhikari', 'anchal_adhikari', 'tehsildar', 'collector', 'super_admin'].includes(role);
   
-  if ((user?.role === 'karmachari' || user?.role === 'patwari') && ['INITIATED', 'AWAITING_CONSENT', 'CONSENT_RECORDED', 'PENDING_PATWARI_VERIFICATION', 'STAMP_DUTY_PAID', 'PENDING_PATWARI_APPROVAL', 'PENDING_BUYER_CONSENT'].includes(transfer.status)) {
+  if (isPatwari && ['INITIATED', 'AWAITING_CONSENT', 'CONSENT_RECORDED', 'PENDING_PATWARI_VERIFICATION', 'STAMP_DUTY_PAID', 'PENDING_PATWARI_APPROVAL', 'PENDING_BUYER_CONSENT'].includes(transfer.status)) {
     canApprove = true;
     actionLabel = 'Karmachari (Patwari) Inspection Complete — Send to Kanungo';
-  } else if ((user?.role === 'circle_inspector' || user?.role === 'kanungo' || user?.role === 'anchalNirikshak') && ['PATWARI_APPROVED', 'PENDING_KANUNGO_APPROVAL', 'PENDING_CI_APPROVAL'].includes(transfer.status)) {
+  } else if (isKanungo && ['PATWARI_APPROVED', 'PENDING_KANUNGO_APPROVAL', 'PENDING_CI_APPROVAL'].includes(transfer.status)) {
     canApprove = true;
     actionLabel = 'Anchal Nirikshak (Kanungo) Approve — Send to Tehsildar';
-  } else if (user?.role === 'sro' && ['CI_APPROVED', 'PENDING_SRO_EXECUTION', 'PENDING_TEHSILDAR_APPROVAL', 'PENDING_KANUNGO_APPROVAL'].includes(transfer.status)) {
+  } else if (isSRO && ['CI_APPROVED', 'PENDING_SRO_EXECUTION', 'PENDING_TEHSILDAR_APPROVAL', 'PENDING_KANUNGO_APPROVAL'].includes(transfer.status)) {
     canApprove = true;
     actionLabel = 'Execute Deed (SRO)';
-  } else if ((user?.role === 'circle_officer' || user?.role === 'anchalAdhikari' || user?.role === 'tehsildar') && ['CI_APPROVED', 'PENDING_SRO_EXECUTION', 'PENDING_TEHSILDAR_APPROVAL', 'PENDING_KANUNGO_APPROVAL', 'PATWARI_APPROVED', 'PENDING_CI_APPROVAL', 'PENDING_PATWARI_VERIFICATION'].includes(transfer.status)) {
+  } else if (isTehsildar && ['CI_APPROVED', 'PENDING_SRO_EXECUTION', 'PENDING_TEHSILDAR_APPROVAL', 'PENDING_KANUNGO_APPROVAL', 'PATWARI_APPROVED', 'PENDING_CI_APPROVAL', 'PENDING_PATWARI_VERIFICATION'].includes(transfer.status)) {
     canApprove = true;
     actionLabel = 'Anchal Adhikari (Tehsildar) Direct Approve & Mutate Land Title on Chain';
   }
