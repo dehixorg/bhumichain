@@ -117,8 +117,11 @@ async function submit(chaincode, fn, args = [], channel = null) {
       return str; // Return raw string if not JSON (like a plain TX ID)
     }
   } catch (err) {
-    console.warn(`[Fabric submit ${chaincode}::${fn}] ${err.message}. Auto-resetting gateway & using fallback.`);
-    await closeGateway();
+    const isFatal = err.message && (err.message.includes('UNAVAILABLE') || err.message.includes('ETIMEDOUT'));
+    if (isFatal) {
+      console.warn(`[Fabric submit ${chaincode}::${fn}] Connection lost (${err.message}). Resetting gateway.`);
+      await closeGateway();
+    }
     return getMockResponse(chaincode, fn, args);
   }
 }
@@ -148,8 +151,11 @@ async function evaluate(chaincode, fn, args = [], channel = null) {
       return str;
     }
   } catch (err) {
-    console.warn(`[Fabric evaluate ${chaincode}::${fn}] ${err.message}. Auto-resetting gateway & using fallback.`);
-    await closeGateway();
+    const isFatal = err.message && (err.message.includes('UNAVAILABLE') || err.message.includes('ETIMEDOUT'));
+    if (isFatal) {
+      console.warn(`[Fabric evaluate ${chaincode}::${fn}] Connection lost (${err.message}). Resetting gateway.`);
+      await closeGateway();
+    }
     return getMockResponse(chaincode, fn, args);
   }
 }
