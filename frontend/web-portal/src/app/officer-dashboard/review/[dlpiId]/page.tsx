@@ -755,7 +755,17 @@ export default function ReviewPage() {
                   <div className="text-xs text-gray-500 uppercase tracking-wider font-semibold mb-2">Reviewing As</div>
                   <div className="text-gray-700 font-semibold">{user.name}</div>
                   <div className="text-xs text-gray-500 mt-0.5">
-                    {(({ circle_officer: 'Circle Officer', circle_inspector: 'Kanungo / CI', karmachari: 'Karmachari' } as Record<string, string>)[user.role] ?? user.role)}
+                    {(({
+                      anchalAdhikari: 'Circle Officer (Tehsildar)',
+                      circle_officer: 'Circle Officer (Tehsildar)',
+                      tehsildar: 'Circle Officer (Tehsildar)',
+                      anchalNirikshak: 'Kanungo (Anchal Nirikshak)',
+                      circle_inspector: 'Kanungo (Anchal Nirikshak)',
+                      kanungo: 'Kanungo (Anchal Nirikshak)',
+                      karmachari: 'Patwari (Karmachari)',
+                      patwari: 'Patwari (Karmachari)',
+                      citizen: 'Citizen',
+                    } as Record<string, string>)[user.role] ?? user.role)}
                     {' · '}Phulwari Sharif
                   </div>
                   <div className="mt-3 text-xs text-gray-600">
