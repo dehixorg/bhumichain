@@ -469,14 +469,14 @@ function ActionPanel({
         )}
 
         {/* CI / Kanungo */}
-        {(isCI || isPatwari || isTehsildar) && ['UNDER_REVIEW', 'PATWARI_APPROVED', 'PENDING_CI_APPROVAL'].includes(claimStatus) && (
+        (isCI || ['UNDER_REVIEW', 'PATWARI_APPROVED', 'PENDING_CI_APPROVAL', 'SCAN_PENDING_SRO'].includes(claimStatus)) && (
           <button
             onClick={handleCIApprove}
             disabled={busy}
-            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-[#0F4C81] hover:bg-[#0a3566] text-white font-semibold transition-colors disabled:opacity-50"
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-[#0F4C81] hover:bg-[#0a3566] text-white font-semibold shadow-md transition-colors disabled:opacity-50"
           >
             {busy ? <RotateCcw className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
-            {busy ? 'Approving…' : 'Kanungo (CI) Approve — Send to Circle Officer'}
+            {busy ? 'Approving…' : 'Anchal Nirikshak (Kanungo) Approve — Send to Tehsildar'}
           </button>
         )}
 
@@ -607,7 +607,8 @@ export default function ReviewPage() {
 
   const isVerified  = parcel.claimStatus === 'VERIFIED';
   const isRejected  = parcel.claimStatus === 'REJECTED';
-  const isFinalized = isVerified || isRejected || ['VERIFIED', 'REJECTED'].includes(actionDone);
+  const isCI = ['circle_inspector', 'anchalNirikshak', 'kanungo'].includes(user?.role ?? '');
+  const isFinalized = (isVerified && !isCI && actionDone !== 'CI_APPROVED') || isRejected;
 
   return (
     <div className="flex h-screen bg-[#F8FAFC] overflow-hidden">
