@@ -399,13 +399,8 @@ function ActionPanel({
   const isPatwari = ['karmachari', 'patwari'].includes(userRole);
   const isTehsildar = ['circle_officer', 'anchalAdhikari', 'tehsildar'].includes(userRole);
 
-  // Determine what this officer can do
-  const canAct = (
-    (isPatwari   && ['CLAIM_SUBMITTED', 'UNDER_REVIEW', 'CI_APPROVED'].includes(claimStatus)) ||
-    (isCI        && ['CLAIM_SUBMITTED', 'UNDER_REVIEW', 'PATWARI_APPROVED', 'PENDING_CI_APPROVAL', 'SCAN_PENDING_SRO'].includes(claimStatus)) ||
-    (isTehsildar && ['CLAIM_SUBMITTED', 'UNDER_REVIEW', 'CI_APPROVED', 'SCAN_PENDING_TEHSILDAR', 'PENDING_TEHSILDAR_APPROVAL'].includes(claimStatus)) ||
-    (userRole === 'kotwal')
-  );
+  // Determine what this officer can do (officers opening items in their queue can act)
+  const canAct = isCI || isPatwari || isTehsildar || userRole === 'kotwal';
 
   if (!canAct) {
     return (
@@ -457,19 +452,19 @@ function ActionPanel({
         )}
 
         {/* Karmachari / Patwari */}
-        {(isPatwari || isCI || isTehsildar) && claimStatus === 'CLAIM_SUBMITTED' && (
+        {isPatwari && (
           <button
             onClick={handleSubmitForReview}
             disabled={busy}
             className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-[#0F4C81] hover:bg-[#0a3566] text-white font-semibold transition-colors disabled:opacity-50"
           >
             {busy ? <RotateCcw className="w-4 h-4 animate-spin" /> : <ChevronRight className="w-4 h-4" />}
-            {busy ? 'Submitting…' : 'Field Inspection Complete — Send to CI / Kanungo'}
+            {busy ? 'Submitting…' : 'Karmachari (Patwari) Inspection Complete — Send to Kanungo'}
           </button>
         )}
 
-        {/* CI / Kanungo */}
-        (isCI || ['UNDER_REVIEW', 'PATWARI_APPROVED', 'PENDING_CI_APPROVAL', 'SCAN_PENDING_SRO'].includes(claimStatus)) && (
+        {/* CI / Kanungo / Anchal Nirikshak */}
+        {isCI && (
           <button
             onClick={handleCIApprove}
             disabled={busy}
@@ -480,8 +475,8 @@ function ActionPanel({
           </button>
         )}
 
-        {/* Circle Officer / Tehsildar */}
-        {(isTehsildar || isCI || isPatwari) && claimStatus === 'CI_APPROVED' && (
+        {/* Circle Officer / Tehsildar / Anchal Adhikari */}
+        {isTehsildar && (
           <button
             onClick={() => setShowESign(true)}
             disabled={busy}
