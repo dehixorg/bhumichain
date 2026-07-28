@@ -479,70 +479,100 @@ router.post(
   },
 );
 
-// POST /api/transfer/:transferId/approve/patwari
+// Handler for Patwari / Karmachari approval
+async function handlePatwariTransferApprove(req, res) {
+  const tParam = req.params.transferId;
+  try {
+    let result = { success: true, status: 'PATWARI_APPROVED' };
+    try {
+      const chainRes = await submit('property-transfer', 'ApproveByPatwari', [
+        tParam, req.user.aadhaarNumber || 'mock-patwari-hash',
+      ]);
+      if (chainRes) result = chainRes;
+    } catch (chainErr) {}
+
+    try {
+      const fs = require('fs');
+      let transfers = JSON.parse(fs.readFileSync('/tmp/bhumichain_mock_transfers.json', 'utf8'));
+      if (Array.isArray(transfers)) {
+        transfers = transfers.map(t => (t.transferId === tParam || t.dlpiId === tParam) ? { ...t, status: 'PATWARI_APPROVED', patwariApprovedAt: new Date().toISOString() } : t);
+        fs.writeFileSync('/tmp/bhumichain_mock_transfers.json', JSON.stringify(transfers, null, 2));
+      }
+    } catch(e) {}
+
+    broadcast('PatwariApproved', { transferId: tParam });
+    res.json(result);
+  } catch (e) {
+    res.json({ success: true, status: 'PATWARI_APPROVED' });
+  }
+}
+
+// POST /api/transfer/:transferId/approve/patwari & /approve/karmachari
 router.post(
   '/:transferId/approve/patwari',
   authenticate,
   requireRole(ROLES.KARMACHARI, ROLES.PATWARI, 'karmachari', 'patwari', ROLES.ANCHAL_ADHIKARI, ROLES.SUPER_ADMIN),
-  async (req, res) => {
-    const tParam = req.params.transferId;
-    try {
-      let result = { success: true, status: 'PENDING_CI_APPROVAL' };
-      try {
-        const chainRes = await submit('property-transfer', 'ApproveByPatwari', [
-          tParam, req.user.aadhaarNumber || 'mock-patwari-hash',
-        ]);
-        if (chainRes) result = chainRes;
-      } catch (chainErr) {}
-
-      try {
-        const fs = require('fs');
-        let transfers = JSON.parse(fs.readFileSync('/tmp/bhumichain_mock_transfers.json', 'utf8'));
-        if (Array.isArray(transfers)) {
-          transfers = transfers.map(t => (t.transferId === tParam || t.dlpiId === tParam) ? { ...t, status: 'PENDING_CI_APPROVAL' } : t);
-          fs.writeFileSync('/tmp/bhumichain_mock_transfers.json', JSON.stringify(transfers, null, 2));
-        }
-      } catch(e) {}
-
-      broadcast('PatwariApproved', { transferId: tParam });
-      res.json(result);
-    } catch (e) {
-      res.json({ success: true, status: 'PENDING_CI_APPROVAL' });
-    }
-  },
+  handlePatwariTransferApprove
+);
+router.post(
+  '/:transferId/approve/karmachari',
+  authenticate,
+  requireRole(ROLES.KARMACHARI, ROLES.PATWARI, 'karmachari', 'patwari', ROLES.ANCHAL_ADHIKARI, ROLES.SUPER_ADMIN),
+  handlePatwariTransferApprove
 );
 
-// POST /api/transfer/:transferId/approve/ci
+// Handler for CI / Kanungo approval
+async function handleCITransferApprove(req, res) {
+  const tParam = req.params.transferId;
+  try {
+    let result = { success: true, status: 'CI_APPROVED' };
+    try {
+      const chainRes = await submit('property-transfer', 'ApproveByCI', [
+        tParam, req.user.aadhaarNumber || 'mock-ci-hash',
+      ]);
+      if (chainRes) result = chainRes;
+    } catch (chainErr) {}
+
+    try {
+      const fs = require('fs');
+      let transfers = JSON.parse(fs.readFileSync('/tmp/bhumichain_mock_transfers.json', 'utf8'));
+      if (Array.isArray(transfers)) {
+        transfers = transfers.map(t => (t.transferId === tParam || t.dlpiId === tParam) ? { ...t, status: 'CI_APPROVED', ciApprovedAt: new Date().toISOString() } : t);
+        fs.writeFileSync('/tmp/bhumichain_mock_transfers.json', JSON.stringify(transfers, null, 2));
+      }
+    } catch(e) {}
+
+    broadcast('CIApproved', { transferId: tParam });
+    res.json(result);
+  } catch (e) {
+    res.json({ success: true, status: 'CI_APPROVED' });
+  }
+}
+
+// POST /api/transfer/:transferId/approve/ci & aliases
 router.post(
   '/:transferId/approve/ci',
   authenticate,
   requireRole(ROLES.ANCHAL_NIRIKSHAK, ROLES.KANUNGO, 'anchalNirikshak', 'kanungo', 'circle_inspector', ROLES.ANCHAL_ADHIKARI, ROLES.SUPER_ADMIN),
-  async (req, res) => {
-    const tParam = req.params.transferId;
-    try {
-      let result = { success: true, status: 'PENDING_SRO_EXECUTION' };
-      try {
-        const chainRes = await submit('property-transfer', 'ApproveByCI', [
-          tParam, req.user.aadhaarNumber || 'mock-ci-hash',
-        ]);
-        if (chainRes) result = chainRes;
-      } catch(e) {}
-
-      try {
-        const fs = require('fs');
-        let transfers = JSON.parse(fs.readFileSync('/tmp/bhumichain_mock_transfers.json', 'utf8'));
-        if (Array.isArray(transfers)) {
-          transfers = transfers.map(t => (t.transferId === tParam || t.dlpiId === tParam) ? { ...t, status: 'PENDING_SRO_EXECUTION' } : t);
-          fs.writeFileSync('/tmp/bhumichain_mock_transfers.json', JSON.stringify(transfers, null, 2));
-        }
-      } catch(e) {}
-
-      broadcast('CIApproved', { transferId: tParam });
-      res.json(result);
-    } catch (e) {
-      res.json({ success: true, status: 'PENDING_SRO_EXECUTION' });
-    }
-  },
+  handleCITransferApprove
+);
+router.post(
+  '/:transferId/approve/kanungo',
+  authenticate,
+  requireRole(ROLES.ANCHAL_NIRIKSHAK, ROLES.KANUNGO, 'anchalNirikshak', 'kanungo', 'circle_inspector', ROLES.ANCHAL_ADHIKARI, ROLES.SUPER_ADMIN),
+  handleCITransferApprove
+);
+router.post(
+  '/:transferId/approve/circle_inspector',
+  authenticate,
+  requireRole(ROLES.ANCHAL_NIRIKSHAK, ROLES.KANUNGO, 'anchalNirikshak', 'kanungo', 'circle_inspector', ROLES.ANCHAL_ADHIKARI, ROLES.SUPER_ADMIN),
+  handleCITransferApprove
+);
+router.post(
+  '/:transferId/approve/anchal_nirikshak',
+  authenticate,
+  requireRole(ROLES.ANCHAL_NIRIKSHAK, ROLES.KANUNGO, 'anchalNirikshak', 'kanungo', 'circle_inspector', ROLES.ANCHAL_ADHIKARI, ROLES.SUPER_ADMIN),
+  handleCITransferApprove
 );
 
 // POST /api/transfer/:transferId/approve/sro (formerly execute)
