@@ -22,6 +22,7 @@ const NAV_CITIZEN = [
 
 const NAV_OFFICER = [
   { href: '/officer-dashboard', icon: Building2,      label: 'Officer Queue'      },
+  { href: '/officer-dashboard/audit-logs', icon: Shield, label: 'Audit & Chain Logs' },
   { href: '/map',               icon: Map,            label: 'GIS Map'            },
   { href: '/scan',              icon: FileText,       label: 'RecordScan AI'      },
   { href: '/mutation',          icon: GitMerge,       label: 'Mutation Manager'   },
