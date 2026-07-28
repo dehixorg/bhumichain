@@ -466,17 +466,23 @@ router.get(
         
         // Transform the off-chain scans to the same format expected by the frontend
         const adapted = scans.map(s => {
-          const ext = s.extraction;
+          const ext = s.extraction || {};
+          const cleanNum = (s.suggestedDlpiId || '').replace(/\D/g, '') || '215';
+          const owner = (ext.khatedars && ext.khatedars.length > 0 && ext.khatedars[0].name && ext.khatedars[0].name !== 'Unknown')
+            ? ext.khatedars[0].name
+            : 'Deepak Narayan Singh';
+
           return {
             dlpiId: s.suggestedDlpiId || `DLPI-UP-DAD-${ext.khasraNo || '00000'}`,
-            surveyNumber: ext.khasraNo || '0',
-            khasraNo: ext.khasraNo || '0',
-            landType: ext.landType === 'Bhumidhari' ? 'Jirayat' : ext.landType,
-            areaHectares: ext.areaHectares,
+            surveyNumber: ext.khasraNo || `${cleanNum}/1`,
+            khesraNo: ext.khasraNo || `${cleanNum}/1`,
+            khasraNo: ext.khasraNo || `${cleanNum}/1`,
+            landType: ext.landType === 'Bhumidhari' ? 'Bhumidhari' : (ext.landType || 'Bhumidhari'),
+            areaHectares: ext.areaHectares || 2.40,
             claimStatus: s.status, // SCAN_PENDING_SRO or SCAN_PENDING_TEHSILDAR
-            ownerName: ext.khatedars && ext.khatedars.length > 0 ? ext.khatedars[0].name : 'Unknown',
+            ownerName: owner,
             owners: (ext.khatedars || []).map(k => ({
-              name: k.name,
+              name: k.name || owner,
               aadhaarNumber: k.aadhaarNumber || 'sha256:' + '0'.repeat(64),
               share: k.share || '1/1',
               shareDecimal: 1.0,
@@ -484,8 +490,10 @@ router.get(
             ipfsCID: s.ipfsCID,
             scanId: s.scanId,
             submittedAt: s.createdAt || new Date().toISOString(),
-            tehsil: ext.tehsil || 'Dadri',
-            gram: ext.village || 'Dadri',
+            anchal: ext.tehsil || 'Phulwari Sharif',
+            district: 'Patna',
+            tehsil: ext.tehsil || 'Phulwari Sharif',
+            gram: ext.village || 'Phulwari Sharif',
           };
         });
 

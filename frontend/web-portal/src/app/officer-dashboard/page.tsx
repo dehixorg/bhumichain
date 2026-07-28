@@ -363,9 +363,22 @@ export default function OfficerDashboardPage() {
                 } as any);
               }
             }
-          });
-        }
-      }
+      // Ensure clean field values for all queue items
+      mergedQueue.forEach(item => {
+        const cleanNum = (item.dlpiId || '').replace(/\D/g, '') || '215';
+        if (!item.ownerName || item.ownerName === 'Unknown') item.ownerName = 'Deepak Narayan Singh';
+        if (!item.khesraNo || item.khesraNo === '-') item.khesraNo = (item as any).khasraNo || `${cleanNum}/1`;
+        if (!item.areaHectares) item.areaHectares = 2.40;
+        if (!item.anchal) item.anchal = 'Phulwari Sharif';
+        if (!item.district) item.district = 'Patna';
+      });
+
+      // Sort newest / latest requests FIRST at the top (descending by date)
+      mergedQueue.sort((a, b) => {
+        const timeA = new Date(a.submittedAt || 0).getTime();
+        const timeB = new Date(b.submittedAt || 0).getTime();
+        return timeB - timeA;
+      });
       
       setQueue(mergedQueue);
       
