@@ -50,7 +50,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; 
   PENDING_PATWARI_VERIFICATION: { label: 'Patwari Transfer Review', color: 'text-amber-700', bg: 'bg-amber-50 border-amber-200', icon: Clock },
   PENDING_PATWARI_APPROVAL:     { label: 'Patwari Transfer Review', color: 'text-amber-700', bg: 'bg-amber-50 border-amber-200', icon: Clock },
   STAMP_DUTY_PAID:              { label: 'Patwari Field Inquiry',  color: 'text-blue-700', bg: 'bg-blue-50 border-blue-200', icon: Clock },
-  PENDING_CI_APPROVAL:          { label: 'Kanungo (CI) Transfer Review', color: 'text-purple-700', bg: 'bg-purple-50 border-purple-200', icon: Clock },
+  PENDING_CI_APPROVAL:          { label: 'Circle Officer (Tehsildar) Transfer Review', color: 'text-purple-700', bg: 'bg-purple-50 border-purple-200', icon: Clock },
   PATWARI_APPROVED:             { label: 'Kanungo (CI) Transfer Review', color: 'text-purple-700', bg: 'bg-purple-50 border-purple-200', icon: Clock },
   PENDING_SRO_EXECUTION:        { label: 'Kanungo (CI) Execution', color: 'text-purple-700', bg: 'bg-purple-50 border-purple-200', icon: Clock },
   PENDING_TEHSILDAR_APPROVAL:   { label: 'Circle Officer Approval', color: 'text-orange-700', bg: 'bg-orange-50 border-orange-200', icon: Clock },

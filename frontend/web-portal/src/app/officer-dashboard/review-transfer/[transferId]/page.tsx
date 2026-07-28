@@ -92,16 +92,16 @@ export default function ReviewTransferPage() {
   
   if ((user?.role === 'karmachari' || user?.role === 'patwari') && ['INITIATED', 'AWAITING_CONSENT', 'CONSENT_RECORDED', 'PENDING_PATWARI_VERIFICATION', 'STAMP_DUTY_PAID', 'PENDING_PATWARI_APPROVAL', 'PENDING_BUYER_CONSENT'].includes(transfer.status)) {
     canApprove = true;
-    actionLabel = 'Approve & Forward to Kanungo (Karmachari)';
-  } else if ((user?.role === 'circle_inspector' || user?.role === 'kanungo') && ['PATWARI_APPROVED', 'PENDING_KANUNGO_APPROVAL', 'PENDING_CI_APPROVAL'].includes(transfer.status)) {
+    actionLabel = 'Karmachari (Patwari) Inspection Complete — Send to Kanungo';
+  } else if ((user?.role === 'circle_inspector' || user?.role === 'kanungo' || user?.role === 'anchalNirikshak') && ['PATWARI_APPROVED', 'PENDING_KANUNGO_APPROVAL', 'PENDING_CI_APPROVAL'].includes(transfer.status)) {
     canApprove = true;
-    actionLabel = 'Verify & Forward to Circle Officer (Kanungo / CI)';
+    actionLabel = 'Anchal Nirikshak (Kanungo) Approve — Send to Tehsildar';
   } else if (user?.role === 'sro' && ['CI_APPROVED', 'PENDING_SRO_EXECUTION', 'PENDING_TEHSILDAR_APPROVAL', 'PENDING_KANUNGO_APPROVAL'].includes(transfer.status)) {
     canApprove = true;
     actionLabel = 'Execute Deed (SRO)';
   } else if ((user?.role === 'circle_officer' || user?.role === 'anchalAdhikari' || user?.role === 'tehsildar') && ['CI_APPROVED', 'PENDING_SRO_EXECUTION', 'PENDING_TEHSILDAR_APPROVAL', 'PENDING_KANUNGO_APPROVAL', 'PATWARI_APPROVED', 'PENDING_CI_APPROVAL', 'PENDING_PATWARI_VERIFICATION'].includes(transfer.status)) {
     canApprove = true;
-    actionLabel = 'Finalize Mutation & Atomic Transfer (Circle Officer)';
+    actionLabel = 'Anchal Adhikari (Tehsildar) Direct Approve & Mutate Land Title on Chain';
   }
 
   return (
