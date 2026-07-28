@@ -331,14 +331,13 @@ export default function AuditLogsPage() {
                     {filteredChain.map((log) => (
                       <tr key={log.txHash} className="hover:bg-gray-50/80 transition-colors">
                         <td className="px-4 py-3 font-mono font-bold text-gray-900">#{log.blockNumber}</td>
-                        <td className="px-4 py-3 font-mono text-[#0F4C81]">
+                        <td className="px-4 py-3 font-mono text-[#0F4C81] break-all max-w-[280px]">
                           <button
                             onClick={() => copyHash(log.txHash)}
-                            className="hover:underline flex items-center gap-1 group"
-                            title="Click to copy hash"
+                            className="hover:underline text-left cursor-pointer text-[11px] leading-tight font-mono select-all font-semibold"
+                            title="Click to copy full transaction hash"
                           >
-                            <span>{log.txHash.slice(0, 14)}...{log.txHash.slice(-6)}</span>
-                            <ExternalLink className="w-3 h-3 text-gray-400 group-hover:text-[#0F4C81]" />
+                            {log.txHash}
                           </button>
                         </td>
                         <td className="px-4 py-3 font-semibold text-gray-800">{log.type}</td>
