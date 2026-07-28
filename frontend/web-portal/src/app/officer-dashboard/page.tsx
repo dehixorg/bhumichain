@@ -94,7 +94,14 @@ function formatSubmittedDate(dateStr?: string): string {
   try {
     const d = new Date(dateStr);
     if (isNaN(d.getTime())) return '--';
-    return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+    return d.toLocaleString('en-IN', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+    });
   } catch {
     return '--';
   }
@@ -448,6 +455,13 @@ export default function OfficerDashboardPage() {
   const completedTransfers = transfersQueue.filter(t => ['COMPLETED', 'MUTATED_AND_TRANSFERRED', 'VERIFIED'].includes(t.status));
   const completedClaims    = queue.filter(q => ['COMPLETED', 'MUTATED_AND_TRANSFERRED', 'VERIFIED'].includes(q.claimStatus));
 
+  const getItemTime = (item: any) => {
+    const ts = item.submittedAt || item.claimedAt || item.completedAt || item.initiatedAt || item.createdAt || item.updatedAt;
+    if (!ts) return 0;
+    const t = new Date(ts).getTime();
+    return isNaN(t) ? 0 : t;
+  };
+
   let filtered = queue.filter(item => activeTab.statuses.includes(item.claimStatus));
   if (tab === 'approved_completed') {
     const mappedCompletedTransfers = completedTransfers.map((t: any) => ({
@@ -473,6 +487,9 @@ export default function OfficerDashboardPage() {
     }));
     filtered = [...completedClaims, ...mappedCompletedTransfers];
   }
+
+  // Sort LIFO (Newest action/submission at the top stack)
+  filtered.sort((a, b) => getItemTime(b) - getItemTime(a));
 
   const urgentCount = queue.filter(q => q.priority === 'URGENT').length;
   const myTurnCount = queue.filter(q => (ROLE_ACTION_STATUSES[user?.role ?? ''] ?? []).includes(q.claimStatus)).length;
