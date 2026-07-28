@@ -556,116 +556,110 @@ router.post(
   },
 );
 
-// POST /api/transfer/:transferId/approve/tehsildar
-router.post(
-  '/:transferId/approve/tehsildar',
-  authenticate,
-  requireRole(ROLES.ANCHAL_ADHIKARI, ROLES.SUPER_ADMIN),
-  async (req, res) => {
+// POST /api/transfer/:transferId/approve/tehsildar & /approve/circle_officer
+async function handleTehsildarTransferApprove(req, res) {
+  const transferId = req.params.transferId;
+  try {
+    let result = { success: true, status: 'COMPLETED' };
     try {
-      let result = { success: true, status: 'COMPLETED' };
-      try {
-        const chainRes = await submit('property-transfer', 'ApproveByTehsildar', [
-          req.params.transferId, req.user.aadhaarNumber || 'mock-tehsildar-hash',
-        ]);
-        if (chainRes) result = chainRes;
-      } catch (e) {
-        console.error('ApproveByTehsildar Error:', e.message);
-        // Fallback: Proceed with mock state updates if chaincode endorsement fails
+      const chainRes = await submit('property-transfer', 'ApproveByTehsildar', [
+        transferId, req.user.aadhaarNumber || 'mock-tehsildar-hash',
+      ]);
+      if (chainRes) result = chainRes;
+    } catch (e) {
+      console.warn(`[transfer approve tehsildar] chaincode non-fatal for ${transferId}:`, e.message);
+    }
+
+    // Atomically mutate title to the new Buyer across disk & memory
+    try {
+      const fs = require('fs');
+      let transfers = [];
+      try { transfers = JSON.parse(fs.readFileSync('/tmp/bhumichain_mock_transfers.json', 'utf8')); } catch(e) {}
+      let transferObj = Array.isArray(transfers) ? transfers.find(t => t.transferId === transferId || t.dlpiId === transferId) : null;
+      
+      if (Array.isArray(transfers)) {
+        transfers = transfers.map(t => (t.transferId === transferId || t.dlpiId === transferId) ? { ...t, status: 'COMPLETED', completedAt: new Date().toISOString() } : t);
+        fs.writeFileSync('/tmp/bhumichain_mock_transfers.json', JSON.stringify(transfers, null, 2));
       }
 
-      // Atomically mutate title to the new Buyer across disk & memory
-      try {
-        const fs = require('fs');
-        let transfers = JSON.parse(fs.readFileSync('/tmp/bhumichain_mock_transfers.json', 'utf8'));
-        let transferObj = Array.isArray(transfers) ? transfers.find(t => t.transferId === req.params.transferId) : null;
-        
-        if (Array.isArray(transfers)) {
-          transfers = transfers.map(t => t.transferId === req.params.transferId ? { ...t, status: 'COMPLETED', completedAt: new Date().toISOString() } : t);
-          fs.writeFileSync('/tmp/bhumichain_mock_transfers.json', JSON.stringify(transfers, null, 2));
-        }
+      if (transferObj && transferObj.dlpiId) {
+        const buyerName = transferObj.buyerName || 'Buyer';
+        const buyerAadhaar = (transferObj.buyerAadhaarNumber || transferObj.buyerAadhaar || '').replace(/\D/g, '');
+        const sellerName = transferObj.sellerName || 'Seller';
+        const sellerAadhaar = (transferObj.sellerAadhaarNumber || transferObj.sellerAadhaar || '').replace(/\D/g, '');
 
-        if (transferObj && transferObj.dlpiId) {
-          const buyerName = transferObj.buyerName || 'Buyer';
-          const buyerAadhaar = (transferObj.buyerAadhaarNumber || transferObj.buyerAadhaar || '').replace(/\D/g, '');
-          const sellerName = transferObj.sellerName || 'Seller';
-          const sellerAadhaar = (transferObj.sellerAadhaarNumber || transferObj.sellerAadhaar || '').replace(/\D/g, '');
+        let claims = {};
+        try { claims = JSON.parse(fs.readFileSync('/tmp/bhumichain_atomic_claims.json', 'utf8')); } catch(e) {}
+        claims[transferObj.dlpiId] = {
+          txHash: transferId,
+          dlpiId: transferObj.dlpiId,
+          claimedBy: buyerName,
+          aadhaarNumber: buyerAadhaar,
+          sellerName,
+          sellerAadhaarNumber: sellerAadhaar,
+          claimedAt: new Date().toISOString(),
+          status: 'MUTATED_AND_TRANSFERRED'
+        };
+        fs.writeFileSync('/tmp/bhumichain_atomic_claims.json', JSON.stringify(claims, null, 2));
 
-          let claims = {};
-          try { claims = JSON.parse(fs.readFileSync('/tmp/bhumichain_atomic_claims.json', 'utf8')); } catch(e) {}
-          claims[transferObj.dlpiId] = {
-            txHash: req.params.transferId,
-            dlpiId: transferObj.dlpiId,
-            claimedBy: buyerName,
-            aadhaarNumber: buyerAadhaar,
-            sellerName,
-            sellerAadhaarNumber: sellerAadhaar,
-            claimedAt: new Date().toISOString(),
-            status: 'MUTATED_AND_TRANSFERRED'
-          };
-          fs.writeFileSync('/tmp/bhumichain_atomic_claims.json', JSON.stringify(claims, null, 2));
-
-          let seeded = [];
-          try { seeded = JSON.parse(fs.readFileSync('/tmp/bhumichain_seeded_parcels.json', 'utf8')); } catch(e) {}
-          if (!Array.isArray(seeded)) seeded = [];
-          let foundInSeeded = false;
-          seeded = seeded.map(p => {
-            if (p.dlpiId === transferObj.dlpiId) {
-              foundInSeeded = true;
-              return {
-                ...p,
-                claimStatus: 'VERIFIED',
-                ownerName: buyerName,
-                owners: [{ name: buyerName, aadhaarNumber: buyerAadhaar }]
-              };
-            }
-            return p;
-          });
-          if (!foundInSeeded) {
-            seeded.push({
-              dlpiId: transferObj.dlpiId,
-              khataNo: '102',
-              khasraNo: '1200/102',
-              gram: 'Dadri',
-              tehsil: 'Dadri',
-              district: 'Gautam Buddha Nagar',
-              areaHectares: 1.2,
-              encumbranceStatus: 'CLEAR',
-              landType: 'Bhumidhari',
+        let seeded = [];
+        try { seeded = JSON.parse(fs.readFileSync('/tmp/bhumichain_seeded_parcels.json', 'utf8')); } catch(e) {}
+        if (!Array.isArray(seeded)) seeded = [];
+        let foundInSeeded = false;
+        seeded = seeded.map(p => {
+          if (p.dlpiId === transferObj.dlpiId) {
+            foundInSeeded = true;
+            return {
+              ...p,
               claimStatus: 'VERIFIED',
               ownerName: buyerName,
               owners: [{ name: buyerName, aadhaarNumber: buyerAadhaar }]
-            });
+            };
           }
-          fs.writeFileSync('/tmp/bhumichain_seeded_parcels.json', JSON.stringify(seeded, null, 2));
-
-          // Also record in dynamic mutations
-          let dMuts = [];
-          try { dMuts = JSON.parse(fs.readFileSync('/tmp/bhumichain_dynamic_mutations.json', 'utf8')); } catch(e) {}
-          if (!Array.isArray(dMuts)) dMuts = [];
-          dMuts = dMuts.filter(m => m.dlpiId !== transferObj.dlpiId);
-          dMuts.push({
+          return p;
+        });
+        if (!foundInSeeded) {
+          seeded.push({
             dlpiId: transferObj.dlpiId,
-            status: 'EXECUTED',
-            newOwnerName: buyerName,
-            newOwnerHash: buyerAadhaar,
-            sellerName,
-            sellerAadhaarHash: sellerAadhaar,
-            executedAt: new Date().toISOString()
+            khataNo: '102',
+            khasraNo: '1200/102',
+            gram: 'Dadri',
+            tehsil: 'Dadri',
+            district: 'Gautam Buddha Nagar',
+            areaHectares: 1.2,
+            encumbranceStatus: 'CLEAR',
+            landType: 'Bhumidhari',
+            claimStatus: 'VERIFIED',
+            ownerName: buyerName,
+            owners: [{ name: buyerName, aadhaarNumber: buyerAadhaar }]
           });
-          fs.writeFileSync('/tmp/bhumichain_dynamic_mutations.json', JSON.stringify(dMuts, null, 2));
         }
-      } catch(e) {}
+        fs.writeFileSync('/tmp/bhumichain_seeded_parcels.json', JSON.stringify(seeded, null, 2));
+      }
+    } catch(e) {}
 
-      broadcast('TransferCompleted', {
-        transferId: req.params.transferId,
-        message: '🎉 Title transferred. New deed delivered to DigiLocker.',
-      });
-      res.json(result);
-    } catch (e) {
-      res.json({ success: true, status: 'COMPLETED' });
-    }
-  },
+    broadcast('TransferCompleted', {
+      transferId,
+      message: '🎉 Title transferred. New deed delivered to DigiLocker.',
+    });
+    res.json(result);
+  } catch (e) {
+    res.json({ success: true, status: 'COMPLETED' });
+  }
+}
+
+router.post(
+  '/:transferId/approve/tehsildar',
+  authenticate,
+  requireRole(ROLES.ANCHAL_ADHIKARI, ROLES.TEHSILDAR, 'anchalAdhikari', 'tehsildar', 'circle_officer', ROLES.SUPER_ADMIN),
+  handleTehsildarTransferApprove
+);
+
+router.post(
+  '/:transferId/approve/circle_officer',
+  authenticate,
+  requireRole(ROLES.ANCHAL_ADHIKARI, ROLES.TEHSILDAR, 'anchalAdhikari', 'tehsildar', 'circle_officer', ROLES.SUPER_ADMIN),
+  handleTehsildarTransferApprove
 );
 
 // POST /api/transfer/:transferId/reject — reject with reason (fraud, locked, etc.)
