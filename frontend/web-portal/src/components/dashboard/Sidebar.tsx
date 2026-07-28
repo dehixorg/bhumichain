@@ -51,7 +51,10 @@ export default function Sidebar({ demoMode }: Props = {}) {
 
   useEffect(() => { setUser(getUser()); }, []);
 
-  const nav = user && isOfficer() ? NAV_OFFICER : NAV_CITIZEN;
+  let nav = user && isOfficer() ? NAV_OFFICER : NAV_CITIZEN;
+  if (user?.role === 'karmachari') {
+    nav = nav.filter((item) => item.label !== 'Mutation Manager' && item.label !== 'Mutations' && item.label !== 'Succession');
+  }
   const initials = user?.name?.split(' ').filter(Boolean).map(w => w[0]).slice(0, 2).join('').toUpperCase() || 'U';
 
   return (
