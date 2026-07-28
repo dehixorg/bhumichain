@@ -97,6 +97,16 @@ function formatSubmittedDate(dateStr?: string): string {
   }
 }
 
+function getStr(val: any): string {
+  if (val === null || val === undefined) return '';
+  if (typeof val === 'string') return val;
+  if (typeof val === 'number') return String(val);
+  if (typeof val === 'object') {
+    return val.transferId || val.dlpiId || val.id || val.caseId || val.name || JSON.stringify(val);
+  }
+  return String(val);
+}
+
 function formatArea(ha?: number): string {
   if (ha === undefined || ha === null || isNaN(ha)) return 'N/A';
   if (ha < 0.1) return `${(ha * 10000).toFixed(0)} sq.m`;
@@ -355,36 +365,37 @@ export default function OfficerDashboardPage() {
 
       if (resTransfers.ok) {
         const transfersData = await resTransfers.json();
-        setTransfersQueue(transfersData);
-        if (Array.isArray(transfersData)) {
-          transfersData.forEach((t: any) => {
-            if (['PENDING_PATWARI_VERIFICATION', 'PENDING_PATWARI_APPROVAL', 'STAMP_DUTY_PAID', 'PENDING_CI_APPROVAL', 'PATWARI_APPROVED', 'PENDING_SRO_EXECUTION', 'PENDING_TEHSILDAR_APPROVAL'].includes(t.status)) {
-              if (!mergedQueue.some(q => (q as any).transferId === t.transferId)) {
-                mergedQueue.push({
-                  dlpiId:            t.dlpiId,
-                  khataNo:           '108',
-                  khesraNo:          t.khesraNo || t.khasraNo || `${(t.dlpiId || '').replace(/\D/g, '') || '215'}/1`,
-                  gram:              'Phulwari Sharif',
-                  anchal:            'Phulwari Sharif',
-                  district:          'Patna',
-                  ownerName:         `${t.sellerName || 'Seller'} → ${t.buyerName || 'Buyer'}`,
-                  landType:          'Bhumidhari',
-                  areaHectares:      2.40,
-                  encumbranceStatus: 'CLEAR',
-                  claimStatus:       t.status,
-                  submittedAt:       t.initiatedAt || new Date().toISOString(),
-                  claimedAt:         t.initiatedAt || new Date().toISOString(),
-                  priority:          'URGENT',
-                  isTribal:          false,
-                  isCoparcenary:     false,
-                  scanId:            null,
-                  officerNotes:      `Property Transfer Ref: ${t.transferId}`,
-                  transferId:        t.transferId,
-                } as any);
-              }
+        const safeTransfers = Array.isArray(transfersData) ? transfersData : [];
+        setTransfersQueue(safeTransfers);
+        safeTransfers.forEach((t: any) => {
+          const tId = getStr(t.transferId || t);
+          const dId = getStr(t.dlpiId);
+          if (['PENDING_PATWARI_VERIFICATION', 'PENDING_PATWARI_APPROVAL', 'STAMP_DUTY_PAID', 'PENDING_CI_APPROVAL', 'PATWARI_APPROVED', 'PENDING_SRO_EXECUTION', 'PENDING_TEHSILDAR_APPROVAL'].includes(t.status)) {
+            if (!mergedQueue.some(q => getStr((q as any).transferId) === tId)) {
+              mergedQueue.push({
+                dlpiId:            dId,
+                khataNo:           '108',
+                khesraNo:          t.khesraNo || t.khasraNo || `${dId.replace(/\D/g, '') || '215'}/1`,
+                gram:              'Phulwari Sharif',
+                anchal:            'Phulwari Sharif',
+                district:          'Patna',
+                ownerName:         `${t.sellerName || 'Seller'} → ${t.buyerName || 'Buyer'}`,
+                landType:          'Bhumidhari',
+                areaHectares:      2.40,
+                encumbranceStatus: 'CLEAR',
+                claimStatus:       t.status,
+                submittedAt:       t.initiatedAt || new Date().toISOString(),
+                claimedAt:         t.initiatedAt || new Date().toISOString(),
+                priority:          'URGENT',
+                isTribal:          false,
+                isCoparcenary:     false,
+                scanId:            null,
+                officerNotes:      `Property Transfer Ref: ${tId}`,
+                transferId:        tId,
+              } as any);
             }
-          });
-        }
+          }
+        });
       }
 
       // Ensure clean field values for all queue items
@@ -661,22 +672,27 @@ export default function OfficerDashboardPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {transfersQueue.map(item => (
-                      <tr key={item.transferId} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                        <td className="px-4 py-3 font-mono text-[#0F4C81] text-xs font-semibold">{item.transferId}</td>
-                        <td className="px-4 py-3 text-gray-900 font-mono text-sm">{item.dlpiId}</td>
-                        <td className="px-4 py-3 text-xs text-amber-700 font-semibold">{item.status}</td>
-                        <td className="px-4 py-3">
-                           <Link
-                             href={`/officer-dashboard/review-transfer/${item.transferId}`}
-                             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors bg-[#0F4C81] hover:bg-[#0c3d67] text-white"
-                           >
-                             Review
-                             <ChevronRight className="w-3 h-3" />
-                           </Link>
-                        </td>
-                      </tr>
-                    ))}
+                    {transfersQueue.map((item, idx) => {
+                      const tId = getStr(item.transferId || item);
+                      const dId = getStr(item.dlpiId);
+                      const st  = getStr(item.status);
+                      return (
+                        <tr key={tId || idx} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                          <td className="px-4 py-3 font-mono text-[#0F4C81] text-xs font-semibold">{tId}</td>
+                          <td className="px-4 py-3 text-gray-900 font-mono text-sm">{dId}</td>
+                          <td className="px-4 py-3 text-xs text-amber-700 font-semibold">{st}</td>
+                          <td className="px-4 py-3">
+                             <Link
+                               href={`/officer-dashboard/review-transfer/${tId}`}
+                               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors bg-[#0F4C81] hover:bg-[#0c3d67] text-white"
+                             >
+                               Review
+                               <ChevronRight className="w-3 h-3" />
+                             </Link>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
