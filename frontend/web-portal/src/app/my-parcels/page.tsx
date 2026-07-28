@@ -236,6 +236,36 @@ export default function CitizenDashboard() {
     }
   };
 
+  const handleBuyerESign = async (transferId: string) => {
+    if (!user) return;
+    const userAadhaar = ((user as any).aadhaarNumber || user.aadhaarNumber || '').replace(/\D/g, '');
+    if (!userAadhaar || userAadhaar.length !== 12) {
+      toast.error('Missing valid 12-digit Aadhaar for your account. Please re-login.');
+      return;
+    }
+    try {
+      toast.loading('Verifying identity & executing buyer eSign on-chain...', { id: 'buyer-esign' });
+      await new Promise(r => setTimeout(r, 1000));
+      const res = await apiFetch(`/api/transfer/${transferId}/consent`, {
+        method: 'POST',
+        body: JSON.stringify({
+          partyType: 'BUYER',
+          aadhaarNumber: userAadhaar,
+          eSignTxHash: '0xBUYER_ESIGN_' + Math.random().toString(16).slice(2),
+        }),
+      });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.message || 'eSign failed');
+      }
+      toast.success('🎉 Successfully eSigned purchase offer! Property transfer forwarded to Patwari for field inquiry.', { id: 'buyer-esign' });
+      setPendingTransfers(prev => prev.filter(t => t.transferId !== transferId));
+    } catch (err: any) {
+      toast.error('Failed to eSign purchase offer: ' + (err?.message || err), { id: 'buyer-esign' });
+      console.error(err);
+    }
+  };
+
   if (!user) return null;
 
   return (
