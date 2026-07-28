@@ -445,16 +445,45 @@ export default function OfficerDashboardPage() {
   }, []);
 
   const activeTab   = TABS.find(t => t.key === tab) ?? TABS[0];
-  const filtered    = queue.filter(item => activeTab.statuses.includes(item.claimStatus));
+  const completedTransfers = transfersQueue.filter(t => ['COMPLETED', 'MUTATED_AND_TRANSFERRED', 'VERIFIED'].includes(t.status));
+  const completedClaims    = queue.filter(q => ['COMPLETED', 'MUTATED_AND_TRANSFERRED', 'VERIFIED'].includes(q.claimStatus));
+
+  let filtered = queue.filter(item => activeTab.statuses.includes(item.claimStatus));
+  if (tab === 'approved_completed') {
+    const mappedCompletedTransfers = completedTransfers.map((t: any) => ({
+      dlpiId: getStr(t.dlpiId),
+      khataNo: '108',
+      khesraNo: t.khesraNo || t.khasraNo || `${getStr(t.dlpiId).replace(/\D/g, '') || '215'}/1`,
+      gram: 'Phulwari Sharif',
+      anchal: 'Phulwari Sharif',
+      district: 'Patna',
+      ownerName: `${t.sellerName || 'Seller'} → ${t.buyerName || 'Buyer'}`,
+      landType: 'Bhumidhari',
+      areaHectares: 2.40,
+      encumbranceStatus: 'CLEAR',
+      claimStatus: 'COMPLETED',
+      submittedAt: t.completedAt || t.initiatedAt || new Date().toISOString(),
+      claimedAt: t.completedAt || t.initiatedAt || new Date().toISOString(),
+      priority: 'NORMAL',
+      isTribal: false,
+      isCoparcenary: false,
+      scanId: null,
+      officerNotes: `Completed Transfer ${t.transferId || ''}`,
+      transferId: t.transferId || t.dlpiId,
+    }));
+    filtered = [...completedClaims, ...mappedCompletedTransfers];
+  }
+
   const urgentCount = queue.filter(q => q.priority === 'URGENT').length;
   const myTurnCount = queue.filter(q => (ROLE_ACTION_STATUSES[user?.role ?? ''] ?? []).includes(q.claimStatus)).length;
 
   const counts: Record<TabKey, number> = {
-    all:            queue.length,
+    all:            queue.filter(q => !['COMPLETED', 'MUTATED_AND_TRANSFERRED', 'VERIFIED'].includes(q.claimStatus)).length,
     claim_submitted: queue.filter(q => q.claimStatus === 'CLAIM_SUBMITTED').length,
     under_review:    queue.filter(q => q.claimStatus === 'UNDER_REVIEW').length,
     ci_approved:     queue.filter(q => q.claimStatus === 'CI_APPROVED').length,
     pending_scans:   queue.filter(q => ['SCAN_PENDING_SRO', 'SCAN_PENDING_TEHSILDAR', 'SUCCESSION_PENDING_TEHSILDAR'].includes(q.claimStatus)).length,
+    approved_completed: completedTransfers.length + completedClaims.length,
   };
 
   return (
