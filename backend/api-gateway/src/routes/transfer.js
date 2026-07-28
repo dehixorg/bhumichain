@@ -237,6 +237,7 @@ router.get(
 
       const myTransfers = Array.from(mergedMap.values()).filter(t => {
         if (t.status !== 'PENDING_BUYER_CONSENT') return false;
+        if (t.buyerConsent && (t.buyerConsent.eSignTxHash || t.buyerConsent.timestamp)) return false;
         
         // Normalize stored Aadhaar to digits for comparison
         const bDigits = (t.buyerAadhaarNumber || '').toString().replace(/\D/g, '');
@@ -402,7 +403,7 @@ router.post(
         try { transfers = JSON.parse(fs.readFileSync('/tmp/bhumichain_mock_transfers.json', 'utf8')); } catch(e) {}
         if (Array.isArray(transfers)) {
           transfers = transfers.map(t => {
-            if (t.transferId === req.params.transferId) {
+            if (t.transferId === req.params.transferId || t.dlpiId === req.params.transferId) {
               return {
                 ...t,
                 status: partyType === 'BUYER' ? 'PENDING_PATWARI_VERIFICATION' : 'PENDING_BUYER_CONSENT',
