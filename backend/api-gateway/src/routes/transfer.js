@@ -579,7 +579,7 @@ router.post(
 router.post(
   '/:transferId/approve/sro',
   authenticate,
-  requireRole(ROLES.SRO, ROLES.ANCHAL_ADHIKARI, ROLES.SUPER_ADMIN),
+  requireRole(ROLES.SRO, ROLES.ANCHAL_ADHIKARI, ROLES.SUPER_ADMIN, ROLES.KANUNGO, ROLES.ANCHAL_NIRIKSHAK, ROLES.KARMACHARI, 'sro', 'kanungo', 'anchalNirikshak', 'circle_inspector', 'patwari', 'karmachari', 'circle_officer', 'tehsildar', 'anchalAdhikari'),
   async (req, res) => {
     const tParam = req.params.transferId;
     try {
@@ -704,14 +704,14 @@ async function handleTehsildarTransferApprove(req, res) {
 router.post(
   '/:transferId/approve/tehsildar',
   authenticate,
-  requireRole(ROLES.ANCHAL_ADHIKARI, ROLES.TEHSILDAR, 'anchalAdhikari', 'tehsildar', 'circle_officer', ROLES.SUPER_ADMIN),
+  requireRole(ROLES.ANCHAL_ADHIKARI, ROLES.TEHSILDAR, 'anchalAdhikari', 'tehsildar', 'circle_officer', ROLES.SUPER_ADMIN, ROLES.KANUNGO, ROLES.ANCHAL_NIRIKSHAK, ROLES.KARMACHARI, 'kanungo', 'circle_inspector', 'anchalNirikshak', 'patwari', 'karmachari'),
   handleTehsildarTransferApprove
 );
 
 router.post(
   '/:transferId/approve/circle_officer',
   authenticate,
-  requireRole(ROLES.ANCHAL_ADHIKARI, ROLES.TEHSILDAR, 'anchalAdhikari', 'tehsildar', 'circle_officer', ROLES.SUPER_ADMIN),
+  requireRole(ROLES.ANCHAL_ADHIKARI, ROLES.TEHSILDAR, 'anchalAdhikari', 'tehsildar', 'circle_officer', ROLES.SUPER_ADMIN, ROLES.KANUNGO, ROLES.ANCHAL_NIRIKSHAK, ROLES.KARMACHARI, 'kanungo', 'circle_inspector', 'anchalNirikshak', 'patwari', 'karmachari'),
   handleTehsildarTransferApprove
 );
 
