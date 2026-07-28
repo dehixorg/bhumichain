@@ -115,23 +115,6 @@ export default function CitizenDashboard() {
       .catch(e => console.error("Failed to fetch pending transfers", e));
   }, [router]);
 
-  const handleBuyerESign = async (transferId: string) => {
-    if (!user) return;
-    try {
-      toast.loading('Verifying agreement & providing buyer eSign...', { id: 'buyer-esign' });
-      await new Promise(r => setTimeout(r, 1200));
-      await recordConsent(transferId, {
-        partyType: 'BUYER',
-        aadhaarNumber: ((user as any).aadhaarNumber || user.aadhaarNumber || '').replace(/\D/g, ''),
-        eSignTxHash: '0x' + Math.random().toString(16).slice(2)
-      });
-      toast.success('🎉 Purchase Agreement eSigned! Sent to Karmachari officer queue.', { id: 'buyer-esign' });
-      setPendingTransfers(prev => prev.filter(t => t.transferId !== transferId));
-    } catch (e: any) {
-      toast.error(e.message || 'Failed to submit eSign', { id: 'buyer-esign' });
-    }
-  };
-
   const handleClaimParcel = async (parcel: any) => {
     if (!user) return;
     setClaimingId(parcel.dlpiId);
