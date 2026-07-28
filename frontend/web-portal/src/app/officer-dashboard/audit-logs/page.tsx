@@ -152,6 +152,12 @@ export default function AuditLogsPage() {
   useEffect(() => {
     const u = getUser();
     if (!u) { router.replace('/login'); return; }
+    const isTehsildar = u.role && ['circle_officer', 'anchalAdhikari', 'tehsildar'].includes(u.role);
+    if (!isTehsildar) {
+      toast.error('Audit & Chain Logs are restricted to Circle Officer (Tehsildar)');
+      router.replace('/officer-dashboard');
+      return;
+    }
     setUser(u);
   }, []);
 
