@@ -47,24 +47,35 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; 
   SCAN_PENDING_SRO: { label: 'Pending SRO',    color: 'text-amber-700',  bg: 'bg-amber-50 border-amber-200',   icon: Clock },
   SCAN_PENDING_TEHSILDAR: { label: 'Pending Circle Officer', color: 'text-orange-700', bg: 'bg-orange-50 border-orange-200', icon: Clock },
   SUCCESSION_PENDING_TEHSILDAR: { label: 'Pending Succession', color: 'text-purple-700', bg: 'bg-purple-50 border-purple-200', icon: Clock },
+  PENDING_PATWARI_VERIFICATION: { label: 'Patwari Transfer Review', color: 'text-amber-700', bg: 'bg-amber-50 border-amber-200', icon: Clock },
+  PENDING_PATWARI_APPROVAL:     { label: 'Patwari Transfer Review', color: 'text-amber-700', bg: 'bg-amber-50 border-amber-200', icon: Clock },
+  STAMP_DUTY_PAID:              { label: 'Patwari Field Inquiry',  color: 'text-blue-700', bg: 'bg-blue-50 border-blue-200', icon: Clock },
+  PENDING_CI_APPROVAL:          { label: 'Kanungo (CI) Transfer Review', color: 'text-purple-700', bg: 'bg-purple-50 border-purple-200', icon: Clock },
+  PATWARI_APPROVED:             { label: 'Kanungo (CI) Transfer Review', color: 'text-purple-700', bg: 'bg-purple-50 border-purple-200', icon: Clock },
+  PENDING_SRO_EXECUTION:        { label: 'Kanungo (CI) Execution', color: 'text-purple-700', bg: 'bg-purple-50 border-purple-200', icon: Clock },
+  PENDING_TEHSILDAR_APPROVAL:   { label: 'Circle Officer Approval', color: 'text-orange-700', bg: 'bg-orange-50 border-orange-200', icon: Clock },
+  PENDING_TEHSILDAR:            { label: 'Circle Officer Approval', color: 'text-orange-700', bg: 'bg-orange-50 border-orange-200', icon: Clock },
 };
 
 // Role → which statuses this officer should act on
-// Role → which statuses this officer should act on
 const ROLE_ACTION_STATUSES: Record<string, string[]> = {
-  karmachari:          ['CLAIM_SUBMITTED'],
-  circle_inspector: ['UNDER_REVIEW', 'SCAN_PENDING_SRO'],
-  circle_officer:        ['CI_APPROVED', 'SCAN_PENDING_TEHSILDAR', 'SUCCESSION_PENDING_TEHSILDAR'],
-  kotwal:           ['CLAIM_SUBMITTED', 'UNDER_REVIEW', 'CI_APPROVED'],
+  karmachari:          ['CLAIM_SUBMITTED', 'PENDING_PATWARI_VERIFICATION', 'PENDING_PATWARI_APPROVAL', 'STAMP_DUTY_PAID'],
+  patwari:             ['CLAIM_SUBMITTED', 'PENDING_PATWARI_VERIFICATION', 'PENDING_PATWARI_APPROVAL', 'STAMP_DUTY_PAID'],
+  circle_inspector:    ['UNDER_REVIEW', 'SCAN_PENDING_SRO', 'PENDING_CI_APPROVAL', 'PENDING_SRO_EXECUTION', 'PATWARI_APPROVED'],
+  kanungo:             ['UNDER_REVIEW', 'SCAN_PENDING_SRO', 'PENDING_CI_APPROVAL', 'PENDING_SRO_EXECUTION', 'PATWARI_APPROVED'],
+  circle_officer:      ['CI_APPROVED', 'SCAN_PENDING_TEHSILDAR', 'SUCCESSION_PENDING_TEHSILDAR', 'PENDING_TEHSILDAR_APPROVAL', 'PENDING_TEHSILDAR'],
+  anchalAdhikari:      ['CI_APPROVED', 'SCAN_PENDING_TEHSILDAR', 'SUCCESSION_PENDING_TEHSILDAR', 'PENDING_TEHSILDAR_APPROVAL', 'PENDING_TEHSILDAR'],
+  tehsildar:           ['CI_APPROVED', 'SCAN_PENDING_TEHSILDAR', 'SUCCESSION_PENDING_TEHSILDAR', 'PENDING_TEHSILDAR_APPROVAL', 'PENDING_TEHSILDAR'],
+  kotwal:              ['CLAIM_SUBMITTED', 'UNDER_REVIEW', 'CI_APPROVED'],
 };
 
 type TabKey = 'all' | 'claim_submitted' | 'under_review' | 'ci_approved' | 'pending_scans';
 
 const TABS: { key: TabKey; label: string; statuses: string[] }[] = [
-  { key: 'all',            label: 'All',           statuses: ['CLAIM_SUBMITTED', 'UNDER_REVIEW', 'CI_APPROVED', 'DISPUTED', 'SCAN_PENDING_SRO', 'SCAN_PENDING_TEHSILDAR', 'SUCCESSION_PENDING_TEHSILDAR'] },
-  { key: 'claim_submitted',label: 'Claim Submitted', statuses: ['CLAIM_SUBMITTED'] },
-  { key: 'under_review',   label: 'Under Review',  statuses: ['UNDER_REVIEW'] },
-  { key: 'ci_approved',    label: 'CI Approved',   statuses: ['CI_APPROVED'] },
+  { key: 'all',            label: 'All',           statuses: ['CLAIM_SUBMITTED', 'UNDER_REVIEW', 'CI_APPROVED', 'DISPUTED', 'SCAN_PENDING_SRO', 'SCAN_PENDING_TEHSILDAR', 'SUCCESSION_PENDING_TEHSILDAR', 'PENDING_PATWARI_VERIFICATION', 'PENDING_CI_APPROVAL', 'PATWARI_APPROVED', 'PENDING_TEHSILDAR_APPROVAL'] },
+  { key: 'claim_submitted',label: 'Claim Submitted', statuses: ['CLAIM_SUBMITTED', 'PENDING_PATWARI_VERIFICATION'] },
+  { key: 'under_review',   label: 'Under Review',  statuses: ['UNDER_REVIEW', 'PENDING_CI_APPROVAL', 'PATWARI_APPROVED'] },
+  { key: 'ci_approved',    label: 'CI Approved',   statuses: ['CI_APPROVED', 'PENDING_TEHSILDAR_APPROVAL'] },
   { key: 'pending_scans',  label: 'Pending Scans', statuses: ['SCAN_PENDING_SRO', 'SCAN_PENDING_TEHSILDAR', 'SUCCESSION_PENDING_TEHSILDAR'] },
 ];
 
@@ -235,6 +246,19 @@ function QueueRow({ item, userRole, fetchQueue }: { item: QueueItem; userRole: s
              {busy ? <RefreshCw className="w-3 h-3 animate-spin" /> : <CheckCircle className="w-3 h-3" />}
              Execute Succession
           </button>
+        ) : (item as any).transferId ? (
+          <Link
+            href={`/officer-dashboard/review-transfer/${(item as any).transferId}`}
+            className={clsx(
+              'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors',
+              myTurn
+                ? 'bg-[#0F4C81] hover:bg-[#0c3d67] text-white shadow-sm'
+                : 'bg-gray-100 hover:bg-gray-200 text-gray-700',
+            )}
+          >
+            Review Transfer
+            <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
         ) : (
           <Link
             href={`/officer-dashboard/review/${item.dlpiId}`}
@@ -246,7 +270,7 @@ function QueueRow({ item, userRole, fetchQueue }: { item: QueueItem; userRole: s
             )}
           >
             {myTurn ? actionLabel(userRole) : 'View'}
-            <ChevronRight className="w-3 h-3" />
+            <ArrowRight className="w-3.5 h-3.5" />
           </Link>
         )}
       </td>
@@ -306,12 +330,44 @@ export default function OfficerDashboardPage() {
       
       const dlpiData = await resDlpi.json();
       if (!resDlpi.ok) throw new Error(dlpiData.message || dlpiData.error || 'Failed to load queue');
-      setQueue(dlpiData);
+      
+      const mergedQueue: QueueItem[] = Array.isArray(dlpiData) ? [...dlpiData] : [];
 
       if (resTransfers.ok) {
         const transfersData = await resTransfers.json();
         setTransfersQueue(transfersData);
+        if (Array.isArray(transfersData)) {
+          transfersData.forEach((t: any) => {
+            if (['PENDING_PATWARI_VERIFICATION', 'PENDING_PATWARI_APPROVAL', 'STAMP_DUTY_PAID', 'PENDING_CI_APPROVAL', 'PATWARI_APPROVED', 'PENDING_SRO_EXECUTION', 'PENDING_TEHSILDAR_APPROVAL'].includes(t.status)) {
+              if (!mergedQueue.some(q => (q as any).transferId === t.transferId)) {
+                mergedQueue.push({
+                  dlpiId:            t.dlpiId,
+                  khataNo:           '108',
+                  khesraNo:          t.khesraNo || t.khasraNo || `${(t.dlpiId || '').replace(/\D/g, '') || '215'}/1`,
+                  gram:              'Phulwari Sharif',
+                  anchal:            'Phulwari Sharif',
+                  district:          'Patna',
+                  ownerName:         `${t.sellerName || 'Seller'} → ${t.buyerName || 'Buyer'}`,
+                  landType:          'Bhumidhari',
+                  areaHectares:      2.40,
+                  encumbranceStatus: 'CLEAR',
+                  claimStatus:       t.status,
+                  submittedAt:       t.initiatedAt || new Date().toISOString(),
+                  claimedAt:         t.initiatedAt || new Date().toISOString(),
+                  priority:          'URGENT',
+                  isTribal:          false,
+                  isCoparcenary:     false,
+                  scanId:            null,
+                  officerNotes:      `Property Transfer Ref: ${t.transferId}`,
+                  transferId:        t.transferId,
+                } as any);
+              }
+            }
+          });
+        }
       }
+      
+      setQueue(mergedQueue);
       
       if (resSuccessions.ok) {
         const successionsData = await resSuccessions.json();
