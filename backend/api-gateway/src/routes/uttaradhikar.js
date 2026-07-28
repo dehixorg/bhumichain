@@ -376,7 +376,7 @@ router.get('/my-pending', authenticate, requireRole(ROLES.CITIZEN), async (req, 
 
 
 // GET /api/succession/pending/all — Officer queue
-router.get('/pending/all', authenticate, requireRole(ROLES.ANCHAL_ADHIKARI, ROLES.COLLECTOR), async (req, res) => {
+router.get('/pending/all', authenticate, requireRole(ROLES.ANCHAL_ADHIKARI, ROLES.COLLECTOR, ROLES.KARMACHARI, ROLES.ANCHAL_NIRIKSHAK, ROLES.KANUNGO, ROLES.SRO, ROLES.SUPER_ADMIN, 'patwari', 'circle_inspector', 'circle_officer', 'tehsildar', 'karmachari'), async (req, res) => {
   try {
     const fs = require('fs');
     if (fs.existsSync('/tmp/bhumichain_history_cleared.json')) return res.json([]);
@@ -847,7 +847,7 @@ router.post(
 );
 
 // GET /api/succession/pending/all — officer dashboard: all pending cases
-router.get('/pending/all', authenticate, requireRole(ROLES.ANCHAL_ADHIKARI, ROLES.REVENUE_OFFICER, ROLES.COLLECTOR, ROLES.ANCHAL_NIRIKSHAK), async (req, res) => {
+router.get('/pending/all', authenticate, requireRole(ROLES.ANCHAL_ADHIKARI, ROLES.REVENUE_OFFICER, ROLES.COLLECTOR, ROLES.ANCHAL_NIRIKSHAK, ROLES.KARMACHARI, ROLES.KANUNGO, ROLES.SRO, ROLES.SUPER_ADMIN, 'patwari', 'circle_inspector', 'circle_officer', 'tehsildar', 'karmachari'), async (req, res) => {
   try {
     const fs = require('fs');
     if (fs.existsSync('/tmp/bhumichain_history_cleared.json')) return res.json([]);
