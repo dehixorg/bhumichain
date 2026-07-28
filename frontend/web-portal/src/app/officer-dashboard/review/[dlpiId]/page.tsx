@@ -604,10 +604,13 @@ export default function ReviewPage() {
     );
   }
 
+  const currentUser = user || getUser();
+  const currentRole = currentUser?.role || '';
+  const isCI        = ['circle_inspector', 'anchalNirikshak', 'kanungo'].includes(currentRole);
+  const isTehsildar = ['circle_officer', 'anchalAdhikari', 'tehsildar'].includes(currentRole);
   const isVerified  = parcel.claimStatus === 'VERIFIED';
   const isRejected  = parcel.claimStatus === 'REJECTED';
-  const isCI = ['circle_inspector', 'anchalNirikshak', 'kanungo'].includes(user?.role ?? '');
-  const isFinalized = (isVerified && !isCI && actionDone !== 'CI_APPROVED') || isRejected;
+  const isFinalized = (isVerified && !isTehsildar && !isCI && actionDone !== 'VERIFIED') || (isRejected && actionDone !== 'VERIFIED');
 
   return (
     <div className="flex h-screen bg-[#F8FAFC] overflow-hidden">
