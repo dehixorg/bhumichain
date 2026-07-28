@@ -453,9 +453,9 @@ router.get(
   async (req, res) => {
     try {
       let status = '';
-      if (req.user.role === ROLES.ANCHAL_NIRIKSHAK) {
+      if (['anchalNirikshak', 'circle_inspector', 'kanungo', ROLES.ANCHAL_NIRIKSHAK].includes(req.user.role)) {
         status = 'SCAN_PENDING_SRO';
-      } else if (req.user.role === ROLES.ANCHAL_ADHIKARI) {
+      } else if (['anchalAdhikari', 'circle_officer', 'tehsildar', ROLES.ANCHAL_ADHIKARI].includes(req.user.role)) {
         status = 'SCAN_PENDING_TEHSILDAR';
       }
 
