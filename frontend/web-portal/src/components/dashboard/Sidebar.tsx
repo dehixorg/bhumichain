@@ -53,7 +53,9 @@ export default function Sidebar({ demoMode }: Props = {}) {
 
   let nav = user && isOfficer() ? NAV_OFFICER : NAV_CITIZEN;
   if (user?.role === 'karmachari') {
-    nav = nav.filter((item) => item.label !== 'Mutation Manager' && item.label !== 'Mutations' && item.label !== 'Succession');
+    nav = nav.filter((item) => !['Mutation Manager', 'Mutations', 'Succession', 'Analytics', 'Janganana'].includes(item.label));
+  } else if (user?.role === 'circle_inspector') {
+    nav = nav.filter((item) => !['Analytics', 'Janganana'].includes(item.label));
   }
   const initials = user?.name?.split(' ').filter(Boolean).map(w => w[0]).slice(0, 2).join('').toUpperCase() || 'U';
 
