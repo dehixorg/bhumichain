@@ -62,6 +62,7 @@ const ROLE_ACTION_STATUSES: Record<string, string[]> = {
   karmachari:          ['CLAIM_SUBMITTED', 'PENDING_PATWARI_VERIFICATION', 'PENDING_PATWARI_APPROVAL', 'STAMP_DUTY_PAID'],
   patwari:             ['CLAIM_SUBMITTED', 'PENDING_PATWARI_VERIFICATION', 'PENDING_PATWARI_APPROVAL', 'STAMP_DUTY_PAID'],
   circle_inspector:    ['UNDER_REVIEW', 'SCAN_PENDING_SRO', 'PENDING_CI_APPROVAL', 'PENDING_SRO_EXECUTION', 'PATWARI_APPROVED'],
+  anchalNirikshak:     ['UNDER_REVIEW', 'SCAN_PENDING_SRO', 'PENDING_CI_APPROVAL', 'PENDING_SRO_EXECUTION', 'PATWARI_APPROVED'],
   kanungo:             ['UNDER_REVIEW', 'SCAN_PENDING_SRO', 'PENDING_CI_APPROVAL', 'PENDING_SRO_EXECUTION', 'PATWARI_APPROVED'],
   circle_officer:      ['CI_APPROVED', 'SCAN_PENDING_TEHSILDAR', 'SUCCESSION_PENDING_TEHSILDAR', 'PENDING_TEHSILDAR_APPROVAL', 'PENDING_TEHSILDAR'],
   anchalAdhikari:      ['CI_APPROVED', 'SCAN_PENDING_TEHSILDAR', 'SUCCESSION_PENDING_TEHSILDAR', 'PENDING_TEHSILDAR_APPROVAL', 'PENDING_TEHSILDAR'],
@@ -103,11 +104,30 @@ function formatArea(ha?: number): string {
 }
 
 function roleLabel(role: string): string {
-  return { circle_officer: 'Circle Officer', circle_inspector: 'Kanungo / CI', karmachari: 'Patwari (Karmachari)', kotwal: 'Kotwal' }[role] ?? role;
+  return {
+    circle_officer:   'Circle Officer (Tehsildar)',
+    anchalAdhikari:   'Circle Officer (Tehsildar)',
+    tehsildar:        'Circle Officer (Tehsildar)',
+    circle_inspector: 'Kanungo (Anchal Nirikshak)',
+    anchalNirikshak:  'Kanungo (Anchal Nirikshak)',
+    kanungo:          'Kanungo (Anchal Nirikshak)',
+    karmachari:       'Patwari (Karmachari)',
+    patwari:          'Patwari (Karmachari)',
+    kotwal:           'Kotwal'
+  }[role] ?? role;
 }
 
 function actionLabel(role: string): string {
-  return { karmachari: 'Send to CI', circle_inspector: 'CI Review', circle_officer: 'Final Approve' }[role] ?? 'Review';
+  return {
+    karmachari:       'Send to Kanungo',
+    patwari:          'Send to Kanungo',
+    circle_inspector: 'Kanungo Review',
+    anchalNirikshak:  'Kanungo Review',
+    kanungo:          'Kanungo Review',
+    circle_officer:   'Tehsildar Direct Approve',
+    anchalAdhikari:   'Tehsildar Direct Approve',
+    tehsildar:        'Tehsildar Direct Approve'
+  }[role] ?? 'Review';
 }
 
 // ── Queue Row ─────────────────────────────────────────────────────────────────
@@ -543,8 +563,8 @@ export default function OfficerDashboardPage() {
                       </td>
                     </tr>
                   ) : (
-                    filtered.map(item => (
-                      <QueueRow key={item.dlpiId} item={item} userRole={user?.role ?? 'karmachari'} fetchQueue={fetchQueue} />
+                    filtered.map((item, idx) => (
+                      <QueueRow key={`${item.dlpiId || 'DLPI'}-${(item as any).transferId || (item as any).caseId || idx}`} item={item} userRole={user?.role ?? 'karmachari'} fetchQueue={fetchQueue} />
                     ))
                   )}
                 </tbody>
