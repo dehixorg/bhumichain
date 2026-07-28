@@ -363,6 +363,10 @@ export default function OfficerDashboardPage() {
                 } as any);
               }
             }
+          });
+        }
+      }
+
       // Ensure clean field values for all queue items
       mergedQueue.forEach(item => {
         const cleanNum = (item.dlpiId || '').replace(/\D/g, '') || '215';
