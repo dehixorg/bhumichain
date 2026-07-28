@@ -394,13 +394,18 @@ function ActionPanel({
     if (data) { setShowReject(false); onActionDone('REJECTED'); }
   }
 
+  // Role helpers
+  const isCI = ['circle_inspector', 'anchalNirikshak', 'kanungo'].includes(userRole);
+  const isPatwari = ['karmachari', 'patwari'].includes(userRole);
+  const isTehsildar = ['circle_officer', 'anchalAdhikari', 'tehsildar'].includes(userRole);
+
   // Determine what this officer can do
-  const canAct = {
-    karmachari:          ['CLAIM_SUBMITTED', 'UNDER_REVIEW', 'CI_APPROVED'].includes(claimStatus),
-    circle_inspector: claimStatus === 'UNDER_REVIEW',
-    circle_officer:        ['CLAIM_SUBMITTED', 'UNDER_REVIEW', 'CI_APPROVED'].includes(claimStatus),
-    kotwal:           ['CLAIM_SUBMITTED', 'UNDER_REVIEW', 'CI_APPROVED'].includes(claimStatus),
-  }[userRole] ?? false;
+  const canAct = (
+    (isPatwari   && ['CLAIM_SUBMITTED', 'UNDER_REVIEW', 'CI_APPROVED'].includes(claimStatus)) ||
+    (isCI        && ['CLAIM_SUBMITTED', 'UNDER_REVIEW', 'PATWARI_APPROVED', 'PENDING_CI_APPROVAL', 'SCAN_PENDING_SRO'].includes(claimStatus)) ||
+    (isTehsildar && ['CLAIM_SUBMITTED', 'UNDER_REVIEW', 'CI_APPROVED', 'SCAN_PENDING_TEHSILDAR', 'PENDING_TEHSILDAR_APPROVAL'].includes(claimStatus)) ||
+    (userRole === 'kotwal')
+  );
 
   if (!canAct) {
     return (
@@ -444,43 +449,43 @@ function ActionPanel({
         )}
 
         {/* Checklist warning */}
-        {!allChecked && (userRole === 'karmachari' || userRole === 'circle_inspector') && (
-          <div className="flex items-start gap-2 p-3 rounded-xl bg-yellow-900/20 border border-yellow-800 text-yellow-400 text-xs">
-            <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+        {!allChecked && (isPatwari || isCI) && (
+          <div className="flex items-start gap-2 p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs font-medium">
+            <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-amber-600" />
             Complete the verification checklist before approving to maintain audit trail.
           </div>
         )}
 
-        {/* Karmachari */}
-        {['karmachari', 'circle_inspector', 'circle_officer'].includes(userRole) && claimStatus === 'CLAIM_SUBMITTED' && (
+        {/* Karmachari / Patwari */}
+        {(isPatwari || isCI || isTehsildar) && claimStatus === 'CLAIM_SUBMITTED' && (
           <button
             onClick={handleSubmitForReview}
             disabled={busy}
             className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-[#0F4C81] hover:bg-[#0a3566] text-white font-semibold transition-colors disabled:opacity-50"
           >
             {busy ? <RotateCcw className="w-4 h-4 animate-spin" /> : <ChevronRight className="w-4 h-4" />}
-            {busy ? 'Submitting…' : 'Send to Circle Inspector'}
+            {busy ? 'Submitting…' : 'Field Inspection Complete — Send to CI / Kanungo'}
           </button>
         )}
 
-        {/* CI */}
-        {['karmachari', 'circle_inspector', 'circle_officer'].includes(userRole) && claimStatus === 'UNDER_REVIEW' && (
+        {/* CI / Kanungo */}
+        {(isCI || isPatwari || isTehsildar) && ['UNDER_REVIEW', 'PATWARI_APPROVED', 'PENDING_CI_APPROVAL'].includes(claimStatus) && (
           <button
             onClick={handleCIApprove}
             disabled={busy}
             className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-[#0F4C81] hover:bg-[#0a3566] text-white font-semibold transition-colors disabled:opacity-50"
           >
             {busy ? <RotateCcw className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
-            {busy ? 'Approving…' : 'CI Approve — Send to Circle Officer'}
+            {busy ? 'Approving…' : 'Kanungo (CI) Approve — Send to Circle Officer'}
           </button>
         )}
 
-        {/* Circle Officer */}
-        {['karmachari', 'circle_inspector', 'circle_officer'].includes(userRole) && claimStatus === 'CI_APPROVED' && (
+        {/* Circle Officer / Tehsildar */}
+        {(isTehsildar || isCI || isPatwari) && claimStatus === 'CI_APPROVED' && (
           <button
             onClick={() => setShowESign(true)}
             disabled={busy}
-            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-green-700 hover:bg-green-600 text-white font-semibold transition-colors disabled:opacity-50"
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-semibold transition-colors disabled:opacity-50"
           >
             <Zap className="w-4 h-4" />
             Final Approve with eSign → VERIFIED
