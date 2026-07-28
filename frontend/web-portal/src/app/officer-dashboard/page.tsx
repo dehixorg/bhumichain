@@ -55,6 +55,8 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; 
   PENDING_SRO_EXECUTION:        { label: 'Kanungo (CI) Execution', color: 'text-purple-700', bg: 'bg-purple-50 border-purple-200', icon: Clock },
   PENDING_TEHSILDAR_APPROVAL:   { label: 'Circle Officer Approval', color: 'text-orange-700', bg: 'bg-orange-50 border-orange-200', icon: Clock },
   PENDING_TEHSILDAR:            { label: 'Circle Officer Approval', color: 'text-orange-700', bg: 'bg-orange-50 border-orange-200', icon: Clock },
+  PENDING_BUYER_CONSENT:        { label: 'Awaiting Buyer eSign',   color: 'text-amber-700', bg: 'bg-amber-50 border-amber-200', icon: Clock },
+  COMPLETED:                    { label: 'Completed (Recorded on Chain)', color: 'text-emerald-700', bg: 'bg-emerald-50 border-emerald-200', icon: CheckCircle },
 };
 
 // Role → which statuses this officer should act on
@@ -680,7 +682,15 @@ export default function OfficerDashboardPage() {
                         <tr key={tId || idx} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
                           <td className="px-4 py-3 font-mono text-[#0F4C81] text-xs font-semibold">{tId}</td>
                           <td className="px-4 py-3 text-gray-900 font-mono text-sm">{dId}</td>
-                          <td className="px-4 py-3 text-xs text-amber-700 font-semibold">{st}</td>
+                          <td className="px-4 py-3">
+                            <span className={clsx(
+                              'px-2.5 py-1 text-xs font-semibold rounded-full border inline-flex items-center gap-1.5',
+                              (STATUS_CONFIG[st]?.bg || 'bg-amber-50 border-amber-200'),
+                              (STATUS_CONFIG[st]?.color || 'text-amber-700')
+                            )}>
+                              {STATUS_CONFIG[st]?.label || st}
+                            </span>
+                          </td>
                           <td className="px-4 py-3">
                              <Link
                                href={`/officer-dashboard/review-transfer/${tId}`}
