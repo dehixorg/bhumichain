@@ -152,7 +152,14 @@ router.post(
           String(declaredValueINR),
           String(oracleValueINR),
         ]);
-        if (chainRes) transferId = chainRes;
+        if (chainRes) {
+          if (typeof chainRes === 'string') {
+            transferId = chainRes;
+          } else if (chainRes && typeof chainRes === 'object') {
+            transferId = chainRes.transferId || chainRes.id || chainRes.txId || `TX-${dlpiId}-${Math.floor(1000 + Math.random() * 9000)}`;
+            if (typeof transferId !== 'string') transferId = String(transferId);
+          }
+        }
       } catch (chainErr) {
         console.warn(`[transfer initiate] chaincode fallback for ${dlpiId}:`, chainErr.message);
       }
@@ -232,8 +239,10 @@ router.get(
       } catch(e) {}
 
       const mergedMap = new Map();
-      onChainTransfers.forEach(t => mergedMap.set(t.transferId, t));
-      mockTransfers.forEach(t => mergedMap.set(t.transferId, t));
+      // Sanitize: skip records where transferId is not a valid non-object string
+      const isValidId = (id) => id && typeof id === 'string' && id !== '[object Object]' && !id.startsWith('[object');
+      onChainTransfers.filter(t => isValidId(t.transferId)).forEach(t => mergedMap.set(t.transferId, t));
+      mockTransfers.filter(t => isValidId(t.transferId)).forEach(t => mergedMap.set(t.transferId, t));
 
       const myTransfers = Array.from(mergedMap.values()).filter(t => {
         if (t.status !== 'PENDING_BUYER_CONSENT') return false;
@@ -355,8 +364,9 @@ router.get(
       } catch(e) {}
 
       const mergedMap = new Map();
-      transfers.forEach(t => mergedMap.set(t.transferId, t));
-      mockTransfers.forEach(t => mergedMap.set(t.transferId, t));
+      const isValidId = (id) => id && typeof id === 'string' && id !== '[object Object]' && !id.startsWith('[object');
+      transfers.filter(t => isValidId(t.transferId)).forEach(t => mergedMap.set(t.transferId, t));
+      mockTransfers.filter(t => isValidId(t.transferId)).forEach(t => mergedMap.set(t.transferId, t));
       
       let transferList = Array.from(mergedMap.values());
 

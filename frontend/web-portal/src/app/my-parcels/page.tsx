@@ -219,7 +219,15 @@ export default function CitizenDashboard() {
     }
   };
 
-  const handleBuyerESign = async (transferId: string) => {
+  const handleBuyerESign = async (transferIdRaw: any) => {
+    // Defensive: extract string transferId even if an object was passed
+    const transferId: string = typeof transferIdRaw === 'string'
+      ? transferIdRaw
+      : (transferIdRaw?.transferId || transferIdRaw?.id || String(transferIdRaw));
+    if (!transferId || transferId === '[object Object]') {
+      toast.error('Invalid transfer ID — please refresh the page and try again.');
+      return;
+    }
     if (!user) return;
     const userAadhaar = ((user as any).aadhaarNumber || user.aadhaarNumber || '').replace(/\D/g, '');
     if (!userAadhaar || userAadhaar.length !== 12) {
