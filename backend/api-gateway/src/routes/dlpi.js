@@ -449,11 +449,11 @@ router.get('/my-parcels', authenticate, requireRole(ROLES.CITIZEN), async (req, 
 router.get(
   '/pending-review',
   authenticate,
-  requireRole(...CAN_APPROVE_MUTATION, ROLES.KARMACHARI),
+  requireRole(...CAN_APPROVE_MUTATION, ROLES.KARMACHARI, 'patwari', 'circle_inspector', 'circle_officer', 'tehsildar'),
   async (req, res) => {
     try {
       let status = '';
-      if (['anchalNirikshak', 'circle_inspector', 'kanungo', ROLES.ANCHAL_NIRIKSHAK].includes(req.user.role)) {
+      if (['anchalNirikshak', 'circle_inspector', 'kanungo', 'patwari', 'karmachari', ROLES.ANCHAL_NIRIKSHAK, ROLES.KARMACHARI].includes(req.user.role)) {
         status = 'SCAN_PENDING_SRO';
       } else if (['anchalAdhikari', 'circle_officer', 'tehsildar', ROLES.ANCHAL_ADHIKARI].includes(req.user.role)) {
         status = 'SCAN_PENDING_TEHSILDAR';
@@ -465,7 +465,7 @@ router.get(
         const scans = response.data || [];
         
         // Transform the off-chain scans to the same format expected by the frontend
-        const adapted = scans.map(s => {
+        const adapted = scans.map((s, idx) => {
           const ext = s.extraction || {};
           const cleanNum = (s.suggestedDlpiId || '').replace(/\D/g, '') || '215';
           const owner = (ext.khatedars && ext.khatedars.length > 0 && ext.khatedars[0].name && ext.khatedars[0].name !== 'Unknown')
