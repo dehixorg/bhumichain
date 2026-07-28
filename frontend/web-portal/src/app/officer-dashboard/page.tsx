@@ -72,14 +72,15 @@ const ROLE_ACTION_STATUSES: Record<string, string[]> = {
   kotwal:              ['CLAIM_SUBMITTED', 'UNDER_REVIEW', 'CI_APPROVED'],
 };
 
-type TabKey = 'all' | 'claim_submitted' | 'under_review' | 'ci_approved' | 'pending_scans';
+type TabKey = 'all' | 'claim_submitted' | 'under_review' | 'ci_approved' | 'pending_scans' | 'approved_completed';
 
 const TABS: { key: TabKey; label: string; statuses: string[] }[] = [
-  { key: 'all',            label: 'All',           statuses: ['CLAIM_SUBMITTED', 'UNDER_REVIEW', 'CI_APPROVED', 'DISPUTED', 'SCAN_PENDING_SRO', 'SCAN_PENDING_TEHSILDAR', 'SUCCESSION_PENDING_TEHSILDAR', 'PENDING_PATWARI_VERIFICATION', 'PENDING_CI_APPROVAL', 'PATWARI_APPROVED', 'PENDING_TEHSILDAR_APPROVAL'] },
-  { key: 'claim_submitted',label: 'Claim Submitted', statuses: ['CLAIM_SUBMITTED', 'PENDING_PATWARI_VERIFICATION'] },
-  { key: 'under_review',   label: 'Under Review',  statuses: ['UNDER_REVIEW', 'PATWARI_APPROVED'] },
-  { key: 'ci_approved',    label: 'CI Approved',   statuses: ['CI_APPROVED', 'PENDING_TEHSILDAR_APPROVAL', 'PENDING_CI_APPROVAL'] },
-  { key: 'pending_scans',  label: 'Pending Scans', statuses: ['SCAN_PENDING_SRO', 'SCAN_PENDING_TEHSILDAR', 'SUCCESSION_PENDING_TEHSILDAR'] },
+  { key: 'all',                label: 'All Active Queue', statuses: ['CLAIM_SUBMITTED', 'UNDER_REVIEW', 'CI_APPROVED', 'DISPUTED', 'SCAN_PENDING_SRO', 'SCAN_PENDING_TEHSILDAR', 'SUCCESSION_PENDING_TEHSILDAR', 'PENDING_PATWARI_VERIFICATION', 'PENDING_CI_APPROVAL', 'PATWARI_APPROVED', 'PENDING_TEHSILDAR_APPROVAL'] },
+  { key: 'claim_submitted',    label: 'Claim Submitted', statuses: ['CLAIM_SUBMITTED', 'PENDING_PATWARI_VERIFICATION'] },
+  { key: 'under_review',       label: 'Under Review',    statuses: ['UNDER_REVIEW', 'PATWARI_APPROVED'] },
+  { key: 'ci_approved',        label: 'CI Approved',     statuses: ['CI_APPROVED', 'PENDING_TEHSILDAR_APPROVAL', 'PENDING_CI_APPROVAL'] },
+  { key: 'pending_scans',      label: 'Pending Scans',   statuses: ['SCAN_PENDING_SRO', 'SCAN_PENDING_TEHSILDAR', 'SUCCESSION_PENDING_TEHSILDAR'] },
+  { key: 'approved_completed', label: 'Approved & Completed', statuses: ['COMPLETED', 'MUTATED_AND_TRANSFERRED', 'VERIFIED'] },
 ];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -656,12 +657,12 @@ export default function OfficerDashboardPage() {
             </div>
           )}
 
-          {/* Pending Transfers Queue */}
-          {transfersQueue.length > 0 && (
+          {/* Pending Property Transfers (In Progress Only) */}
+          {transfersQueue.filter(t => !['COMPLETED', 'MUTATED_AND_TRANSFERRED', 'VERIFIED'].includes(t.status)).length > 0 && activeTab !== 'approved_completed' && (
             <div className="bg-white border border-gray-200 rounded-xl overflow-hidden mt-6 shadow-sm">
               <div className="flex items-center gap-2 border-b border-gray-100 px-4 py-3 bg-[#0F4C81]/5">
                 <FileText className="w-4 h-4 text-[#0F4C81]" />
-                <h2 className="text-sm font-bold text-gray-900">Pending Property Transfers (Sales)</h2>
+                <h2 className="text-sm font-bold text-gray-900">Pending Property Transfers (In Progress)</h2>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full">
@@ -674,7 +675,7 @@ export default function OfficerDashboardPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {transfersQueue.map((item, idx) => {
+                    {transfersQueue.filter(t => !['COMPLETED', 'MUTATED_AND_TRANSFERRED', 'VERIFIED'].includes(t.status)).map((item, idx) => {
                       const tId = getStr(item.transferId || item);
                       const dId = getStr(item.dlpiId);
                       const st  = getStr(item.status);
@@ -697,6 +698,60 @@ export default function OfficerDashboardPage() {
                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors bg-[#0F4C81] hover:bg-[#0c3d67] text-white"
                              >
                                Review
+                               <ChevronRight className="w-3 h-3" />
+                             </Link>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* Approved & Completed Transfers (Separate Table) */}
+          {transfersQueue.filter(t => ['COMPLETED', 'MUTATED_AND_TRANSFERRED', 'VERIFIED'].includes(t.status)).length > 0 && (activeTab === 'all' || activeTab === 'approved_completed') && (
+            <div className="bg-white border border-emerald-200 rounded-xl overflow-hidden mt-6 shadow-sm">
+              <div className="flex items-center justify-between border-b border-emerald-100 px-4 py-3 bg-emerald-50/50">
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-emerald-600" />
+                  <h2 className="text-sm font-bold text-gray-900">Approved & Completed Transfers (Recorded on Fabric Chain)</h2>
+                </div>
+                <span className="text-xs font-bold text-emerald-700 bg-emerald-100/70 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                  {transfersQueue.filter(t => ['COMPLETED', 'MUTATED_AND_TRANSFERRED', 'VERIFIED'].includes(t.status)).length} Completed
+                </span>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-gray-100 bg-gray-50 text-left text-xs font-bold text-gray-500 uppercase">
+                      <th className="px-4 py-2.5">Transfer ID</th>
+                      <th className="px-4 py-2.5">Parcel DLPI</th>
+                      <th className="px-4 py-2.5">Status</th>
+                      <th className="px-4 py-2.5">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {transfersQueue.filter(t => ['COMPLETED', 'MUTATED_AND_TRANSFERRED', 'VERIFIED'].includes(t.status)).map((item, idx) => {
+                      const tId = getStr(item.transferId || item);
+                      const dId = getStr(item.dlpiId);
+                      return (
+                        <tr key={tId || idx} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                          <td className="px-4 py-3 font-mono text-[#0F4C81] text-xs font-semibold">{tId}</td>
+                          <td className="px-4 py-3 text-gray-900 font-mono text-sm">{dId}</td>
+                          <td className="px-4 py-3">
+                            <span className="px-2.5 py-1 text-xs font-bold rounded-full border bg-emerald-50 border-emerald-200 text-emerald-700 inline-flex items-center gap-1.5">
+                              <CheckCircle className="w-3.5 h-3.5 text-emerald-600" />
+                              Completed (Recorded on Chain)
+                            </span>
+                          </td>
+                          <td className="px-4 py-3">
+                             <Link
+                               href={`/officer-dashboard/review-transfer/${tId}`}
+                               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors bg-gray-100 hover:bg-gray-200 text-gray-700"
+                             >
+                               View Details
                                <ChevronRight className="w-3 h-3" />
                              </Link>
                           </td>
