@@ -463,13 +463,14 @@ router.post(
 router.post(
   '/:transferId/approve/patwari',
   authenticate,
-  requireRole(ROLES.KARMACHARI, ROLES.ANCHAL_ADHIKARI, ROLES.SUPER_ADMIN),
+  requireRole(ROLES.KARMACHARI, ROLES.PATWARI, 'karmachari', 'patwari', ROLES.ANCHAL_ADHIKARI, ROLES.SUPER_ADMIN),
   async (req, res) => {
+    const tParam = req.params.transferId;
     try {
       let result = { success: true, status: 'PENDING_CI_APPROVAL' };
       try {
         const chainRes = await submit('property-transfer', 'ApproveByPatwari', [
-          req.params.transferId, req.user.aadhaarNumber || 'mock-patwari-hash',
+          tParam, req.user.aadhaarNumber || 'mock-patwari-hash',
         ]);
         if (chainRes) result = chainRes;
       } catch (chainErr) {}
@@ -478,12 +479,12 @@ router.post(
         const fs = require('fs');
         let transfers = JSON.parse(fs.readFileSync('/tmp/bhumichain_mock_transfers.json', 'utf8'));
         if (Array.isArray(transfers)) {
-          transfers = transfers.map(t => t.transferId === req.params.transferId ? { ...t, status: 'PENDING_CI_APPROVAL' } : t);
+          transfers = transfers.map(t => (t.transferId === tParam || t.dlpiId === tParam) ? { ...t, status: 'PENDING_CI_APPROVAL' } : t);
           fs.writeFileSync('/tmp/bhumichain_mock_transfers.json', JSON.stringify(transfers, null, 2));
         }
       } catch(e) {}
 
-      broadcast('PatwariApproved', { transferId: req.params.transferId });
+      broadcast('PatwariApproved', { transferId: tParam });
       res.json(result);
     } catch (e) {
       res.json({ success: true, status: 'PENDING_CI_APPROVAL' });
@@ -495,13 +496,14 @@ router.post(
 router.post(
   '/:transferId/approve/ci',
   authenticate,
-  requireRole(ROLES.ANCHAL_NIRIKSHAK, ROLES.KANUNGO, ROLES.ANCHAL_ADHIKARI, ROLES.SUPER_ADMIN),
+  requireRole(ROLES.ANCHAL_NIRIKSHAK, ROLES.KANUNGO, 'anchalNirikshak', 'kanungo', 'circle_inspector', ROLES.ANCHAL_ADHIKARI, ROLES.SUPER_ADMIN),
   async (req, res) => {
+    const tParam = req.params.transferId;
     try {
       let result = { success: true, status: 'PENDING_SRO_EXECUTION' };
       try {
         const chainRes = await submit('property-transfer', 'ApproveByCI', [
-          req.params.transferId, req.user.aadhaarNumber || 'mock-ci-hash',
+          tParam, req.user.aadhaarNumber || 'mock-ci-hash',
         ]);
         if (chainRes) result = chainRes;
       } catch(e) {}
@@ -510,12 +512,12 @@ router.post(
         const fs = require('fs');
         let transfers = JSON.parse(fs.readFileSync('/tmp/bhumichain_mock_transfers.json', 'utf8'));
         if (Array.isArray(transfers)) {
-          transfers = transfers.map(t => t.transferId === req.params.transferId ? { ...t, status: 'PENDING_SRO_EXECUTION' } : t);
+          transfers = transfers.map(t => (t.transferId === tParam || t.dlpiId === tParam) ? { ...t, status: 'PENDING_SRO_EXECUTION' } : t);
           fs.writeFileSync('/tmp/bhumichain_mock_transfers.json', JSON.stringify(transfers, null, 2));
         }
       } catch(e) {}
 
-      broadcast('CIApproved', { transferId: req.params.transferId });
+      broadcast('CIApproved', { transferId: tParam });
       res.json(result);
     } catch (e) {
       res.json({ success: true, status: 'PENDING_SRO_EXECUTION' });
@@ -529,12 +531,13 @@ router.post(
   authenticate,
   requireRole(ROLES.SRO, ROLES.ANCHAL_ADHIKARI, ROLES.SUPER_ADMIN),
   async (req, res) => {
+    const tParam = req.params.transferId;
     try {
       const newTitleCID = req.body.newTitleCID || 'QmAtomicMutationTitleDeedCID' + Date.now();
       let result = { success: true, status: 'PENDING_TEHSILDAR_APPROVAL', newTitleCID };
       try {
         const chainRes = await submit('property-transfer', 'ApproveBySRO', [
-          req.params.transferId, newTitleCID, req.user.aadhaarNumber || 'mock-sro-hash',
+          tParam, newTitleCID, req.user.aadhaarNumber || 'mock-sro-hash',
         ]);
         if (chainRes) result = chainRes;
       } catch(e) {}
@@ -543,12 +546,12 @@ router.post(
         const fs = require('fs');
         let transfers = JSON.parse(fs.readFileSync('/tmp/bhumichain_mock_transfers.json', 'utf8'));
         if (Array.isArray(transfers)) {
-          transfers = transfers.map(t => t.transferId === req.params.transferId ? { ...t, status: 'PENDING_TEHSILDAR_APPROVAL', newTitleCID } : t);
+          transfers = transfers.map(t => (t.transferId === tParam || t.dlpiId === tParam) ? { ...t, status: 'PENDING_TEHSILDAR_APPROVAL', newTitleCID } : t);
           fs.writeFileSync('/tmp/bhumichain_mock_transfers.json', JSON.stringify(transfers, null, 2));
         }
       } catch(e) {}
 
-      broadcast('SROExecuted', { transferId: req.params.transferId, newTitleCID });
+      broadcast('SROExecuted', { transferId: tParam, newTitleCID });
       res.json(result);
     } catch (e) {
       res.json({ success: true, status: 'PENDING_TEHSILDAR_APPROVAL' });
