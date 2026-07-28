@@ -683,7 +683,6 @@ export default function SuccessionPage() {
                           className="mt-4 w-full bg-[#0F4C81] hover:bg-[#0a3860] text-white font-semibold py-2.5 rounded-lg flex items-center justify-center gap-2 text-sm transition-colors">
                           <Upload className="w-4 h-4" /> Proceed to Upload Document <ArrowRight className="w-3.5 h-3.5" />
                         </button>
-                      )}
                     </div>
                   )}
                 </div>

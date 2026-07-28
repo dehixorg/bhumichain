@@ -737,6 +737,8 @@ export default function OfficerDashboardPage() {
                 </table>
               </div>
             </div>
+          )}
+
           {/* Pending Successions Queue (Only shown when not in approved_completed tab) */}
           {tab !== 'approved_completed' && (
             <div className="bg-white border border-gray-200 rounded-xl overflow-hidden mt-6 shadow-sm">
@@ -822,7 +824,8 @@ export default function OfficerDashboardPage() {
                 </tbody>
               </table>
             </div>
-          )}
+          </div>
+        )}
         </div>
       </main>
     </div>
