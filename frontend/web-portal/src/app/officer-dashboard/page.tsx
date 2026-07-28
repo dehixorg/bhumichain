@@ -464,7 +464,7 @@ export default function OfficerDashboardPage() {
       claimStatus: 'COMPLETED',
       submittedAt: t.completedAt || t.initiatedAt || new Date().toISOString(),
       claimedAt: t.completedAt || t.initiatedAt || new Date().toISOString(),
-      priority: 'NORMAL',
+      priority: 'NORMAL' as const,
       isTribal: false,
       isCoparcenary: false,
       scanId: null,
