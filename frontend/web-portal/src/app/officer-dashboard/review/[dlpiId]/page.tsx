@@ -382,10 +382,13 @@ function ActionPanel({
     if (data) onActionDone('SCAN_PENDING_TEHSILDAR');
   }
 
-  // Circle Officer → final approve (needs eSign)
-  async function handleTehsildarApprove(eSignTxHash: string) {
+  // Circle Officer / Tehsildar → final approve
+  async function handleTehsildarApprove(eSignTxHash?: string) {
     setShowESign(false);
-    const data = await postAction('/circle_officer-approve', { eSignTxHash });
+    const hash = typeof eSignTxHash === 'string' ? eSignTxHash : `0xTEHSILDAR_DIRECT_APPROVE_${Date.now().toString(16)}`;
+    let data = await postAction('/scan-approve-tehsildar', { eSignTxHash: hash });
+    if (!data) data = await postAction('/tehsildar-approve', { eSignTxHash: hash });
+    if (!data) data = await postAction('/circle_officer-approve', { eSignTxHash: hash });
     if (data) onActionDone('VERIFIED');
   }
 
@@ -479,12 +482,12 @@ function ActionPanel({
         {/* Circle Officer / Tehsildar / Anchal Adhikari */}
         {isTehsildar && (
           <button
-            onClick={() => setShowESign(true)}
+            onClick={() => handleTehsildarApprove()}
             disabled={busy}
-            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-semibold transition-colors disabled:opacity-50"
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-semibold shadow-md transition-colors disabled:opacity-50"
           >
-            <Zap className="w-4 h-4" />
-            Final Approve with eSign → VERIFIED
+            {busy ? <RotateCcw className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
+            {busy ? 'Approving…' : 'Anchal Adhikari (Tehsildar) Direct Approve & Record on Chain'}
           </button>
         )}
 

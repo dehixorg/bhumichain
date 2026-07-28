@@ -855,7 +855,7 @@ router.post(
 router.post(
   '/:dlpiId/scan-approve-tehsildar',
   authenticate,
-  requireRole(ROLES.ANCHAL_ADHIKARI),
+  requireRole(ROLES.ANCHAL_ADHIKARI, 'anchalAdhikari', 'tehsildar', 'circle_officer'),
   dlpiParam,
   validate,
   async (req, res) => {
