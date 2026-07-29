@@ -670,18 +670,24 @@ app.post('/api/analyze', upload.any(), async (req, res) => {
       return res.status(502).json({ error: 'No response content from Azure OpenAI.' });
     }
 
+    // Parse the JSON response from Azure OpenAI
     let originalData;
     try {
       originalData = JSON.parse(content);
     } catch {
+      // If the response is not valid JSON, return a clear error to the client
       return res.status(502).json({
         error: 'Azure OpenAI returned invalid JSON.',
         raw: content,
       });
     }
 
+
+
     if (originalData.extraction_meta) {
-      originalData.extraction_meta.source_file = uploadedFile ? uploadedFile.originalname : 'uploaded_document.pdf';
+      originalData.extraction_meta.source_file = uploadedFile
+        ? uploadedFile.originalname
+        : 'uploaded_document.pdf';
       originalData.extraction_meta.pages_processed = numPages;
     }
 

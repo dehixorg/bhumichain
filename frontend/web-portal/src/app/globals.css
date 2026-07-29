@@ -62,8 +62,8 @@
   }
 
   ::selection {
-    background: rgba(15,76,129,.15);
-    color: #0F4C81;
+    background: #2563EB;
+    color: #FFFFFF;
   }
 
   ::-webkit-scrollbar { width: 6px; height: 6px; }

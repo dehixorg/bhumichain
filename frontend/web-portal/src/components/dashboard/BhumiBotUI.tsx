@@ -34,9 +34,20 @@ import {
   Compass,
   FileCheck2,
   Landmark,
+  RotateCw,
+  ChevronDown,
 } from 'lucide-react';
 import axios from 'axios';
-import { getUser, isOfficer } from '@/lib/auth';
+import { getUser, isOfficer, JWTUser } from '@/lib/auth';
+
+const ROLE_LABEL: Record<string, string> = {
+  circle_officer: 'Circle Officer',
+  circle_inspector: 'Kanungo / CI',
+  karmachari: 'Patwari (Karmachari)',
+  citizen: 'Citizen',
+  kotwal: 'Kotwal',
+  anchalNirikshak: 'Anchal Nirikshak',
+};
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -87,34 +98,139 @@ function BhumiBotAvatarInverted({ className = "w-10 h-10" }: { className?: strin
   );
 }
 
-// ─── Fresh System Prompt V5 Smart Legal Guidance Cards ─────────────────────────
+// ─── 24 Distinct Land Legal Recommendation Questions (6 Batches of 4) ─────────────
 
-const SYSTEM_V5_SMART_CARDS = [
+const NEW_LEGAL_RECOMMENDATIONS_POOL = [
+  // --- Batch 1: Succession & Inheritance ---
   {
-    title: 'Succession & Coparcenary Rights',
-    desc: 'Hindu Succession Act 2005 coparcenary rights, daughter inheritance & Supreme Court precedents',
-    query: 'What are the coparcenary inheritance rights of a daughter under Hindu Succession Act 2005?',
     category: 'Inheritance Law',
+    question: 'What are the coparcenary inheritance rights of a daughter under Hindu Succession Act 2005 after Supreme Court Vineeta Sharma ruling?',
     icon: Scale,
   },
   {
-    title: 'Registration vs. Revenue Mutation',
-    desc: 'Legal distinction between registered sale deed execution and government revenue mutation entries',
-    query: 'Explain the legal difference between registering a sale deed and applying for revenue land mutation.',
+    category: 'Inheritance Law',
+    question: 'How is agricultural land distributed among Class-I legal heirs when a landowner dies intestate without a Will?',
+    icon: BookOpen,
+  },
+  {
+    category: 'Inheritance Law',
+    question: 'Is a registered Will sufficient for revenue land mutation, or is a Probate/Succession Certificate mandatory?',
+    icon: FileText,
+  },
+  {
+    category: 'Property Partition',
+    question: 'What is the legal difference between a registered Partition Deed and an oral Family Settlement (Khandani Batwara)?',
+    icon: Scale,
+  },
+
+  // --- Batch 2: Property Transfer & Registration ---
+  {
     category: 'Property Transfer',
+    question: 'Why does a registered Sale Deed not automatically transfer revenue ownership without Jamabandi land mutation?',
     icon: Landmark,
   },
   {
-    title: 'Encumbrance & Mortgage Search',
-    desc: 'Section 57 Registration Act 1908, bank charges, court stay injunctions & EC verification',
-    query: 'How can I verify if a property has registered bank mortgages, court injunctions, or encumbrances?',
+    category: 'Property Transfer',
+    question: 'Can a property be legally sold using a General Power of Attorney (GPA) under Suraj Lamp Supreme Court ruling?',
+    icon: FileCheck2,
+  },
+  {
+    category: 'Stamp & Registration',
+    question: 'What happens if a sale deed is impounded under Section 47A for undervaluation below MVR guideline rates?',
     icon: ShieldCheck,
   },
   {
-    title: 'Document Evidence Legal Risk Analysis',
-    desc: 'Analyze uploaded 7/12 Satbara, Khatauni, or Sale Deed text for title defects & fraud indicators',
-    query: 'What legal details and potential defect indicators should I check when analyzing a land record document?',
+    category: 'Revenue Appeals',
+    question: 'How can a fraudulent revenue land mutation entry be challenged or cancelled before the DCLR / Revenue Collector?',
+    icon: AlertTriangle,
+  },
+
+  // --- Batch 3: Title Audit & Land Records ---
+  {
+    category: 'Title Audit',
+    question: 'How do I verify a 12-year chain of title ownership using Jamabandi, Khasra, and registered sale deeds?',
+    icon: Compass,
+  },
+  {
+    category: 'Revenue Records',
+    question: 'What legal procedure resolves discrepancies between Khatauni area records and physical survey plot boundaries?',
+    icon: Landmark,
+  },
+  {
+    category: 'Title Audit',
+    question: 'How can I verify whether a land parcel belongs to Gram Sabha, Gair Mazarua, or public easement rights?',
+    icon: AlertTriangle,
+  },
+  {
+    category: 'Document Audit',
+    question: 'What legal details and defect indicators should I check when analyzing a land record document text?',
     icon: FileCheck2,
+  },
+
+  // --- Batch 4: Regulations & Ceiling Laws ---
+  {
+    category: 'Land Regulations',
+    question: 'What ceiling limits and agricultural land purchasing restrictions apply to non-farmers under state revenue codes?',
+    icon: ShieldCheck,
+  },
+  {
+    category: 'Land Regulations',
+    question: 'How to verify Non-Agricultural (NA) land conversion permission and layout approval before plot purchase?',
+    icon: Landmark,
+  },
+  {
+    category: 'Land Regulations',
+    question: 'What statutory permissions are required before purchasing tribal or Scheduled Tribe (ST) land under land revenue acts?',
+    icon: ShieldCheck,
+  },
+  {
+    category: 'Revenue Records',
+    question: 'What is the statutory process to obtain certified copies of Khatiyan, Jamabandi, and Khasra map from Revenue Circle Office?',
+    icon: FileText,
+  },
+
+  // --- Batch 5: Encumbrance & Mortgage Search ---
+  {
+    category: 'Encumbrance Search',
+    question: 'How do I verify registered bank mortgages, court stay orders, or charges via Encumbrance Certificate (EC)?',
+    icon: ShieldCheck,
+  },
+  {
+    category: 'Encumbrance Search',
+    question: 'What legal procedure is required to remove or discharge a bank mortgage lien from revenue Jamabandi records?',
+    icon: ShieldCheck,
+  },
+  {
+    category: 'Litigation Risk',
+    question: 'How can a prospective buyer verify whether a property is involved in pending civil court litigation or injunctions?',
+    icon: AlertTriangle,
+  },
+  {
+    category: 'Encumbrance Search',
+    question: 'What is CERSAI registration and how does it protect property buyers against fraudulent multi-bank loans?',
+    icon: ShieldCheck,
+  },
+
+  // --- Batch 6: Boundary Disputes & Land Rights ---
+  {
+    category: 'Boundary Dispute',
+    question: 'What is the official legal procedure for boundary demarcation (Napi) and removing illegal land encroachment?',
+    icon: Landmark,
+  },
+  {
+    category: 'Dispute Risk',
+    question: 'What legal conditions must be proven under Article 65 Limitation Act to claim or defend 12-year Adverse Possession?',
+    icon: Scale,
+  },
+  {
+    category: 'Land Rights',
+    question: 'Does a co-sharer or adjoining tenant have legal pre-emption rights to buy land before third-party purchasers?',
+    icon: Compass,
+  },
+  {
+    category: 'Boundary Dispute',
+    question: 'How can an illegal boundary wall obstruction or easement right violation be removed via Circle Officer proceedings?',
+    icon: AlertTriangle,
   },
 ];
 
@@ -130,9 +246,17 @@ export default function BhumiBotUI({ className }: BhumiBotUIProps) {
   const [editingTitle, setEditingTitle] = useState('');
   const [portalLink, setPortalLink] = useState('/my-parcels');
 
+  const [user, setUser] = useState<JWTUser | null>(null);
+
   useEffect(() => {
     setMounted(true);
+    const u = getUser();
+    setUser(u);
   }, []);
+
+  const userInitials = user?.name
+    ? user.name.split(' ').filter(Boolean).map((w) => w[0]).slice(0, 2).join('').toUpperCase()
+    : 'U';
 
   // Popover state for collapsed sidebar icons
   const [activeFlyout, setActiveFlyout] = useState<'pinned' | 'recents' | 'search' | null>(null);
@@ -222,11 +346,38 @@ export default function BhumiBotUI({ className }: BhumiBotUIProps) {
     scrollToBottom();
   }, [messages, isTyping]);
 
-  // Clear un-sent attachment and input whenever switching or creating chat threads
+  const heroTextareaRef = useRef<HTMLTextAreaElement>(null);
+  const bottomTextareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const adjustTextareaHeight = (el: HTMLTextAreaElement | null) => {
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${Math.min(el.scrollHeight, 180)}px`;
+  };
+
+  const [batchIndex, setBatchIndex] = useState(0);
+
+  const shuffleRecommendations = useCallback(() => {
+    setBatchIndex((prev) => (prev + 1) % 6);
+  }, []);
+
+  const currentRecommendations = React.useMemo(() => {
+    const start = (batchIndex * 4) % NEW_LEGAL_RECOMMENDATIONS_POOL.length;
+    return NEW_LEGAL_RECOMMENDATIONS_POOL.slice(start, start + 4);
+  }, [batchIndex]);
+
+  // Reset input, attachment, and adjust textarea height on thread switch
   useEffect(() => {
     setAttachment(null);
     setInput('');
+    if (heroTextareaRef.current) adjustTextareaHeight(heroTextareaRef.current);
+    if (bottomTextareaRef.current) adjustTextareaHeight(bottomTextareaRef.current);
   }, [activeThreadId]);
+
+  useEffect(() => {
+    if (heroTextareaRef.current) adjustTextareaHeight(heroTextareaRef.current);
+    if (bottomTextareaRef.current) adjustTextareaHeight(bottomTextareaRef.current);
+  }, [input]);
 
   const handleNewChat = () => {
     if (speakingId) {
@@ -473,99 +624,139 @@ export default function BhumiBotUI({ className }: BhumiBotUIProps) {
   return (
     <div className={clsx('flex h-full w-full bg-[#F8FAFC] font-sans text-slate-900 antialiased rounded-2xl border border-slate-200/90 shadow-2xl overflow-hidden relative', className)}>
       
-      {/* ── 1. Royal Navy Sidebar (#0F4C81) ── */}
+      {/* ── 1. Royal Navy Sidebar (#0F4C81) with Subtle Tiranga Accent ── */}
       <div
         className={clsx(
           'bg-[#0F4C81] text-white flex flex-col border-r border-[#0F4C81]/30 transition-all duration-300 shrink-0 z-20 shadow-xl overflow-visible relative',
           sidebarOpen ? 'w-64 md:w-72' : 'w-14'
         )}
       >
+        {/* Sleek Top Indian Tricolor (Tiranga) Accent Line */}
+        <div className="h-1 w-full bg-gradient-to-r from-[#FF9933] via-white to-[#138808] shrink-0" />
+
         {!sidebarOpen ? (
-          <div className="flex flex-col items-center py-3.5 space-y-3.5 h-full relative">
-            <button
-              onClick={() => setSidebarOpen(true)}
-              className="p-2 hover:bg-white/15 rounded-xl text-white transition cursor-pointer"
-              title="Expand Sidebar"
-            >
-              <BhumiBotAvatarInverted className="w-6 h-6 rounded-md shadow-sm" />
-            </button>
-
-            <button
-              onClick={handleNewChat}
-              className="p-2.5 hover:bg-white/15 rounded-xl text-white/90 hover:text-white transition cursor-pointer"
-              title="New Legal Analysis"
-            >
-              <Plus className="w-5 h-5" />
-            </button>
-
-            <div className="relative">
+          <div className="flex flex-col items-center py-3 h-full relative justify-between">
+            <div className="flex flex-col items-center space-y-3.5">
               <button
-                onClick={() => setActiveFlyout(activeFlyout === 'search' ? null : 'search')}
-                onMouseEnter={() => setActiveFlyout('search')}
-                className="p-2.5 hover:bg-white/15 rounded-xl text-white/90 hover:text-white transition cursor-pointer"
-                title="Search History"
+                onClick={() => setSidebarOpen(true)}
+                className="p-2 hover:bg-white/15 rounded-xl text-white transition cursor-pointer"
+                title="Expand Sidebar"
               >
-                <Search className="w-5 h-5" />
+                <BhumiBotAvatarInverted className="w-6 h-6 rounded-md shadow-sm" />
               </button>
 
-              {activeFlyout === 'search' && (
-                <div
-                  onMouseLeave={() => setActiveFlyout(null)}
-                  className="absolute left-14 top-0 w-64 bg-[#1E293B] border border-slate-700 text-white rounded-2xl shadow-2xl p-3 z-50 space-y-2"
+              <button
+                onClick={handleNewChat}
+                className="p-2.5 hover:bg-white/15 rounded-xl text-white/90 hover:text-white transition cursor-pointer relative group"
+                title="New Legal Analysis"
+              >
+                <Plus className="w-5 h-5" />
+                <div className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-[#FF9933]" />
+              </button>
+
+              <div className="relative">
+                <button
+                  onClick={() => setActiveFlyout(activeFlyout === 'search' ? null : 'search')}
+                  onMouseEnter={() => setActiveFlyout('search')}
+                  className="p-2.5 hover:bg-white/15 rounded-xl text-white/90 hover:text-white transition cursor-pointer"
+                  title="Search History"
                 >
-                  <div className="font-bold text-xs text-white">Search History</div>
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Type query title..."
-                    autoFocus
-                    className="w-full bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1 text-xs text-white placeholder-slate-400 focus:outline-none"
-                  />
-                  <div className="max-h-48 overflow-y-auto space-y-1 custom-scrollbar">
-                    {threads
-                      .filter((t) => t.title.toLowerCase().includes(searchQuery.toLowerCase()))
-                      .map((t) => (
-                        <button
-                          key={t.id}
-                          onClick={() => {
-                            setActiveThreadId(t.id);
-                            setActiveFlyout(null);
-                          }}
-                          className="w-full text-left px-2.5 py-1.5 hover:bg-slate-800 rounded-lg text-xs font-medium text-slate-200 truncate block"
-                        >
-                          {t.title}
-                        </button>
-                      ))}
+                  <Search className="w-5 h-5" />
+                </button>
+
+                {activeFlyout === 'search' && (
+                  <div
+                    onMouseLeave={() => setActiveFlyout(null)}
+                    className="absolute left-14 top-0 w-64 bg-[#1E293B] border border-slate-700 text-white rounded-2xl shadow-2xl p-3 z-50 space-y-2"
+                  >
+                    <div className="font-bold text-xs text-white">Search History</div>
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Type query title..."
+                      autoFocus
+                      className="w-full bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1 text-xs text-white placeholder-slate-400 focus:outline-none"
+                    />
+                    <div className="max-h-48 overflow-y-auto space-y-1 custom-scrollbar">
+                      {threads
+                        .filter((t) => t.title.toLowerCase().includes(searchQuery.toLowerCase()))
+                        .map((t) => (
+                          <button
+                            key={t.id}
+                            onClick={() => {
+                              setActiveThreadId(t.id);
+                              setActiveFlyout(null);
+                            }}
+                            className="w-full text-left px-2.5 py-1.5 hover:bg-slate-800 rounded-lg text-xs font-medium text-slate-200 truncate block"
+                          >
+                            {t.title}
+                          </button>
+                        ))}
+                    </div>
                   </div>
-                </div>
-              )}
-            </div>
-
-            <div className="relative">
-              <button
-                onClick={() => setActiveFlyout(activeFlyout === 'pinned' ? null : 'pinned')}
-                onMouseEnter={() => setActiveFlyout('pinned')}
-                className={clsx(
-                  'p-2.5 rounded-xl transition cursor-pointer',
-                  pinnedThreads.length > 0 ? 'text-amber-300 hover:bg-white/15' : 'text-white/90 hover:bg-white/15'
                 )}
-                title="Pinned Chats"
-              >
-                <Pin className="w-5 h-5" />
-              </button>
+              </div>
 
-              {activeFlyout === 'pinned' && (
-                <div
-                  onMouseLeave={() => setActiveFlyout(null)}
-                  className="absolute left-14 top-0 w-64 bg-[#262626] border border-zinc-700 text-white rounded-2xl shadow-2xl p-3.5 z-50 space-y-2.5"
+              <div className="relative">
+                <button
+                  onClick={() => setActiveFlyout(activeFlyout === 'pinned' ? null : 'pinned')}
+                  onMouseEnter={() => setActiveFlyout('pinned')}
+                  className={clsx(
+                    'p-2.5 rounded-xl transition cursor-pointer',
+                    pinnedThreads.length > 0 ? 'text-amber-300 hover:bg-white/15' : 'text-white/90 hover:bg-white/15'
+                  )}
+                  title="Pinned Chats"
                 >
-                  <div className="font-bold text-xs text-zinc-200 tracking-wide">Pinned</div>
-                  {pinnedThreads.length === 0 ? (
-                    <div className="text-[11px] text-zinc-400 py-1">No pinned analyses yet.</div>
-                  ) : (
-                    <div className="max-h-56 overflow-y-auto space-y-1 custom-scrollbar">
-                      {pinnedThreads.map((t) => (
+                  <Pin className="w-5 h-5" />
+                </button>
+
+                {activeFlyout === 'pinned' && (
+                  <div
+                    onMouseLeave={() => setActiveFlyout(null)}
+                    className="absolute left-14 top-0 w-64 bg-[#262626] border border-zinc-700 text-white rounded-2xl shadow-2xl p-3.5 z-50 space-y-2.5"
+                  >
+                    <div className="font-bold text-xs text-zinc-200 tracking-wide">Pinned</div>
+                    {pinnedThreads.length === 0 ? (
+                      <div className="text-[11px] text-zinc-400 py-1">No pinned analyses yet.</div>
+                    ) : (
+                      <div className="max-h-56 overflow-y-auto space-y-1 custom-scrollbar">
+                        {pinnedThreads.map((t) => (
+                          <button
+                            key={t.id}
+                            onClick={() => {
+                              setActiveThreadId(t.id);
+                              setActiveFlyout(null);
+                            }}
+                            className="w-full text-left px-2.5 py-2 hover:bg-zinc-800 rounded-xl text-xs text-zinc-200 group transition"
+                          >
+                            <span className="truncate block">{t.title}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <div className="relative">
+                <button
+                  onClick={() => setActiveFlyout(activeFlyout === 'recents' ? null : 'recents')}
+                  onMouseEnter={() => setActiveFlyout('recents')}
+                  className="p-2.5 hover:bg-white/15 rounded-xl text-white/90 hover:text-white transition cursor-pointer"
+                  title="Recents"
+                >
+                  <MessageSquare className="w-5 h-5" />
+                </button>
+
+                {activeFlyout === 'recents' && (
+                  <div
+                    onMouseLeave={() => setActiveFlyout(null)}
+                    className="absolute left-14 top-0 w-64 bg-[#262626] border border-zinc-700 text-white rounded-2xl shadow-2xl p-3.5 z-50 space-y-2.5"
+                  >
+                    <div className="font-bold text-xs text-zinc-200 tracking-wide">Recents</div>
+                    <div className="max-h-64 overflow-y-auto space-y-1 custom-scrollbar">
+                      {threads.map((t) => (
                         <button
                           key={t.id}
                           onClick={() => {
@@ -579,53 +770,30 @@ export default function BhumiBotUI({ className }: BhumiBotUIProps) {
                         </button>
                       ))}
                     </div>
-                  )}
-                </div>
-              )}
-            </div>
-
-            <div className="relative">
-              <button
-                onClick={() => setActiveFlyout(activeFlyout === 'recents' ? null : 'recents')}
-                onMouseEnter={() => setActiveFlyout('recents')}
-                className="p-2.5 hover:bg-white/15 rounded-xl text-white/90 hover:text-white transition cursor-pointer"
-                title="Recents"
-              >
-                <MessageSquare className="w-5 h-5" />
-              </button>
-
-              {activeFlyout === 'recents' && (
-                <div
-                  onMouseLeave={() => setActiveFlyout(null)}
-                  className="absolute left-14 top-0 w-64 bg-[#262626] border border-zinc-700 text-white rounded-2xl shadow-2xl p-3.5 z-50 space-y-2.5"
-                >
-                  <div className="font-bold text-xs text-zinc-200 tracking-wide">Recents</div>
-                  <div className="max-h-64 overflow-y-auto space-y-1 custom-scrollbar">
-                    {threads.map((t) => (
-                      <button
-                        key={t.id}
-                        onClick={() => {
-                          setActiveThreadId(t.id);
-                          setActiveFlyout(null);
-                        }}
-                        className="w-full text-left flex items-center gap-2 px-2.5 py-2 hover:bg-zinc-800 rounded-xl text-xs text-zinc-200 group transition"
-                      >
-                        <MessageSquare className="w-3.5 h-3.5 text-zinc-400 group-hover:text-white shrink-0" />
-                        <span className="truncate">{t.title}</span>
-                      </button>
-                    ))}
                   </div>
+                )}
+              </div>
+
+              <Link
+                href={portalLink}
+                className="p-2.5 hover:bg-white/15 rounded-xl text-white/90 hover:text-white transition cursor-pointer"
+                title="Back to Main Portal"
+              >
+                <Home className="w-5 h-5" />
+              </Link>
+            </div>
+
+            {/* ── User Profile Footer (Collapsed Panel - Pinned to absolute bottom end) ── */}
+            <div className="w-full p-3 border-t border-white/15 shrink-0 bg-black/10 flex items-center justify-center min-h-[57px]">
+              {user && (
+                <div
+                  className="w-8 h-8 rounded-lg bg-white text-[#0F4C81] font-black text-xs flex items-center justify-center shrink-0 shadow-xs cursor-pointer hover:scale-105 transition border border-[#FF9933]/50"
+                  title={`${user.name} (${ROLE_LABEL[user.role] ?? user.role})`}
+                >
+                  {userInitials}
                 </div>
               )}
             </div>
-
-            <Link
-              href={portalLink}
-              className="mt-auto p-2.5 mb-2 hover:bg-white/15 rounded-xl text-white/90 hover:text-white transition cursor-pointer"
-              title="Back to Main Portal"
-            >
-              <Home className="w-5 h-5" />
-            </Link>
           </div>
         ) : (
           <>
@@ -655,15 +823,22 @@ export default function BhumiBotUI({ className }: BhumiBotUIProps) {
                 <BhumiBotAvatarInverted className="w-8 h-8 rounded-lg shadow-sm" />
                 <div>
                   <div className="font-extrabold text-sm text-white tracking-wide leading-tight">BhumiBot AI</div>
-                  <div className="text-[10px] text-white/60 font-medium leading-tight">Legal Intelligence Workspace</div>
+                  <div className="flex items-center gap-1 mt-0.5">
+                    <div className="flex h-1.5 w-3.5 rounded-full overflow-hidden shrink-0 border border-white/30">
+                      <div className="w-1/3 bg-[#FF9933]" />
+                      <div className="w-1/3 bg-white" />
+                      <div className="w-1/3 bg-[#138808]" />
+                    </div>
+                    <span className="text-[10px] text-white/70 font-medium leading-tight">Indian Land Law AI</span>
+                  </div>
                 </div>
               </div>
 
               <button
                 onClick={handleNewChat}
-                className="w-full flex items-center justify-center gap-2 px-3.5 py-2.5 bg-white text-[#0F4C81] hover:bg-slate-100 rounded-xl font-bold text-xs transition shadow-md cursor-pointer"
+                className="w-full flex items-center justify-center gap-2 px-3.5 py-2.5 bg-white text-[#0F4C81] hover:bg-slate-100 rounded-xl font-bold text-xs transition shadow-md border-t-2 border-t-[#FF9933] cursor-pointer"
               >
-                <Plus className="w-4 h-4" />
+                <Plus className="w-4 h-4 text-[#FF9933]" />
                 <span>New Legal Analysis</span>
               </button>
             </div>
@@ -730,8 +905,26 @@ export default function BhumiBotUI({ className }: BhumiBotUIProps) {
               </div>
             </div>
 
-            <div className="p-3 border-t border-white/10 text-[10px] text-white/60 flex items-center justify-between shrink-0">
-              <span>BhumiChain Legal AI</span>
+            {/* ── User Profile Footer (Left Panel) ── */}
+            <div className="p-3 border-t border-white/15 shrink-0 bg-black/10">
+              {user ? (
+                <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-white/10 border border-white/15 backdrop-blur-xs shadow-xs">
+                  <div className="w-8 h-8 rounded-lg bg-white text-[#0F4C81] font-black text-xs flex items-center justify-center shrink-0 shadow-xs">
+                    {userInitials}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-white text-xs font-extrabold truncate leading-tight">{user.name}</div>
+                    <div className="text-white/70 text-[10px] font-medium leading-tight mt-0.5">{ROLE_LABEL[user.role] ?? user.role}</div>
+                    {user.jurisdictionCode && (
+                      <div className="text-amber-300 text-[9px] font-mono mt-0.5 truncate">{user.jurisdictionCode}</div>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="text-[10px] text-white/60 flex items-center justify-between">
+                  <span>BhumiChain Legal AI</span>
+                </div>
+              )}
             </div>
           </>
         )}
@@ -753,11 +946,6 @@ export default function BhumiBotUI({ className }: BhumiBotUIProps) {
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1.5 text-xs text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200 font-medium">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              Active
-            </div>
-
             <Link
               href={portalLink}
               className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 transition shadow-2xs"
@@ -769,25 +957,25 @@ export default function BhumiBotUI({ className }: BhumiBotUIProps) {
         </div>
 
         {/* Message Workspace */}
-        <div className="flex-1 overflow-y-auto px-4 py-6 space-y-6">
+        <div className="flex-1 overflow-y-auto px-4 md:px-6 py-6 space-y-6 custom-scrollbar">
           {messages.length === 0 ? (
             /* ── Hero Glass Welcome Screen ── */
-            <div className="flex flex-col items-center justify-center min-h-[85%] max-w-2xl mx-auto text-center space-y-6">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-[#0F4C81] to-blue-600 flex items-center justify-center shadow-xl p-1">
-                <BhumiBotAvatarInverted className="w-13 h-13 rounded-xl" />
+            <div className="flex flex-col items-center justify-center min-h-[85%] w-full max-w-4xl mx-auto text-center space-y-6 px-2">
+              <div className="w-14 h-14 rounded-2xl bg-[#0F4C81] flex items-center justify-center shadow-lg p-1">
+                <BhumiBotAvatarInverted className="w-10 h-10 rounded-xl" />
               </div>
 
-              <div className="space-y-2">
-                <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
+              <div className="space-y-1.5">
+                <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">
                   BhumiBot AI Legal Assistant
                 </h1>
-                <p className="text-xs text-slate-500 max-w-lg mx-auto leading-relaxed font-medium">
+                <p className="text-xs md:text-sm text-slate-500 max-w-lg mx-auto leading-relaxed font-medium">
                   Ask substantive questions on Indian land revenue, succession, registration vs. mutation, or attach property document text for legally defensible analysis.
                 </p>
               </div>
 
               {/* ── Hero Input Box ── */}
-              <div className="w-full max-w-2xl">
+              <div className="w-full max-w-3xl">
                 {attachment && (
                   <div className="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-200 shadow-xs rounded-xl text-xs text-slate-900 mb-2 w-fit">
                     <FileText className="w-4 h-4 text-[#0F4C81]" />
@@ -807,7 +995,7 @@ export default function BhumiBotUI({ className }: BhumiBotUIProps) {
                     e.preventDefault();
                     handleSendMessage();
                   }}
-                  className="relative flex items-center bg-white border border-slate-200/90 focus-within:border-[#0F4C81] focus-within:ring-2 focus-within:ring-[#0F4C81]/10 rounded-2xl p-2.5 shadow-xl transition-all"
+                  className="relative flex items-end bg-white border border-slate-200/90 focus-within:border-[#0F4C81] focus-within:ring-2 focus-within:ring-[#0F4C81]/10 rounded-2xl p-2.5 shadow-lg transition-all"
                 >
                   <input
                     ref={fileInputRef}
@@ -819,74 +1007,98 @@ export default function BhumiBotUI({ className }: BhumiBotUIProps) {
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="p-2 text-slate-500 hover:text-[#0F4C81] hover:bg-slate-100 rounded-xl transition"
-                    title="Attach Document Text"
+                    className="p-2 text-slate-500 hover:text-[#0F4C81] hover:bg-slate-100 rounded-xl transition shrink-0 mb-0.5 cursor-pointer"
+                    title="Attach Property Document (PDF, Image, DOCX)"
                   >
                     <Paperclip className="w-4 h-4" />
                   </button>
 
-                  <input
-                    type="text"
+                  <textarea
+                    ref={heroTextareaRef}
+                    rows={1}
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSendMessage();
+                      }
+                    }}
                     placeholder="Ask any property legal question or paste document text..."
-                    className="flex-1 bg-transparent px-3 py-2 text-xs text-slate-900 placeholder-slate-400 focus:outline-none"
-                    disabled={isTyping || isExtractingDoc}
+                    className="flex-1 bg-transparent px-3 py-2 text-xs md:text-sm text-slate-900 placeholder-slate-400 focus:outline-none resize-none max-h-44 custom-scrollbar leading-relaxed font-medium"
+                    disabled={isTyping}
                   />
 
                   <button
                     type="submit"
-                    disabled={(!input.trim() && !attachment) || isTyping || isExtractingDoc}
-                    className="bg-[#0F4C81] hover:bg-[#0B3A64] disabled:opacity-30 text-white rounded-xl p-2.5 transition shrink-0 shadow-sm cursor-pointer"
+                    disabled={(!input.trim() && !attachment) || isTyping}
+                    className="bg-[#0F4C81] hover:bg-[#0B3A64] disabled:opacity-30 text-white rounded-xl p-2.5 transition shrink-0 shadow-sm cursor-pointer mb-0.5"
                   >
                     <Send className="w-4 h-4" />
                   </button>
                 </form>
               </div>
 
-              {/* ── Redesigned System Prompt V5 Guidance Cards ── */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 w-full text-left pt-1">
-                {SYSTEM_V5_SMART_CARDS.map((card, idx) => {
-                  const Icon = card.icon;
-                  return (
-                    <button
-                      key={idx}
-                      onClick={() => handleSendMessage(card.query)}
-                      className="p-4 bg-white border border-slate-200/90 hover:border-[#0F4C81]/40 hover:bg-slate-50/50 rounded-2xl transition-all duration-200 group text-left space-y-2 shadow-xs hover:shadow-md cursor-pointer"
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-blue-50 text-[#0F4C81] border border-blue-100">
-                          {card.category}
-                        </span>
-                        <ArrowUpRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-[#0F4C81] transition" />
-                      </div>
-                      <div className="flex items-center gap-2 font-bold text-xs text-slate-900 group-hover:text-[#0F4C81] transition">
-                        <Icon className="w-4 h-4 text-[#0F4C81] shrink-0" />
-                        <span>{card.title}</span>
-                      </div>
-                      <p className="text-[11px] text-slate-500 leading-snug">
-                        {card.desc}
-                      </p>
-                    </button>
-                  );
-                })}
+              {/* ── Dynamic Legal Recommendation Cards with Batch Rotation ── */}
+              <div className="w-full max-w-3xl space-y-3 pt-1">
+                <div className="flex items-center justify-between px-1">
+                  <span className="text-xs font-extrabold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-[#0F4C81]" />
+                    <span>Suggested Legal Analysis</span>
+                  </span>
+
+                  <button
+                    type="button"
+                    onClick={shuffleRecommendations}
+                    className="flex items-center gap-1.5 px-3 py-1 text-[11px] font-bold text-[#0F4C81] hover:bg-blue-50 bg-white border border-blue-200/90 rounded-xl transition cursor-pointer shadow-2xs"
+                    title="Load 4 completely new legal suggestions"
+                  >
+                    <RotateCw className="w-3 h-3 text-[#0F4C81]" />
+                    <span>New Suggestions</span>
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 w-full text-left">
+                  {currentRecommendations.map((card, idx) => {
+                    const Icon = card.icon;
+                    return (
+                      <button
+                        key={idx}
+                        onClick={() => handleSendMessage(card.question)}
+                        className="p-3.5 bg-white border border-slate-200/90 hover:border-[#0F4C81]/40 hover:bg-slate-50/50 rounded-2xl transition-all duration-200 group text-left space-y-2 shadow-2xs hover:shadow-md cursor-pointer flex flex-col justify-between min-h-[92px]"
+                      >
+                        <div className="flex items-center justify-between w-full">
+                          <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-blue-50 text-[#0F4C81] border border-blue-100">
+                            {card.category}
+                          </span>
+                          <ArrowUpRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-[#0F4C81] transition" />
+                        </div>
+
+                        <div className="flex items-start gap-2 font-bold text-xs text-slate-900 group-hover:text-[#0F4C81] transition leading-snug">
+                          <Icon className="w-4 h-4 text-[#0F4C81] shrink-0 mt-0.5" />
+                          <span>{card.question}</span>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           ) : (
             /* ── Active Stream ── */
-            <div className="max-w-3xl mx-auto space-y-6">
+            <div className="w-full max-w-4xl mx-auto space-y-6">
               {messages.map((msg) => (
                 <div
                   key={msg.id}
-                  className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                  className={`flex gap-3.5 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                 >
                   {msg.role === 'assistant' && (
                     <div className="shrink-0 mt-1">
-                      <BhumiBotAvatar className="w-7 h-7 rounded-lg shadow-xs" />
+                      <BhumiBotAvatar className="w-8 h-8 rounded-xl shadow-xs" />
                     </div>
                   )}
 
-                  <div className={`max-w-[88%] space-y-2 ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
+                  <div className={`max-w-[88%] md:max-w-[82%] space-y-2 ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
                     {msg.role === 'user' && msg.attachment && (
                       <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-800 text-white rounded-xl text-xs ml-auto w-fit shadow-xs">
                         <FileText className="w-3.5 h-3.5 text-slate-300" />
@@ -898,35 +1110,47 @@ export default function BhumiBotUI({ className }: BhumiBotUIProps) {
                     <div
                       className={`rounded-2xl p-4 md:p-5 text-sm md:text-base leading-relaxed ${
                         msg.role === 'user'
-                          ? 'bg-[#0F4C81] text-white shadow-md'
-                          : 'bg-white/90 backdrop-blur-md border border-slate-200/80 text-slate-900 shadow-xs'
+                          ? 'bg-[#0F4C81] text-white shadow-md selection:bg-white selection:text-[#0F4C81]'
+                          : 'bg-white border border-slate-200/90 text-slate-900 shadow-xs selection:bg-[#0F4C81] selection:text-white'
                       }`}
                     >
                       <FormattedResponse text={msg.text} isUser={msg.role === 'user'} />
 
                       {msg.role === 'assistant' && (
-                        <div className="mt-2.5 pt-1 flex items-center justify-start gap-1">
+                        <div className="mt-3 pt-2 flex items-center justify-start gap-1 border-t border-slate-100">
                           <button
                             onClick={() => handleCopy(msg.id, msg.text)}
-                            className="p-1.5 text-slate-400 hover:text-[#0F4C81] hover:bg-slate-100/80 rounded-lg transition cursor-pointer"
+                            className="flex items-center gap-1 px-2 py-1 text-slate-400 hover:text-[#0F4C81] hover:bg-slate-100 rounded-lg text-xs font-medium transition cursor-pointer"
                             title={copiedId === msg.id ? 'Copied!' : 'Copy response'}
                           >
                             {copiedId === msg.id ? (
-                              <Check className="w-4 h-4 text-[#0F4C81]" />
+                              <>
+                                <Check className="w-3.5 h-3.5 text-[#0F4C81]" />
+                                <span className="text-[#0F4C81] font-bold">Copied</span>
+                              </>
                             ) : (
-                              <Copy className="w-4 h-4" />
+                              <>
+                                <Copy className="w-3.5 h-3.5" />
+                                <span>Copy</span>
+                              </>
                             )}
                           </button>
 
                           <button
                             onClick={() => handleSpeak(msg.id, msg.text)}
-                            className="p-1.5 text-slate-400 hover:text-[#0F4C81] hover:bg-slate-100/80 rounded-lg transition cursor-pointer"
+                            className="flex items-center gap-1 px-2 py-1 text-slate-400 hover:text-[#0F4C81] hover:bg-slate-100 rounded-lg text-xs font-medium transition cursor-pointer"
                             title={speakingId === msg.id ? 'Stop reading' : 'Listen to response'}
                           >
                             {speakingId === msg.id ? (
-                              <VolumeX className="w-4 h-4 text-[#0F4C81] animate-pulse" />
+                              <>
+                                <VolumeX className="w-3.5 h-3.5 text-[#0F4C81] animate-pulse" />
+                                <span className="text-[#0F4C81] font-bold">Stop</span>
+                              </>
                             ) : (
-                              <Volume2 className="w-4 h-4" />
+                              <>
+                                <Volume2 className="w-3.5 h-3.5" />
+                                <span>Listen</span>
+                              </>
                             )}
                           </button>
                         </div>
@@ -935,8 +1159,11 @@ export default function BhumiBotUI({ className }: BhumiBotUIProps) {
                   </div>
 
                   {msg.role === 'user' && (
-                    <div className="w-8 h-8 rounded-lg bg-slate-200 text-slate-900 flex items-center justify-center shrink-0 mt-1 font-bold">
-                      <User className="w-4.5 h-4.5" />
+                    <div
+                      className="w-8 h-8 rounded-xl bg-[#0F4C81] text-white border border-[#0F4C81]/30 flex items-center justify-center shrink-0 mt-1 font-black text-xs shadow-sm"
+                      title={user?.name || 'User'}
+                    >
+                      {userInitials}
                     </div>
                   )}
                 </div>
@@ -944,11 +1171,19 @@ export default function BhumiBotUI({ className }: BhumiBotUIProps) {
 
               {isTyping && (
                 <div className="flex gap-3 justify-start items-center">
-                  <BhumiBotAvatar className="w-8 h-8 rounded-lg shadow-xs animate-pulse" />
-                  <div className="bg-white/90 backdrop-blur-md border border-slate-200/80 px-4 py-3 rounded-2xl flex items-center gap-1.5 shadow-2xs">
-                    <div className="w-2 h-2 rounded-full bg-[#0F4C81] animate-bounce [animation-delay:-0.3s]" />
-                    <div className="w-2 h-2 rounded-full bg-[#0F4C81] animate-bounce [animation-delay:-0.15s]" />
-                    <div className="w-2 h-2 rounded-full bg-[#0F4C81] animate-bounce" />
+                  <BhumiBotAvatar className="w-8 h-8 rounded-xl shadow-xs shrink-0" />
+                  <div className="bg-white border border-slate-200/90 px-4 py-2.5 rounded-2xl flex items-center gap-2 shadow-2xs">
+                    {((messages.length > 0 && messages[messages.length - 1].role === 'user' && !!messages[messages.length - 1].attachment) || !!attachment) ? (
+                      <>
+                        <FileText className="w-3.5 h-3.5 text-[#0F4C81] animate-pulse shrink-0" />
+                        <span className="text-xs font-semibold text-slate-600">Analyzing document</span>
+                      </>
+                    ) : null}
+                    <div className="flex items-center gap-1.5 py-0.5">
+                      <div className="w-2 h-2 rounded-full bg-[#0F4C81] animate-bounce [animation-delay:-0.3s]" />
+                      <div className="w-2 h-2 rounded-full bg-[#0F4C81] animate-bounce [animation-delay:-0.15s]" />
+                      <div className="w-2 h-2 rounded-full bg-[#0F4C81] animate-bounce" />
+                    </div>
                   </div>
                 </div>
               )}
@@ -961,7 +1196,7 @@ export default function BhumiBotUI({ className }: BhumiBotUIProps) {
         {/* Bottom Input Area */}
         {messages.length > 0 && (
           <div className="p-4 bg-transparent shrink-0">
-            <div className="max-w-3xl mx-auto space-y-2">
+            <div className="w-full max-w-4xl mx-auto space-y-2">
               {attachment && (
                 <div className="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-200 shadow-xs rounded-xl text-xs md:text-sm text-slate-900 w-fit">
                   <FileText className="w-4 h-4 text-[#0F4C81]" />
@@ -981,7 +1216,7 @@ export default function BhumiBotUI({ className }: BhumiBotUIProps) {
                   e.preventDefault();
                   handleSendMessage();
                 }}
-                className="relative flex items-center bg-white/90 backdrop-blur-xl border border-slate-200/90 focus-within:border-[#0F4C81] focus-within:ring-2 focus-within:ring-[#0F4C81]/10 rounded-2xl p-2.5 shadow-lg transition-all"
+                className="relative flex items-end bg-white border border-slate-200/90 focus-within:border-[#0F4C81] focus-within:ring-2 focus-within:ring-[#0F4C81]/10 rounded-2xl p-2.5 shadow-lg transition-all"
               >
                 <input
                   ref={messages.length > 0 ? fileInputRef : undefined}
@@ -993,25 +1228,32 @@ export default function BhumiBotUI({ className }: BhumiBotUIProps) {
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="p-2.5 text-slate-500 hover:text-[#0F4C81] hover:bg-slate-100 rounded-xl transition cursor-pointer"
-                  title="Attach Document Evidence"
+                  className="p-2.5 text-slate-500 hover:text-[#0F4C81] hover:bg-slate-100 rounded-xl transition cursor-pointer shrink-0 mb-0.5"
+                  title="Attach Property Document (PDF, Image, DOCX)"
                 >
                   <Paperclip className="w-5 h-5" />
                 </button>
 
-                <input
-                  type="text"
+                <textarea
+                  ref={bottomTextareaRef}
+                  rows={1}
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSendMessage();
+                    }
+                  }}
                   placeholder="Ask any legal question or analyze attached document..."
-                  className="flex-1 bg-transparent px-3.5 py-2 text-sm md:text-base text-slate-900 placeholder-slate-400 focus:outline-none font-medium"
+                  className="flex-1 bg-transparent px-3.5 py-2 text-sm md:text-base text-slate-900 placeholder-slate-400 focus:outline-none font-medium resize-none max-h-44 custom-scrollbar leading-relaxed"
                   disabled={isTyping}
                 />
 
                 <button
                   type="submit"
                   disabled={(!input.trim() && !attachment) || isTyping}
-                  className="bg-[#0F4C81] hover:bg-[#0B3A64] disabled:opacity-30 text-white rounded-xl p-3 transition shrink-0 shadow-sm cursor-pointer"
+                  className="bg-[#0F4C81] hover:bg-[#0B3A64] disabled:opacity-30 text-white rounded-xl p-2.5 transition shrink-0 shadow-sm cursor-pointer mb-0.5"
                 >
                   <Send className="w-4 h-4" />
                 </button>
@@ -1058,12 +1300,11 @@ function ThreadListItem({
       className={clsx(
         'group flex items-center justify-between px-3 py-2.5 rounded-xl text-xs cursor-pointer transition-all',
         isActive
-          ? 'bg-white/20 text-white font-bold border border-white/25 shadow-sm backdrop-blur-md'
-          : 'text-white/70 hover:bg-white/10 hover:text-white'
+          ? 'bg-white/20 text-white font-bold border-l-3 border-l-[#FF9933] border-t border-r border-b border-white/20 shadow-xs backdrop-blur-xs'
+          : 'text-white/75 hover:bg-white/10 hover:text-white'
       )}
     >
-      <div className="flex items-center gap-2 min-w-0 flex-1">
-        <BhumiBotAvatarInverted className="w-4 h-4 rounded shrink-0 opacity-90" />
+      <div className="min-w-0 flex-1">
         {isEditing ? (
           <input
             type="text"
@@ -1075,7 +1316,7 @@ function ThreadListItem({
             className="bg-black text-white px-1.5 py-0.5 rounded border border-white/40 text-xs w-full focus:outline-none"
           />
         ) : (
-          <span className="truncate leading-snug">{thread.title}</span>
+          <span className="truncate leading-snug font-medium">{thread.title}</span>
         )}
       </div>
 
@@ -1118,7 +1359,7 @@ function FormattedResponse({ text, isUser }: { text: string; isUser: boolean }) 
     return <div className="whitespace-pre-wrap leading-relaxed text-base md:text-lg font-medium">{text}</div>;
   }
 
-  const sourcesIndex = text.search(/##?\s*Sources|##?\s*References|##?\s*Verified Statutory/i);
+  const sourcesIndex = text.search(/##?\s*Suggested References|Suggested References|##?\s*Sources|##?\s*References|##?\s*Verified Statutory/i);
   let bodyText = text;
   let sourcesText = '';
 
@@ -1212,47 +1453,112 @@ function FormatLine({ line }: { line: string }) {
 }
 
 function SourcesReferenceCard({ sourcesText }: { sourcesText: string }) {
+  const [isOpen, setIsOpen] = useState(false);
+
   const lines = sourcesText.split('\n').filter((l) => l.trim().length > 0);
-  const header = lines[0].replace(/^#+\s*/, '');
-  const citationItems = lines.slice(1);
+  const header = lines[0].replace(/^#+\s*/, '').trim();
+
+  const rawItemsText = sourcesText.substring(sourcesText.indexOf(lines[0]) + lines[0].length);
+  const itemBlocks = rawItemsText.split(/\n(?=\d+\.\s)/g).map((b) => b.trim()).filter(Boolean);
+  const count = itemBlocks.length;
 
   return (
-    <div className="mt-5 pt-3.5 border-t-2 border-[#0F4C81] space-y-2.5 bg-[#0F4C81]/5 p-4 rounded-2xl border border-[#0F4C81]/15 backdrop-blur-xs">
-      <div className="flex items-center gap-2 text-sm font-black uppercase tracking-wider text-[#0F4C81]">
-        <ShieldCheck className="w-4 h-4 text-[#0F4C81]" />
-        <span>{header}</span>
-      </div>
+    <div className="mt-5 border border-slate-200/90 rounded-2xl bg-white shadow-2xs overflow-hidden transition-all duration-200">
+      {/* Accordion Dropdown Header Toggle */}
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full flex items-center justify-between px-4 py-3 bg-slate-50 hover:bg-blue-50/60 transition cursor-pointer text-left"
+      >
+        <div className="flex items-center gap-2.5">
+          <div className="p-1.5 bg-[#0F4C81]/10 rounded-lg">
+            <ShieldCheck className="w-4 h-4 text-[#0F4C81]" />
+          </div>
+          <span className="font-extrabold text-xs md:text-sm text-[#0F4C81] uppercase tracking-wider">
+            {header || 'Suggested References'}
+          </span>
+          {count > 0 && (
+            <span className="px-2 py-0.5 text-[10px] font-extrabold bg-[#0F4C81] text-white rounded-full">
+              {count} {count === 1 ? 'Source' : 'Sources'}
+            </span>
+          )}
+        </div>
 
-      <div className="space-y-2">
-        {citationItems.map((item, idx) => {
-          const urlMatch = item.match(/(https?:\/\/[^\s]+)/g);
-          const url = urlMatch ? urlMatch[0] : null;
-          const cleanItem = item.replace(/(https?:\/\/[^\s]+)/g, '').trim();
+        <div className="flex items-center gap-1.5 text-xs text-slate-500 font-semibold">
+          <span>{isOpen ? 'Hide References' : 'View References'}</span>
+          <ChevronDown className={clsx('w-4 h-4 text-[#0F4C81] transition-transform duration-200', isOpen && 'rotate-180')} />
+        </div>
+      </button>
 
-          return (
-            <div
-              key={idx}
-              className="flex items-start justify-between gap-2.5 p-3 bg-white border border-slate-200/80 rounded-xl text-xs md:text-sm text-slate-800 shadow-2xs"
-            >
-              <div className="flex items-start gap-2">
-                <span className="font-mono font-bold text-[#0F4C81] shrink-0">[{idx + 1}]</span>
-                <span>{cleanItem}</span>
-              </div>
-              {url && (
-                <a
-                  href={url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 px-3 py-1 bg-[#0F4C81] text-white hover:bg-[#0B3A64] rounded-lg font-semibold text-xs shrink-0 transition shadow-2xs"
-                >
-                  <span>Source</span>
-                  <ExternalLink className="w-3 h-3" />
-                </a>
-              )}
+      {/* Accordion Dropdown Content Body */}
+      {isOpen && (
+        <div className="p-4 bg-slate-50/50 border-t border-slate-200/80 space-y-3">
+          {itemBlocks.length === 0 ? (
+            <div className="text-xs text-slate-700 whitespace-pre-wrap leading-relaxed px-1">
+              {lines.slice(1).join('\n')}
             </div>
-          );
-        })}
-      </div>
+          ) : (
+            itemBlocks.map((block, idx) => {
+              const itemLines = block.split('\n').map((l) => l.trim());
+              const titleLine = itemLines[0]?.replace(/^\d+\.\s*/, '') || '';
+              
+              let description = '';
+              let link = '';
+
+              itemLines.slice(1).forEach((line) => {
+                if (/^\-?\s*Description:/i.test(line)) {
+                  description = line.replace(/^\-?\s*Description:\s*/i, '');
+                } else if (/^\-?\s*Link:/i.test(line)) {
+                  link = line.replace(/^\-?\s*Link:\s*/i, '');
+                }
+              });
+
+              const urlMatch = link.match(/(https?:\/\/[^\s]+)/g) || block.match(/(https?:\/\/[^\s]+)/g);
+              const directUrl = urlMatch ? urlMatch[0] : null;
+
+              return (
+                <div
+                  key={idx}
+                  className="p-3.5 bg-white border border-slate-200/90 rounded-xl text-xs md:text-sm text-slate-800 shadow-2xs space-y-1.5"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-start gap-2 font-bold text-slate-900 leading-snug">
+                      <span className="font-mono text-[#0F4C81] shrink-0">{idx + 1}.</span>
+                      <span>{titleLine}</span>
+                    </div>
+                    {directUrl ? (
+                      <a
+                        href={directUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1 px-2.5 py-1 bg-[#0F4C81] text-white hover:bg-[#0B3A64] rounded-lg font-semibold text-xs shrink-0 transition shadow-2xs cursor-pointer"
+                      >
+                        <span>View Source</span>
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                    ) : (
+                      <span className="text-[10px] font-mono text-slate-400 shrink-0 italic">No Public Link</span>
+                    )}
+                  </div>
+
+                  {description && (
+                    <p className="text-xs text-slate-600 leading-relaxed pl-5">
+                      <span className="font-semibold text-slate-700">Description: </span>
+                      {description}
+                    </p>
+                  )}
+
+                  {link && !directUrl && (
+                    <p className="text-[11px] font-mono text-slate-500 pl-5 italic">
+                      {link}
+                    </p>
+                  )}
+                </div>
+              );
+            })
+          )}
+        </div>
+      )}
     </div>
   );
 }
