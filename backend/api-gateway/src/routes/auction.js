@@ -39,15 +39,15 @@ router.post(
   '/:auctionId/bid',
   authenticate,
   body('bidAmountINR').isInt({ min: 1 }),
-  body('bidderAadhaarHash').matches(/^sha256:[a-f0-9]{64}$/),
+  body('bidderAadhaarNumber').matches(/^sha256:[a-f0-9]{64}$/),
   validate,
   async (req, res) => {
     try {
-      const { bidAmountINR, bidderAadhaarHash } = req.body;
+      const { bidAmountINR, bidderAadhaarNumber } = req.body;
       const result = await submit('bhumi-auction', 'PlaceSealedBid', [
         req.params.auctionId,
         String(bidAmountINR),
-        bidderAadhaarHash,
+        bidderAadhaarNumber,
       ]);
       res.status(201).json(result);
     } catch (e) {

@@ -3,16 +3,22 @@ const API = process.env.NEXT_PUBLIC_API_URL || 'mock';
 import { handleMockApi } from './mockBackend';
 
 async function unifiedFetch(path: string, options: RequestInit = {}): Promise<Response> {
+  // Use mock backend ONLY when in full mock mode (local dev)
   if (API === 'mock') {
     return handleMockApi(path, options);
   }
+  // On real VM: all calls go to actual backend
   return fetch(`${API}${path}`, options);
 }
 
 export interface JWTUser {
   role: string;
   name: string;
-  aadhaarHash: string;
+  aadhaarNumber: string;
+  aadhaarId?: string;
+  aadhaarRaw?: string;
+  aadhaar?: string;
+  aadhaarNo?: string;
   jurisdictionCode?: string;
   tehsilCode?: string;
   circleCode?: string;
@@ -32,19 +38,53 @@ export function getToken(): string | null {
 
 export function setToken(token: string): void {
   localStorage.setItem(TOKEN_KEY, token);
+  try { localStorage.setItem('bhumichain_last_login', new Date().toISOString()); } catch(e) {}
 }
 
 export function clearToken(): void {
   localStorage.removeItem(TOKEN_KEY);
 }
 
+export function formatMaskedAadhaar(user: any): string {
+  if (!user) return 'XXXX-XXXX-XXXX';
+  const rawDigits = (user.aadhaarNumber || user.aadhaar || user.aadhaarNo || user.aadhaarId || user.aadhaarNumber || '').replace(/\D/g, '');
+  if (rawDigits.length >= 4) {
+    const last4 = rawDigits.slice(-4);
+    return `XXXX-XXXX-${last4}`;
+  }
+  return 'XXXX-XXXX-XXXX';
+}
+
+export function formatLastLogin(): string {
+  if (typeof window === 'undefined') return 'Today, 10:24 AM';
+  try {
+    const stored = localStorage.getItem('bhumichain_last_login');
+    if (stored) {
+      const dt = new Date(stored);
+      if (!isNaN(dt.getTime())) {
+        return dt.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) + ', ' + dt.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+      }
+    }
+  } catch(e) {}
+  const now = new Date();
+  try { localStorage.setItem('bhumichain_last_login', now.toISOString()); } catch(e) {}
+  return now.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) + ', ' + now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+}
+
 // ─── User decoding ────────────────────────────────────────────────────────────
+
+// Converts base64url → standard base64 so atob() works on real JWTs
+function base64urlDecode(base64url: string): string {
+  const base64 = base64url.replace(/-/g, '+').replace(/_/g, '/');
+  const padded = base64.padEnd(base64.length + (4 - (base64.length % 4)) % 4, '=');
+  return atob(padded);
+}
 
 export function getUser(): JWTUser | null {
   const token = getToken();
   if (!token) return null;
   try {
-    const payload = JSON.parse(atob(token.split('.')[1])) as JWTUser;
+    const payload = JSON.parse(base64urlDecode(token.split('.')[1])) as JWTUser;
     if (payload.exp && Date.now() / 1000 > payload.exp) {
       clearToken();
       return null;
@@ -65,11 +105,11 @@ export function getRole(): string | null {
 }
 
 export function isOfficer(): boolean {
-  return ['patwari', 'circle_inspector', 'tehsildar', 'kotwal'].includes(getRole() ?? '');
+  return ['karmachari', 'circle_inspector', 'circle_officer', 'kotwal'].includes(getRole() ?? '');
 }
 
 export function isTehsildar(): boolean {
-  return getRole() === 'tehsildar';
+  return getRole() === 'circle_officer';
 }
 
 export function getRedirectPath(role: string): string {

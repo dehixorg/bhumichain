@@ -33,11 +33,11 @@ export default function FraudReject({
   const scoreColor =
     fraudScore >= 0.90 ? 'text-red-300 bg-red-950 border-red-700' :
     fraudScore >= 0.75 ? 'text-amber-300 bg-amber-950 border-amber-700' :
-                         'text-brand-300 bg-brand-950 border-brand-700';
+                         'text-[#0F4C81] bg-[#EFF6FF] border-blue-300';
 
   return (
     <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/80 backdrop-blur-sm">
-      <div className="w-full max-w-lg mx-4 bg-gray-900 border-2 border-red-700 rounded-2xl shadow-2xl overflow-hidden">
+      <div className="w-full max-w-lg mx-4 bg-white border-2 border-red-700 rounded-2xl shadow-2xl overflow-hidden">
 
         {/* Header */}
         <div className="bg-red-950 border-b border-red-800 px-5 py-4 flex items-center gap-3">
@@ -105,7 +105,7 @@ export default function FraudReject({
           )}
 
           {/* Timeline */}
-          <div className="bg-gray-800 rounded-xl p-4">
+          <div className="bg-[#F8FAFC] rounded-xl p-4">
             <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
               Transaction Timeline
             </div>
@@ -146,7 +146,7 @@ export default function FraudReject({
             <Shield className="w-3.5 h-3.5 shrink-0 mt-0.5" />
             <span>
               This attempt has been logged to the BhumiChain audit trail and flagged to the
-              Inspector General of Registration, Uttar Pradesh. Persistent attempts may trigger
+              Inspector General of Registration, Bihar. Persistent attempts may trigger
               FIR under IPC Section 420 (cheating) and Section 465 (forgery).
             </span>
           </div>
@@ -180,7 +180,7 @@ function TimelineItem({
   current?: boolean;
 }) {
   const dot = color === 'red' ? 'bg-red-500' : color === 'amber' ? 'bg-amber-500' : 'bg-brand-500';
-  const txt = color === 'red' ? 'text-red-300' : color === 'amber' ? 'text-amber-300' : 'text-brand-300';
+  const txt = color === 'red' ? 'text-red-300' : color === 'amber' ? 'text-amber-300' : 'text-[#0F4C81]';
 
   return (
     <div className="relative">

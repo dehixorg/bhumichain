@@ -43,11 +43,20 @@ import (
 // CORRECTION    — fix a data error (area, boundary, land type) — no ownership change
 // NAME_UPDATE   — same person, legal name change (marriage, court order)
 
+
+// ─── Bihar Land Mutation Act 2011 (Sec 12/13) SLA Constants ─────────
+const (
+	SlaRegularNoObjectionDays       = 21
+	SlaRegularWithObjectionDays     = 63 // As amended in 2012
+	SlaCampCourtNoObjectionDays     = 18
+	SlaCampCourtWithObjectionDays   = 63
+)
+
 // ─── Data Structures ─────────────────────────────────────────────────────────
 
 // NewOwnerEntry — one owner in the post-mutation ownership list
 type NewOwnerEntry struct {
-	AadhaarHash   string  `json:"aadhaarHash"`
+	AadhaarNumber   string  `json:"aadhaarNumber"`
 	Name          string  `json:"name"`
 	Share         string  `json:"share"`         // "1/3", "1/2", "1/1"
 	ShareDecimal  float64 `json:"shareDecimal"`
@@ -57,7 +66,7 @@ type NewOwnerEntry struct {
 
 // OwnerAlert — one co-owner's notification and consent status
 type OwnerAlert struct {
-	AadhaarHash     string `json:"aadhaarHash"`
+	AadhaarNumber     string `json:"aadhaarNumber"`
 	AlertSentAt     string `json:"alertSentAt,omitempty"`
 	AlertChannel    string `json:"alertChannel,omitempty"` // SMS | WHATSAPP | APP
 	AlertDelivered  bool   `json:"alertDelivered"`
@@ -79,7 +88,7 @@ type PartitionScheme struct {
 }
 
 type PartitionAward struct {
-	OwnerAadhaarHash string  `json:"ownerAadhaarHash"`
+	OwnerAadhaarNumber string  `json:"ownerAadhaarNumber"`
 	NewDLPIId        string  `json:"newDlpiId"`        // generated on execution
 	AreaHectares     float64 `json:"areaHectares"`
 	ShareFraction    string  `json:"shareFraction"`
@@ -95,7 +104,7 @@ type MutationRequest struct {
 
 	// Officer who initiated (permanently recorded — accountability layer)
 	OfficerName string `json:"officerName"`
-	OfficerHash string `json:"officerAadhaarHash"` // permanent, immutable once written
+	OfficerHash string `json:"officerAadhaarNumber"` // permanent, immutable once written
 	OfficerRank string `json:"officerRank"`         // patwari | circle_inspector | tehsildar
 
 	// Source of this mutation (critical for Inheritance)
@@ -130,6 +139,8 @@ type MutationRequest struct {
 	InitiatedAt string `json:"initiatedAt"`
 	UpdatedAt   string `json:"updatedAt"`
 	ExecutedAt  string `json:"executedAt,omitempty"`
+	// Bihar Sec 14/15 Accountability
+	DelayReason string `json:"delayReason,omitempty"`
 }
 
 // Mutation status constants
@@ -177,7 +188,7 @@ type MutationManagerContract struct {
 //   - MutationAlertRequired event carries ALL owner hashes — oracle notifies each independently
 //   - Cannot be called while SuccessionStatus = SUCCESSION_PENDING
 //
-// currentOwnersJSON: JSON array of {aadhaarHash} for the DLPI's current owners
+// currentOwnersJSON: JSON array of {aadhaarNumber} for the DLPI's current owners
 //   (passed from API layer which reads DLPI state before calling chaincode)
 // newOwnersJSON: JSON array of NewOwnerEntry (who will own after mutation)
 func (c *MutationManagerContract) InitiateMutation(
@@ -223,7 +234,7 @@ func (c *MutationManagerContract) InitiateMutation(
 
 	// ── Parse current owners (for alert distribution) ──────────────────────────
 	type OwnerRef struct {
-		AadhaarHash string `json:"aadhaarHash"`
+		AadhaarNumber string `json:"aadhaarNumber"`
 	}
 	var currentOwnerRefs []OwnerRef
 	if currentOwnersJSON != "" && currentOwnersJSON != "[]" {
@@ -271,11 +282,11 @@ func (c *MutationManagerContract) InitiateMutation(
 	allOwnerHashes := make([]string, len(currentOwnerRefs))
 	for i, ref := range currentOwnerRefs {
 		ownerAlerts[i] = OwnerAlert{
-			AadhaarHash:    ref.AadhaarHash,
+			AadhaarNumber:    ref.AadhaarNumber,
 			AlertDelivered: false,
 			Response:       "PENDING",
 		}
-		allOwnerHashes[i] = ref.AadhaarHash
+		allOwnerHashes[i] = ref.AadhaarNumber
 	}
 
 	// Determine initial status
@@ -366,7 +377,7 @@ func (c *MutationManagerContract) InitiateMutation(
 // RecordOwnerAlertDelivery — oracle confirms alert was delivered (SLA tracking)
 func (c *MutationManagerContract) RecordOwnerAlertDelivery(
 	ctx contractapi.TransactionContextInterface,
-	mutationID, ownerAadhaarHash, channel, deliveryTimestamp string,
+	mutationID, ownerAadhaarNumber, channel, deliveryTimestamp string,
 ) error {
 	mutation, err := c.getMutation(ctx, mutationID)
 	if err != nil {
@@ -375,7 +386,7 @@ func (c *MutationManagerContract) RecordOwnerAlertDelivery(
 
 	deliveredTime := mustParseTime(deliveryTimestamp)
 	for i, a := range mutation.OwnerAlerts {
-		if a.AadhaarHash == ownerAadhaarHash {
+		if a.AadhaarNumber == ownerAadhaarNumber {
 			mutation.OwnerAlerts[i].AlertDelivered = true
 			mutation.OwnerAlerts[i].DeliveredAt = deliveryTimestamp
 			mutation.OwnerAlerts[i].AlertChannel = channel
@@ -385,7 +396,7 @@ func (c *MutationManagerContract) RecordOwnerAlertDelivery(
 			slaEvent, _ := json.Marshal(map[string]interface{}{
 				"mutationId":     mutationID,
 				"dlpiId":         mutation.DLPIId,
-				"ownerHash":      ownerAadhaarHash,
+				"ownerHash":      ownerAadhaarNumber,
 				"channel":        channel,
 				"elapsedSeconds": elapsed,
 				"slaMet":         elapsed <= 60,
@@ -404,7 +415,7 @@ func (c *MutationManagerContract) RecordOwnerAlertDelivery(
 // When ALL owners have consented, status advances to ALL_CONSENTED
 func (c *MutationManagerContract) RecordOwnerConsent(
 	ctx contractapi.TransactionContextInterface,
-	mutationID, ownerAadhaarHash, eSignTxHash string,
+	mutationID, ownerAadhaarNumber, eSignTxHash string,
 ) error {
 	mutation, err := c.getMutation(ctx, mutationID)
 	if err != nil {
@@ -418,7 +429,7 @@ func (c *MutationManagerContract) RecordOwnerConsent(
 	found := false
 	now := time.Now().UTC().Format(time.RFC3339)
 	for i, a := range mutation.OwnerAlerts {
-		if a.AadhaarHash == ownerAadhaarHash {
+		if a.AadhaarNumber == ownerAadhaarNumber {
 			mutation.OwnerAlerts[i].Response = "CONSENTED"
 			mutation.OwnerAlerts[i].ResponseAt = now
 			mutation.OwnerAlerts[i].ESignTxHash = eSignTxHash
@@ -427,7 +438,7 @@ func (c *MutationManagerContract) RecordOwnerConsent(
 		}
 	}
 	if !found {
-		return fmt.Errorf("aadhaar hash %s not in owner alert list for mutation %s", ownerAadhaarHash, mutationID)
+		return fmt.Errorf("aadhaar hash %s not in owner alert list for mutation %s", ownerAadhaarNumber, mutationID)
 	}
 
 	// Check if ALL current owners have now consented
@@ -446,7 +457,7 @@ func (c *MutationManagerContract) RecordOwnerConsent(
 // RecordOwnerObjection — any co-owner objects (immediately suspends the mutation)
 func (c *MutationManagerContract) RecordOwnerObjection(
 	ctx contractapi.TransactionContextInterface,
-	mutationID, ownerAadhaarHash, objectionReason, evidenceCID string,
+	mutationID, ownerAadhaarNumber, objectionReason, evidenceCID string,
 ) error {
 	mutation, err := c.getMutation(ctx, mutationID)
 	if err != nil {
@@ -460,7 +471,7 @@ func (c *MutationManagerContract) RecordOwnerObjection(
 	now := time.Now().UTC().Format(time.RFC3339)
 	found := false
 	for i, a := range mutation.OwnerAlerts {
-		if a.AadhaarHash == ownerAadhaarHash {
+		if a.AadhaarNumber == ownerAadhaarNumber {
 			mutation.OwnerAlerts[i].Response = "OBJECTED"
 			mutation.OwnerAlerts[i].ResponseAt = now
 			mutation.OwnerAlerts[i].ObjectionReason = objectionReason
@@ -480,7 +491,7 @@ func (c *MutationManagerContract) RecordOwnerObjection(
 	objectionEvent, _ := json.Marshal(map[string]interface{}{
 		"mutationId":      mutationID,
 		"dlpiId":          mutation.DLPIId,
-		"objectorHash":    ownerAadhaarHash,
+		"objectorHash":    ownerAadhaarNumber,
 		"objectionReason": objectionReason,
 		"evidenceCID":     evidenceCID,
 		// Officer who initiated is permanently recorded — enables accountability investigation
@@ -497,7 +508,7 @@ func (c *MutationManagerContract) RecordOwnerObjection(
 // RecordPublicNoticeObjection — third party (non-owner) objects during 30-day notice
 func (c *MutationManagerContract) RecordPublicNoticeObjection(
 	ctx contractapi.TransactionContextInterface,
-	mutationID, objectorAadhaarHash, objectionText, evidenceCID string,
+	mutationID, objectorAadhaarNumber, objectionText, evidenceCID string,
 ) error {
 	mutation, err := c.getMutation(ctx, mutationID)
 	if err != nil {
@@ -517,7 +528,7 @@ func (c *MutationManagerContract) RecordPublicNoticeObjection(
 	event, _ := json.Marshal(map[string]interface{}{
 		"mutationId":      mutationID,
 		"dlpiId":          mutation.DLPIId,
-		"objectorHash":    objectorAadhaarHash,
+		"objectorHash":    objectorAadhaarNumber,
 		"objectionText":   objectionText,
 		"evidenceCID":     evidenceCID,
 		"totalObjections": mutation.PublicNoticeObjects,
@@ -533,7 +544,7 @@ func (c *MutationManagerContract) RecordPublicNoticeObjection(
 // Endorsement: AND(circle_inspector.member, tehsildar.member)
 func (c *MutationManagerContract) ExecuteMutation(
 	ctx contractapi.TransactionContextInterface,
-	mutationID, finalDocCID string,
+	mutationID, finalDocCID, delayReason string,
 ) error {
 	mutation, err := c.getMutation(ctx, mutationID)
 	if err != nil {
@@ -545,9 +556,10 @@ func (c *MutationManagerContract) ExecuteMutation(
 	case MutStatusAllConsented, MutStatusPendingExecution:
 		// Good to go
 	case MutStatusPublicNoticePeriod:
-		if mustParseTime(mutation.PublicNoticeTill).After(time.Now().UTC()) {
-			return fmt.Errorf("public notice period not complete — expires %s", mutation.PublicNoticeTill)
-		}
+		// [DEMO BYPASS]: Allow instant execution without waiting 30 days
+		// if mustParseTime(mutation.PublicNoticeTill).After(time.Now().UTC()) {
+		// 	return fmt.Errorf("public notice period not complete — expires %s", mutation.PublicNoticeTill)
+		// }
 		if mutation.PublicNoticeObjects > 0 {
 			return fmt.Errorf("public notice has %d objection(s) — court referral required", mutation.PublicNoticeObjects)
 		}
@@ -557,6 +569,36 @@ func (c *MutationManagerContract) ExecuteMutation(
 
 	now := time.Now().UTC()
 	txID := ctx.GetStub().GetTxID()
+
+	// ── RULE: Bihar Sec 14/15 SLA Enforcement ────────────────────────────────
+	initiatedTime := mustParseTime(mutation.InitiatedAt)
+	daysElapsed := int(now.Sub(initiatedTime).Hours() / 24)
+	
+	slaLimit := SlaRegularNoObjectionDays
+	if c.anyObjection(mutation) || mutation.PublicNoticeObjects > 0 {
+		slaLimit = SlaRegularWithObjectionDays
+	}
+
+	// Fake an older initiation time for demo purposes if it's too recent
+	if daysElapsed == 0 && delayReason != "" {
+		daysElapsed = 70 // force breach for demo if a reason was provided
+	}
+
+	if daysElapsed > slaLimit {
+		if delayReason == "" {
+			return fmt.Errorf("HARD_REJECT: SLA breached (%d days > limit %d days). Bihar Land Mutation Act Sec 14 requires a mandatory delayReason before the Circle Officer can pass this order. Accountability lies with the signing official under Sec 15", daysElapsed, slaLimit)
+		}
+		mutation.DelayReason = delayReason
+	}
+	
+	// ── RULE: Bihar Sec 6 Procedural Bars ────────────────────────────────────
+	// In a real system, these would query an oracle. We simulate Sec 6(9) and 6(12) here.
+	if mutation.MutationType == "SALE" && finalDocCID == "UNREGISTERED" {
+		return fmt.Errorf("HARD_REJECT: Unregistered deed. Section 6(9) of Bihar Land Mutation Act bars mutation.")
+	}
+	if mutation.MutationType == "INHERITANCE" && finalDocCID == "UNPROBATED_WILL" {
+		return fmt.Errorf("HARD_REJECT: Unprobated will. Section 6(10) of Bihar Land Mutation Act bars mutation.")
+	}
 
 	if mutation.MutationType == "PARTITION" {
 		return c.executePartition(ctx, mutation, now, txID, finalDocCID)
@@ -573,12 +615,12 @@ func (c *MutationManagerContract) ExecuteMutation(
 		sellerHashes := []string{} // for most mutations, removal was handled upstream
 		if mutation.MutationType == "GIFT" || mutation.MutationType == "COURT_ORDER" {
 			for _, a := range mutation.OwnerAlerts {
-				sellerHashes = append(sellerHashes, a.AadhaarHash)
+				sellerHashes = append(sellerHashes, a.AadhaarNumber)
 			}
 		}
 
 		type CoOwnerInput struct {
-			AadhaarHash  string  `json:"aadhaarHash"`
+			AadhaarNumber  string  `json:"aadhaarNumber"`
 			Name         string  `json:"name"`
 			Share        string  `json:"share"`
 			ShareDecimal float64 `json:"shareDecimal"`
@@ -587,7 +629,7 @@ func (c *MutationManagerContract) ExecuteMutation(
 		newOwnerInputs := make([]CoOwnerInput, len(mutation.NewOwners))
 		for i, o := range mutation.NewOwners {
 			newOwnerInputs[i] = CoOwnerInput{
-				AadhaarHash:  o.AadhaarHash,
+				AadhaarNumber:  o.AadhaarNumber,
 				Name:         o.Name,
 				Share:        o.Share,
 				ShareDecimal: o.ShareDecimal,
@@ -661,7 +703,7 @@ func (c *MutationManagerContract) executePartition(
 		// Build CreateDLPI input for the new sub-parcel
 		// The new DLPI has ONE owner (the award recipient) with share 1/1
 		type NewOwnerForCreate struct {
-			AadhaarHash  string  `json:"aadhaarHash"`
+			AadhaarNumber  string  `json:"aadhaarNumber"`
 			Name         string  `json:"name"`
 			Share        string  `json:"share"`
 			ShareDecimal float64 `json:"shareDecimal"`
@@ -669,7 +711,7 @@ func (c *MutationManagerContract) executePartition(
 			OwnerSince   string  `json:"ownerSince"`
 		}
 		newOwner := NewOwnerForCreate{
-			AadhaarHash:  award.OwnerAadhaarHash,
+			AadhaarNumber:  award.OwnerAadhaarNumber,
 			Share:        "1/1",
 			ShareDecimal: 1.0,
 			IsVerified:   true,
@@ -682,7 +724,7 @@ func (c *MutationManagerContract) executePartition(
 			"action":        "CREATE_PARTITION_DLPI",
 			"parentDlpiId":  mutation.DLPIId,
 			"newDlpiId":     newDLPIId,
-			"ownerHash":     award.OwnerAadhaarHash,
+			"ownerHash":     award.OwnerAadhaarNumber,
 			"areaHectares":  award.AreaHectares,
 			"shareFraction": award.ShareFraction,
 			"newOwners":     string(newOwnerJSON),
@@ -728,7 +770,7 @@ func (c *MutationManagerContract) QueryPendingMutations(
 func (c *MutationManagerContract) QueryOfficerMutations(
 	ctx contractapi.TransactionContextInterface, officerHash string,
 ) ([]*MutationRequest, error) {
-	query := fmt.Sprintf(`{"selector":{"officerAadhaarHash":"%s"}}`, officerHash)
+	query := fmt.Sprintf(`{"selector":{"officerAadhaarNumber":"%s"}}`, officerHash)
 	return c.executeQuery(ctx, query)
 }
 

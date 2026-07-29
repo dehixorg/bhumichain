@@ -168,7 +168,7 @@ Jurisdiction: Uttar Pradesh Revenue Law, Hindu Succession Act 1956/2005, UP Zami
   try {
     const url = `${process.env.NYAYA_URL || 'http://localhost:8012'}/nyaya/predict`;
     const r = await axios.post(url, req.body, {
-      headers: { 'x-user-role': req.user.role, 'x-aadhaar-hash': req.user.aadhaarHash },
+      headers: { 'x-user-role': req.user.role, 'x-aadhaar-hash': req.user.aadhaarNumber },
     });
     res.json({ ...r.data, source: 'local' });
   } catch (e) {
@@ -181,7 +181,7 @@ app.use('/api/ai/nyaya', authenticate, async (req, res) => {
   try {
     const url = `${process.env.NYAYA_URL || 'http://localhost:8012'}/nyaya${req.path}`;
     const r = await axios({ method: req.method, url, data: req.body, params: req.query,
-      headers: { 'x-user-role': req.user.role, 'x-aadhaar-hash': req.user.aadhaarHash } });
+      headers: { 'x-user-role': req.user.role, 'x-aadhaar-hash': req.user.aadhaarNumber } });
     res.status(r.status).json(r.data);
   } catch (e) {
     res.status(e.response?.status || 502).json(e.response?.data || { error: 'NYAYA_AI_UNREACHABLE' });

@@ -71,13 +71,13 @@ export default function OTPInput({ value, onChange, disabled, error }: Props) {
           onPaste={handlePaste}
           className={clsx(
             'w-11 h-12 text-center text-xl font-bold rounded-lg border-2 transition-all',
-            'bg-gray-800 text-gray-100',
+            'bg-[#F8FAFC] text-gray-900',
             'focus:outline-none focus:scale-105',
             error
               ? 'border-red-500 focus:border-red-400'
               : digits[i]
-              ? 'border-brand-500 focus:border-brand-400'
-              : 'border-gray-600 focus:border-brand-500',
+              ? 'border-[#0F4C81]/60 focus:border-brand-400'
+              : 'border-gray-300 focus:border-[#0F4C81]/60',
             disabled && 'opacity-50 cursor-not-allowed',
           )}
         />

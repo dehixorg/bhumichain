@@ -104,7 +104,7 @@ class ComputeRequest(BaseModel):
     dlpiId: str
     familyId: str
     deceasedName: str
-    deceasedHash: str
+    deceasedAadhaar: str
     dateOfDeath: str
     religion: str = "Hindu"
     muslimSchool: str = "Sunni"    # "Sunni" | "Shia"
@@ -232,7 +232,7 @@ def validate_plan(req: PlanValidationRequest):
     members = []
     for ph in req.plannedHeirs:
         m = FamilyMember(
-            memberId=ph.get("aadhaarHash", str(uuid.uuid4()))[:12],
+            memberId=ph.get("aadhaarNumber", str(uuid.uuid4()))[:12],
             name=ph.get("name", ""),
             relation=ph.get("relation", "Son"),
             gender=Gender.F if ph.get("gender", "M") == "F" else Gender.M,
@@ -324,7 +324,7 @@ class AliveTransferRequest(BaseModel):
     dlpiId: str
     ownerName: str
     ownerReligion: str = "Hindu"
-    recipients: list[dict]         # [{aadhaarHash, name, relation, finalShare, finalShareDec}]
+    recipients: list[dict]         # [{aadhaarNumber, name, relation, finalShare, finalShareDec}]
 
 class AliveTransferResponse(BaseModel):
     isValid: bool

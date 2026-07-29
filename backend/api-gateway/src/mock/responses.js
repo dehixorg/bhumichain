@@ -11,7 +11,7 @@ const DEMO_DLPI = {
   tehsilCode:        'DAD',
   districtCode:      'UP-GBN',
   ownerName:         'Deepak Narayan Singh',
-  ownerAadhaarHash:  'sha256:a3f8e2d1c7b4a09f6e5d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b3a',
+  ownerAadhaarNumber:  'sha256:a3f8e2d1c7b4a09f6e5d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b3a',
   landType:          'Bhumidhari',
   landTypeDesc:      'Hereditary tenant with full rights',
   areaHectares:      2.4,
@@ -32,7 +32,7 @@ const DEMO_TRIBAL_DLPI = {
   tehsilCode:        'DAD',
   districtCode:      'UP-GBN',
   ownerName:         'Ramkali Gond',
-  ownerAadhaarHash:  'sha256:b4g9f3d2c8e1a7f0e6d5c4b3a2f1e0d9c8b7a6f5e4d3c2b1a0f9e8d7c6b5a',
+  ownerAadhaarNumber:  'sha256:b4g9f3d2c8e1a7f0e6d5c4b3a2f1e0d9c8b7a6f5e4d3c2b1a0f9e8d7c6b5a',
   landType:          'Tribal_FRA',
   landTypeDesc:      'Tribal / forest rights patta',
   areaHectares:      2.1,
@@ -106,7 +106,7 @@ const DEMO_MY_PARCELS = [
     areaHectares:      2.4,
     encumbranceStatus: 'CLEAR',
     claimStatus:       'SEEDED_UNVERIFIED',
-    owner:             { name: 'Arun Sharma' },
+    owner:             { name: 'Rakesh Agarwal' },
     location:          { latitude: 28.6010, longitude: 77.4850 },
     valuation:         { circleRateINR: 2_880_000 },
     txHash:            '0xdemo_arun_tx',
@@ -311,7 +311,7 @@ const DEMO_SUCCESSION_CASE = {
     {
       heirId:       'HEIR-001',
       name:         'Ankur Singh',
-      aadhaarHash:  'sha256:heir1ankur3f8e2d1c7b4a09f6e5d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8',
+      aadhaarNumber:  'sha256:heir1ankur3f8e2d1c7b4a09f6e5d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8',
       relation:     'Son',
       gender:       'Male',
       dob:          '1988-03-15',
@@ -327,7 +327,7 @@ const DEMO_SUCCESSION_CASE = {
     {
       heirId:       'HEIR-002',
       name:         'Nitin Singh',
-      aadhaarHash:  'sha256:heir2nitin8e2d1c7b4a09f6e5d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8f7',
+      aadhaarNumber:  'sha256:heir2nitin8e2d1c7b4a09f6e5d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8f7',
       relation:     'Son',
       gender:       'Male',
       dob:          '1991-07-22',
@@ -343,7 +343,7 @@ const DEMO_SUCCESSION_CASE = {
     {
       heirId:       'HEIR-003',
       name:         'Neeta Singh',
-      aadhaarHash:  'sha256:heir3neeta1c7b4a09f6e5d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8f7e6d5',
+      aadhaarNumber:  'sha256:heir3neeta1c7b4a09f6e5d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8f7e6d5',
       relation:     'Daughter',
       gender:       'Female',
       dob:          '1994-11-08',
@@ -370,9 +370,9 @@ const DEMO_SUCCESSION_CASE = {
 const DEMO_TRANSFER = {
   transferId:          'TXF-DLPI-UP-DAD-00100-b2c3d4e5',
   dlpiId:              'DLPI-UP-DAD-00100',
-  sellerAadhaarHash:   'sha256:a3f8e2d1c7b4a09f6e5d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b3a',
+  sellerAadhaarNumber:   'sha256:a3f8e2d1c7b4a09f6e5d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b3a',
   buyerName:           'Rakesh Agarwal',
-  buyerAadhaarHash:    'sha256:buyer1rakesh9d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b3a2f1e0',
+  buyerAadhaarNumber:    'sha256:buyer1rakesh9d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b3a2f1e0',
   declaredValueINR:    4_800_000,
   oracleValueINR:      5_200_000,
   stampDutyINR:        208_000,
@@ -418,9 +418,9 @@ const DEMO_MUTATION = {
   officerRank:             'Patwari',
   officerHash:             'sha256:officer1ramesh3f8e2d1c7b4a09f6e5d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a',
   currentOwnerName:        'Deepak Narayan Singh',
-  currentOwnerAadhaarHash: 'sha256:owner1deepak3f8e2d1c7b4a09f6e5d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9',
+  currentOwnerAadhaarNumber: 'sha256:owner1deepak3f8e2d1c7b4a09f6e5d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9',
   newOwnerName:            'Ankur Singh',
-  newOwnerAadhaarHash:     'sha256:heir1ankur3f8e2d1c7b4a09f6e5d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8',
+  newOwnerAadhaarNumber:     'sha256:heir1ankur3f8e2d1c7b4a09f6e5d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8',
   reason:                  'Death of Deepak Narayan Singh (CRS Reg: CRS-GBN-2026-00541). Son Ankur Singh is primary legal heir under Hindu Succession Act 1956.',
   supportingCID:           'QmDeathCertDeepaK2026Khatauni',
   courtOrderNo:            null,
@@ -456,7 +456,7 @@ const DEMO_MUTATION = {
     },
     {
       channel:    'TELEGRAM',
-      recipient:  'Neighbour: Arun Sharma (DLPI-UP-DAD-00003)',
+      recipient:  'Neighbour: Rakesh Agarwal (DLPI-UP-DAD-00003)',
       chatId:     '@bhumichain_alerts',
       message:    '📢 Public Notice: Land mutation on adjacent parcel DLPI-UP-DAD-00100 in Gharbara, Dadri. View: bhumi.up.gov.in/mutation/MUT-DLPI-UP-DAD-00100-d4e5f6a7',
       sentAt:     '2026-06-10T09:31:06Z',
@@ -642,6 +642,9 @@ const DEMO_WS_EVENTS = {
   },
 };
 
+let MOCK_SCANS = [];
+let MOCK_SUCCESSION_CASES = [];
+
 module.exports = {
   DEMO_DLPI,
   DEMO_TRIBAL_DLPI,
@@ -701,11 +704,130 @@ module.exports = {
           { txId: '0xfabric-tx-000003', timestamp: '2025-09-01T14:00:00Z', action: 'ENCUMBRANCE_RELEASED', actor: 'SBI Noida Branch' },
         ];
 
-      case 'dlpi::GetMyParcels':
-        return DEMO_MY_PARCELS;
+      case 'dlpi::QueryDLPIsByOwner':
+      case 'dlpi::GetMyParcels': {
+        const fs = require('fs');
+        const ownerHash = args[0] || '';
+        const userRaw   = args[1] || '';
+        const userName  = (args[2] || '').toLowerCase();
+        const PRIYA_AADHAAR = '999900010010';
+        
+        let dynamicScans = [...MOCK_SCANS];
+        // Read executed mock cases to persist property mutations across restarts
+        try {
+          const cases = JSON.parse(fs.readFileSync('/tmp/bhumichain_mock_cases.json'));
+          cases.filter(c => c.status === 'EXECUTED' || c.status === 'AUTO_MUTATED' || c.status === 'COMPLETED' || c.status === 'TEHSILDAR_APPROVED').forEach(sc => {
+            if (sc && sc.heirs) {
+              if (!dynamicScans.find(s => s.dlpiId === sc.dlpiId)) {
+                 const parcel = JSON.parse(JSON.stringify(DEMO_DLPI));
+                 parcel.dlpiId = sc.dlpiId;
+                 parcel.initialOwners = sc.heirs.map(h => ({
+                   name: h.name,
+                   aadhaarNumber: h.aadhaarNumber || h.aadhaar || '',
+                   aadhaar: h.aadhaar || h.aadhaarNumber || '',
+                   share: h.share || h.finalShare || `1/${sc.heirs.length}`,
+                   shareDecimal: h.shareDecimal || h.finalShareDec || (1.0 / sc.heirs.length)
+                 }));
+                 parcel.claimStatus = 'VERIFIED';
+                 dynamicScans.push(parcel);
+              } else {
+                 const existing = dynamicScans.find(s => s.dlpiId === sc.dlpiId);
+                 if (existing) {
+                   existing.initialOwners = sc.heirs.map(h => ({
+                     name: h.name,
+                     aadhaarNumber: h.aadhaarNumber || h.aadhaar || '',
+                     aadhaar: h.aadhaar || h.aadhaarNumber || '',
+                     share: h.share || h.finalShare || `1/${sc.heirs.length}`,
+                     shareDecimal: h.shareDecimal || h.finalShareDec || (1.0 / sc.heirs.length)
+                   }));
+                 }
+              }
+            }
+          });
+        } catch(e) {}
 
-      case 'dlpi::GetPendingReview':
-        return DEMO_PENDING_REVIEW;
+        // Filter dynamicScans to include parcels where this citizen is an owner
+        const myScans = dynamicScans.filter(s => {
+          const ownersList = s.initialOwners || s.owners || [];
+          if (!Array.isArray(ownersList) || ownersList.length === 0) return false;
+          return ownersList.some(o => {
+            const oHash = o.aadhaarNumber || '';
+            const oRaw  = o.aadhaar || '';
+            const oName = (o.name || '').toLowerCase();
+            if (oHash && (oHash === ownerHash || oHash === userRaw)) return true;
+            if (oRaw && (oRaw === ownerHash || oRaw === userRaw)) return true;
+            if (userName && oName && oName.length > 2 && (oName.includes(userName) || userName.includes(oName))) return true;
+            if (userRaw === '999900010010' && oName.includes('priya')) return true;
+            if (userRaw === '999900010015' && oName.includes('sunita')) return true;
+            if (userRaw === '999900010012' && oName.includes('suresh')) return true;
+            if (ownerHash === '999900010012' && oName.includes('suresh')) return true;
+            return false;
+          });
+        });
+        // Check if atomic clear history was triggered
+        let isCleared = false;
+        try { if (fs.existsSync('/tmp/bhumichain_history_cleared.json')) isCleared = true; } catch(e) {}
+        let seededParcels = [];
+        try { seededParcels = JSON.parse(fs.readFileSync('/tmp/bhumichain_seeded_parcels.json', 'utf8')); } catch(e) {}
+        
+        let atomicClaims = {};
+        try { atomicClaims = JSON.parse(fs.readFileSync('/tmp/bhumichain_atomic_claims.json', 'utf8')); } catch(e) {}
+
+        const mySeeded = Array.isArray(seededParcels) ? seededParcels.filter(p => {
+          if (atomicClaims[p.dlpiId]) {
+            const claim = atomicClaims[p.dlpiId];
+            if (claim.heirs && Array.isArray(claim.heirs)) {
+              return claim.heirs.some(h => (h.aadhaarNumber && (h.aadhaarNumber === ownerHash || h.aadhaarNumber === userRaw)) || (h.aadhaar && (h.aadhaar === ownerHash || h.aadhaar === userRaw)) || ((h.name || '').toLowerCase().includes(userName) && userName.length > 1));
+            }
+            return (claim.aadhaarNumber && (claim.aadhaarNumber.includes(ownerHash) || claim.aadhaarNumber.includes(userRaw))) ||
+                   ((claim.claimedBy || '').toLowerCase().includes(userName) && userName.length > 1);
+          }
+          const ownersList = p.owners || [];
+          return ownersList.some(o => (o.aadhaarNumber && (o.aadhaarNumber === ownerHash || o.aadhaarNumber === userRaw)) || (o.aadhaar && (o.aadhaar === ownerHash || o.aadhaar === userRaw)) || ((o.name || '').toLowerCase().includes(userName) && userName.length > 1)) ||
+                 (userRaw === '999900010010' && (p.ownerName || '').toLowerCase().includes('priya')) ||
+                 (userRaw === '999900010015' && (p.ownerName || '').toLowerCase().includes('sunita'));
+        }) : [];
+
+        const demoParcels = (ownerHash === PRIYA_AADHAAR && !isCleared) ? DEMO_MY_PARCELS.filter(p => !myScans.find(s => s.dlpiId === p.dlpiId) && !atomicClaims[p.dlpiId]) : [];
+        const claimedDemoParcels = DEMO_MY_PARCELS.filter(p => {
+          if (atomicClaims[p.dlpiId]) {
+            const claim = atomicClaims[p.dlpiId];
+            if (claim.heirs && Array.isArray(claim.heirs)) {
+              return claim.heirs.some(h => (h.aadhaarNumber && (h.aadhaarNumber === ownerHash || h.aadhaarNumber === userRaw)) || (h.aadhaar && (h.aadhaar === ownerHash || h.aadhaar === userRaw)) || ((h.name || '').toLowerCase().includes(userName) && userName.length > 1));
+            }
+            return (claim.aadhaarNumber && (claim.aadhaarNumber.includes(ownerHash) || claim.aadhaarNumber.includes(userRaw))) ||
+                   ((claim.claimedBy || '').toLowerCase().includes(userName) && userName.length > 1) ||
+                   (userRaw === '999900010015' && (claim.claimedBy || '').toLowerCase().includes('sunita'));
+          }
+          return false;
+        });
+
+        // Also check if any succession case directly matched this heir and executed
+        let myExecutedCasesParcels = [];
+        try {
+          const mCases = JSON.parse(fs.readFileSync('/tmp/bhumichain_mock_cases.json', 'utf8')) || [];
+          mCases.filter(c => (c.status === 'EXECUTED' || c.status === 'AUTO_MUTATED' || c.status === 'COMPLETED' || c.status === 'TEHSILDAR_APPROVED') && c.heirs && c.heirs.some(h => (h.aadhaarNumber && (h.aadhaarNumber === ownerHash || h.aadhaarNumber === userRaw)) || (h.aadhaar && (h.aadhaar === ownerHash || h.aadhaar === userRaw)) || ((h.name || '').toLowerCase().includes(userName) && userName.length > 1))).forEach(sc => {
+            if (!demoParcels.find(p => p.dlpiId === sc.dlpiId) && !claimedDemoParcels.find(p => p.dlpiId === sc.dlpiId) && !myScans.find(p => p.dlpiId === sc.dlpiId) && !mySeeded.find(p => p.dlpiId === sc.dlpiId)) {
+              myExecutedCasesParcels.push({
+                ...DEMO_DLPI,
+                dlpiId: sc.dlpiId,
+                claimStatus: 'OWNER_VERIFIED',
+                ownerName: sc.heirs.map(h => `${h.name} (${h.share || 'Heir'})`).join(', '),
+                owners: sc.heirs
+              });
+            }
+          });
+        } catch(e) {}
+
+        return demoParcels.concat(claimedDemoParcels).concat(myScans).concat(mySeeded).concat(myExecutedCasesParcels);
+      }
+
+      case 'dlpi::GetPendingReview': {
+        const fs = require('fs');
+        let isCleared = false;
+        try { if (fs.existsSync('/tmp/bhumichain_history_cleared.json')) isCleared = true; } catch(e) {}
+        return isCleared ? [] : DEMO_PENDING_REVIEW;
+      }
 
       // ── DLPI writes ─────────────────────────────────────────────────────────
       case 'dlpi::CreateDLPI': {
@@ -821,8 +943,26 @@ module.exports = {
           consentSeller: false, consentBuyer: false, initiatedAt: new Date().toISOString(),
           ...DEMO_TRANSFER,
         };
-      case 'property-transfer::GetTransfer':
+      case 'property-transfer::GetTransferProposal':
+      case 'property-transfer::GetTransfer': {
+        try {
+          const fs = require('fs');
+          const mockT = JSON.parse(fs.readFileSync('/tmp/bhumichain_mock_transfers.json', 'utf8'));
+          if (Array.isArray(mockT)) {
+            const found = mockT.find(t => t.transferId === args[0]);
+            if (found) return { ...DEMO_TRANSFER, ...found };
+          }
+        } catch(e) {}
         return DEMO_TRANSFER;
+      }
+      case 'property-transfer::ApproveByPatwari':
+        return { success: true, status: 'PENDING_CI_APPROVAL' };
+      case 'property-transfer::ApproveByCI':
+        return { success: true, status: 'PENDING_SRO_EXECUTION' };
+      case 'property-transfer::ApproveBySRO':
+        return { success: true, status: 'PENDING_TEHSILDAR_APPROVAL' };
+      case 'property-transfer::ApproveByTehsildar':
+        return { success: true, status: 'COMPLETED' };
       case 'property-transfer::RecordConsent':
         return { transferId: args[0], partyType: args[1], consentedAt: new Date().toISOString(), status: 'CONSENT_RECORDED' };
       case 'property-transfer::RecordFraudScore':
@@ -833,8 +973,12 @@ module.exports = {
         return { transferId: args[0], newTitleCID: args[1], status: 'EXECUTED', txHash: `0xfabric-tx-transfer-${Date.now()}`, executedAt: new Date().toISOString() };
       case 'property-transfer::RejectTransfer':
         return { transferId: args[0], reason: args[1], status: 'REJECTED', rejectedAt: new Date().toISOString() };
-      case 'property-transfer::GetAllTransfers':
+      case 'property-transfer::QueryPendingTransfers':
+      case 'property-transfer::GetAllTransfers': {
+        const fs = require('fs');
+        if (fs.existsSync('/tmp/bhumichain_history_cleared.json')) return [];
         return [DEMO_TRANSFER];
+      }
       case 'mutation-manager::CreateMutation': {
         const data = JSON.parse(args[0]);
         const id = `MUT-2026-${Math.floor(1000 + Math.random() * 9000)}`;
@@ -904,8 +1048,16 @@ module.exports = {
         return DEMO_MUTATION_LIST.find(m => m.mutationId === args[0]) || DEMO_MUTATION;
       case 'mutation-manager::GetMutationsByDLPI':
         return DEMO_MUTATION_LIST.filter(m => m.dlpiId === args[0]);
-      case 'mutation-manager::GetAllMutations':
-        return DEMO_MUTATION_LIST;
+      case 'mutation-manager::QueryPendingMutations':
+      case 'mutation-manager::GetAllMutations': {
+        const fs = require('fs');
+        let isCleared = false;
+        try { if (fs.existsSync('/tmp/bhumichain_history_cleared.json')) isCleared = true; } catch(e) {}
+        let dMuts = [];
+        try { dMuts = JSON.parse(fs.readFileSync('/tmp/bhumichain_dynamic_mutations.json')); } catch(e) {}
+        const initial = isCleared ? [] : DEMO_MUTATION_LIST;
+        return [...initial, ...dMuts];
+      }
       case 'mutation-manager::RecordOwnerAlertDelivery':
         return { mutationId: args[0], channel: args[1], deliveredAt: args[2], recorded: true };
       case 'mutation-manager::RecordOwnerConsent': {
@@ -1002,18 +1154,187 @@ module.exports = {
       }
       case 'mutation-manager::ExecuteMutation':
         return { mutationId: args[0], status: 'EXECUTED', executedAt: new Date().toISOString(), txHash: `0xmut-exec-${Date.now()}` };
-      case 'uttaradhikar::InitiateSuccession':
-        return { caseId: DEMO_SUCCESSION_CASE.caseId, status: 'HEIRS_IDENTIFIED' };
-      case 'uttaradhikar::GetSuccessionCase':
-        return DEMO_SUCCESSION_CASE;
-      case 'uttaradhikar::GetSuccessionByDLPI':
-        return args[0] === DEMO_SUCCESSION_CASE.dlpiId ? [DEMO_SUCCESSION_CASE] : [];
-      case 'uttaradhikar::QueryPendingSuccessions':
-        return [DEMO_SUCCESSION_CASE];
-      case 'uttaradhikar::RecordHeirConsent':
-        return { caseId: args[0], heirAadhaarHash: args[1], eSignTxHash: args[2], consentedAt: new Date().toISOString(), status: 'CONSENT_RECORDED' };
+      case 'uttaradhikar::InitiateSuccessionByDeathCert':
+      case 'uttaradhikar::InitiateSuccession': {
+        const caseId = `SUC-${args[0]}-${Date.now().toString(16)}`;
+        let heirs = [];
+        try {
+          if (args.length >= 10 && args[9]) {
+            heirs = JSON.parse(args[9]);
+            if (heirs.length > 0) {
+              const fraction = `1/${heirs.length}`;
+              const decimal = 1.0 / heirs.length;
+              heirs = heirs.map(h => ({
+                ...h,
+                share: fraction,
+                finalShare: fraction,
+                shareDecimal: decimal,
+                finalShareDec: decimal
+              }));
+            }
+          }
+        } catch (e) {}
+        const newCase = {
+          caseId,
+          dlpiId: args[0],
+          familyId: args[1],
+          deceasedName: args[2],
+          deceasedAadhaarNumber: args[3],
+          dateOfDeath: args[4],
+          deathCertCID: args[5],
+          crsRegistrationNo: args[6],
+          applicableLaw: args[8] || 'Hindu Succession Act 1956/2005',
+          status: 'AWAITING_CONSENTS',
+          heirs: heirs,
+          totalHeirs: heirs.length,
+          consentDeadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+          aiComputationCID: args[11] || 'QmDynamicHeirComputation',
+          aiConfidenceScore: parseFloat(args[12] || '1.0'),
+          initiatedAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        const fs = require('fs');
+        let cases = [];
+        try { cases = JSON.parse(fs.readFileSync('/tmp/bhumichain_mock_cases.json')); } catch(e) {}
+        cases.push(newCase);
+        fs.writeFileSync('/tmp/bhumichain_mock_cases.json', JSON.stringify(cases));
+        return { caseId, status: 'HEIRS_IDENTIFIED' };
+      }
+      case 'uttaradhikar::GetSuccessionCase': {
+        const fs = require('fs');
+        let cases = [];
+        try { cases = JSON.parse(fs.readFileSync('/tmp/bhumichain_mock_cases.json')); } catch(e) {}
+        try {
+          const bCases = JSON.parse(fs.readFileSync('/tmp/bhumichain_succession_cases.json'));
+          cases = [...cases, ...Object.values(bCases || {})];
+        } catch(e) {}
+        return cases.find(c => c.caseId === args[0]) || (cases.length > 0 ? cases[cases.length - 1] : DEMO_SUCCESSION_CASE);
+      }
+      case 'uttaradhikar::GetSuccessionByDLPI': {
+        const fs = require('fs');
+        let cases = [];
+        try { cases = JSON.parse(fs.readFileSync('/tmp/bhumichain_mock_cases.json')); } catch(e) {}
+        try {
+          const bCases = JSON.parse(fs.readFileSync('/tmp/bhumichain_succession_cases.json'));
+          cases = [...cases, ...Object.values(bCases || {})];
+        } catch(e) {}
+        const activeCase = cases.find(c => c.dlpiId === args[0]);
+        return activeCase ? [activeCase] : [];
+      }
+      case 'uttaradhikar::QueryPendingSuccessions': {
+        const fs = require('fs');
+        if (fs.existsSync('/tmp/bhumichain_history_cleared.json')) return [];
+        let cases = [];
+        try { cases = JSON.parse(fs.readFileSync('/tmp/bhumichain_mock_cases.json')); } catch(e) {}
+        try {
+          const bCases = JSON.parse(fs.readFileSync('/tmp/bhumichain_succession_cases.json'));
+          cases = [...cases, ...Object.values(bCases || {})];
+        } catch(e) {}
+        return cases.filter(c => c && ['AWAITING_CONSENTS', 'HEIR_CONSENT_PENDING', 'PENDING_TEHSILDAR_APPROVAL', 'ALL_CONSENTED', 'PENDING_TEHSILDAR', 'SUCCESSION_PENDING_TEHSILDAR', 'COURT_REFERRED'].includes(c.status));
+      }
+      case 'uttaradhikar::GetMyPendingSuccessions': {
+        const myHashRaw = String(args[0] || '').replace(/\D/g, '');
+        const myHash = args[0];
+        const fs = require('fs');
+        let cases = [];
+        try { cases = JSON.parse(fs.readFileSync('/tmp/bhumichain_mock_cases.json')); } catch(e) {}
+        try {
+          const bCases = JSON.parse(fs.readFileSync('/tmp/bhumichain_succession_cases.json'));
+          cases = [...cases, ...Object.values(bCases || {})];
+        } catch(e) {}
+        return cases.filter(c => {
+          if (!['AWAITING_CONSENTS', 'HEIR_CONSENT_PENDING'].includes(c.status)) return false;
+          const me = c.heirs?.find(h => {
+            const hAadhaar = String(h.aadhaarNumber || h.aadhaar || '').replace(/\D/g, '');
+            if (hAadhaar && myHashRaw && hAadhaar === myHashRaw) return true;
+            if (h.aadhaarNumber === myHash) return true;
+            const nameLower = (h.name || '').toLowerCase();
+            if (myHash === '999900010010' && nameLower.includes('priya')) return true;
+            if (myHash === '999900010015' && nameLower.includes('sunita')) return true;
+            if (myHash === '999900010012' && nameLower.includes('suresh')) return true;
+            return false;
+          });
+          return me && !me.hasConsented;
+        });
+      }
+      case 'uttaradhikar::RecordHeirConsent': {
+        const fs = require('fs');
+        let cases = [];
+        try { cases = JSON.parse(fs.readFileSync('/tmp/bhumichain_mock_cases.json')); } catch(e) {}
+        const sc = cases.find(c => c && c.caseId === args[0]);
+        let returnedStatus = 'CONSENT_RECORDED';
+        if (sc && sc.heirs) {
+          const heir = sc.heirs.find(h => h.aadhaarNumber === args[1] || h.aadhaar === args[1] || (args[1] && (String(args[1]).replace(/\D/g, '') === String(h.aadhaar || h.aadhaarNumber).replace(/\D/g, ''))));
+          if (heir) {
+            heir.hasConsented = true;
+            heir.consentedAt = new Date().toISOString();
+            heir.eSignTxHash = args[2];
+          }
+          if (sc.heirs.every(h => h.hasConsented)) {
+            sc.status = 'PENDING_TEHSILDAR';
+            returnedStatus = 'PENDING_TEHSILDAR_APPROVAL';
+          }
+          fs.writeFileSync('/tmp/bhumichain_mock_cases.json', JSON.stringify(cases, null, 2));
+        }
+        return { caseId: args[0], heirAadhaarNumber: args[1], eSignTxHash: args[2], consentedAt: new Date().toISOString(), status: returnedStatus };
+      }
+      case 'uttaradhikar::ExecuteSuccession': {
+        const fs = require('fs');
+        let cases = [];
+        try { cases = JSON.parse(fs.readFileSync('/tmp/bhumichain_mock_cases.json')); } catch(e) {}
+        const sc = cases.find(c => c.caseId === args[0]);
+        if (sc && sc.heirs) {
+          sc.status = 'EXECUTED';
+          fs.writeFileSync('/tmp/bhumichain_mock_cases.json', JSON.stringify(cases));
+          // Find the parcel in MOCK_SCANS and replace initialOwners
+          let parcel = MOCK_SCANS.find(p => p.dlpiId === sc.dlpiId);
+          if (!parcel) {
+            parcel = JSON.parse(JSON.stringify(DEMO_DLPI));
+            parcel.dlpiId = sc.dlpiId; // Just in case
+            MOCK_SCANS.push(parcel);
+          }
+          if (parcel) {
+            parcel.initialOwners = sc.heirs.map(h => ({
+              name: h.name,
+              aadhaarNumber: h.aadhaarNumber,
+              share: h.share || h.finalShare,
+              shareDecimal: h.shareDecimal || h.finalShareDec
+            }));
+            parcel.claimStatus = 'VERIFIED';
+          }
+          
+          // Auto-generate a mutation for this succession
+          const mutId = `MUT-${sc.dlpiId}-${Date.now().toString(16)}`;
+          const newMut = {
+            mutationId: mutId,
+            dlpiId: sc.dlpiId,
+            mutationType: 'Virasat (Inheritance)',
+            mutationTypeCode: 'Inheritance',
+            officerName: 'Amit Saxena (Auto)',
+            officerHash: 'tehsildar-hash',
+            officerRank: 'Tehsildar',
+            currentOwnerName: sc.deceasedName,
+            newOwnerName: sc.heirs.map(h => h.name).join(', '),
+            status: 'ALERT_SENT',
+            slaMet: true,
+            requiresPublicNotice: true,
+            publicNoticePeriodDays: 30,
+            objectionDeadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+            initiatedAt: new Date().toISOString(),
+            timeline: [
+              { step: 'INITIATED', label: 'Mutation Initiated', actor: 'System (Auto)', at: new Date().toISOString(), done: true },
+              { step: 'ALERT_SENT', label: 'Owner Alerted', actor: 'BhumiChain', at: new Date().toISOString(), done: true }
+            ]
+          };
+          let dMuts = [];
+          try { dMuts = JSON.parse(fs.readFileSync('/tmp/bhumichain_dynamic_mutations.json')); } catch(e) {}
+          dMuts.push(newMut);
+          fs.writeFileSync('/tmp/bhumichain_dynamic_mutations.json', JSON.stringify(dMuts));
+        }
+        return { caseId: args[0], status: 'EXECUTED', executedAt: new Date().toISOString(), txHash: `0xsuc-exec-${Date.now()}` };
+      }
       case 'uttaradhikar::RecordHeirObjection':
-        return { caseId: args[0], heirAadhaarHash: args[1], reason: args[2], objectedAt: new Date().toISOString(), status: 'OBJECTION_FILED' };
+        return { caseId: args[0], heirAadhaarNumber: args[1], reason: args[2], objectedAt: new Date().toISOString(), status: 'OBJECTION_FILED' };
       case 'uttaradhikar::RecordHeirNotification':
         return { caseId: args[0], channel: args[1], deliveredAt: new Date().toISOString(), recorded: true };
       case 'bhumi-auction::GetAllAuctions':
@@ -1042,6 +1363,30 @@ module.exports = {
         return DEMO_TRIBAL_REJECTION;
       case 'encumbrance::GenerateEC':
         return DEMO_EC;
+
+      case 'dlpi::CreateDLPI':
+        const input = JSON.parse(args[0]);
+        input.claimStatus = input.sourceType === 'RECORD_SCAN_AI' ? 'SCAN_PENDING_SRO' : 'SEEDED_UNVERIFIED';
+        input.encumbranceStatus = 'CLEAR';
+        // Add fake submittedAt for sorting in queue
+        input.submittedAt = new Date().toISOString();
+        // Give it ownerName derived from initialOwners
+        input.ownerName = input.initialOwners && input.initialOwners.length > 0 ? input.initialOwners[0].name : 'Unknown';
+        MOCK_SCANS.push(input);
+        return { success: true, txId: `mock-tx-${Date.now()}` };
+
+      case 'dlpi::QueryPendingScans':
+        return MOCK_SCANS.filter(s => s.claimStatus === args[0]);
+
+      case 'dlpi::ApproveScanSRO':
+        const scanSro = MOCK_SCANS.find(s => s.dlpiId === args[0]);
+        if (scanSro) scanSro.claimStatus = 'SCAN_PENDING_TEHSILDAR';
+        return { success: true };
+
+      case 'dlpi::ApproveScanTehsildar':
+        const scanTehsil = MOCK_SCANS.find(s => s.dlpiId === args[0]);
+        if (scanTehsil) scanTehsil.claimStatus = 'SEEDED_UNVERIFIED';
+        return { success: true };
 
       default:
         return { success: true, txId: `mock-tx-${Date.now()}` };

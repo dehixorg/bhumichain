@@ -19,7 +19,7 @@ const ANOMALIES = [
     severity:      'HIGH',
     gps:           [19.7234, 73.6891] as [number, number],
     dlpiId:        null,
-    tehsil:        'Igatpuri',
+    anchal:        'Igatpuri',
     casteCategory: 'ST',
     desc:          'Household of 6 found on Forest Reserve land near Igatpuri. No legal patta exists.',
     action:        'Revenue Department field survey. Verify if FRA claim pending.',
@@ -31,7 +31,7 @@ const ANOMALIES = [
     severity:      'HIGH',
     gps:           [19.9812, 73.7823] as [number, number],
     dlpiId:        'DLPI-MH-NSK-02891',
-    tehsil:        'Nashik City',
+    anchal:        'Nashik City',
     casteCategory: 'General',
     desc:          'No household found at registered address. Owner holds 5 similar parcels — benami pattern.',
     action:        'Escalate to I-T Department. FraudSense score: 0.87.',
@@ -43,7 +43,7 @@ const ANOMALIES = [
     severity:      'MEDIUM',
     gps:           [20.1456, 73.9234] as [number, number],
     dlpiId:        'DLPI-MH-NSK-04512',
-    tehsil:        'Nashik City',
+    anchal:        'Nashik City',
     casteCategory: 'OBC',
     desc:          'Census occupant name does not match DLPI owner. Possible unauthorised transfer without mutation.',
     action:        'Cross-check with Revenue Records Office. Issue mutation notice.',
@@ -55,7 +55,7 @@ const ANOMALIES = [
     severity:      'MEDIUM',
     gps:           [19.8345, 74.0123] as [number, number],
     dlpiId:        'DLPI-MH-SNN-00789',
-    tehsil:        'Sinnar',
+    anchal:        'Sinnar',
     casteCategory: 'SC',
     desc:          'DLPI shows owner but Janganana enumerator found abandoned land for 8 years. No occupant.',
     action:        'Check if owner deceased — trigger succession process if confirmed.',
@@ -87,6 +87,7 @@ function JangananaMap({ anomalies }: { anomalies: typeof ANOMALIES }) {
     if (typeof window === 'undefined' || !containerRef.current || mapRef.current) return;
 
     import('leaflet').then((L) => {
+      if (!containerRef.current || (containerRef.current as any)._leaflet_id) return;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       delete (L.Icon.Default.prototype as any)._getIconUrl;
       L.Icon.Default.mergeOptions({
@@ -114,7 +115,7 @@ function JangananaMap({ anomalies }: { anomalies: typeof ANOMALIES }) {
               <div style="color:#9ca3af;margin-bottom:2px">${a.householdId}</div>
               ${a.dlpiId ? `<div style="font-family:monospace;color:#6b7280;margin-bottom:4px">${a.dlpiId}</div>` : ''}
               <div style="margin-bottom:2px">${a.desc.slice(0, 80)}…</div>
-              <div style="color:#6b7280;margin-top:4px">${a.tehsil} tehsil</div>
+              <div style="color:#6b7280;margin-top:4px">${a.anchal} anchal</div>
             </div>
           `);
       }
@@ -141,7 +142,7 @@ function JangananaMap({ anomalies }: { anomalies: typeof ANOMALIES }) {
 }
 
 const JangananaMapDynamic = dynamic(() => Promise.resolve(JangananaMap), { ssr: false, loading: () => (
-  <div className="w-full h-full bg-gray-800 flex items-center justify-center text-gray-500 text-sm animate-pulse rounded-xl">
+  <div className="w-full h-full bg-[#F8FAFC] flex items-center justify-center text-gray-500 text-sm animate-pulse rounded-xl">
     Loading map…
   </div>
 ) });
@@ -156,15 +157,15 @@ export default function JangananaPage() {
   }, []);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-gray-950">
+    <div className="flex h-screen overflow-hidden bg-[#F8FAFC]">
       <Sidebar demoMode />
 
       <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
 
         {/* Topbar */}
-        <div className="h-12 bg-gray-900 border-b border-gray-800 flex items-center px-6 gap-3 shrink-0">
-          <Layers className="w-4 h-4 text-brand-400" />
-          <span className="text-sm font-semibold text-gray-200">Janganana Integration</span>
+        <div className="h-12 bg-white border-b border-gray-200 flex items-center px-6 gap-3 shrink-0">
+          <Layers className="w-4 h-4 text-[#0F4C81]" />
+          <span className="text-sm font-semibold text-gray-700">Janganana Integration</span>
           <span className="text-xs text-gray-500">— Census 2026-27 × BhumiChain cross-reference</span>
         </div>
 
@@ -178,8 +179,8 @@ export default function JangananaPage() {
               { label: 'Anomalies flagged',       value: SUMMARY.anomalies.toString(),                   icon: <AlertTriangle className="w-4 h-4" />, color: 'red' },
               { label: 'Field reviews complete',  value: SUMMARY.fieldReviewDone.toString(),             icon: <TrendingUp className="w-4 h-4" />, color: 'amber' },
             ].map(({ label, value, icon, color }) => {
-              const text = { brand: 'text-brand-300', red: 'text-red-300', amber: 'text-amber-300' }[color];
-              const bg   = { brand: 'bg-brand-950',   red: 'bg-red-950',   amber: 'bg-amber-950'   }[color];
+              const text = { brand: 'text-[#0F4C81]', red: 'text-red-300', amber: 'text-amber-300' }[color];
+              const bg   = { brand: 'bg-[#EFF6FF]',   red: 'bg-red-950',   amber: 'bg-amber-950'   }[color];
               return (
                 <div key={label} className="card flex items-center gap-3">
                   <div className={clsx('w-9 h-9 rounded-lg flex items-center justify-center shrink-0', bg)}>
@@ -213,10 +214,10 @@ export default function JangananaPage() {
                   return (
                     <div key={type} className="mb-3">
                       <div className="flex items-center justify-between mb-1">
-                        <span className="text-xs text-gray-300">{type.replace(/_/g, ' ')}</span>
+                        <span className="text-xs text-gray-600">{type.replace(/_/g, ' ')}</span>
                         <span className="text-xs font-mono font-bold" style={{ color }}>{count}</span>
                       </div>
-                      <div className="h-1.5 bg-gray-800 rounded-full">
+                      <div className="h-1.5 bg-[#F8FAFC] rounded-full">
                         <div className="h-full rounded-full" style={{ width: `${pct}%`, background: color }} />
                       </div>
                     </div>
@@ -226,11 +227,11 @@ export default function JangananaPage() {
 
               <div className="card">
                 <div className="flex items-start gap-2">
-                  <Info className="w-3.5 h-3.5 text-brand-400 shrink-0 mt-0.5" />
+                  <Info className="w-3.5 h-3.5 text-[#0F4C81] shrink-0 mt-0.5" />
                   <div className="text-xs text-gray-500 space-y-1.5">
                     <p>Janganana GPS data is cross-referenced with the BhumiChain DLPI registry in real-time.</p>
-                    <p>Anomalies are auto-prioritised by severity and forwarded to the relevant tehsildar.</p>
-                    <p className="text-brand-400">SVAMITVA scheme: 3.10 crore property cards issued across 3.29 lakh villages.</p>
+                    <p>Anomalies are auto-prioritised by severity and forwarded to the relevant circle_officer.</p>
+                    <p className="text-[#0F4C81]">SVAMITVA scheme: 3.10 crore property cards issued across 3.29 lakh villages.</p>
                   </div>
                 </div>
               </div>
@@ -240,8 +241,8 @@ export default function JangananaPage() {
           {/* Anomaly detail table */}
           <div className="card">
             <div className="flex items-center gap-2 mb-4">
-              <MapPin className="w-4 h-4 text-brand-400" />
-              <span className="text-sm font-semibold text-gray-200">Demo Anomaly Records</span>
+              <MapPin className="w-4 h-4 text-[#0F4C81]" />
+              <span className="text-sm font-semibold text-gray-700">Demo Anomaly Records</span>
               <span className="ml-auto text-xs text-gray-500">Click row for details</span>
             </div>
             <div className="space-y-2">
@@ -252,8 +253,8 @@ export default function JangananaPage() {
                   className={clsx(
                     'w-full text-left rounded-xl border transition-colors',
                     selected?.householdId === a.householdId
-                      ? 'bg-gray-800 border-brand-700'
-                      : 'bg-gray-800 border-gray-700 hover:border-gray-600',
+                      ? 'bg-[#F8FAFC] border-blue-300'
+                      : 'bg-[#F8FAFC] border-gray-200 hover:border-gray-300',
                   )}
                 >
                   <div className="flex items-center gap-3 px-4 py-3">
@@ -263,7 +264,7 @@ export default function JangananaPage() {
                     />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-semibold text-gray-200">{a.type.replace(/_/g, ' ')}</span>
+                        <span className="text-xs font-semibold text-gray-700">{a.type.replace(/_/g, ' ')}</span>
                         <span className={clsx(
                           'text-xs px-1.5 py-0.5 rounded font-semibold',
                           a.severity === 'HIGH' ? 'bg-red-950 text-red-400' : 'bg-amber-950 text-amber-400',
@@ -273,12 +274,12 @@ export default function JangananaPage() {
                     </div>
                     <div className="text-right text-xs text-gray-600 shrink-0">
                       <div className="font-mono">{a.dlpiId || '—'}</div>
-                      <div>{a.tehsil}</div>
+                      <div>{a.anchal}</div>
                     </div>
                   </div>
 
                   {selected?.householdId === a.householdId && (
-                    <div className="px-4 pb-3 pt-1 border-t border-gray-700 space-y-2 text-xs text-gray-400">
+                    <div className="px-4 pb-3 pt-1 border-t border-gray-200 space-y-2 text-xs text-gray-400">
                       <div className="flex gap-4">
                         <span className="text-gray-500">GPS</span>
                         <span className="font-mono">{a.gps[0].toFixed(4)}, {a.gps[1].toFixed(4)}</span>
@@ -295,7 +296,7 @@ export default function JangananaPage() {
                         <span className="text-gray-500">Caste</span>
                         <span>{a.casteCategory}</span>
                       </div>
-                      <div className="flex gap-2 mt-2 pt-2 border-t border-gray-800">
+                      <div className="flex gap-2 mt-2 pt-2 border-t border-gray-200">
                         <Shield className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
                         <span className="text-amber-300">Recommended: {a.action}</span>
                       </div>

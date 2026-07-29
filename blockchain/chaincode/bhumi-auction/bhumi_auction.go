@@ -45,8 +45,8 @@ type BhumiAuction struct {
 type SealedBid struct {
 	BidId             string `json:"bidId"`
 	AuctionId         string `json:"auctionId"`
-	BidSealHash       string `json:"bidSealHash"`        // sha256(strconv.FormatInt(amount)+bidderAadhaarHash+nonce)
-	BidderAadhaarHash string `json:"bidderAadhaarHash"`
+	BidSealHash       string `json:"bidSealHash"`        // sha256(strconv.FormatInt(amount)+bidderAadhaarNumber+nonce)
+	BidderAadhaarNumber string `json:"bidderAadhaarNumber"`
 	SealedAt          string `json:"sealedAt"`
 	RevealedAmount    *int64 `json:"revealedAmount,omitempty"` // nil until RevealBid called
 	RevealedAt        string `json:"revealedAt,omitempty"`
@@ -56,7 +56,7 @@ type SealedBid struct {
 
 type AuctionWinner struct {
 	BidId             string `json:"bidId"`
-	BidderAadhaarHash string `json:"bidderAadhaarHash"`
+	BidderAadhaarNumber string `json:"bidderAadhaarNumber"`
 	WinningBid        int64  `json:"winningBid"`
 	ExecutedAt        string `json:"executedAt"`
 	TxHash            string `json:"txHash"`
@@ -140,11 +140,11 @@ func (c *BhumiAuctionContract) ActivateAuction(
 }
 
 // ── PlaceSealedBid ────────────────────────────────────────────────────────────
-// Bidder submits sha256(amount+bidderAadhaarHash+nonce). Actual amount stays off-chain until reveal.
+// Bidder submits sha256(amount+bidderAadhaarNumber+nonce). Actual amount stays off-chain until reveal.
 
 func (c *BhumiAuctionContract) PlaceSealedBid(
 	ctx contractapi.TransactionContextInterface,
-	auctionId, bidSealHash, bidderAadhaarHash string,
+	auctionId, bidSealHash, bidderAadhaarNumber string,
 ) (*SealedBid, error) {
 	auction, err := c.getAuction(ctx, auctionId)
 	if err != nil {
@@ -161,7 +161,7 @@ func (c *BhumiAuctionContract) PlaceSealedBid(
 		BidId:             bidId,
 		AuctionId:         auctionId,
 		BidSealHash:       bidSealHash,
-		BidderAadhaarHash: bidderAadhaarHash,
+		BidderAadhaarNumber: bidderAadhaarNumber,
 		SealedAt:          now,
 		Status:            "SEALED",
 	}
@@ -201,7 +201,7 @@ func (c *BhumiAuctionContract) RevealBid(
 	}
 
 	// Verify seal
-	expectedHash := fmt.Sprintf("%x", sha256.Sum256([]byte(amountStr+bid.BidderAadhaarHash+nonce)))
+	expectedHash := fmt.Sprintf("%x", sha256.Sum256([]byte(amountStr+bid.BidderAadhaarNumber+nonce)))
 	if expectedHash != bid.BidSealHash {
 		bid.Status = "INVALID"
 		c.saveBid(ctx, &bid)
@@ -291,7 +291,7 @@ func (c *BhumiAuctionContract) ExecuteWinner(
 	auction.UpdatedAt = now
 	auction.Winner = &AuctionWinner{
 		BidId:             winningBidId,
-		BidderAadhaarHash: bid.BidderAadhaarHash,
+		BidderAadhaarNumber: bid.BidderAadhaarNumber,
 		WinningBid:        *bid.RevealedAmount,
 		ExecutedAt:        now,
 		TxHash:            ctx.GetStub().GetTxID(),

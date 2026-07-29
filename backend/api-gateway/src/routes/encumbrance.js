@@ -21,7 +21,7 @@ router.post(
   '/mortgage',
   authenticate,
   requireRole(ROLES.BANK),
-  body('dlpiId').matches(/^DLPI-[A-Z]{2}-[A-Z]{3}-[A-Z0-9]+$/),
+  body('dlpiId').matches(/^DLPI-[A-Z0-9-]+$/),
   body('bankName').notEmpty(),
   body('bankBranch').notEmpty(),
   body('loanAccountHashedNo').notEmpty(),
@@ -29,7 +29,7 @@ router.post(
   body('cersaiRegNo').notEmpty(),
   body('mortgageDate').isISO8601(),
   body('mortgageExpiry').isISO8601(),
-  body('registeredByHash').matches(/^sha256:[a-f0-9]{64}$/),
+  body('registeredByHash').notEmpty(),
   validate,
   async (req, res) => {
     try {
@@ -67,13 +67,13 @@ router.post(
   '/injunction',
   authenticate,
   requireRole(ROLES.COLLECTOR, ROLES.REVENUE_OFFICER),
-  body('dlpiId').matches(/^DLPI-[A-Z]{2}-[A-Z]{3}-[A-Z0-9]+$/),
+  body('dlpiId').matches(/^DLPI-[A-Z0-9-]+$/),
   body('courtName').notEmpty(),
   body('caseNumber').notEmpty(),
   body('injunctionDate').isISO8601(),
   body('injunctionType').isIn(['STAY', 'ATTACHMENT', 'FREEZE', 'PROHIBITORY']),
   body('eCourtsOracleHash').notEmpty(),
-  body('registeredByHash').matches(/^sha256:[a-f0-9]{64}$/),
+  body('registeredByHash').notEmpty(),
   validate,
   async (req, res) => {
     try {
@@ -97,11 +97,11 @@ router.post(
   '/it-attachment',
   authenticate,
   requireRole(ROLES.COLLECTOR),
-  body('dlpiId').matches(/^DLPI-[A-Z]{2}-[A-Z]{3}-[A-Z0-9]+$/),
+  body('dlpiId').matches(/^DLPI-[A-Z0-9-]+$/),
   body('itAssessmentYear').matches(/^\d{4}-\d{2}$/),
   body('panHash').notEmpty(),
   body('itDemandAmountINR').isInt({ min: 1 }),
-  body('registeredByHash').matches(/^sha256:[a-f0-9]{64}$/),
+  body('registeredByHash').notEmpty(),
   validate,
   async (req, res) => {
     try {
@@ -121,7 +121,7 @@ router.post(
   '/:encumbranceId/release',
   authenticate,
   requireRole(ROLES.BANK, ROLES.COLLECTOR, ROLES.REVENUE_OFFICER),
-  body('releasedByHash').matches(/^sha256:[a-f0-9]{64}$/),
+  body('releasedByHash').notEmpty(),
   body('releaseDocCID').notEmpty(),
   validate,
   async (req, res) => {
@@ -143,13 +143,13 @@ router.post(
 router.get(
   '/ec/:dlpiId',
   authenticate,
-  param('dlpiId').matches(/^DLPI-[A-Z]{2}-[A-Z]{3}-[A-Z0-9]+$/),
+  param('dlpiId').matches(/^DLPI-[A-Z0-9-]+$/),
   validate,
   async (req, res) => {
     try {
       const ec = await submit('encumbrance', 'GenerateEC', [
         req.params.dlpiId,
-        req.user.aadhaarHash || 'sha256:requestor',
+        req.user.aadhaarNumber || 'sha256:requestor',
       ]);
       res.json(ec);
     } catch (e) {

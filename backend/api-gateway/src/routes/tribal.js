@@ -20,7 +20,7 @@ router.post(
   '/register',
   authenticate,
   requireRole(ROLES.NALSA, ROLES.COLLECTOR),
-  body('dlpiId').matches(/^DLPI-[A-Z]{2}-[A-Z]{3}-[A-Z0-9]+$/),
+  body('dlpiId').matches(/^DLPI-[A-Z0-9-]+$/),
   body('scheduleType').isIn(['V', 'VI', 'FRA_PATTA', 'PVTG']),
   body('gazettedOn').isISO8601(),
   body('districtName').notEmpty(),
@@ -57,19 +57,19 @@ router.post(
 router.post(
   '/check',
   authenticate,
-  body('dlpiId').matches(/^DLPI-[A-Z]{2}-[A-Z]{3}-[A-Z0-9]+$/),
+  body('dlpiId').matches(/^DLPI-[A-Z0-9-]+$/),
   body('buyerName').notEmpty().trim(),
-  body('buyerAadhaarHash').matches(/^sha256:[a-f0-9]{64}$/),
+  body('buyerAadhaarNumber').notEmpty(),
   validate,
   async (req, res) => {
     try {
-      const { dlpiId, buyerName, buyerAadhaarHash } = req.body;
+      const { dlpiId, buyerName, buyerAadhaarNumber } = req.body;
       const isTribalBuyer = req.body.isTribalBuyer || false;
       const tribalCertHash = req.body.tribalCertHash || '';
       const tribalCommunity = req.body.tribalCommunity || '';
 
       const result = await submit('tribal-guard', 'CheckTransfer', [
-        dlpiId, buyerName, buyerAadhaarHash,
+        dlpiId, buyerName, buyerAadhaarNumber,
         String(isTribalBuyer), tribalCertHash, tribalCommunity,
       ]);
 
@@ -110,7 +110,7 @@ router.get('/parcel/:dlpiId/attempts', authenticate, requireRole(ROLES.COLLECTOR
 router.post(
   '/:attemptId/gram-sabha',
   authenticate,
-  body('memberAadhaarHash').matches(/^sha256:[a-f0-9]{64}$/),
+  body('memberAadhaarNumber').notEmpty(),
   body('memberName').notEmpty(),
   body('villageId').notEmpty(),
   body('eSignTxHash').notEmpty(),
@@ -119,7 +119,7 @@ router.post(
     try {
       const result = await submit('tribal-guard', 'RecordGramSabhaApproval', [
         req.params.attemptId,
-        req.body.memberAadhaarHash,
+        req.body.memberAadhaarNumber,
         req.body.memberName,
         req.body.villageId,
         req.body.eSignTxHash,

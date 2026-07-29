@@ -1,26 +1,26 @@
 // ─── Core domain types matching chaincode structs ─────────────────────────────
 
-// UP land types (primary) + Maharashtra legacy
+// Bihar land types (primary) + Maharashtra legacy
 export type LandType =
-  | 'Bhumidhari' | 'Sirdar' | 'Asamiyadar' | 'Residential' | 'Commercial'
+  | 'Raiyati' | 'Gair Mazarua' | 'Asamiyadar' | 'Residential' | 'Commercial'
   | 'Tribal_FRA' | 'Govt_Reserved'
   | 'Bagayat' | 'Jirayat' | 'Kharaba' | 'Government' | 'Forest';
 
 export type EncumbranceStatus = 'CLEAR' | 'MORTGAGED' | 'COURT_INJUNCTION' | 'IT_ATTACHMENT' | 'MULTIPLE';
 
-// UP tehsil codes (primary) + Maharashtra legacy
-export type TehsilCode = 'DAD' | 'NDA' | 'JWR' | 'BSK' | 'SNN' | 'IGT' | 'NSK' | 'DIN' | 'NIK';
+// Bihar anchal codes (primary) + Maharashtra legacy
+export type TehsilCode = 'PHU' | 'NDA' | 'JWR' | 'BSK' | 'SNN' | 'IGT' | 'NSK' | 'DIN' | 'NIK';
 
 export interface ParcelOwner {
   name: string;
-  aadhaarHash: string;
+  aadhaarNumber: string;
   dob?: string;
   isTribal?: boolean;
 }
 
 export interface CoparcenaryHeir {
   name: string;
-  aadhaarHash: string;
+  aadhaarNumber: string;
   relation: string;
   share: string;
   shareDecimal: number;
@@ -45,18 +45,24 @@ export interface ParcelLocation {
 export interface Parcel {
   dlpiId: string;
   surveyNumber: string;
-  tehsil: string;
+  anchal: string;
   tehsilCode: TehsilCode;
   district: string;
   state: string;
   landType: LandType;
   landTypeDescription: string;
   areaHectares: number;
+  rakbaBigha?: number;
+  rakbaKatha?: number;
+  rakbaDhur?: number;
+  rakbaDecimal?: number;
   isTribal: boolean;
   isCoparcenary: boolean;
   scheduleVArea: boolean;
   encumbranceStatus: EncumbranceStatus;
   owner: ParcelOwner;
+  owners?: ParcelOwner[];
+  ownershipType?: string;
   coparcenary?: Coparcenary;
   location: ParcelLocation;
   valuation?: { circleRateINR: number; estimatedValueINR: number };
@@ -74,10 +80,14 @@ export interface GeoFeature {
     owner: string;
     landType: LandType;
     areaHectares: number;
+  rakbaBigha?: number;
+  rakbaKatha?: number;
+  rakbaDhur?: number;
+  rakbaDecimal?: number;
     encumbranceStatus: EncumbranceStatus;
     isTribal: boolean;
     isCoparcenary: boolean;
-    tehsil: string;
+    anchal: string;
     surveyNumber: string;
     circleRateINR: number;
   };
@@ -97,7 +107,7 @@ export interface GeoFeatureCollection {
 export interface SuccessionHeir {
   heirId: string;
   name: string;
-  aadhaarHash: string;
+  aadhaarNumber: string;
   relation: string;
   gender: string;
   dob: string;
@@ -136,9 +146,9 @@ export interface SuccessionCase {
 export interface Transfer {
   transferId: string;
   dlpiId: string;
-  sellerAadhaarHash: string;
+  sellerAadhaarNumber: string;
   buyerName: string;
-  buyerAadhaarHash: string;
+  buyerAadhaarNumber: string;
   declaredValueINR: number;
   oracleValueINR: number;
   stampDutyINR: number;
@@ -193,5 +203,5 @@ export interface AuthUser {
   token: string;
   role: UserRole;
   name: string;
-  aadhaarHash?: string;
+  aadhaarNumber?: string;
 }

@@ -1,0 +1,32 @@
+.loading-section {
+  text-align: center;
+  padding: 60px 20px;
+  animation: fadeSlideUp 0.4s ease-out;
+}
+
+.spinner {
+  width: 56px; height: 56px;
+  margin: 0 auto 24px;
+  border-radius: 50%;
+  border: 3px solid var(--border-glass);
+  border-top-color: var(--accent-blue);
+  border-right-color: var(--accent-purple);
+  animation: spin 0.9s linear infinite;
+}
+
+.loading-section h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.loading-section p {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+.loading-dots::after {
+  content: '';
+  animation: dotPulse 1.5s steps(4, end) infinite;
+}

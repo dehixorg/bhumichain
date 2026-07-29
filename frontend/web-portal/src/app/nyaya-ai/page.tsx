@@ -13,9 +13,9 @@ import clsx from 'clsx';
 // ─── Demo data ────────────────────────────────────────────────────────────────
 
 const DEMO_INPUT = {
-  dlpiId:       'DLPI-UP-DAD-00100',
+  dlpiId:       'DLPI-Bihar-PHU-00100',
   disputeType:  'Succession',
-  facts:        'Succession dispute following death of Deepak Narayan Singh (CRS-GBN-2026-00541). Three heirs — two sons and one daughter — claim equal 1/3 Bhumidhari shares under Mitakshara coparcenary. Lekhpal has delayed mutation for 45 days beyond statutory limit without cause.',
+  facts:        'Succession dispute following death of Deepak Narayan Singh (CRS-GBN-2026-00541). Three heirs — two sons and one daughter — claim equal 1/3 Raiyati shares under Mitakshara coparcenary. Karmachari has delayed mutation for 45 days beyond statutory limit without cause.',
 };
 
 const AI_PIPELINE = [
@@ -52,9 +52,9 @@ const DEMO_PREDICTION = {
       year:      2021,
     },
     {
-      caseNo:    'UP Revenue Case 2023-GBN-0471',
-      court:     'Board of Revenue, Uttar Pradesh',
-      ruling:    'Lekhpal bound to execute Virasat mutation within 30 days of verified CRS death certificate. Unexplained delay is misconduct under UP Revenue Code 2006.',
+      caseNo:    'Bihar Revenue Case 2023-GBN-0471',
+      court:     'Board of Revenue, Bihar',
+      ruling:    'Karmachari bound to execute Virasat mutation within 30 days of verified CRS death certificate. Unexplained delay is misconduct under Bihar Revenue Code 2006.',
       relevance: 0.79,
       year:      2023,
     },
@@ -124,17 +124,17 @@ export default function NyayaAIPage() {
   };
 
   return (
-    <div className="flex h-screen overflow-hidden bg-gray-950">
+    <div className="flex h-screen overflow-hidden bg-[#F8FAFC]">
       <Sidebar demoMode />
 
       <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
 
         {/* Topbar */}
-        <div className="h-12 bg-gray-900 border-b border-gray-800 flex items-center px-6 gap-3 shrink-0">
-          <Scale className="w-4 h-4 text-brand-400" />
-          <span className="text-sm font-semibold text-gray-200">NyayaAI — Legal Prediction</span>
+        <div className="h-12 bg-white border-b border-gray-200 flex items-center px-6 gap-3 shrink-0">
+          <Scale className="w-4 h-4 text-[#0F4C81]" />
+          <span className="text-sm font-semibold text-gray-700">NyayaAI — Legal Prediction</span>
           <span className="text-xs text-gray-500">— Demo Scene 5</span>
-          <div className="ml-auto flex items-center gap-1.5 text-xs text-brand-400">
+          <div className="ml-auto flex items-center gap-1.5 text-xs text-[#0F4C81]">
             <div className="w-1.5 h-1.5 rounded-full bg-brand-400 animate-pulse" />
             XGBoost + BERT · 18 crore eCourts cases
           </div>
@@ -148,8 +148,8 @@ export default function NyayaAIPage() {
             {/* Dispute input card */}
             <div className="card">
               <div className="flex items-center gap-2 mb-4">
-                <MessageSquare className="w-4 h-4 text-brand-400" />
-                <span className="text-sm font-semibold text-gray-200">Dispute Brief</span>
+                <MessageSquare className="w-4 h-4 text-[#0F4C81]" />
+                <span className="text-sm font-semibold text-gray-700">Dispute Brief</span>
                 <span className="ml-auto text-xs bg-amber-900 text-amber-300 px-2 py-0.5 rounded-full">
                   Pre-filled — Scene 5 Demo
                 </span>
@@ -158,20 +158,20 @@ export default function NyayaAIPage() {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs text-gray-400 mb-1">DLPI (Parcel)</label>
-                    <div className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm font-mono text-gray-200">
+                    <div className="bg-[#F8FAFC] border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono text-gray-700">
                       {DEMO_INPUT.dlpiId}
                     </div>
                   </div>
                   <div>
                     <label className="block text-xs text-gray-400 mb-1">Dispute Type</label>
-                    <div className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-200">
+                    <div className="bg-[#F8FAFC] border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700">
                       {DEMO_INPUT.disputeType}
                     </div>
                   </div>
                 </div>
                 <div>
                   <label className="block text-xs text-gray-400 mb-1">Facts of Dispute</label>
-                  <div className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2.5 text-sm text-gray-300 leading-relaxed min-h-[80px]">
+                  <div className="bg-[#F8FAFC] border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-600 leading-relaxed min-h-[80px]">
                     {DEMO_INPUT.facts}
                   </div>
                 </div>
@@ -189,8 +189,8 @@ export default function NyayaAIPage() {
             {(stage === 'computing' || stage === 'done') && (
               <div className="card">
                 <div className="flex items-center gap-2 mb-4">
-                  <Cpu className={clsx('w-4 h-4 text-brand-400', stage === 'computing' && 'animate-pulse')} />
-                  <span className="text-sm font-semibold text-gray-200">NyayaAI Pipeline</span>
+                  <Cpu className={clsx('w-4 h-4 text-[#0F4C81]', stage === 'computing' && 'animate-pulse')} />
+                  <span className="text-sm font-semibold text-gray-700">NyayaAI Pipeline</span>
                   {stage === 'done' && (
                     <span className="ml-auto text-xs text-gray-500 font-mono">
                       {elapsedMs}ms · {(DEMO_PREDICTION.casesAnalysed / 1e7).toFixed(2)}Cr cases scanned
@@ -201,11 +201,11 @@ export default function NyayaAIPage() {
                   {aiSteps.map((step, i) => (
                     <div key={i} className={clsx(
                       'flex items-center gap-3 text-sm transition-colors',
-                      step.done ? 'text-gray-300' : 'text-gray-600',
+                      step.done ? 'text-gray-600' : 'text-gray-600',
                     )}>
                       {step.done
-                        ? <CheckCircle className="w-4 h-4 text-brand-400 shrink-0" />
-                        : <div className="w-4 h-4 border border-gray-600 rounded-full shrink-0 animate-pulse" />
+                        ? <CheckCircle className="w-4 h-4 text-[#0F4C81] shrink-0" />
+                        : <div className="w-4 h-4 border border-gray-300 rounded-full shrink-0 animate-pulse" />
                       }
                       {step.label}
                       {step.done && <span className="ml-auto text-xs text-gray-600 font-mono">{step.ms}ms</span>}
@@ -221,15 +221,15 @@ export default function NyayaAIPage() {
                 {/* Outcome gauge */}
                 <div className="card">
                   <div className="flex items-center gap-2 mb-4">
-                    <TrendingUp className="w-4 h-4 text-brand-400" />
-                    <span className="text-sm font-semibold text-gray-200">Predicted Outcome</span>
+                    <TrendingUp className="w-4 h-4 text-[#0F4C81]" />
+                    <span className="text-sm font-semibold text-gray-700">Predicted Outcome</span>
                     {isRealAI && (
-                      <span className="text-xs bg-brand-900 text-brand-300 px-2 py-0.5 rounded-full font-semibold">
+                      <span className="text-xs bg-[#DBEAFE] text-[#0F4C81] px-2 py-0.5 rounded-full font-semibold">
                         ✦ Real AI
                       </span>
                     )}
                     <span className="ml-auto text-xs text-gray-500">
-                      Confidence: <span className="text-brand-400 font-semibold">{Math.round(prediction.confidence * 100)}%</span>
+                      Confidence: <span className="text-[#0F4C81] font-semibold">{Math.round(prediction.confidence * 100)}%</span>
                     </span>
                   </div>
 
@@ -251,11 +251,11 @@ export default function NyayaAIPage() {
                     <span>Lose {Math.round(prediction.loseProbability * 100)}%</span>
                   </div>
 
-                  <div className="mt-4 flex items-center gap-3 bg-brand-950 border border-brand-800 rounded-xl px-4 py-3">
-                    <CheckCircle className="w-5 h-5 text-brand-400 shrink-0" />
+                  <div className="mt-4 flex items-center gap-3 bg-[#EFF6FF] border border-blue-200 rounded-xl px-4 py-3">
+                    <CheckCircle className="w-5 h-5 text-[#0F4C81] shrink-0" />
                     <div>
-                      <div className="text-brand-300 font-semibold text-sm">Recommended Action</div>
-                      <div className="text-brand-500 text-xs mt-0.5">
+                      <div className="text-[#0F4C81] font-semibold text-sm">Recommended Action</div>
+                      <div className="text-[#0F4C81] text-xs mt-0.5">
                         {prediction.recommendedAction}
                       </div>
                     </div>
@@ -265,8 +265,8 @@ export default function NyayaAIPage() {
                 {/* Precedents */}
                 <div>
                   <div className="flex items-center gap-2 mb-3">
-                    <BookOpen className="w-4 h-4 text-brand-400" />
-                    <span className="text-sm font-semibold text-gray-200">Top Precedents</span>
+                    <BookOpen className="w-4 h-4 text-[#0F4C81]" />
+                    <span className="text-sm font-semibold text-gray-700">Top Precedents</span>
                     <span className="text-xs text-gray-500 ml-auto">ranked by BM25 relevance</span>
                   </div>
                   <div className="space-y-3">
@@ -293,8 +293,8 @@ export default function NyayaAIPage() {
             {/* Scene flow */}
             <div className="card">
               <div className="flex items-center gap-2 mb-3">
-                <Info className="w-4 h-4 text-brand-400" />
-                <span className="text-sm font-semibold text-gray-200">Scene 5 flow</span>
+                <Info className="w-4 h-4 text-[#0F4C81]" />
+                <span className="text-sm font-semibold text-gray-700">Scene 5 flow</span>
               </div>
               <ol className="space-y-2.5 text-xs text-gray-400">
                 {[
@@ -306,11 +306,11 @@ export default function NyayaAIPage() {
                   ['Legal brief',       'Actionable recommendation + citations'],
                 ].map(([title, desc], i) => (
                   <li key={i} className="flex gap-2">
-                    <span className="w-4 h-4 rounded-full bg-gray-800 text-gray-500 flex items-center justify-center shrink-0 font-mono text-xs">
+                    <span className="w-4 h-4 rounded-full bg-[#F8FAFC] text-gray-500 flex items-center justify-center shrink-0 font-mono text-xs">
                       {i + 1}
                     </span>
                     <div>
-                      <div className="text-gray-300">{title}</div>
+                      <div className="text-gray-600">{title}</div>
                       <div className="text-gray-600">{desc}</div>
                     </div>
                   </li>
@@ -328,7 +328,7 @@ export default function NyayaAIPage() {
                 <InfoRow label="Base"     value="XGBoost + BERT" mono />
                 <InfoRow label="Dataset"  value="18.42 Cr eCourts cases" />
                 <InfoRow label="Port"     value="8012" mono />
-                <InfoRow label="Training" value="UP + National HC corpus" />
+                <InfoRow label="Training" value="Bihar + National HC corpus" />
               </div>
             </div>
 
@@ -349,7 +349,7 @@ export default function NyayaAIPage() {
             {/* Access to justice stats */}
             <div className="card">
               <div className="flex items-center gap-1.5 mb-2">
-                <Shield className="w-3.5 h-3.5 text-brand-400" />
+                <Shield className="w-3.5 h-3.5 text-[#0F4C81]" />
                 <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
                   Access to Justice
                 </div>
@@ -357,10 +357,10 @@ export default function NyayaAIPage() {
               <div className="text-xs text-gray-500 space-y-1.5">
                 <p>
                   Land disputes account for <span className="text-red-400 font-medium">66%</span> of
-                  all civil litigation in UP, with avg case duration of <span className="text-red-400 font-medium">11 years</span>.
+                  all civil litigation in Bihar, with avg case duration of <span className="text-red-400 font-medium">11 years</span>.
                 </p>
                 <p>
-                  NyayaAI helps citizens identify <span className="text-brand-400 font-medium">strong precedents</span> before
+                  NyayaAI helps citizens identify <span className="text-[#0F4C81] font-medium">strong precedents</span> before
                   incurring legal costs — cutting frivolous filings and speeding resolution.
                 </p>
               </div>
@@ -383,7 +383,7 @@ function OutcomeCard({
   primary?: boolean;
 }) {
   const cls = {
-    brand: { bg: 'bg-brand-950', border: 'border-brand-800', text: 'text-brand-300', num: 'text-brand-200' },
+    brand: { bg: 'bg-[#EFF6FF]', border: 'border-blue-200', text: 'text-[#0F4C81]', num: 'text-brand-200' },
     amber: { bg: 'bg-amber-950', border: 'border-amber-800', text: 'text-amber-400', num: 'text-amber-300' },
     red:   { bg: 'bg-red-950',   border: 'border-red-800',   text: 'text-red-400',   num: 'text-red-300'   },
   }[color];
@@ -406,20 +406,20 @@ function PrecedentCard({
   rank: number;
 }) {
   return (
-    <div className="bg-gray-800 border border-gray-700 rounded-xl p-4">
+    <div className="bg-[#F8FAFC] border border-gray-200 rounded-xl p-4">
       <div className="flex items-start gap-3">
         <div className="w-6 h-6 rounded-full bg-gray-700 text-gray-400 flex items-center justify-center text-xs font-bold shrink-0">
           {rank}
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-xs font-semibold text-brand-300 font-mono">{precedent.caseNo}</span>
-            <span className="text-xs bg-brand-900 text-brand-400 px-1.5 py-0.5 rounded">
+            <span className="text-xs font-semibold text-[#0F4C81] font-mono">{precedent.caseNo}</span>
+            <span className="text-xs bg-[#DBEAFE] text-[#0F4C81] px-1.5 py-0.5 rounded">
               {Math.round(precedent.relevance * 100)}% match
             </span>
           </div>
           <div className="text-xs text-gray-500 mt-0.5">{precedent.court} · {precedent.year}</div>
-          <div className="text-sm text-gray-300 mt-2 leading-relaxed">{precedent.ruling}</div>
+          <div className="text-sm text-gray-600 mt-2 leading-relaxed">{precedent.ruling}</div>
         </div>
       </div>
     </div>
@@ -430,7 +430,7 @@ function InfoRow({ label, value, mono }: { label: string; value: string; mono?: 
   return (
     <div className="flex items-start justify-between gap-3">
       <span className="text-gray-500 shrink-0">{label}</span>
-      <span className={clsx('text-gray-200 text-right', mono && 'font-mono')}>{value}</span>
+      <span className={clsx('text-gray-700 text-right', mono && 'font-mono')}>{value}</span>
     </div>
   );
 }

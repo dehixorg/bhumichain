@@ -34,7 +34,7 @@ export default function MutationAlert({
 
   return (
     <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/70 backdrop-blur-sm animate-fade-in">
-      <div className="w-full max-w-md mx-4 bg-gray-900 border border-amber-700 rounded-2xl shadow-2xl overflow-hidden">
+      <div className="w-full max-w-md mx-4 bg-white border border-amber-700 rounded-2xl shadow-2xl overflow-hidden">
         {/* Header — amber alert bar */}
         <div className="bg-amber-900 border-b border-amber-700 px-5 py-3 flex items-center gap-3">
           <div className="relative">
@@ -57,7 +57,7 @@ export default function MutationAlert({
             <div className={clsx(
               'flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold',
               slaMet
-                ? 'bg-brand-900 border border-brand-700 text-brand-300'
+                ? 'bg-[#DBEAFE] border border-blue-300 text-[#0F4C81]'
                 : 'bg-red-900 border border-red-700 text-red-300',
             )}>
               {slaMet
@@ -68,7 +68,7 @@ export default function MutationAlert({
           </div>
 
           {/* Details */}
-          <div className="bg-gray-800 rounded-xl p-4 space-y-3">
+          <div className="bg-[#F8FAFC] rounded-xl p-4 space-y-3">
             <DetailRow label="Parcel ID" value={dlpiId} mono />
             <DetailRow label="Mutation Type" value={mutationType} />
             <DetailRow label="Initiated By" value={officerName} />
@@ -123,7 +123,7 @@ function DetailRow({ label, value, mono }: { label: string; value: string; mono?
   return (
     <div className="flex items-start justify-between gap-4">
       <span className="text-gray-500 text-xs shrink-0">{label}</span>
-      <span className={clsx('text-xs text-gray-200 text-right', mono && 'font-mono')}>{value}</span>
+      <span className={clsx('text-xs text-gray-700 text-right', mono && 'font-mono')}>{value}</span>
     </div>
   );
 }

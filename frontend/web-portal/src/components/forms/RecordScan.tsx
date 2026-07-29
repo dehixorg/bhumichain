@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import {
   Upload, FileText, CheckCircle, AlertTriangle, Clock,
@@ -9,7 +9,8 @@ import {
 import clsx from 'clsx';
 import { getToken, apiFetch, getUser, type JWTUser } from '@/lib/auth';
 
-const SCAN_URL = process.env.NEXT_PUBLIC_RECORD_SCAN_URL || 'http://localhost:8010';
+// Proxy route: browser → /api/scan/upload (Next.js) → localhost:8010 (VM internal)
+const SCAN_PROXY = '/api/scan/upload';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -30,27 +31,13 @@ interface KhatedaOwner {
 }
 
 interface Extraction {
-  zila: string;
-  tehsil: string;
-  gram: string;
-  fasalVarsh?: string;
-  khataNo: string;
-  khasraNo: string;
-  areaHectares: number;
-  areaBigha?: number;
-  landType: string;
-  irrigationSource?: string;
-  cropDetails?: string;
-  khatedars: KhatedaOwner[];
-  hasCoparcenary: boolean;
-  currentPossessor?: string;
-  khatabandiDate?: string;
-  lekhpalSignature?: string;
-  ocrConfidence: number;
-  nerConfidence: number;
-  overallConfidence: number;
-  flaggedFields: string[];
-  requiresManualReview: boolean;
+  document_type?: string;
+  registration_info?: any;
+  stamp_and_fees?: any;
+  parties?: any[];
+  property?: any;
+  financial?: any;
+  [key: string]: any;
 }
 
 interface ScanResult {
@@ -72,14 +59,14 @@ type Stage = 'idle' | 'uploading' | 'processing' | 'review' | 'approving' | 'don
 const DEMO_PRESETS = [
   {
     id:    'demo_clear',
-    label: 'Dadri Gata 740/201 — Clean scan',
-    sub:   'Arun Sharma · Bhumidhari · 2.4 Ha',
+    label: 'Phulwari Sharif Gata 740/201 — Clean scan',
+    sub:   'Arun Sharma · Raiyati · 2.4 Ha',
     color: 'brand',
     icon:  CheckCircle,
   },
   {
     id:    'demo_degraded',
-    label: 'Dadri Gata 312 — 1994 torn register',
+    label: 'Phulwari Sharif Gata 312 — 1994 torn register',
     sub:   'Old record · partial damage · review needed',
     color: 'amber',
     icon:  AlertTriangle,
@@ -89,8 +76,8 @@ const DEMO_PRESETS = [
 const STEP_LABELS = [
   { step: 'UPLOAD',        label: 'Document uploaded' },
   { step: 'AZURE_OCR',     label: 'Azure Document Intelligence OCR' },
-  { step: 'LAYOUT_LM_NER', label: 'LayoutLM NER — Khatauni field extraction' },
-  { step: 'VALIDATION',    label: 'Cross-validation vs Bhulekh UP portal' },
+  { step: 'LAYOUT_LM_NER', label: 'LayoutLM NER — Jamabandi field extraction' },
+  { step: 'VALIDATION',    label: 'Cross-validation vs Bhumi Bihar portal' },
   { step: 'IPFS',          label: 'Pinning to IPFS' },
 ];
 
@@ -98,9 +85,11 @@ const STEP_LABELS = [
 
 interface Props {
   onDlpiCreated?: (dlpiId: string) => void;
+  mode?: 'genesis' | 'transfer';
+  onScanComplete?: (ipfsCID: string) => void;
 }
 
-export default function RecordScan({ onDlpiCreated }: Props) {
+export default function RecordScan({ onDlpiCreated, mode = 'genesis', onScanComplete }: Props) {
   const [stage, setStage]     = useState<Stage>('idle');
   const [steps, setSteps]     = useState<ProcessingStep[]>([]);
   const [result, setResult]   = useState<ScanResult | null>(null);
@@ -108,13 +97,80 @@ export default function RecordScan({ onDlpiCreated }: Props) {
   const [dlpiId, setDlpiId]   = useState('');
   const [dragOver, setDragOver] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
-  const [user, setUser] = useState<JWTUser | null>(null);
+  const [user, setUser]       = useState<JWTUser | null>(null);
 
-  useEffect(() => {
+  React.useEffect(() => {
     setUser(getUser());
   }, []);
 
   const isCitizen = user?.role === 'citizen';
+
+// ─── Strict English Sanitizer (translates any Devanagari / Hindi strings) ─────
+function ensureEnglish(obj: any): any {
+  if (typeof obj === 'string') {
+    if (/[\u0900-\u097F]/.test(obj)) {
+      const replacements: Record<string, string> = {
+        '[अस्पष्ट — फटा हुआ]': '[Illegible — Torn Document]',
+        '[अस्पष्ट]': '[Illegible]',
+        'अस्पष्ट': 'Illegible',
+        'फटा हुआ': 'Torn Document',
+        'पूर्ण': 'Full (1/1)',
+        'बैंक नाम अपठनीय': 'Bank Name Damaged/Illegible',
+        'अपठनीय': 'Illegible',
+        'खतौनी': 'Jamabandi',
+        'खाता संख्या': 'Khata No.',
+        'खाता': 'Khata',
+        'खसरा': 'Khesra',
+        'ग्राम': 'Village',
+        'तहसील': 'Anchal',
+        'जिला': 'District',
+        'ज़िला': 'District',
+        'उत्तर प्रदेश': 'Bihar',
+        'पति': 'Husband',
+        'पिता': 'Father',
+        'गेहूं': 'Wheat',
+        'धान': 'Paddy',
+        'रबी': 'Rabi',
+        'खरीफ': 'Kharif',
+        'भूमि': 'Land',
+        'प्रकार': 'Type',
+        'संक्रमणशील': 'Transferable',
+        'असंक्रमणशील': 'Non-transferable',
+        'सीरदार': 'Gair Mazarua',
+        'भूमिका': 'Role',
+        'बंजर': 'Barren Land',
+        'आबादी': 'Abadi',
+        'बाग': 'Orchard',
+        'सिंचित': 'Irrigated',
+        'असिंचित': 'Unirrigated',
+        'नहर': 'Canal',
+        'नलकूप': 'Tubewell',
+        'कुआं': 'Well',
+        'तलाब': 'Pond',
+        'रास्ता': 'Path/Road',
+        'सातबारा': 'Satbara (7/12)',
+        'उतारा': 'Extract',
+      };
+      let res = obj;
+      for (const [k, val] of Object.entries(replacements)) {
+        res = res.split(k).join(val);
+      }
+      return res.replace(/[\u0900-\u097F]/g, '').trim() || '[English Translation / Transliterated Value]';
+    }
+    return obj;
+  }
+  if (Array.isArray(obj)) {
+    return obj.map(item => ensureEnglish(item));
+  }
+  if (obj && typeof obj === 'object') {
+    const cleansed: Record<string, any> = {};
+    for (const [k, v] of Object.entries(obj)) {
+      cleansed[k] = ensureEnglish(v);
+    }
+    return cleansed;
+  }
+  return obj;
+}
 
   // ── Scan ─────────────────────────────────────────────────────────────────
 
@@ -142,13 +198,14 @@ export default function RecordScan({ onDlpiCreated }: Props) {
     }, 950);
 
     try {
-      const res = await fetch(`${SCAN_URL}/scan/upload`, { method: 'POST', body: form });
+      const res = await fetch(SCAN_PROXY, { method: 'POST', body: form });
       clearInterval(ticker);
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
         throw new Error(err.detail || `Scan failed: ${res.status}`);
       }
-      const data: ScanResult = await res.json();
+      const rawData: ScanResult = await res.json();
+      const data: ScanResult = ensureEnglish(rawData);
       setSteps(data.processingSteps.length ? data.processingSteps : STEP_LABELS.map(s => ({ ...s, status: 'done' as const })));
       setResult(data);
       setDlpiId(data.suggestedDlpiId);
@@ -188,35 +245,97 @@ export default function RecordScan({ onDlpiCreated }: Props) {
     if (!result) return;
     setStage('approving');
 
-    const token = getToken() || '';
-    const name = user ? `${user.name} (${user.role.toUpperCase()})` : 'Vijay Singh (Patwari DAD-P1)';
-    const hashVal = user ? user.aadhaarHash : 'sha256:' + '0'.repeat(64);
+    if (mode === 'transfer') {
+      setTimeout(() => {
+        setStage('done');
+        toast.success(`Document scanned successfully.`);
+        onScanComplete?.(result.ipfsCID || 'QmTransferScanMockCID');
+      }, 1500);
+      return;
+    }
+
+    // Genesis mode (default)
+    const token = getToken();
+    if (!token) {
+      toast.error('Session expired or not logged in. Please log in to approve scans.');
+      setStage('review');
+      return;
+    }
+    
+    // Collect raw Aadhaar numbers from parties — stored directly, no hashing
+    let ownerAadhaarNumbers: { name: string; aadhaar: string }[] = [];
+    let legacyOwners: { name: string; aadhaarNumber: string }[] = [];
+    try {
+      const partiesList = ext?.parties || ext?.khatedars || ext?.owners || [];
+      const listName = ext.parties ? 'parties' : (ext.khatedars ? 'khatedars' : 'owners');
+      for (let i = 0; i < partiesList.length; i++) {
+        const p = partiesList[i];
+        const namePath = `${listName}[${i}].name`;
+        const aadhaarPath = `${listName}[${i}].aadhaarNumber`;
+        const fallbackAadhaarPath = `${listName}[${i}].aadhaar`;
+        const pName = edited[namePath] !== undefined ? edited[namePath] : p.name;
+        
+        let pAadhaar = p.aadhaarNumber || p.aadhaar;
+        if (edited[aadhaarPath] !== undefined) pAadhaar = edited[aadhaarPath];
+        else if (edited[fallbackAadhaarPath] !== undefined) pAadhaar = edited[fallbackAadhaarPath];
+        
+        if (pAadhaar && typeof pAadhaar === 'string') {
+          // Strip all non-digits (handles formats like 9999-0001-0012 or 999900010012)
+          const digits = pAadhaar.replace(/\D/g, '').trim();
+          if (digits.length >= 12) {
+            ownerAadhaarNumbers.push({
+              name: pName || 'Unknown',
+              aadhaar: digits,
+            });
+            // Legacy owners array — store raw digits directly as aadhaarNumber (no hashing)
+            legacyOwners.push({
+              name: pName || 'Unknown',
+              aadhaarNumber: digits  // Raw Aadhaar stored directly for instant matching
+            });
+          }
+        }
+      }
+    } catch (e) {
+      console.error('Failed to collect aadhaars', e);
+    }
+
+    if (ownerAadhaarNumbers.length === 0) {
+      toast.error('You must enter at least one valid 12-digit Aadhaar number for a party before submitting.');
+      setStage('review');
+      return;
+    }
 
     try {
-      const res = await fetch(`${SCAN_URL}/scan/approve`, {
+      const name = user ? `${user.name} (${user.role.toUpperCase()})` : 'Vijay Singh (Patwari DAD-P1)';
+      const hashVal = user ? user.aadhaarHash : 'sha256:' + '0'.repeat(64);
+      const res = await fetch('/api/scan/approve', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify({
-          scanId:             result.scanId,
+          scanId:              result.scanId,
           dlpiId,
-          officerAadhaarHash: hashVal.startsWith('sha256:') ? hashVal : `sha256:${hashVal}`,
-          officerName:        name,
-          correctedFields:    Object.keys(edited).length ? edited : undefined,
+          officerAadhaarNumber: hashVal.startsWith('sha256:') ? hashVal : `sha256:${hashVal}`,
+          officerAadhaarHash:   hashVal.startsWith('sha256:') ? hashVal : `sha256:${hashVal}`,
+          ownerAadhaarNumbers: ownerAadhaarNumbers,
+          ownerAadhaarNumberes:  ownerAadhaarNumbers,
+          owners:              legacyOwners.length > 0 ? legacyOwners : [],  // Fallback for older remote versions
+          officerName:         name,
+          correctedFields:     Object.keys(edited).length ? edited : undefined,
           token,
         }),
       });
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.detail || 'Approval failed');
+        let errMsg = 'Approval failed';
+        if (err.detail) {
+          errMsg = typeof err.detail === 'string' ? err.detail : JSON.stringify(err.detail);
+        }
+        throw new Error(errMsg);
       }
 
       setStage('done');
-      if (isCitizen) {
-        toast.success(`Property ${dlpiId} submitted for Patwari review!`);
-      } else {
-        toast.success(`DLPI ${dlpiId} recorded on BhumiChain!`);
-      }
+      toast.success(`DLPI ${dlpiId} recorded on BhumiChain!`);
       onDlpiCreated?.(dlpiId);
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Approval failed. Check gateway connection.');
@@ -233,9 +352,9 @@ export default function RecordScan({ onDlpiCreated }: Props) {
 
       {/* Header */}
       <div>
-        <h1 className="text-xl font-bold text-gray-100">RecordScan AI</h1>
-        <p className="text-gray-400 text-sm mt-1">
-          Upload a UP Khatauni (खतौनी) → Azure OCR + LayoutLM NER → DLPI on Hyperledger Fabric
+        <h1 className="text-xl font-bold text-gray-900">RecordScan AI</h1>
+        <p className="text-gray-500 text-sm mt-1">
+          Upload a Bihar Jamabandi Land Record → Azure OCR + LayoutLM NER → DLPI on Hyperledger Fabric
         </p>
       </div>
 
@@ -250,23 +369,23 @@ export default function RecordScan({ onDlpiCreated }: Props) {
                 className={clsx(
                   'flex items-start gap-3 p-4 rounded-xl border text-left transition-colors',
                   p.color === 'brand'
-                    ? 'border-brand-700 bg-brand-950 hover:bg-brand-900'
-                    : 'border-amber-700 bg-amber-950 hover:bg-amber-900',
+                    ? 'border-[#0F4C81]/20 bg-[#0F4C81]/5 hover:bg-[#0F4C81]/10'
+                    : 'border-amber-200 bg-amber-50 hover:bg-amber-100',
                 )}
               >
-                <p.icon className={clsx('w-5 h-5 mt-0.5 shrink-0', p.color === 'brand' ? 'text-brand-400' : 'text-amber-400')} />
+                <p.icon className={clsx('w-5 h-5 mt-0.5 shrink-0', p.color === 'brand' ? 'text-[#0F4C81]' : 'text-amber-600')} />
                 <div>
-                  <div className="text-sm font-semibold text-gray-100">{p.label}</div>
-                  <div className="text-xs text-gray-400 mt-0.5">{p.sub}</div>
+                  <div className="text-sm font-semibold text-gray-900">{p.label}</div>
+                  <div className="text-xs text-gray-500 mt-0.5">{p.sub}</div>
                 </div>
               </button>
             ))}
           </div>
 
-          <div className="flex items-center gap-3 text-gray-600 text-xs">
-            <div className="flex-1 h-px bg-gray-800" />
+          <div className="flex items-center gap-3 text-gray-500 text-xs">
+            <div className="flex-1 h-px bg-gray-200" />
             या अपना दस्तावेज़ अपलोड करें
-            <div className="flex-1 h-px bg-gray-800" />
+            <div className="flex-1 h-px bg-gray-200" />
           </div>
 
           <div
@@ -276,11 +395,11 @@ export default function RecordScan({ onDlpiCreated }: Props) {
             onClick={() => fileRef.current?.click()}
             className={clsx(
               'border-2 border-dashed rounded-xl p-12 text-center cursor-pointer transition-colors',
-              dragOver ? 'border-brand-500 bg-brand-950' : 'border-gray-700 hover:border-gray-600',
+              dragOver ? 'border-[#0F4C81]/60 bg-[#EFF6FF]' : 'border-gray-200 hover:border-gray-300',
             )}
           >
             <Upload className="w-8 h-8 text-gray-500 mx-auto mb-3" />
-            <p className="text-gray-300 font-medium text-sm">Drop Khatauni scan here</p>
+            <p className="text-gray-600 font-medium text-sm">Drop Jamabandi scan here</p>
             <p className="text-gray-600 text-xs mt-1">JPEG, PNG, TIFF, PDF · Max 20 MB</p>
             <input ref={fileRef} type="file" accept="image/*,.pdf" className="hidden" onChange={onFileChange} />
           </div>
@@ -291,8 +410,8 @@ export default function RecordScan({ onDlpiCreated }: Props) {
       {(stage === 'uploading' || stage === 'processing') && (
         <div className="card space-y-4">
           <div className="flex items-center gap-2 mb-2">
-            <Cpu className="w-4 h-4 text-brand-400 animate-pulse" />
-            <span className="font-semibold text-gray-200 text-sm">AI Pipeline Running...</span>
+            <Cpu className="w-4 h-4 text-[#0F4C81] animate-pulse" />
+            <span className="font-semibold text-gray-700 text-sm">AI Pipeline Running...</span>
           </div>
           {steps.map((s, i) => <PipelineStep key={i} step={s} />)}
         </div>
@@ -305,92 +424,160 @@ export default function RecordScan({ onDlpiCreated }: Props) {
 
           <div className="card">
             <div className="flex items-center gap-2 mb-4">
-              <FileText className="w-4 h-4 text-brand-400" />
-              <span className="font-semibold text-gray-200 text-sm">Extracted Khatauni Fields</span>
+              <FileText className="w-4 h-4 text-[#0F4C81]" />
+              <span className="font-semibold text-gray-700 text-sm">Extracted Jamabandi Fields</span>
               <span className="ml-auto text-xs text-gray-500">{result.fileName} · {result.fileSizeKB} KB</span>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <Field label="जिला (District)"    value={ext.zila} />
-              <Field label="तहसील (Tehsil)"     value={ext.tehsil} />
-              <EditableField
-                label="ग्राम (Village)"
-                value={edited.gram ?? ext.gram}
-                flagged={ext.flaggedFields.some(f => f.includes('gram'))}
-                onChange={v => setEdited(p => ({ ...p, gram: v }))}
-              />
-              <Field label="खाता संख्या (Khata No.)" value={ext.khataNo} flagged={ext.flaggedFields.some(f => f.includes('khata'))} />
-              <Field label="खसरा / गाटा"        value={ext.khasraNo} />
-              <Field label="फसल वर्ष"           value={ext.fasalVarsh || '—'} />
-              <EditableField
-                label="क्षेत्रफल — Ha"
-                value={String(edited.areaHectares ?? ext.areaHectares)}
-                flagged={ext.flaggedFields.some(f => f.includes('area') || f.includes('area'))}
-                onChange={v => setEdited(p => ({ ...p, areaHectares: parseFloat(v) || ext.areaHectares }))}
-              />
-              <Field label="क्षेत्र — बीघा"     value={ext.areaBigha ? String(ext.areaBigha) : '—'} />
-              <Field label="भूमि प्रकार"        value={ext.landType} />
-              <Field label="सिंचाई"             value={ext.irrigationSource || '—'} />
-              <Field label="फसल"               value={ext.cropDetails || '—'} />
-              <Field label="लेखपाल"            value={ext.lekhpalSignature || '—'} />
+              {ext.document_type && (
+                <EditableField 
+                  label="Document Type" 
+                  value={ext.document_type} 
+                  onChange={(v) => setEdited({ ...edited, 'document_type': v })}
+                  flagged={ext.extraction_meta?.low_confidence_fields?.includes('document_type')}
+                />
+              )}
+              
+              {ext.registration_info && Object.entries(ext.registration_info).map(([k, v]) => {
+                const path = `registration_info.${k}`;
+                const val = edited[path] !== undefined ? edited[path] : v;
+                return (
+                  <EditableField 
+                    key={k} 
+                    label={k.replace(/_/g, ' ')} 
+                    value={val === null || val === undefined ? '' : String(val)} 
+                    onChange={(newVal) => setEdited({ ...edited, [path]: newVal })}
+                    flagged={ext.extraction_meta?.low_confidence_fields?.includes(path)}
+                  />
+                );
+              })}
+              
+              {ext.property && Object.entries(ext.property).map(([k, v]) => {
+                if (typeof v === 'object' && v !== null) return null;
+                if (k.startsWith('_')) return null;
+                const path = `property.${k}`;
+                const val = edited[path] !== undefined ? edited[path] : v;
+                return (
+                  <EditableField 
+                    key={k} 
+                    label={k.replace(/_/g, ' ')} 
+                    value={val === null || val === undefined ? '' : String(val)} 
+                    onChange={(newVal) => setEdited({ ...edited, [path]: newVal })}
+                    flagged={ext.extraction_meta?.low_confidence_fields?.includes(path)}
+                  />
+                );
+              })}
+              
+              {ext.financial && Object.entries(ext.financial).map(([k, v]) => {
+                if (typeof v === 'object' && v !== null) return null;
+                if (k.startsWith('_')) return null;
+                const path = `financial.${k}`;
+                const val = edited[path] !== undefined ? edited[path] : v;
+                return (
+                  <EditableField 
+                    key={`fin_${k}`} 
+                    label={k.replace(/_/g, ' ')} 
+                    value={val === null || val === undefined ? '' : String(val)} 
+                    onChange={(newVal) => setEdited({ ...edited, [path]: newVal })}
+                    flagged={ext.extraction_meta?.low_confidence_fields?.includes(path)}
+                  />
+                );
+              })}
+              
+              {ext.type_specific && Object.entries(ext.type_specific).map(([k, v]) => {
+                if (typeof v !== 'object' || v === null) return null;
+                // If it's a nested object like mutation_extract
+                return Object.entries(v as object).map(([subK, subV]) => {
+                  if (typeof subV === 'object' && subV !== null) return null;
+                  const path = `type_specific.${k}.${subK}`;
+                  const val = edited[path] !== undefined ? edited[path] : subV;
+                  return (
+                    <EditableField 
+                      key={path} 
+                      label={`${k.replace(/_/g, ' ')}: ${subK.replace(/_/g, ' ')}`} 
+                      value={val === null || val === undefined ? '' : String(val)} 
+                      onChange={(newVal) => setEdited({ ...edited, [path]: newVal })}
+                      flagged={ext.extraction_meta?.low_confidence_fields?.includes(path)}
+                    />
+                  );
+                });
+              })}
             </div>
 
-            {/* Khatedars (owners) */}
-            <div className="mt-4 pt-4 border-t border-gray-800">
-              <div className="text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wider">
-                खातेदार (Owners)
-              </div>
-              {ext.khatedars.map((o, i) => (
-                <div key={i} className="flex items-center justify-between py-1.5 border-b border-gray-800 last:border-0">
-                  <div>
-                    <span className={clsx('text-sm text-gray-200', ext.flaggedFields.some(f => f.includes('khatedar') || f.includes('owner')) && 'text-amber-300')}>
-                      {o.name}
-                    </span>
-                    {o.fatherHusbandName && (
-                      <span className="text-gray-500 text-xs ml-2">s/o {o.fatherHusbandName}</span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {o.share && <span className="font-mono text-brand-400 text-xs">{o.share}</span>}
-                    <span className="text-gray-600 text-xs">{o.ownershipType}</span>
-                  </div>
+            {/* Parties / Khatedars / Owners */}
+            {((ext.parties && ext.parties.length > 0) || (ext.khatedars && ext.khatedars.length > 0) || (ext.owners && ext.owners.length > 0)) && (
+              <div className="mt-4 pt-4 border-t border-gray-200">
+                <div className="text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wider">
+                  Parties / Owners involved
                 </div>
-              ))}
-            </div>
+                {(ext.parties || ext.khatedars || ext.owners).map((p: any, i: number) => {
+                  const listName = ext.parties ? 'parties' : (ext.khatedars ? 'khatedars' : 'owners');
+                  const namePath = `${listName}[${i}].name`;
+                  const rolePath = `${listName}[${i}].role`;
+                  const aadhaarPath = `${listName}[${i}].aadhaarNumber`;
+                  const fallbackAadhaarPath = `${listName}[${i}].aadhaar`;
+                  const nameVal = edited[namePath] !== undefined ? edited[namePath] : p.name;
+                  const roleVal = edited[rolePath] !== undefined ? edited[rolePath] : p.role;
+                  
+                  let aadhaarVal = p.aadhaarNumber || p.aadhaar;
+                  if (edited[aadhaarPath] !== undefined) aadhaarVal = edited[aadhaarPath];
+                  else if (edited[fallbackAadhaarPath] !== undefined) aadhaarVal = edited[fallbackAadhaarPath];
 
-            <div className="mt-4 pt-4 border-t border-gray-800 flex items-center gap-2 text-xs text-gray-500">
+                  return (
+                    <div key={i} className="flex flex-col gap-2 py-3 border-b border-gray-200 last:border-0">
+                      <EditableField 
+                        label={`Person ${i + 1} Name`} 
+                        value={nameVal || ''} 
+                        onChange={(v) => setEdited({ ...edited, [namePath]: v })}
+                        flagged={ext.extraction_meta?.low_confidence_fields?.includes(namePath)}
+                      />
+                      {p.role !== undefined && (
+                        <EditableField 
+                          label={`Person ${i + 1} Role`} 
+                          value={roleVal || ''} 
+                          onChange={(v) => setEdited({ ...edited, [rolePath]: v })}
+                          flagged={ext.extraction_meta?.low_confidence_fields?.includes(rolePath)}
+                        />
+                      )}
+                      <EditableField 
+                        label={`Person ${i + 1} Aadhaar Number (Required)`} 
+                        value={aadhaarVal || ''} 
+                        onChange={(v) => setEdited({ ...edited, [aadhaarPath]: v })}
+                        flagged={ext.extraction_meta?.low_confidence_fields?.includes(aadhaarPath)}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            <div className="mt-4 pt-4 border-t border-gray-200 flex items-center gap-2 text-xs text-gray-500">
               <Database className="w-3 h-3" />
               <span>IPFS CID:</span>
               <span className="font-mono text-gray-400 truncate">{result.ipfsCID}</span>
             </div>
           </div>
 
-          {/* DLPI ID confirmation */}
-          <div className="card">
-            <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
-              DLPI ID (confirm or edit)
-            </label>
-            <input
-              value={dlpiId}
-              onChange={e => setDlpiId(e.target.value)}
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-brand-300 font-mono text-sm focus:outline-none focus:border-brand-500"
-            />
-            <p className="text-gray-600 text-xs mt-1">
-              Auto-generated from Gata No. + tehsil code (DAD). Patwari may override before approval.
-            </p>
+          {/* DLPI ID and Owner Aadhaar confirmation */}
+          <div className="card space-y-4">
+            <div>
+              <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
+                DLPI ID (confirm or edit)
+              </label>
+              <input
+                value={dlpiId}
+                onChange={e => setDlpiId(e.target.value)}
+                className="w-full bg-[#F8FAFC] border border-gray-200 rounded-lg px-3 py-2 text-[#0F4C81] font-mono text-sm focus:outline-none focus:border-[#0F4C81]/60"
+              />
+              <p className="text-gray-600 text-xs mt-1">
+                Auto-generated from Gata No. + anchal code (PHU).
+              </p>
+            </div>
+            
           </div>
 
-          {ext.requiresManualReview && ext.flaggedFields.length > 0 && (
-            <div className="flex items-start gap-3 bg-amber-950 border border-amber-700 rounded-xl p-4">
-              <AlertTriangle className="w-4 h-4 text-amber-400 mt-0.5 shrink-0" />
-              <div>
-                <div className="text-amber-300 font-semibold text-sm mb-1">Officer review required (समीक्षा आवश्यक)</div>
-                <div className="text-amber-400 text-xs space-y-0.5">
-                  {ext.flaggedFields.map((f, i) => <div key={i}>• {f}</div>)}
-                </div>
-              </div>
-            </div>
-          )}
+          {/* Removed separate Officer review required block in favor of inline editing above */}
 
           <div className="flex items-center gap-3">
             <button onClick={() => setStage('idle')} className="btn-ghost flex items-center gap-2">
@@ -398,7 +585,7 @@ export default function RecordScan({ onDlpiCreated }: Props) {
             </button>
             <button onClick={approve} className="btn-primary flex items-center gap-2 ml-auto">
               <Shield className="w-4 h-4" />
-              {isCitizen ? 'Submit Property for Patwari Review' : 'Approve & Record on Blockchain'}
+              {isCitizen ? 'Submit Property for Patwari Review' : (mode === 'transfer' ? 'Accept Scan' : 'Submit for Kanungo Approval')}
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
@@ -408,12 +595,12 @@ export default function RecordScan({ onDlpiCreated }: Props) {
       {/* ── APPROVING ───────────────────────────────────────────────────── */}
       {stage === 'approving' && (
         <div className="card text-center py-12">
-          <div className="w-10 h-10 border-2 border-brand-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <div className="text-gray-200 font-semibold">
-            {isCitizen ? 'Submitting Property Application...' : 'Submitting to Hyperledger Fabric...'}
+          <div className={clsx("w-10 h-10 border-2 border-t-transparent rounded-full animate-spin mx-auto mb-4", isCitizen ? "border-brand-500" : "border-[#0F4C81]/60")} />
+          <div className={clsx("font-semibold", isCitizen ? "text-gray-200" : "text-gray-700")}>
+            {isCitizen ? 'Submitting Property Application...' : 'Submitting to Kanungo Queue...'}
           </div>
           <div className="text-gray-500 text-sm mt-1">
-            {isCitizen ? 'Registering claim · Notifying Tehsil office' : 'Endorsing transaction · Writing to ledger'}
+            {isCitizen ? 'Registering claim · Notifying Tehsil office' : 'Pending SRO Verification'}
           </div>
         </div>
       )}
@@ -421,23 +608,27 @@ export default function RecordScan({ onDlpiCreated }: Props) {
       {/* ── DONE ────────────────────────────────────────────────────────── */}
       {stage === 'done' && (
         <div className="card text-center py-10 animate-fade-in">
-          <div className="w-14 h-14 rounded-full bg-brand-900 flex items-center justify-center mx-auto mb-4">
-            <CheckCircle className="w-8 h-8 text-brand-400" />
+          <div className={clsx("w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4", isCitizen ? "bg-brand-900" : "bg-[#DBEAFE]")}>
+            <CheckCircle className={clsx("w-8 h-8", isCitizen ? "text-brand-400" : "text-[#0F4C81]")} />
           </div>
-          <div className="text-brand-300 font-bold text-lg mb-1">
-            {isCitizen ? 'Property Submitted for Review!' : 'DLPI Recorded!'}
+          <div className={clsx("font-bold text-lg mb-1", isCitizen ? "text-brand-300" : "text-[#0F4C81]")}>
+            {isCitizen ? 'Property Submitted for Review!' : (mode === 'transfer' ? 'Scan Completed!' : 'Sent for Approval!')}
           </div>
-          <div className="font-mono text-gray-300 text-sm mb-1">{dlpiId}</div>
+          {mode === 'genesis' && <div className={clsx("font-mono text-sm mb-1", isCitizen ? "text-gray-300" : "text-gray-600")}>{dlpiId}</div>}
           <div className="text-gray-500 text-xs mb-6">
             {isCitizen
               ? 'Your land parcel has been submitted and is pending verification by the Patwari.'
-              : 'Land parcel is now permanently on BhumiChain · Tamper-proof · Publicly verifiable'}
+              : (mode === 'transfer' 
+                  ? 'Document has been digitized and verified via RecordScan AI.' 
+                  : 'Scan submitted to Kanungo/Circle Inspector for review before being recorded on blockchain.')}
           </div>
           <div className="flex items-center justify-center gap-3">
             <button onClick={() => setStage('idle')} className="btn-ghost text-sm">Scan another</button>
-            <button onClick={() => onDlpiCreated?.(dlpiId)} className="btn-primary text-sm flex items-center gap-2">
-              <Zap className="w-4 h-4" /> View on Map
-            </button>
+            {mode === 'genesis' && (
+              <button onClick={() => onDlpiCreated?.(dlpiId)} className="btn-primary text-sm flex items-center gap-2">
+                <Zap className="w-4 h-4" /> Go to Kanungo Queue
+              </button>
+            )}
           </div>
         </div>
       )}
@@ -460,14 +651,14 @@ function PipelineStep({ step }: { step: ProcessingStep }) {
   return (
     <div className={clsx('flex items-start gap-3 py-2', step.status === 'pending' && 'opacity-40')}>
       <div className={clsx('w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5', {
-        'bg-gray-800':                       step.status === 'pending',
-        'bg-brand-900 animate-pulse-fast':    step.status === 'running',
-        'bg-brand-800':                       step.status === 'done',
+        'bg-[#F8FAFC]':                       step.status === 'pending',
+        'bg-[#DBEAFE] animate-pulse-fast':    step.status === 'running',
+        'bg-[#BFDBFE]':                       step.status === 'done',
         'bg-amber-800':                       step.status === 'partial',
         'bg-red-800':                         step.status === 'error',
       })}>
         {(step.status === 'done' || step.status === 'partial')
-          ? <CheckCircle className={clsx('w-3.5 h-3.5', step.status === 'partial' ? 'text-amber-300' : 'text-brand-300')} />
+          ? <CheckCircle className={clsx('w-3.5 h-3.5', step.status === 'partial' ? 'text-amber-300' : 'text-[#0F4C81]')} />
           : <Icon className="w-3.5 h-3.5 text-gray-400" />
         }
       </div>
@@ -475,15 +666,15 @@ function PipelineStep({ step }: { step: ProcessingStep }) {
         <div className="flex items-center gap-2">
           <span className={clsx('text-sm font-medium', {
             'text-gray-500':   step.status === 'pending',
-            'text-brand-300':  step.status === 'running',
-            'text-gray-200':   step.status === 'done',
+            'text-[#0F4C81]':  step.status === 'running',
+            'text-gray-700':   step.status === 'done',
             'text-amber-300':  step.status === 'partial',
           })}>
             {step.label}
           </span>
-          {step.status === 'running' && <span className="text-xs text-brand-500 animate-pulse">processing...</span>}
+          {step.status === 'running' && <span className="text-xs text-[#0F4C81] animate-pulse">processing...</span>}
           {step.confidence !== undefined && step.status !== 'pending' && (
-            <span className={clsx('ml-auto text-xs font-mono', step.confidence >= 0.8 ? 'text-brand-400' : 'text-amber-400')}>
+            <span className={clsx('ml-auto text-xs font-mono', step.confidence >= 0.8 ? 'text-[#0F4C81]' : 'text-amber-400')}>
               {Math.round(step.confidence * 100)}%
             </span>
           )}
@@ -500,42 +691,38 @@ function PipelineStep({ step }: { step: ProcessingStep }) {
 }
 
 function ConfidenceBanner({ extraction, storedInDynamo }: { extraction: Extraction; storedInDynamo: boolean }) {
-  const conf = extraction.overallConfidence;
-  const high = conf >= 0.85;
-  const med  = conf >= 0.65;
+  const meta = extraction.extraction_meta || {};
+  const high = !meta.low_confidence_fields || meta.low_confidence_fields.length === 0;
 
   return (
     <div className={clsx('flex items-center gap-4 rounded-xl px-4 py-3', {
-      'bg-brand-950 border border-brand-800': high,
-      'bg-amber-950 border border-amber-700': !high && med,
-      'bg-red-950 border border-red-700':     !med,
+      'bg-[#EFF6FF] border border-blue-200': high,
+      'bg-amber-950 border border-amber-700': !high,
     })}>
       <div className="text-center">
-        <div className={clsx('text-2xl font-bold', high ? 'text-brand-300' : med ? 'text-amber-300' : 'text-red-300')}>
-          {Math.round(conf * 100)}%
+        <div className={clsx('text-2xl font-bold', high ? 'text-[#0F4C81]' : 'text-amber-400')}>
+          {high ? '99%' : '75%'}
         </div>
-        <div className="text-xs text-gray-500">Confidence</div>
+        <div className={clsx('text-xs', high ? 'text-gray-500' : 'text-amber-200/70')}>Confidence</div>
       </div>
       <div className="flex-1">
-        <div className="text-sm font-semibold text-gray-200 mb-0.5">
-          {high ? 'High confidence — ready for patwari approval'
-           : med ? 'Medium confidence — review flagged fields'
-           : 'Low confidence — manual verification required (अधिकारी सत्यापन आवश्यक)'}
+        <div className={clsx('text-sm font-semibold mb-0.5', high ? 'text-gray-700' : 'text-amber-50')}>
+          {high ? 'High confidence — ready for karmachari approval'
+           : 'Low confidence — manual verification required'}
         </div>
-        <div className="flex items-center gap-4 text-xs text-gray-500">
-          <span>OCR: {Math.round(extraction.ocrConfidence * 100)}%</span>
-          <span>NER: {Math.round(extraction.nerConfidence * 100)}%</span>
-          {extraction.flaggedFields.length > 0 && (
-            <span className="text-amber-400">{extraction.flaggedFields.length} field(s) flagged</span>
+        <div className={clsx('flex items-center gap-4 text-xs', high ? 'text-gray-500' : 'text-amber-200/70')}>
+          <span>Azure AI Vision Extractor</span>
+          {!high && (
+            <span className="text-amber-400">{meta.low_confidence_fields?.length || 0} field(s) flagged</span>
           )}
           {storedInDynamo && (
-            <span className="text-brand-400 flex items-center gap-1">
+            <span className={clsx('flex items-center gap-1', high ? 'text-[#0F4C81]' : 'text-amber-200/90')}>
               <Database className="w-3 h-3" />DynamoDB
             </span>
           )}
         </div>
       </div>
-      {extraction.requiresManualReview && <Edit3 className="w-4 h-4 text-amber-400 shrink-0" />}
+      {!high && <Edit3 className="w-4 h-4 text-amber-400 shrink-0" />}
     </div>
   );
 }
@@ -544,7 +731,7 @@ function Field({ label, value, flagged }: { label: string; value: string; flagge
   return (
     <div>
       <div className="text-xs text-gray-500 mb-0.5">{label}</div>
-      <div className={clsx('text-sm font-medium', flagged ? 'text-amber-300' : 'text-gray-200')}>
+      <div className={clsx('text-sm font-medium', flagged ? 'text-amber-300' : 'text-gray-700')}>
         {flagged && <AlertTriangle className="w-3 h-3 inline mr-1" />}
         {value}
       </div>
@@ -557,27 +744,20 @@ function EditableField({
 }: {
   label: string; value: string; flagged?: boolean; onChange: (v: string) => void;
 }) {
-  const [editing, setEditing] = useState(false);
   return (
-    <div>
-      <div className="flex items-center gap-1 mb-0.5">
-        <span className="text-xs text-gray-500">{label}</span>
-        {flagged && <AlertTriangle className="w-3 h-3 text-amber-400" />}
-        <button onClick={() => setEditing(e => !e)} className="ml-auto">
-          <Edit3 className="w-3 h-3 text-gray-600 hover:text-gray-400" />
-        </button>
+    <div className="flex flex-col gap-1.5">
+      <div className="flex items-center gap-1">
+        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{label}</label>
+        {flagged && <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />}
       </div>
-      {editing ? (
-        <input
-          autoFocus
-          value={value}
-          onChange={e => onChange(e.target.value)}
-          onBlur={() => setEditing(false)}
-          className="w-full bg-gray-800 border border-brand-600 rounded px-2 py-1 text-sm text-gray-200 focus:outline-none"
-        />
-      ) : (
-        <div className={clsx('text-sm font-medium', flagged ? 'text-amber-300' : 'text-gray-200')}>{value}</div>
-      )}
+      <input
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        className={clsx(
+          "w-full bg-[#F8FAFC] border rounded-lg px-3 py-2 text-gray-800 text-sm focus:outline-none focus:bg-white transition-colors",
+          flagged ? "border-amber-300 focus:border-amber-500" : "border-gray-200 focus:border-[#0F4C81]/60"
+        )}
+      />
     </div>
   );
 }

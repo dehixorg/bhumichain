@@ -14,14 +14,14 @@ const client = new DynamoDBClient({ region: 'ap-south-1' });
 const TABLES = [
   {
     TableName: 'bhumichain-notifications',
-    KeySchema: [{ AttributeName: 'aadhaarHash', KeyType: 'HASH' }],
-    AttributeDefinitions: [{ AttributeName: 'aadhaarHash', AttributeType: 'S' }],
+    KeySchema: [{ AttributeName: 'aadhaarNumber', KeyType: 'HASH' }],
+    AttributeDefinitions: [{ AttributeName: 'aadhaarNumber', AttributeType: 'S' }],
     BillingMode: 'PAY_PER_REQUEST',
     Tags: [{ Key: 'project', Value: 'bhumichain' }],
   },
   {
     TableName: 'bhumichain-tokens',
-    // PK: "sha256:priya001#2026-06-30" — aadhaarHash + date for daily token counts
+    // PK: "sha256:priya001#2026-06-30" — aadhaarNumber + date for daily token counts
     KeySchema: [{ AttributeName: 'pk', KeyType: 'HASH' }],
     AttributeDefinitions: [{ AttributeName: 'pk', AttributeType: 'S' }],
     BillingMode: 'PAY_PER_REQUEST',

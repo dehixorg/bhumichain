@@ -69,17 +69,17 @@ export default function MultiSig({
       {/* Header */}
       <div className="flex items-start justify-between mb-3">
         <div>
-          <div className="font-semibold text-gray-200 text-sm">{title}</div>
+          <div className="font-semibold text-gray-700 text-sm">{title}</div>
           {subtitle && <div className="text-gray-500 text-xs mt-0.5">{subtitle}</div>}
         </div>
         <div className="text-right shrink-0 ml-3">
-          <div className="text-sm font-bold text-gray-200">{consentedCount}/{required}</div>
+          <div className="text-sm font-bold text-gray-700">{consentedCount}/{required}</div>
           <div className="text-xs text-gray-500">signed</div>
         </div>
       </div>
 
       {/* Progress bar */}
-      <div className="h-1.5 bg-gray-800 rounded-full mb-4">
+      <div className="h-1.5 bg-[#F8FAFC] rounded-full mb-4">
         <div
           className={clsx(
             'h-full rounded-full transition-all duration-700',
@@ -95,17 +95,17 @@ export default function MultiSig({
           <div key={signer.id}>
             <div className={clsx(
               'flex items-center gap-3 px-3 py-2.5 rounded-lg border transition-colors',
-              signer.hasConsented  && 'bg-brand-950 border-brand-800',
+              signer.hasConsented  && 'bg-[#EFF6FF] border-blue-200',
               signer.hasObjected   && 'bg-red-950 border-red-800',
-              !signer.hasConsented && !signer.hasObjected && 'bg-gray-800 border-gray-700',
+              !signer.hasConsented && !signer.hasObjected && 'bg-[#F8FAFC] border-gray-200',
             )}>
               {/* Status icon */}
               <div className={clsx('w-7 h-7 rounded-full flex items-center justify-center shrink-0', {
-                'bg-brand-800': signer.hasConsented,
+                'bg-[#BFDBFE]': signer.hasConsented,
                 'bg-red-800':   signer.hasObjected,
                 'bg-gray-700':  !signer.hasConsented && !signer.hasObjected,
               })}>
-                {signer.hasConsented  && <CheckCircle className="w-4 h-4 text-brand-300" />}
+                {signer.hasConsented  && <CheckCircle className="w-4 h-4 text-[#0F4C81]" />}
                 {signer.hasObjected   && <AlertTriangle className="w-4 h-4 text-red-300" />}
                 {!signer.hasConsented && !signer.hasObjected && <Clock className="w-4 h-4 text-gray-400" />}
               </div>
@@ -113,7 +113,7 @@ export default function MultiSig({
               {/* Name + role */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5">
-                  <span className="text-sm text-gray-200 font-medium truncate">{signer.name}</span>
+                  <span className="text-sm text-gray-700 font-medium truncate">{signer.name}</span>
                   {signer.legalNote && (
                     <span title={signer.legalNote} className="shrink-0">
                       <Shield className="w-3 h-3 text-purple-400" />
@@ -123,7 +123,7 @@ export default function MultiSig({
                 <div className="flex items-center gap-2 mt-0.5">
                   <span className="text-xs text-gray-500">{signer.role}</span>
                   {signer.share && (
-                    <span className="font-mono text-xs text-brand-400">{signer.share}</span>
+                    <span className="font-mono text-xs text-[#0F4C81]">{signer.share}</span>
                   )}
                   {signer.consentedAt && (
                     <span className="text-xs text-gray-600">
@@ -168,7 +168,7 @@ export default function MultiSig({
                   value={objectionText}
                   onChange={(e) => setObjectionText(e.target.value)}
                   placeholder="State reason for objection..."
-                  className="flex-1 bg-gray-800 border border-red-700 rounded-lg px-3 py-1.5 text-sm text-gray-200 focus:outline-none focus:border-red-500"
+                  className="flex-1 bg-[#F8FAFC] border border-red-700 rounded-lg px-3 py-1.5 text-sm text-gray-700 focus:outline-none focus:border-red-500"
                 />
                 <button
                   onClick={() => handleObject(signer)}
@@ -185,10 +185,10 @@ export default function MultiSig({
 
       {/* Completion banner */}
       {allDone && (
-        <div className="mt-4 flex items-center gap-2 bg-brand-900 border border-brand-700 rounded-lg px-3 py-2 animate-fade-in">
-          <CheckCircle className="w-4 h-4 text-brand-400 shrink-0" />
-          <span className="text-brand-300 text-sm font-semibold">{completedText}</span>
-          <ChevronRight className="w-4 h-4 text-brand-500 ml-auto" />
+        <div className="mt-4 flex items-center gap-2 bg-[#DBEAFE] border border-blue-300 rounded-lg px-3 py-2 animate-fade-in">
+          <CheckCircle className="w-4 h-4 text-[#0F4C81] shrink-0" />
+          <span className="text-[#0F4C81] text-sm font-semibold">{completedText}</span>
+          <ChevronRight className="w-4 h-4 text-[#0F4C81] ml-auto" />
         </div>
       )}
 
