@@ -1,20 +1,26 @@
-require('dotenv').config();
-const express = require('express');
-const multer = require('multer');
 const path = require('path');
 
+// Load local .env first (if exists), then fall back to main backend api-gateway .env
+require('dotenv').config({ path: path.join(__dirname, '.env') });
+require('dotenv').config({ path: path.join(__dirname, '..', 'api-gateway', '.env') });
+
+const express = require('express');
+const multer = require('multer');
+
 const app = express();
-const PORT = process.env.PORT || 8014;
+const PORT = process.env.DOC_ANALYZER_PORT || process.env.PORT || 8014;
 
 // --- Multer config: store in memory, max 50MB ---
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 50 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
-    if (file.mimetype === 'application/pdf' || file.mimetype.startsWith('image/')) {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const allowedExts = ['.pdf', '.png', '.jpg', '.jpeg', '.webp', '.doc', '.docx'];
+    if (file.mimetype === 'application/pdf' || file.mimetype.startsWith('image/') || allowedExts.includes(ext) || file.mimetype.includes('word')) {
       cb(null, true);
     } else {
-      cb(new Error('Only PDF and image files are allowed.'));
+      cb(new Error('Only PDF, Image (PNG/JPG/WEBP), and DOC/DOCX files are allowed.'));
     }
   },
 });
@@ -530,9 +536,10 @@ app.post('/api/translate', async (req, res) => {
 });
 
 // --- API endpoint: Analyze ---
-app.post('/api/analyze', upload.single('file'), async (req, res) => {
+app.post('/api/analyze', upload.any(), async (req, res) => {
   try {
-    if (!req.file) {
+    const uploadedFile = req.file || (req.files && req.files[0]);
+    if (!uploadedFile) {
       return res.status(400).json({ error: 'No file uploaded.' });
     }
 
@@ -541,13 +548,15 @@ app.post('/api/analyze', upload.single('file'), async (req, res) => {
     let hasText = false;
     let pageImages = [];
     
-    const isPdf = req.file.mimetype === 'application/pdf';
+    const ext = path.extname(uploadedFile.originalname).toLowerCase();
+    const isPdf = uploadedFile.mimetype === 'application/pdf' || ext === '.pdf';
+    const isDoc = ext === '.doc' || ext === '.docx' || uploadedFile.mimetype.includes('word');
 
     if (isPdf) {
       // 1. Try to extract text from PDF
       const pdfParse = require('pdf-parse');
       try {
-        const pdfData = await pdfParse(req.file.buffer);
+        const pdfData = await pdfParse(uploadedFile.buffer);
         pdfText = pdfData.text || '';
         numPages = pdfData.numpages || 0;
       } catch (parseErr) {
@@ -557,16 +566,25 @@ app.post('/api/analyze', upload.single('file'), async (req, res) => {
 
       if (!hasText) {
         console.log('No text found in PDF. Converting pages to images for vision analysis...');
-        pageImages = await convertPdfToImages(req.file.buffer);
+        pageImages = await convertPdfToImages(uploadedFile.buffer);
         numPages = pageImages.length;
         if (pageImages.length === 0) {
           return res.status(400).json({ error: 'Could not process this PDF. The file may be corrupted or empty.' });
         }
       }
+    } else if (isDoc) {
+      try {
+        const textDecoder = new TextDecoder('utf-8', { fatal: false });
+        pdfText = textDecoder.decode(uploadedFile.buffer).replace(/[^\x20-\x7E\s\u0900-\u097F]/g, ' ');
+      } catch (docErr) {
+        pdfText = uploadedFile.buffer.toString('utf-8');
+      }
+      hasText = pdfText.trim().length > 20;
+      numPages = 1;
     } else {
       // It's an image
       hasText = false;
-      const base64Image = req.file.buffer.toString('base64');
+      const base64Image = uploadedFile.buffer.toString('base64');
       pageImages = [base64Image];
       numPages = 1;
     }
@@ -603,7 +621,7 @@ app.post('/api/analyze', upload.single('file'), async (req, res) => {
         },
         ...pageImages.map((base64Img) => {
           // Determine mime type for Data URI
-          const mime = isPdf ? 'image/png' : req.file.mimetype;
+          const mime = isPdf ? 'image/png' : (uploadedFile.mimetype || 'image/jpeg');
           return {
             type: 'image_url',
             image_url: {
@@ -670,38 +688,28 @@ app.post('/api/analyze', upload.single('file'), async (req, res) => {
     // Compute completeness score on original extraction
     const { score, missingCritical } = calculateCompleteness(originalData);
 
-    // Auto-translate to English and Hindi in parallel
+    // Secondary translations (opt-in via query param ?translate=true to save 60-80s latency)
     let englishData = originalData;
     let hindiData = originalData;
-    const docLang = (originalData.extraction_meta?.language_of_document || '').toLowerCase();
-    const isEnglish = docLang.includes('english') || docLang === 'en';
-    const isHindi = docLang.includes('hindi') || docLang === 'hi';
+    const shouldTranslate = req.query.translate === 'true' || (req.body && req.body.translate === 'true');
 
-    const translationPromises = [];
+    if (shouldTranslate) {
+      const docLang = (originalData.extraction_meta?.language_of_document || '').toLowerCase();
+      const isEnglish = docLang.includes('english') || docLang === 'en';
+      const isHindi = docLang.includes('hindi') || docLang === 'hi';
 
-    // Queue English translation if not already English
-    if (!isEnglish && docLang.trim().length > 0) {
-      console.log(`Document language is "${originalData.extraction_meta?.language_of_document}". Queueing English translation...`);
-      translationPromises.push(
-        translateJson(originalData, 'English').then(res => {
-          if (res) englishData = res;
-        })
-      );
-    }
-
-    // Queue Hindi translation if not already Hindi
-    if (!isHindi && docLang.trim().length > 0) {
-      console.log(`Document language is "${originalData.extraction_meta?.language_of_document}". Queueing Hindi translation...`);
-      translationPromises.push(
-        translateJson(originalData, 'Hindi').then(res => {
-          if (res) hindiData = res;
-        })
-      );
-    }
-
-    // Wait for both translation processes to complete in parallel
-    if (translationPromises.length > 0) {
-      await Promise.all(translationPromises);
+      const translationPromises = [];
+      if (!isEnglish && docLang.trim().length > 0) {
+        console.log(`Queueing English translation for ${docLang}...`);
+        translationPromises.push(translateJson(originalData, 'English').then(res => { if (res) englishData = res; }));
+      }
+      if (!isHindi && docLang.trim().length > 0) {
+        console.log(`Queueing Hindi translation for ${docLang}...`);
+        translationPromises.push(translateJson(originalData, 'Hindi').then(res => { if (res) hindiData = res; }));
+      }
+      if (translationPromises.length > 0) {
+        await Promise.all(translationPromises);
+      }
     }
 
     return res.json({
@@ -710,7 +718,7 @@ app.post('/api/analyze', upload.single('file'), async (req, res) => {
       englishData: englishData,   // English translation
       hindiData: hindiData,       // Hindi translation
       meta: {
-        filename: req.file.originalname,
+        filename: uploadedFile.originalname,
         pages: numPages,
         textLength: pdfText.length,
         mode,

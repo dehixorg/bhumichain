@@ -93,6 +93,24 @@ app.use('/api/oracle', authenticate, async (req, res) => {
   }
 });
 
+// BhumiBot AI proxy — forward to BhumiBot microservice (port 8015)
+app.use('/api/bhumibot', async (req, res) => {
+  try {
+    const targetUrl = `${process.env.BHUMIBOT_SERVICE_URL || 'http://localhost:8015'}${req.path}`;
+    const botRes = await axios({
+      method: req.method,
+      url: targetUrl,
+      data: req.body,
+      params: req.query,
+      headers: { 'Content-Type': 'application/json' }
+    });
+    res.status(botRes.status).json(botRes.data);
+  } catch (e) {
+    const status = e.response?.status || 502;
+    res.status(status).json(e.response?.data || { error: 'BHUMIBOT_SERVICE_UNREACHABLE', message: e.message });
+  }
+});
+
 // NyayaAI — calls Azure AI (GPT-4.1) when configured, else falls back to local port 8012
 app.post('/api/ai/nyaya/predict', authenticate, async (req, res) => {
   const azureEndpoint = process.env.AZURE_AI_ENDPOINT;
