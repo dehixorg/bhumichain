@@ -681,7 +681,7 @@ app.post('/api/analyze', upload.any(), async (req, res) => {
     }
 
     if (originalData.extraction_meta) {
-      originalData.extraction_meta.source_file = req.file.originalname;
+      originalData.extraction_meta.source_file = uploadedFile ? uploadedFile.originalname : 'uploaded_document.pdf';
       originalData.extraction_meta.pages_processed = numPages;
     }
 
