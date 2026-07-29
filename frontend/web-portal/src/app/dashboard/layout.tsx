@@ -30,7 +30,6 @@ const SIDEBAR_ITEMS = [
   { name: 'Encumbrance Certificate', href: '/dashboard/ec', icon: FileText },
   { name: 'BhumiAuction', href: '/dashboard/auction', icon: Gavel },
   { name: 'NyayaAI', href: '/dashboard/nyaya-ai', icon: Scale },
-  { name: 'TribalGuard', href: '/dashboard/tribal', icon: ShieldAlert },
   { name: 'Notifications', href: '/dashboard/notifications', icon: Bell },
   { name: 'Settings', href: '/dashboard/settings', icon: Settings },
 ];

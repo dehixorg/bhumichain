@@ -60,7 +60,6 @@ type NewOwnerEntry struct {
 	Name          string  `json:"name"`
 	Share         string  `json:"share"`         // "1/3", "1/2", "1/1"
 	ShareDecimal  float64 `json:"shareDecimal"`
-	IsTribal      bool    `json:"isTribal"`
 	RelationToOld string  `json:"relationToOld,omitempty"` // "Son", "Daughter", "Buyer" etc.
 }
 
@@ -630,7 +629,6 @@ func (c *MutationManagerContract) ExecuteMutation(
 			Name         string  `json:"name"`
 			Share        string  `json:"share"`
 			ShareDecimal float64 `json:"shareDecimal"`
-			IsTribal     bool    `json:"isTribal"`
 		}
 		newOwnerInputs := make([]CoOwnerInput, len(mutation.NewOwners))
 		for i, o := range mutation.NewOwners {
@@ -639,7 +637,6 @@ func (c *MutationManagerContract) ExecuteMutation(
 				Name:         o.Name,
 				Share:        o.Share,
 				ShareDecimal: o.ShareDecimal,
-				IsTribal:     o.IsTribal,
 			}
 		}
 

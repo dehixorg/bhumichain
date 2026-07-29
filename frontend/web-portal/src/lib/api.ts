@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { Parcel, SuccessionCase, Transfer, TribalCheckResult } from '@/types';
+import type { Parcel, SuccessionCase, Transfer } from '@/types';
 import { apiFetch } from './auth';
 
 const BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
@@ -74,8 +74,7 @@ export async function initiateTransfer(payload: {
   buyerAadhaarNumber?: string;
   buyerAadhaar?: string;
   declaredValueINR: number;
-  isTribalBuyer?: boolean;
-}): Promise<Transfer & { tribalCheck?: TribalCheckResult }> {
+}): Promise<Transfer> {
   const sellerNum = (payload.sellerAadhaarNumber || payload.sellerAadhaar || '').replace(/\D/g, '') || payload.sellerAadhaarNumber || '';
   const buyerNum = (payload.buyerAadhaarNumber || payload.buyerAadhaar || '').replace(/\D/g, '') || payload.buyerAadhaarNumber || '';
   const res = await apiFetch('/api/transfer/initiate', {
@@ -217,7 +216,7 @@ export async function executeSuccession(caseId: string) {
 
 export async function nominateHeirs(payload: {
   dlpiId: string;
-  heirs: { name: string; aadhaarNumber: string; }[];
+  heirs: { name: string; aadhaarNumber: string; share: string; }[];
 }) {
   const res = await apiFetch(`/api/succession/nominate`, {
     method: 'POST',
@@ -251,28 +250,7 @@ export async function executeSuccessionClaim(payload: {
   return res.json();
 }
 
-// ─── Tribal Guard ─────────────────────────────────────────────────────────────
 
-export async function checkTribal(payload: {
-  dlpiId: string;
-  buyerName: string;
-  buyerAadhaarNumber: string;
-  isTribalBuyer?: boolean;
-}): Promise<TribalCheckResult> {
-  const res = await apiFetch('/api/tribal/check', {
-    method: 'POST',
-    body: JSON.stringify(payload),
-  });
-  if (res.status === 403) {
-    return await res.json() as TribalCheckResult;
-  }
-  return res.json();
-}
-
-export async function isTribalParcel(dlpiId: string) {
-  const res = await apiFetch(`/api/tribal/parcel/${dlpiId}`);
-  return res.json();
-}
 
 // ─── Encumbrance Certificate ──────────────────────────────────────────────────
 

@@ -30,7 +30,6 @@ interface Parcel {
   encumbranceStatus: string;
   claimStatus: string;
   successionStatus?: string;
-  isTribal?: boolean;
   isCoparcenary?: boolean;
   owners?: any[];
   ownershipType?: string;
@@ -55,7 +54,6 @@ const VAULT_DOCS = [
 
 const ANNOUNCEMENTS = [
   { badge: 'NEW', title: 'BhumiChain Pilot expands to 500 villages in Patna.' },
-  { badge: 'ALERT', title: 'Schedule V (Tribal) land transfers strictly require Collector NOC.' },
   { badge: 'INFO', title: 'Link Aadhaar before 31st August 2026 to claim unverified parcels.' },
 ];
 
@@ -92,7 +90,7 @@ export default function CitizenDashboard() {
   // Nomination State
   const [nominations, setNominations] = useState<any[]>([]);
   const [nominateModalParcel, setNominateModalParcel] = useState<Parcel | null>(null);
-  const [nominateHeirsList, setNominateHeirsList] = useState<{name: string, aadhaarNumber: string}[]>([{name: '', aadhaarNumber: ''}]);
+  const [nominateHeirsList, setNominateHeirsList] = useState<{name: string, aadhaarNumber: string, share: string}[]>([{name: '', aadhaarNumber: '', share: ''}]);
   const [nominateBusy, setNominateBusy] = useState(false);
 
   useEffect(() => {
@@ -597,7 +595,7 @@ export default function CitizenDashboard() {
                               <button
                                 onClick={() => {
                                   setNominateModalParcel(p);
-                                  setNominateHeirsList([{name: '', aadhaarNumber: ''}]);
+                                  setNominateHeirsList([{name: '', aadhaarNumber: '', share: ''}]);
                                 }}
                                 className="bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs py-2 px-3 rounded-lg flex items-center justify-center gap-1.5 transition-colors shadow-sm min-w-[150px]"
                               >
@@ -906,8 +904,8 @@ export default function CitizenDashboard() {
                       type="button"
                       onClick={() => {
                         setNominateHeirsList([
-                          {name: 'Ramesh Singh', aadhaarNumber: '999900010008'},
-                          {name: 'Priya Singh', aadhaarNumber: '999900010009'},
+                          {name: 'Ramesh Singh', aadhaarNumber: '999900010008', share: '50'},
+                          {name: 'Priya Singh', aadhaarNumber: '999900010009', share: '50'},
                         ]);
                       }}
                       className="text-[11px] font-bold text-[#0F4C81] hover:underline"
@@ -956,12 +954,29 @@ export default function CitizenDashboard() {
                             className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm font-mono text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0F4C81]"
                           />
                         </div>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="number"
+                            required
+                            min="1"
+                            max="100"
+                            value={heir.share}
+                            onChange={(e) => {
+                              const newHeirs = [...nominateHeirsList];
+                              newHeirs[idx].share = e.target.value;
+                              setNominateHeirsList(newHeirs);
+                            }}
+                            placeholder="Share %"
+                            className="w-24 bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0F4C81]"
+                          />
+                          <span className="text-xs font-bold text-gray-500">% Share of Property</span>
+                        </div>
                       </div>
                     </div>
                   ))}
                   <button
                     type="button"
-                    onClick={() => setNominateHeirsList([...nominateHeirsList, {name: '', aadhaarNumber: ''}])}
+                    onClick={() => setNominateHeirsList([...nominateHeirsList, {name: '', aadhaarNumber: '', share: ''}])}
                     className="w-full py-2 border-2 border-dashed border-gray-300 rounded-xl text-gray-500 font-bold text-sm hover:border-[#0F4C81] hover:text-[#0F4C81] transition-colors flex items-center justify-center gap-2"
                   >
                     <Plus className="w-4 h-4" /> Add Another Heir

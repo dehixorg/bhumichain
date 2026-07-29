@@ -660,7 +660,6 @@ func (c *PropertyTransferContract) ApproveByTehsildar(
 		Name          string  `json:"name"`
 		Share         string  `json:"share"`
 		ShareDecimal  float64 `json:"shareDecimal"`
-		IsTribal      bool    `json:"isTribal"`
 	}
 	newBuyerInputs := make([]CoOwnerInput, len(proposal.Buyers))
 	for i, b := range proposal.Buyers {
