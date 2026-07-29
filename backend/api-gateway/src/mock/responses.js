@@ -725,20 +725,171 @@ module.exports = {
         return { transferId: args[0], reason: args[1], status: 'REJECTED', rejectedAt: new Date().toISOString() };
       case 'property-transfer::GetAllTransfers':
         return [DEMO_TRANSFER];
-      case 'mutation-manager::InitiateMutation':
-        return { mutationId: DEMO_MUTATION.mutationId, status: 'ALERT_SENT', alertSentAt: new Date().toISOString(), slaMet: true };
+      case 'mutation-manager::CreateMutation': {
+        const data = JSON.parse(args[0]);
+        const id = `MUT-2026-${Math.floor(1000 + Math.random() * 9000)}`;
+        const newMut = {
+          mutationId: id,
+          dlpiId: data.landDetails?.plotNumber ? `DLPI-UP-DAD-${String(data.landDetails.plotNumber).padStart(5, '0')}` : 'DLPI-UP-DAD-00100',
+          mutationType: data.mutationType,
+          officerName: data.officerName || data.applicantDetails?.fullName || 'Citizen',
+          officerRank: data.officerRank || 'Citizen',
+          currentOwnerName: data.previousOwnerDetails?.fullName || 'Deepak Narayan Singh',
+          newOwnerName: data.newOwnerDetails?.fullName || 'Ankur Singh',
+          reason: data.reason || `${data.mutationType} mutation requested.`,
+          supportingCID: data.supportingCID || 'QmDummyCIDDocuments',
+          status: data.status || 'Pending at Patwari',
+          initiatedAt: new Date().toISOString(),
+          applicantDetails: data.applicantDetails,
+          landDetails: data.landDetails,
+          previousOwnerDetails: data.previousOwnerDetails,
+          newOwnerDetails: data.newOwnerDetails,
+          dynamicFields: data.dynamicFields,
+          rejectionReason: null,
+          objectionReason: null,
+          history: data.history || [
+            { step: 'SUBMITTED', label: 'Mutation Submitted', actor: data.applicantDetails?.fullName || 'Citizen', at: new Date().toISOString() }
+          ],
+          timeline: [
+            { step: 'SUBMITTED', label: 'Submitted', actor: data.applicantDetails?.fullName || 'Citizen', at: new Date().toISOString(), done: true },
+            { step: 'PATWARI', label: 'Pending Patwari', actor: 'Patwari', at: null, done: false },
+            { step: 'KANUNGO', label: 'Pending Kanungo', actor: 'Kanungo', at: null, done: false },
+            { step: 'TEHSILDAR', label: 'Pending Tehsildar', actor: 'Tehsildar', at: null, done: false }
+          ],
+          telegramAlerts: []
+        };
+        DEMO_MUTATION_LIST.push(newMut);
+        return newMut;
+      }
+      case 'mutation-manager::InitiateMutation': {
+        // Fallback or legacy support
+        const id = `MUT-2026-${Math.floor(1000 + Math.random() * 9000)}`;
+        const newMut = {
+          mutationId: id,
+          dlpiId: args[0],
+          mutationType: args[1],
+          officerName: args[2],
+          officerRank: args[4] || 'Patwari',
+          currentOwnerName: 'Deepak Narayan Singh',
+          newOwnerName: args[5],
+          reason: args[7],
+          supportingCID: args[8],
+          status: 'Pending at Patwari',
+          initiatedAt: new Date().toISOString(),
+          history: [
+            { step: 'SUBMITTED', label: 'Mutation Initiated', actor: args[2], at: new Date().toISOString() }
+          ],
+          timeline: [
+            { step: 'SUBMITTED', label: 'Submitted', actor: args[2], at: new Date().toISOString(), done: true },
+            { step: 'PATWARI', label: 'Pending Patwari', actor: 'Patwari', at: null, done: false },
+            { step: 'KANUNGO', label: 'Pending Kanungo', actor: 'Kanungo', at: null, done: false },
+            { step: 'TEHSILDAR', label: 'Pending Tehsildar', actor: 'Tehsildar', at: null, done: false }
+          ],
+          telegramAlerts: []
+        };
+        DEMO_MUTATION_LIST.push(newMut);
+        return newMut;
+      }
       case 'mutation-manager::GetMutation':
-        return DEMO_MUTATION;
+        return DEMO_MUTATION_LIST.find(m => m.mutationId === args[0]) || DEMO_MUTATION;
       case 'mutation-manager::GetMutationsByDLPI':
         return DEMO_MUTATION_LIST.filter(m => m.dlpiId === args[0]);
       case 'mutation-manager::GetAllMutations':
         return DEMO_MUTATION_LIST;
       case 'mutation-manager::RecordOwnerAlertDelivery':
         return { mutationId: args[0], channel: args[1], deliveredAt: args[2], recorded: true };
-      case 'mutation-manager::RecordOwnerConsent':
+      case 'mutation-manager::RecordOwnerConsent': {
+        const m = DEMO_MUTATION_LIST.find(x => x.mutationId === args[0]);
+        if (m) {
+          m.status = 'CONSENT_GIVEN';
+          if (!m.history) m.history = [];
+          m.history.push({ step: 'CONSENT', label: 'Owner Consent Given', actor: 'Owner', at: new Date().toISOString() });
+        }
         return { mutationId: args[0], status: 'CONSENT_GIVEN', consentAt: new Date().toISOString() };
-      case 'mutation-manager::RecordOwnerObjection':
+      }
+      case 'mutation-manager::RecordOwnerObjection': {
+        const m = DEMO_MUTATION_LIST.find(x => x.mutationId === args[0]);
+        if (m) {
+          m.status = 'OBJECTION_FILED';
+          m.objectionReason = args[2] || 'Objection raised';
+          if (!m.history) m.history = [];
+          m.history.push({ step: 'OBJECTION_FILED', label: 'Objection Filed by Owner', actor: 'Owner', at: new Date().toISOString() });
+          const step = m.timeline?.find(t => t.step === 'TEHSILDAR');
+          if (step) {
+            step.done = true;
+            step.at = new Date().toISOString();
+            step.label = 'Objection Filed';
+          }
+        }
         return { mutationId: args[0], status: 'OBJECTION_FILED', objectionAt: new Date().toISOString() };
+      }
+      case 'mutation-manager::UpdateMutationStatus': {
+        const m = DEMO_MUTATION_LIST.find(x => x.mutationId === args[0]);
+        if (!m) return { error: 'MUTATION_NOT_FOUND' };
+        const newStatus = args[1];
+        const actorName = args[2];
+        const rejectionReason = args[3] || null;
+        
+        m.status = newStatus;
+        const at = new Date().toISOString();
+        if (!m.history) m.history = [];
+        m.history.push({
+          step: newStatus.toUpperCase().replace(/ /g, '_'),
+          label: `Mutation status: ${newStatus}`,
+          actor: actorName,
+          at
+        });
+
+        if (!m.timeline) {
+          m.timeline = [
+            { step: 'SUBMITTED', label: 'Submitted', actor: 'Citizen', at: m.initiatedAt || at, done: true },
+            { step: 'PATWARI', label: 'Pending Patwari', actor: 'Patwari', at: null, done: false },
+            { step: 'KANUNGO', label: 'Pending Kanungo', actor: 'Kanungo', at: null, done: false },
+            { step: 'TEHSILDAR', label: 'Pending Tehsildar', actor: 'Tehsildar', at: null, done: false }
+          ];
+        }
+
+        if (newStatus === 'Pending at Kanungo') {
+          const step = m.timeline.find(t => t.step === 'PATWARI');
+          if (step) { step.done = true; step.at = at; step.actor = actorName; step.label = 'Patwari Approved'; }
+        } else if (newStatus === 'Pending at Tehsildar') {
+          const step = m.timeline.find(t => t.step === 'KANUNGO');
+          if (step) { step.done = true; step.at = at; step.actor = actorName; step.label = 'Kanungo Approved'; }
+        } else if (newStatus === 'Approved') {
+          const step = m.timeline.find(t => t.step === 'TEHSILDAR');
+          if (step) { step.done = true; step.at = at; step.actor = actorName; step.label = 'Tehsildar Approved'; }
+          // Update Jamabandi records
+          if (m.dlpiId) {
+            const p = DEMO_MY_PARCELS.find(x => x.dlpiId === m.dlpiId);
+            if (p) {
+              p.owner = { name: m.newOwnerName };
+              p.ownerName = m.newOwnerName;
+            }
+            if (DEMO_DLPI.dlpiId === m.dlpiId) {
+              DEMO_DLPI.ownerName = m.newOwnerName;
+            }
+          }
+        } else if (newStatus === 'Rejected') {
+          m.rejectionReason = rejectionReason;
+          const step = m.timeline.find(t => !t.done);
+          if (step) {
+            step.done = true;
+            step.at = at;
+            step.actor = actorName;
+            step.label = `Rejected by ${actorName}`;
+          }
+        } else if (newStatus === 'Objection Filed') {
+          m.objectionReason = rejectionReason; // Save objection text here
+          const step = m.timeline.find(t => t.step === 'TEHSILDAR');
+          if (step) {
+            step.done = true;
+            step.at = at;
+            step.actor = actorName;
+            step.label = 'Objection Filed';
+          }
+        }
+        return m;
+      }
       case 'mutation-manager::ExecuteMutation':
         return { mutationId: args[0], status: 'EXECUTED', executedAt: new Date().toISOString(), txHash: `0xmut-exec-${Date.now()}` };
       case 'uttaradhikar::InitiateSuccession':

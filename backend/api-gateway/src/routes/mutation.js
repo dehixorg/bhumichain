@@ -19,7 +19,7 @@ const MUTATION_TYPES = [
   'Govt_Acquisition', 'Exchange', 'Will',
 ];
 
-// POST /api/mutation/initiate — officer initiates; 60-sec alert SLA starts
+// POST /api/mutation/initiate — officer initiates (legacy support)
 router.post(
   '/initiate',
   authenticate,
@@ -131,21 +131,21 @@ router.post(
   },
 );
 
-// POST /api/mutation/:mutationId/objection — owner objects
+// POST /api/mutation/:mutationId/objection — owner or citizen objects
 router.post(
   '/:mutationId/objection',
   authenticate,
-  body('ownerAadhaarHash').matches(/^sha256:[a-f0-9]{64}$/),
-  body('objectionReason').notEmpty(),
-  body('evidenceCID').notEmpty(),
+  body('objectionReason').notEmpty().trim(),
   validate,
   async (req, res) => {
     try {
+      const ownerHash = req.body.ownerAadhaarHash || req.user.aadhaarHash || 'sha256:default-aadhaar';
+      const evidence = req.body.evidenceCID || 'QmDummyEvidence';
       const result = await submit('mutation-manager', 'RecordOwnerObjection', [
         req.params.mutationId,
-        req.body.ownerAadhaarHash,
+        ownerHash,
         req.body.objectionReason,
-        req.body.evidenceCID,
+        evidence,
       ]);
       broadcast('OwnerObjectionFiled', { mutationId: req.params.mutationId });
       res.json(result);
@@ -159,7 +159,7 @@ router.post(
 router.post(
   '/:mutationId/execute',
   authenticate,
-  requireRole(ROLES.CIRCLE_OFFICER, ROLES.REVENUE_OFFICER),
+  requireRole(ROLES.CIRCLE_OFFICER, ROLES.REVENUE_OFFICER, ROLES.TEHSILDAR),
   body('finalDocCID').notEmpty(),
   validate,
   async (req, res) => {
@@ -173,6 +173,60 @@ router.post(
       res.status(500).json({ error: 'FABRIC_ERROR', message: e.message });
     }
   },
+);
+
+// POST /api/mutation — Create/Apply mutation dynamically (Citizen or Officer)
+router.post(
+  '/',
+  authenticate,
+  async (req, res) => {
+    try {
+      const result = await submit('mutation-manager', 'CreateMutation', [JSON.stringify(req.body)]);
+      broadcast('MutationCreated', {
+        mutationId: result.mutationId,
+        mutationType: result.mutationType,
+        message: `🆕 Mutation ${result.mutationId} (${result.mutationType}) has been submitted successfully.`,
+      });
+      res.status(201).json(result);
+    } catch (e) {
+      res.status(500).json({ error: 'FABRIC_ERROR', message: e.message });
+    }
+  }
+);
+
+// PATCH /api/mutation/:mutationId/status — Approve/Reject workflow transitions
+router.patch(
+  '/:mutationId/status',
+  authenticate,
+  requireRole(ROLES.PATWARI, ROLES.CIRCLE_INSPECTOR, ROLES.TEHSILDAR),
+  body('status').isIn(['Pending at Kanungo', 'Pending at Tehsildar', 'Approved', 'Rejected', 'Objection Filed']),
+  body('reason').optional().trim(),
+  validate,
+  async (req, res) => {
+    try {
+      const { status, reason } = req.body;
+      const { mutationId } = req.params;
+      const actorName = req.user.name || 'Officer';
+      
+      const result = await submit('mutation-manager', 'UpdateMutationStatus', [
+        mutationId,
+        status,
+        actorName,
+        reason || ''
+      ]);
+
+      broadcast('MutationStatusUpdated', {
+        mutationId,
+        status,
+        actorName,
+        message: `🔄 Mutation ${mutationId} status updated to: ${status} by ${actorName}`,
+      });
+
+      res.json(result);
+    } catch (e) {
+      res.status(500).json({ error: 'FABRIC_ERROR', message: e.message });
+    }
+  }
 );
 
 module.exports = router;
