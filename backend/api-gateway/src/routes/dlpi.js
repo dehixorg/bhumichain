@@ -94,6 +94,19 @@ router.get('/:dlpiId/history', authenticate, dlpiParam, validate, async (req, re
   }
 });
 
+// GET /api/dlpi/by-aadhaar/:aadhaarNumber — fetch seller and their properties
+router.get('/by-aadhaar/:aadhaarNumber', authenticate, async (req, res) => {
+  try {
+    const { aadhaarNumber } = req.params;
+    const crypto = require('crypto');
+    const hash = crypto.createHash('sha256').update(aadhaarNumber).digest('hex');
+    const result = await evaluate('dlpi', 'GetParcelsByAadhaar', [hash, aadhaarNumber]);
+    res.json(result || { ownerName: 'Unknown', parcels: [] });
+  } catch (e) {
+    res.status(500).json({ error: 'FABRIC_ERROR', message: e.message });
+  }
+});
+
 // ── Citizen actions ───────────────────────────────────────────────────────────
 
 // POST /api/dlpi/:dlpiId/claim — citizen claims a seeded parcel (requires prior eSign)
@@ -118,11 +131,11 @@ router.post(
   },
 );
 
-// POST /api/dlpi/:dlpiId/submit-for-review — citizen submits for patwari field verification
+// POST /api/dlpi/:dlpiId/submit-for-review — citizen or patwari submits for field verification
 router.post(
   '/:dlpiId/submit-for-review',
   authenticate,
-  requireRole(ROLES.CITIZEN),
+  requireRole(ROLES.CITIZEN, ROLES.PATWARI),
   dlpiParam,
   validate,
   async (req, res) => {
@@ -239,7 +252,7 @@ router.post(
 router.post(
   '/',
   authenticate,
-  requireRole(...CAN_CREATE_DLPI),
+  requireRole(...CAN_CREATE_DLPI, ROLES.CITIZEN),
   body('dlpiId').matches(/^DLPI-[A-Z]{2}-[A-Z]{3}-[A-Z0-9]+$/),
   body('ownerName').notEmpty().trim(),
   body('ownerAadhaarHash').matches(/^sha256:[a-f0-9]{64}$/),
@@ -253,6 +266,7 @@ router.post(
       const { dlpiId, ownerName, ownerAadhaarHash, landType, areaHectares, geojsonCID, surveyDocCID } = req.body;
       const result = await submit('dlpi', 'CreateDLPI', [
         JSON.stringify({ dlpiId, ownerName, ownerAadhaarHash, landType, areaHectares, geojsonCID, surveyDocCID }),
+        req.user.role // pass user role to determine initial status
       ]);
       res.status(201).json(result);
     } catch (e) {

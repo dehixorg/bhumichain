@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import {
   GitMerge, Clock, CheckCircle, AlertTriangle, Send, XCircle, Plus,
   RefreshCw, ArrowRight, Shield, FileText, Upload, AlertCircle, FilePlus,
-  ArrowLeftRight, FileCheck, Check
+  ArrowLeftRight, FileCheck, Check, Search
 } from 'lucide-react';
 import clsx from 'clsx';
 import Sidebar from '@/components/dashboard/Sidebar';
@@ -135,6 +135,14 @@ export default function MutationDashboard() {
 
   const [declaration, setDeclaration] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(false);
+
+  // ── AADHAAR SEARCH & AUTOFILL STATE ─────────────────────────────────────────
+  const [searchAadhaar, setSearchAadhaar] = useState('');
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchError, setSearchError] = useState('');
+  const [fetchedParcels, setFetchedParcels] = useState<any[]>([]);
+  const [fetchedSellerName, setFetchedSellerName] = useState('');
+  const [selectedParcelId, setSelectedParcelId] = useState('');
 
   // ── Fetch Operations ────────────────────────────────────────────────────────
   const fetchMutations = useCallback(async () => {
@@ -311,6 +319,57 @@ export default function MutationDashboard() {
     }
   };
 
+  // ── Aadhaar Search & Autofill Handlers ─────────────────────────────────────
+  const handleAadhaarSearch = async () => {
+    if (searchAadhaar.length !== 12) {
+      setError('Please enter a valid 12-digit Aadhaar number.');
+      return;
+    }
+    setError('');
+    setSearchError('');
+    setSearchLoading(true);
+    setFetchedParcels([]);
+    setFetchedSellerName('');
+    try {
+      const res = await apiFetch(`/api/dlpi/by-aadhaar/${searchAadhaar}`);
+      if (!res.ok) {
+        throw new Error('Failed to search Aadhaar. No response from gateway.');
+      }
+      const data = await res.json();
+      if (data && data.parcels && data.parcels.length > 0) {
+        setFetchedSellerName(data.ownerName);
+        setFetchedParcels(data.parcels);
+        setSelectedParcelId('');
+        setSuccess(`Found ${data.parcels.length} matching properties for ${data.ownerName}!`);
+      } else {
+        setSearchError('No properties found registered on BhumiChain for this Aadhaar card.');
+        setError('Aadhaar lookup found no matching property records.');
+      }
+    } catch (err: any) {
+      setSearchError(err.message || 'Error occurred while looking up Aadhaar.');
+      setError(err.message || 'Lookup failed.');
+    } finally {
+      setSearchLoading(false);
+    }
+  };
+
+  const handleSelectParcel = (parcelId: string) => {
+    setSelectedParcelId(parcelId);
+    const p = fetchedParcels.find(x => x.dlpiId === parcelId);
+    if (p) {
+      setLandDistrict(p.district || 'Gautam Buddha Nagar');
+      setLandTehsil(p.tehsil || 'Dadri');
+      setLandVillage(p.gram || p.village || 'Gharbara');
+      setLandKhata(p.khataNo || '');
+      setLandPlot(p.khasraNo || '');
+      setLandArea(String(p.areaHectares || ''));
+
+      setPrevOwnerName(fetchedSellerName || p.ownerName || p.owner?.name || '');
+      setPrevOwnerAadhaar(searchAadhaar);
+      setSuccess(`Autofilled details from property ${parcelId}!`);
+    }
+  };
+
   // ── Filtering Lists ─────────────────────────────────────────────────────────
   const getFilteredMutations = () => {
     if (activeTab === 'verify') {
@@ -342,6 +401,19 @@ export default function MutationDashboard() {
 
   return (
     <div className="flex h-screen bg-gray-950 overflow-hidden font-sans text-gray-200">
+      <style dangerouslySetInnerHTML={{ __html: `
+        input:-webkit-autofill,
+        input:-webkit-autofill:hover, 
+        input:-webkit-autofill:focus, 
+        input:-webkit-autofill:active {
+            -webkit-box-shadow: 0 0 0 30px #111827 inset !important;
+            -webkit-text-fill-color: #f3f4f6 !important;
+            transition: background-color 5000s ease-in-out 0s;
+        }
+        input[type="date"] {
+            color-scheme: dark;
+        }
+      `}} />
       <Sidebar />
 
       <main className="flex-1 overflow-y-auto">
@@ -479,6 +551,66 @@ export default function MutationDashboard() {
                       </select>
                     </div>
 
+                    {/* Aadhaar Seller & Property Lookup Card */}
+                    <div className="bg-gray-950/80 border border-brand-500/30 p-5 rounded-2xl space-y-4">
+                      <div className="flex items-center justify-between border-b border-gray-800 pb-2">
+                        <span className="text-xs font-bold text-brand-400 uppercase tracking-wider flex items-center gap-1.5">
+                          <Search className="w-3.5 h-3.5" /> Seller &amp; Property lookup by Aadhaar
+                        </span>
+                        <span className="text-[10px] text-gray-500 font-mono">Real-time BhumiChain Query</span>
+                      </div>
+                      
+                      <div className="flex gap-3">
+                        <div className="flex-1">
+                          <input
+                            type="text"
+                            maxLength={12}
+                            placeholder="Enter Seller Aadhaar Number (12 digits) e.g. 999900010010"
+                            value={searchAadhaar}
+                            onChange={(e) => setSearchAadhaar(e.target.value.replace(/\D/g, ''))}
+                            className="w-full bg-gray-900 border border-gray-800 rounded-xl px-4 py-2.5 text-xs text-gray-200 outline-none focus:border-brand-500 font-mono"
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          disabled={searchLoading || searchAadhaar.length !== 12}
+                          onClick={handleAadhaarSearch}
+                          className="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-semibold disabled:opacity-50 flex items-center gap-1.5"
+                        >
+                          {searchLoading ? 'Fetching...' : 'Fetch Details'}
+                        </button>
+                      </div>
+
+                      {searchError && (
+                        <p className="text-red-400 text-xs mt-1">{searchError}</p>
+                      )}
+
+                      {fetchedSellerName && (
+                        <div className="bg-gray-900/60 p-4 rounded-xl border border-gray-800 space-y-3">
+                          <div className="flex justify-between items-center text-xs text-gray-300">
+                            <span>Seller Name: <strong>{fetchedSellerName}</strong></span>
+                            <span className="text-[10px] bg-brand-900/40 border border-brand-700/60 px-2 py-0.5 rounded text-brand-400">Match Found</span>
+                          </div>
+
+                          <div className="space-y-1.5">
+                            <label className="block text-xs text-gray-400">Select Property to Mutate *</label>
+                            <select
+                              value={selectedParcelId}
+                              onChange={(e) => handleSelectParcel(e.target.value)}
+                              className="w-full bg-gray-950 border border-gray-800 rounded-xl px-3 py-2 text-xs text-gray-200 outline-none focus:border-brand-500"
+                            >
+                              <option value="">-- Choose a property --</option>
+                              {fetchedParcels.map(p => (
+                                <option key={p.dlpiId} value={p.dlpiId}>
+                                  {p.dlpiId} - Khasra {p.khasraNo} ({p.areaHectares} Hect, {p.gram || p.tehsil})
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
                     {/* Form Fields: Grid layout */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       
@@ -488,22 +620,22 @@ export default function MutationDashboard() {
                         <input
                           type="text" required placeholder="Applicant Full Name"
                           value={applicantName} onChange={e => setApplicantName(e.target.value)}
-                          className="w-full bg-gray-905 border border-gray-800/80 rounded-xl px-3 py-2.5 text-xs text-gray-200 outline-none focus:border-brand-500"
+                          className="w-full bg-gray-900 border border-gray-800/80 rounded-xl px-3 py-2.5 text-xs text-gray-200 outline-none focus:border-brand-500"
                         />
                         <input
                           type="text" required placeholder="Father's Name"
                           value={applicantFather} onChange={e => setApplicantFather(e.target.value)}
-                          className="w-full bg-gray-905 border border-gray-800/80 rounded-xl px-3 py-2.5 text-xs text-gray-200 outline-none focus:border-brand-500"
+                          className="w-full bg-gray-900 border border-gray-800/80 rounded-xl px-3 py-2.5 text-xs text-gray-200 outline-none focus:border-brand-500"
                         />
                         <input
                           type="text" required maxLength={12} placeholder="Aadhaar Number (12 digits)"
                           value={applicantAadhaar} onChange={e => setApplicantAadhaar(e.target.value.replace(/\D/g,''))}
-                          className="w-full bg-gray-905 border border-gray-800/80 rounded-xl px-3 py-2.5 text-xs text-gray-200 outline-none focus:border-brand-500 font-mono"
+                          className="w-full bg-gray-900 border border-gray-800/80 rounded-xl px-3 py-2.5 text-xs text-gray-200 outline-none focus:border-brand-500 font-mono"
                         />
                         <input
                           type="tel" required placeholder="Mobile Number"
                           value={applicantMobile} onChange={e => setApplicantMobile(e.target.value)}
-                          className="w-full bg-gray-905 border border-gray-800/80 rounded-xl px-3 py-2.5 text-xs text-gray-200 outline-none focus:border-brand-500"
+                          className="w-full bg-gray-900 border border-gray-800/80 rounded-xl px-3 py-2.5 text-xs text-gray-200 outline-none focus:border-brand-500"
                         />
                       </div>
 
@@ -513,33 +645,33 @@ export default function MutationDashboard() {
                         <input
                           type="text" required placeholder="District"
                           value={landDistrict} onChange={e => setLandDistrict(e.target.value)}
-                          className="w-full bg-gray-905 border border-gray-800/80 rounded-xl px-3 py-2.5 text-xs text-gray-200 outline-none focus:border-brand-500"
+                          className="w-full bg-gray-900 border border-gray-800/80 rounded-xl px-3 py-2.5 text-xs text-gray-200 outline-none focus:border-brand-500"
                         />
                         <input
                           type="text" required placeholder="Tehsil"
                           value={landTehsil} onChange={e => setLandTehsil(e.target.value)}
-                          className="w-full bg-gray-905 border border-gray-800/80 rounded-xl px-3 py-2.5 text-xs text-gray-200 outline-none focus:border-brand-500"
+                          className="w-full bg-gray-900 border border-gray-800/80 rounded-xl px-3 py-2.5 text-xs text-gray-200 outline-none focus:border-brand-500"
                         />
                         <input
                           type="text" required placeholder="Village"
                           value={landVillage} onChange={e => setLandVillage(e.target.value)}
-                          className="w-full bg-gray-905 border border-gray-800/80 rounded-xl px-3 py-2.5 text-xs text-gray-200 outline-none focus:border-brand-500"
+                          className="w-full bg-gray-900 border border-gray-800/80 rounded-xl px-3 py-2.5 text-xs text-gray-200 outline-none focus:border-brand-500"
                         />
                         <div className="grid grid-cols-3 gap-2">
                           <input
                             type="text" required placeholder="Khata No"
                             value={landKhata} onChange={e => setLandKhata(e.target.value)}
-                            className="w-full bg-gray-905 border border-gray-800/80 rounded-xl px-2 py-2.5 text-xs text-gray-200 outline-none focus:border-brand-500 font-mono"
+                            className="w-full bg-gray-900 border border-gray-800/80 rounded-xl px-2 py-2.5 text-xs text-gray-200 outline-none focus:border-brand-500 font-mono"
                           />
                           <input
                             type="text" required placeholder="Plot No"
                             value={landPlot} onChange={e => setLandPlot(e.target.value)}
-                            className="w-full bg-gray-905 border border-gray-800/80 rounded-xl px-2 py-2.5 text-xs text-gray-200 outline-none focus:border-brand-500 font-mono"
+                            className="w-full bg-gray-900 border border-gray-800/80 rounded-xl px-2 py-2.5 text-xs text-gray-200 outline-none focus:border-brand-500 font-mono"
                           />
                           <input
                             type="text" required placeholder="Area (Hect)"
                             value={landArea} onChange={e => setLandArea(e.target.value)}
-                            className="w-full bg-gray-905 border border-gray-800/80 rounded-xl px-2 py-2.5 text-xs text-gray-200 outline-none focus:border-brand-500 font-mono"
+                            className="w-full bg-gray-900 border border-gray-800/80 rounded-xl px-2 py-2.5 text-xs text-gray-200 outline-none focus:border-brand-500 font-mono"
                           />
                         </div>
                       </div>
@@ -550,12 +682,12 @@ export default function MutationDashboard() {
                         <input
                           type="text" required placeholder="Full Name"
                           value={prevOwnerName} onChange={e => setPrevOwnerName(e.target.value)}
-                          className="w-full bg-gray-905 border border-gray-800/80 rounded-xl px-3 py-2.5 text-xs text-gray-200 outline-none focus:border-brand-500"
+                          className="w-full bg-gray-900 border border-gray-800/80 rounded-xl px-3 py-2.5 text-xs text-gray-200 outline-none focus:border-brand-500"
                         />
                         <input
                           type="text" required maxLength={12} placeholder="Aadhaar Number (12 digits)"
                           value={prevOwnerAadhaar} onChange={e => setPrevOwnerAadhaar(e.target.value.replace(/\D/g,''))}
-                          className="w-full bg-gray-905 border border-gray-800/80 rounded-xl px-3 py-2.5 text-xs text-gray-200 outline-none focus:border-brand-500 font-mono"
+                          className="w-full bg-gray-900 border border-gray-800/80 rounded-xl px-3 py-2.5 text-xs text-gray-200 outline-none focus:border-brand-500 font-mono"
                         />
                       </div>
 
@@ -565,12 +697,12 @@ export default function MutationDashboard() {
                         <input
                           type="text" required placeholder="Full Name"
                           value={newOwnerName} onChange={e => setNewOwnerName(e.target.value)}
-                          className="w-full bg-gray-905 border border-gray-800/80 rounded-xl px-3 py-2.5 text-xs text-gray-200 outline-none focus:border-brand-500"
+                          className="w-full bg-gray-900 border border-gray-800/80 rounded-xl px-3 py-2.5 text-xs text-gray-200 outline-none focus:border-brand-500"
                         />
                         <input
                           type="text" required maxLength={12} placeholder="Aadhaar Number"
                           value={newOwnerAadhaar} onChange={e => setNewOwnerAadhaar(e.target.value.replace(/\D/g,''))}
-                          className="w-full bg-gray-905 border border-gray-800/80 rounded-xl px-3 py-2.5 text-xs text-gray-200 outline-none focus:border-brand-500 font-mono"
+                          className="w-full bg-gray-900 border border-gray-800/80 rounded-xl px-3 py-2.5 text-xs text-gray-200 outline-none focus:border-brand-500 font-mono"
                         />
                       </div>
 
@@ -585,12 +717,12 @@ export default function MutationDashboard() {
                           <input
                             type="text" required placeholder="Registry Document Number"
                             value={registryNumber} onChange={e => setRegistryNumber(e.target.value)}
-                            className="w-full bg-gray-905 border border-gray-800/80 rounded-xl px-3 py-2.5 text-xs text-gray-200 outline-none focus:border-brand-500 font-mono"
+                            className="w-full bg-gray-900 border border-gray-800/80 rounded-xl px-3 py-2.5 text-xs text-gray-200 outline-none focus:border-brand-500 font-mono"
                           />
                           <input
                             type="date" required
                             value={registryDate} onChange={e => setRegistryDate(e.target.value)}
-                            className="w-full bg-gray-905 border border-gray-800/80 rounded-xl px-3 py-2.5 text-xs text-gray-200 outline-none focus:border-brand-500 font-mono"
+                            className="w-full bg-gray-900 border border-gray-800/80 rounded-xl px-3 py-2.5 text-xs text-gray-200 outline-none focus:border-brand-500 font-mono"
                           />
                         </div>
                       )}
@@ -599,7 +731,7 @@ export default function MutationDashboard() {
                         <input
                           type="text" required placeholder="Court Case Reference Number"
                           value={caseNumber} onChange={e => setCaseNumber(e.target.value)}
-                          className="w-full bg-gray-905 border border-gray-800/80 rounded-xl px-3 py-2.5 text-xs text-gray-200 outline-none focus:border-brand-500 font-mono"
+                          className="w-full bg-gray-900 border border-gray-800/80 rounded-xl px-3 py-2.5 text-xs text-gray-200 outline-none focus:border-brand-500 font-mono"
                         />
                       )}
 
@@ -607,7 +739,7 @@ export default function MutationDashboard() {
                         <input
                           type="text" required placeholder="Government Scheme Name"
                           value={schemeName} onChange={e => setSchemeName(e.target.value)}
-                          className="w-full bg-gray-905 border border-gray-800/80 rounded-xl px-3 py-2.5 text-xs text-gray-200 outline-none focus:border-brand-500"
+                          className="w-full bg-gray-900 border border-gray-800/80 rounded-xl px-3 py-2.5 text-xs text-gray-200 outline-none focus:border-brand-500"
                         />
                       )}
 
@@ -623,7 +755,7 @@ export default function MutationDashboard() {
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                         <div 
                           onClick={() => { setUploadProgress(true); setTimeout(() => setUploadProgress(false), 800); }}
-                          className="border border-dashed border-gray-850 hover:border-brand-500/60 bg-gray-905/60 p-4 rounded-xl flex flex-col items-center justify-center cursor-pointer text-center transition-colors group"
+                          className="border border-dashed border-gray-850 hover:border-brand-500/60 bg-gray-900/60 p-4 rounded-xl flex flex-col items-center justify-center cursor-pointer text-center transition-colors group"
                         >
                           <Upload className="w-5 h-5 text-gray-500 group-hover:text-brand-400 mb-2" />
                           <span className="text-xs font-semibold text-gray-300">Registry Copy</span>
@@ -632,7 +764,7 @@ export default function MutationDashboard() {
 
                         <div 
                           onClick={() => { setUploadProgress(true); setTimeout(() => setUploadProgress(false), 800); }}
-                          className="border border-dashed border-gray-850 hover:border-brand-500/60 bg-gray-905/60 p-4 rounded-xl flex flex-col items-center justify-center cursor-pointer text-center transition-colors group"
+                          className="border border-dashed border-gray-850 hover:border-brand-500/60 bg-gray-900/60 p-4 rounded-xl flex flex-col items-center justify-center cursor-pointer text-center transition-colors group"
                         >
                           <Upload className="w-5 h-5 text-gray-500 group-hover:text-brand-400 mb-2" />
                           <span className="text-xs font-semibold text-gray-300">Aadhaar / ID Proof</span>
@@ -641,7 +773,7 @@ export default function MutationDashboard() {
 
                         <div 
                           onClick={() => { setUploadProgress(true); setTimeout(() => setUploadProgress(false), 800); }}
-                          className="border border-dashed border-gray-850 hover:border-brand-500/60 bg-gray-905/60 p-4 rounded-xl flex flex-col items-center justify-center cursor-pointer text-center transition-colors group"
+                          className="border border-dashed border-gray-850 hover:border-brand-500/60 bg-gray-900/60 p-4 rounded-xl flex flex-col items-center justify-center cursor-pointer text-center transition-colors group"
                         >
                           <Upload className="w-5 h-5 text-gray-500 group-hover:text-brand-400 mb-2" />
                           <span className="text-xs font-semibold text-gray-300">Supporting Docs</span>
@@ -661,7 +793,7 @@ export default function MutationDashboard() {
                       <input
                         type="checkbox" required id="decl"
                         checked={declaration} onChange={e => setDeclaration(e.target.checked)}
-                        className="mt-1 w-4 h-4 rounded border-gray-850 bg-gray-905 text-brand-600 focus:ring-brand-500"
+                        className="mt-1 w-4 h-4 rounded border-gray-850 bg-gray-900 text-brand-600 focus:ring-brand-500"
                       />
                       <label htmlFor="decl" className="text-xs text-gray-400 leading-relaxed cursor-pointer select-none">
                         I hereby declare that all details filled above are accurate to the best of my knowledge. I understand that fraudulent submissions can lead to strict administrative/legal actions under UP Land Revenue rules.

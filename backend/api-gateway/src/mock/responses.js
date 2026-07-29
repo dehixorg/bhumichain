@@ -662,9 +662,37 @@ module.exports = {
     switch (key) {
 
       // ── DLPI reads ──────────────────────────────────────────────────────────
-      case 'dlpi::GetDLPI':
+      case 'dlpi::GetParcelsByAadhaar': {
+        const hash = args[0];
+        const rawAadhaar = args[1];
+        const aadhaarToOwner = {
+          '999900010010': 'Priya Kumar',
+          '999900010011': 'Arun Sharma',
+          '999900010012': 'Suresh Yadav',
+          '999900010013': 'Meena Devi',
+        };
+        const ownerName = aadhaarToOwner[rawAadhaar] || 'Unknown Owner';
+        const matchingParcels = DEMO_MY_PARCELS.filter(p => {
+          const pName = p.ownerName || p.owner?.name;
+          if (pName && ownerName && pName.toLowerCase() === ownerName.toLowerCase()) return true;
+          if (p.ownerAadhaarHash === `sha256:${hash}` || p.ownerAadhaarHash === hash) return true;
+          return false;
+        });
+        return { ownerName, parcels: matchingParcels };
+      }
+
+      case 'dlpi::GetDLPI': {
         if (args[0] === 'DLPI-UP-DAD-00006') return DEMO_TRIBAL_DLPI;
+        const p = DEMO_PENDING_REVIEW.find(x => x.dlpiId === args[0]) || DEMO_MY_PARCELS.find(x => x.dlpiId === args[0]);
+        if (p) {
+          return {
+            ...p,
+            ownerAadhaarHash: p.ownerAadhaarHash || 'sha256:default-owner-hash',
+            ownerName: p.ownerName || p.owner?.name || 'Unknown Owner'
+          };
+        }
         return DEMO_DLPI;
+      }
 
       case 'dlpi::GetDLPIHistory':
         return [
@@ -680,26 +708,108 @@ module.exports = {
         return DEMO_PENDING_REVIEW;
 
       // ── DLPI writes ─────────────────────────────────────────────────────────
+      case 'dlpi::CreateDLPI': {
+        const parsed = JSON.parse(args[0]);
+        const callerRole = args[1] || 'patwari';
+        const initialStatus = callerRole === 'citizen' ? 'CLAIM_SUBMITTED' : 'VERIFIED';
+        
+        const newParcel = {
+          dlpiId:            parsed.dlpiId,
+          khataNo:           parsed.khataNo || '101',
+          khasraNo:          parsed.khasraNo || '101/1',
+          gram:              parsed.village || parsed.gram || 'Gharbara',
+          tehsil:            parsed.tehsil || 'Dadri',
+          district:          parsed.district || 'Gautam Buddha Nagar',
+          ownerName:         parsed.ownerName,
+          ownerAadhaarHash:  parsed.ownerAadhaarHash,
+          landType:          parsed.landType,
+          areaHectares:      parsed.areaHectares,
+          encumbranceStatus: 'CLEAR',
+          claimStatus:       initialStatus,
+          submittedAt:       new Date().toISOString(),
+          claimedAt:         new Date().toISOString(),
+          priority:          'NORMAL',
+          isTribal:          false,
+          isCoparcenary:     false,
+          scanId:            parsed.scanId || null,
+          officerNotes:      '',
+          verificationChecklist: {
+            physicalInspection: false,
+            documentVerified:   false,
+            boundaryConfirmed:  false,
+            encumbranceClear:   true,
+          }
+        };
+
+        if (callerRole === 'citizen') {
+          DEMO_PENDING_REVIEW.push(newParcel);
+        }
+
+        DEMO_MY_PARCELS.push({
+          dlpiId:            parsed.dlpiId,
+          khataNo:           parsed.khataNo || '101',
+          khasraNo:          parsed.khasraNo || '101/1',
+          tehsil:            parsed.tehsil || 'Dadri',
+          district:          parsed.district || 'Gautam Buddha Nagar',
+          state:             'Uttar Pradesh',
+          landType:          parsed.landType,
+          areaHectares:      parsed.areaHectares,
+          encumbranceStatus: 'CLEAR',
+          claimStatus:       initialStatus,
+          owner:             { name: parsed.ownerName },
+          location:          { latitude: 28.5706, longitude: 77.5413 },
+          valuation:         { circleRateINR: 12000 * parsed.areaHectares },
+          txHash:            `0xcreate_dlpi_${Date.now()}`
+        });
+
+        return { dlpiId: parsed.dlpiId, claimStatus: initialStatus, success: true };
+      }
+
       case 'dlpi::BulkSeed':
         return { seeded: args[0] ? JSON.parse(args[0]).length : 0, status: 'SEEDED_UNVERIFIED' };
 
-      case 'dlpi::ClaimParcel':
+      case 'dlpi::ClaimParcel': {
+        const p = DEMO_PENDING_REVIEW.find(x => x.dlpiId === args[0]);
+        if (p) p.claimStatus = 'CLAIM_SUBMITTED';
+        const myP = DEMO_MY_PARCELS.find(x => x.dlpiId === args[0]);
+        if (myP) myP.claimStatus = 'CLAIM_SUBMITTED';
         return { dlpiId: args[0], claimStatus: 'CLAIM_SUBMITTED', eSignTxHash: args[1], claimedAt: new Date().toISOString() };
+      }
 
-      case 'dlpi::SubmitForReview':
+      case 'dlpi::SubmitForReview': {
+        const p = DEMO_PENDING_REVIEW.find(x => x.dlpiId === args[0]);
+        if (p) p.claimStatus = 'UNDER_REVIEW';
+        const myP = DEMO_MY_PARCELS.find(x => x.dlpiId === args[0]);
+        if (myP) myP.claimStatus = 'UNDER_REVIEW';
         return { dlpiId: args[0], claimStatus: 'UNDER_REVIEW', submittedAt: new Date().toISOString() };
+      }
 
-      case 'dlpi::CIReview':
+      case 'dlpi::CIReview': {
+        const p = DEMO_PENDING_REVIEW.find(x => x.dlpiId === args[0]);
+        if (p) p.claimStatus = 'CI_APPROVED';
+        const myP = DEMO_MY_PARCELS.find(x => x.dlpiId === args[0]);
+        if (myP) myP.claimStatus = 'CI_APPROVED';
         return { dlpiId: args[0], claimStatus: 'CI_APPROVED', reviewedAt: new Date().toISOString() };
+      }
 
-      case 'dlpi::TehsildarApprove':
+      case 'dlpi::TehsildarApprove': {
+        const p = DEMO_PENDING_REVIEW.find(x => x.dlpiId === args[0]);
+        if (p) p.claimStatus = 'VERIFIED';
+        const myP = DEMO_MY_PARCELS.find(x => x.dlpiId === args[0]);
+        if (myP) myP.claimStatus = 'VERIFIED';
         return { dlpiId: args[0], claimStatus: 'VERIFIED', approvedAt: new Date().toISOString() };
+      }
 
       case 'dlpi::DisputeParcel':
         return { dlpiId: args[0], claimStatus: 'DISPUTED', disputedAt: new Date().toISOString() };
 
-      case 'dlpi::RejectParcel':
+      case 'dlpi::RejectParcel': {
+        const p = DEMO_PENDING_REVIEW.find(x => x.dlpiId === args[0]);
+        if (p) p.claimStatus = 'REJECTED';
+        const myP = DEMO_MY_PARCELS.find(x => x.dlpiId === args[0]);
+        if (myP) myP.claimStatus = 'REJECTED';
         return { dlpiId: args[0], claimStatus: 'REJECTED', rejectedAt: new Date().toISOString() };
+      }
 
       // ── Other chaincodes ────────────────────────────────────────────────────
       case 'property-transfer::InitiateTransfer':

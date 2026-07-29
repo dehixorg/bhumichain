@@ -1,13 +1,13 @@
 'use client';
 
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import {
   Upload, FileText, CheckCircle, AlertTriangle, Clock,
   Cpu, Database, Shield, Zap, Edit3, ChevronRight, X,
 } from 'lucide-react';
 import clsx from 'clsx';
-import { getToken, apiFetch } from '@/lib/auth';
+import { getToken, apiFetch, getUser, type JWTUser } from '@/lib/auth';
 
 const SCAN_URL = process.env.NEXT_PUBLIC_RECORD_SCAN_URL || 'http://localhost:8010';
 
@@ -108,6 +108,13 @@ export default function RecordScan({ onDlpiCreated }: Props) {
   const [dlpiId, setDlpiId]   = useState('');
   const [dragOver, setDragOver] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const [user, setUser] = useState<JWTUser | null>(null);
+
+  useEffect(() => {
+    setUser(getUser());
+  }, []);
+
+  const isCitizen = user?.role === 'citizen';
 
   // ── Scan ─────────────────────────────────────────────────────────────────
 
@@ -181,8 +188,9 @@ export default function RecordScan({ onDlpiCreated }: Props) {
     if (!result) return;
     setStage('approving');
 
-    // Use the stored JWT (from login) — officer must be logged in
     const token = getToken() || '';
+    const name = user ? `${user.name} (${user.role.toUpperCase()})` : 'Vijay Singh (Patwari DAD-P1)';
+    const hashVal = user ? user.aadhaarHash : 'sha256:' + '0'.repeat(64);
 
     try {
       const res = await fetch(`${SCAN_URL}/scan/approve`, {
@@ -191,8 +199,8 @@ export default function RecordScan({ onDlpiCreated }: Props) {
         body:    JSON.stringify({
           scanId:             result.scanId,
           dlpiId,
-          officerAadhaarHash: 'sha256:' + '0'.repeat(64),
-          officerName:        'Vijay Singh (Patwari DAD-P1)',
+          officerAadhaarHash: hashVal.startsWith('sha256:') ? hashVal : `sha256:${hashVal}`,
+          officerName:        name,
           correctedFields:    Object.keys(edited).length ? edited : undefined,
           token,
         }),
@@ -204,7 +212,11 @@ export default function RecordScan({ onDlpiCreated }: Props) {
       }
 
       setStage('done');
-      toast.success(`DLPI ${dlpiId} recorded on BhumiChain!`);
+      if (isCitizen) {
+        toast.success(`Property ${dlpiId} submitted for Patwari review!`);
+      } else {
+        toast.success(`DLPI ${dlpiId} recorded on BhumiChain!`);
+      }
       onDlpiCreated?.(dlpiId);
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Approval failed. Check gateway connection.');
@@ -386,7 +398,7 @@ export default function RecordScan({ onDlpiCreated }: Props) {
             </button>
             <button onClick={approve} className="btn-primary flex items-center gap-2 ml-auto">
               <Shield className="w-4 h-4" />
-              Approve &amp; Record on Blockchain
+              {isCitizen ? 'Submit Property for Patwari Review' : 'Approve & Record on Blockchain'}
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
@@ -397,8 +409,12 @@ export default function RecordScan({ onDlpiCreated }: Props) {
       {stage === 'approving' && (
         <div className="card text-center py-12">
           <div className="w-10 h-10 border-2 border-brand-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <div className="text-gray-200 font-semibold">Submitting to Hyperledger Fabric...</div>
-          <div className="text-gray-500 text-sm mt-1">Endorsing transaction · Writing to ledger</div>
+          <div className="text-gray-200 font-semibold">
+            {isCitizen ? 'Submitting Property Application...' : 'Submitting to Hyperledger Fabric...'}
+          </div>
+          <div className="text-gray-500 text-sm mt-1">
+            {isCitizen ? 'Registering claim · Notifying Tehsil office' : 'Endorsing transaction · Writing to ledger'}
+          </div>
         </div>
       )}
 
@@ -408,10 +424,14 @@ export default function RecordScan({ onDlpiCreated }: Props) {
           <div className="w-14 h-14 rounded-full bg-brand-900 flex items-center justify-center mx-auto mb-4">
             <CheckCircle className="w-8 h-8 text-brand-400" />
           </div>
-          <div className="text-brand-300 font-bold text-lg mb-1">DLPI Recorded!</div>
+          <div className="text-brand-300 font-bold text-lg mb-1">
+            {isCitizen ? 'Property Submitted for Review!' : 'DLPI Recorded!'}
+          </div>
           <div className="font-mono text-gray-300 text-sm mb-1">{dlpiId}</div>
           <div className="text-gray-500 text-xs mb-6">
-            Land parcel is now permanently on BhumiChain · Tamper-proof · Publicly verifiable
+            {isCitizen
+              ? 'Your land parcel has been submitted and is pending verification by the Patwari.'
+              : 'Land parcel is now permanently on BhumiChain · Tamper-proof · Publicly verifiable'}
           </div>
           <div className="flex items-center justify-center gap-3">
             <button onClick={() => setStage('idle')} className="btn-ghost text-sm">Scan another</button>

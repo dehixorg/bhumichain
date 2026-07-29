@@ -13,6 +13,7 @@ import { getUser, logout, isOfficer, type JWTUser } from '@/lib/auth';
 const NAV_CITIZEN = [
   { href: '/my-parcels', icon: Home,           label: 'My Parcels',        scene: null },
   { href: '/map',        icon: Map,            label: 'GIS Map',           scene: 1    },
+  { href: '/scan',       icon: FileText,       label: 'Add Property (Scan)', scene: 2   },
   { href: '/mutation',   icon: GitMerge,       label: 'Mutations',         scene: null },
   { href: '/transfer',   icon: ArrowLeftRight, label: 'Property Transfer', scene: 4    },
   { href: '/succession', icon: Users,          label: 'Succession',        scene: 3    },
