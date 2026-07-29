@@ -106,7 +106,7 @@ export function getRole(): string | null {
 
 export function isOfficer(): boolean {
   const role = getRole() ?? '';
-  return ['karmachari', 'circle_inspector', 'circle_officer', 'anchalAdhikari', 'tehsildar', 'kotwal'].includes(role);
+  return ['karmachari', 'patwari', 'circle_inspector', 'anchalNirikshak', 'kanungo', 'circle_officer', 'anchalAdhikari', 'tehsildar', 'sro', 'collector', 'super_admin', 'kotwal', 'revenue_officer'].includes(role);
 }
 
 export function isTehsildar(): boolean {

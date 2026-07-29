@@ -24,7 +24,6 @@ const NAV_OFFICER = [
   { href: '/officer-dashboard', icon: Building2,      label: 'Officer Queue'      },
   { href: '/officer-dashboard/audit-logs', icon: Shield, label: 'Audit & Chain Logs' },
   { href: '/scan',              icon: FileText,       label: 'RecordScan AI'      },
-  { href: '/mutation',          icon: GitMerge,       label: 'Mutation Manager'   },
   { href: '/nyaya-ai',          icon: MessageSquare,  label: 'NyayaAI'           },
   { href: '/auction',           icon: Gavel,          label: 'BhumiAuction'       },
   { href: '/analytics',         icon: BarChart3,      label: 'Analytics'          },
@@ -63,9 +62,9 @@ export default function Sidebar({ demoMode }: Props = {}) {
   }
 
   if (user?.role === 'karmachari' || user?.role === 'patwari') {
-    nav = nav.filter((item) => !['Mutation Manager', 'Mutations', 'Analytics', 'Janganana', 'Audit & Chain Logs'].includes(item.label));
+    nav = nav.filter((item) => !['Mutation Manager', 'Mutations', 'GIS Map', 'Analytics', 'Janganana', 'Audit & Chain Logs'].includes(item.label));
   } else if (user?.role === 'circle_inspector' || user?.role === 'anchalNirikshak' || user?.role === 'kanungo') {
-    nav = nav.filter((item) => !['Analytics', 'Janganana', 'Audit & Chain Logs'].includes(item.label));
+    nav = nav.filter((item) => !['Mutation Manager', 'Mutations', 'GIS Map', 'Analytics', 'Janganana', 'Audit & Chain Logs'].includes(item.label));
   }
   const initials = user?.name?.split(' ').filter(Boolean).map(w => w[0]).slice(0, 2).join('').toUpperCase() || 'U';
 
