@@ -114,30 +114,6 @@ router.post(
       }
 
 
-      // Step 1: TribalGuard pre-check
-      let tribalCheck;
-      try {
-        tribalCheck = await submit('tribal-guard', 'CheckTransfer', [
-          dlpiId, buyerName, buyerAadhaarNumber,
-          String(isTribalBuyer), tribalCertHash, tribalCommunity,
-        ]);
-      } catch (e) {
-        const detailsStr = e.details ? JSON.stringify(e.details) : '';
-        if ((e.message && e.message.includes('Value did not match schema')) || 
-            detailsStr.includes('Value did not match schema')) {
-          // Known fabric-contract-api bug: fails on omitted fields for non-tribal parcels
-          console.warn('[TribalGuard] Caught schema bug, assuming non-tribal parcel');
-          tribalCheck = { decision: 'ALLOWED_NOT_TRIBAL' };
-        } else {
-          throw e;
-        }
-      }
-
-
-      if (tribalCheck.decision === 'HARD_REJECTED') {
-        broadcast('TribalTransferHardRejected', tribalCheck, dlpiId);
-        return res.status(403).json({ error: 'TRIBAL_GUARD_BLOCK', ...tribalCheck });
-      }
 
       // Step 2: Valuation Oracle (stamp duty base)
       let oracleValueINR = declaredValueINR;

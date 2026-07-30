@@ -45,7 +45,6 @@ type CoOwner struct {
 	OwnerSince   string  `json:"ownerSince"`
 	IsVerified   bool    `json:"isVerified"`  // has the owner claimed & eSigned?
 	VerifiedAt   string  `json:"verifiedAt,omitempty" metadata:",optional"`
-	IsTribal     bool    `json:"isTribal"`
 	TribeId      string  `json:"tribeId,omitempty" metadata:",optional"`
 }
 
@@ -60,7 +59,6 @@ type DLPI struct {
 	LandType            string        `json:"landType"`
 	LandTypeDescription string        `json:"landTypeDescription"`
 	AreaHectares        float64       `json:"areaHectares"`
-	IsTribal            bool          `json:"isTribal"`
 	ScheduleVArea       bool          `json:"scheduleVArea"`
 
 	// Multi-owner: replaces old single Owner struct
@@ -78,9 +76,6 @@ type DLPI struct {
 	// Succession
 	SuccessionStatus  string       `json:"successionStatus"` // ACTIVE | SUCCESSION_PENDING | SUCCESSION_COMPLETE
 	CoparcenaryMeta   *CoparcenaryMeta `json:"coparcenaryMeta,omitempty" metadata:",optional"` // law metadata only
-
-	// Tribal
-	TribalProtection *TribalProt `json:"tribalProtection,omitempty" metadata:",optional"`
 
 	// Spatial
 	Location  Location  `json:"location"`
@@ -117,7 +112,6 @@ type Heir struct {
 	HasConsented  bool    `json:"hasConsented"`
 	ConsentTxHash string  `json:"consentTxHash,omitempty"`
 	LegalNote     string  `json:"legalNote,omitempty"` // e.g. "HSA 2005 S.6(3) — daughter's equal right"
-	IsTribal      bool    `json:"isTribal"`
 }
 
 // PendingSuccession tracks in-progress succession before all heirs consent
@@ -136,13 +130,7 @@ type InheritancePlan struct {
 	CreatedAt          string `json:"createdAt"`
 }
 
-type TribalProt struct {
-	ScheduleType     string   `json:"scheduleType"`
-	FRAPatteNumber   string   `json:"fraPatteNumber"`
-	GramSabhaVillage string   `json:"gramSabhaVillage"`
-	GramSabhaId      string   `json:"gramSabhaId"`
-	ProtectionActs   []string `json:"protectionActs"`
-}
+
 
 type Location struct {
 	Latitude  float64     `json:"latitude"`
@@ -195,7 +183,6 @@ type CreateDLPIInput struct {
 	LandType            string      `json:"landType"`
 	LandTypeDescription string      `json:"landTypeDescription"`
 	AreaHectares        float64     `json:"areaHectares"`
-	IsTribal            bool        `json:"isTribal"`
 	ScheduleVArea       bool        `json:"scheduleVArea"`
 	// First owner — can be one person or multiple joint owners
 	InitialOwners []CoOwner   `json:"initialOwners"`
@@ -363,7 +350,6 @@ func (c *DLPIContract) CreateDLPI(ctx contractapi.TransactionContextInterface, i
 		LandType:            input.LandType,
 		LandTypeDescription: input.LandTypeDescription,
 		AreaHectares:        input.AreaHectares,
-		IsTribal:            input.IsTribal,
 		ScheduleVArea:       input.ScheduleVArea,
 		Owners:              input.InitialOwners,
 		OwnershipType:       ownershipType,
@@ -883,7 +869,6 @@ func (c *DLPIContract) completeMutation(ctx contractapi.TransactionContextInterf
 			OwnerSince:   now,
 			IsVerified:   true,
 			VerifiedAt:   now,
-			IsTribal:     h.IsTribal,
 		}
 	}
 

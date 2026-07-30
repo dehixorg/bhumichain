@@ -10,92 +10,51 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 
-// ─── Strict English Sanitizer (translates any Devanagari / Hindi strings) ─────
+export const dynamic = 'force-dynamic';
+
+// --- Transparent Sanitizer (Preserves all original language and translated fields) ─────
 function ensureEnglish(obj: any): any {
-  if (typeof obj === 'string') {
-    if (/[\u0900-\u097F]/.test(obj)) {
-      const replacements: Record<string, string> = {
-        '[अस्पष्ट — फटा हुआ]': '[Illegible — Torn Document]',
-        '[अस्पष्ट]': '[Illegible]',
-        'अस्पष्ट': 'Illegible',
-        'फटा हुआ': 'Torn Document',
-        'पूर्ण': 'Full (1/1)',
-        'बैंक नाम अपठनीय': 'Bank Name Damaged/Illegible',
-        'अपठनीय': 'Illegible',
-        'खतौनी': 'Jamabandi',
-        'खाता संख्या': 'Khata No.',
-        'खाता': 'Khata',
-        'खसरा': 'Khesra',
-        'ग्राम': 'Village',
-        'तहसील': 'Anchal',
-        'जिला': 'District',
-        'ज़िला': 'District',
-        'उत्तर प्रदेश': 'Bihar',
-        'पति': 'Husband',
-        'पिता': 'Father',
-        'गेहूं': 'Wheat',
-        'धान': 'Paddy',
-        'रबी': 'Rabi',
-        'खरीफ': 'Kharif',
-        'भूमि': 'Land',
-        'प्रकार': 'Type',
-        'संक्रमणशील': 'Transferable',
-        'असंक्रमणशील': 'Non-transferable',
-        'सीरदार': 'Gair Mazarua',
-        'भूमिका': 'Role',
-        'बंजर': 'Barren Land',
-        'आबादी': 'Abadi',
-        'बाग': 'Orchard',
-        'सिंचित': 'Irrigated',
-        'असिंचित': 'Unirrigated',
-        'नहर': 'Canal',
-        'नलकूप': 'Tubewell',
-        'कुआं': 'Well',
-        'तलाब': 'Pond',
-        'रास्ता': 'Path/Road',
-        'सातबारा': 'Satbara (7/12)',
-        'उतारा': 'Extract',
-      };
-      let res = obj;
-      for (const [k, val] of Object.entries(replacements)) {
-        res = res.split(k).join(val);
-      }
-      return res.replace(/[\u0900-\u097F]/g, '').trim() || '[English Translation / Transliterated Value]';
-    }
-    return obj;
-  }
-  if (Array.isArray(obj)) {
-    return obj.map(item => ensureEnglish(item));
-  }
-  if (obj && typeof obj === 'object') {
-    const cleansed: Record<string, any> = {};
-    for (const [k, v] of Object.entries(obj)) {
-      cleansed[k] = ensureEnglish(v);
-    }
-    return cleansed;
-  }
   return obj;
 }
 
-const SCAN_SERVICE = process.env.RECORD_SCAN_URL || 'http://localhost:8014';
+const DOC_ANALYZER_SERVICE = process.env.DOC_ANALYZER_URL || 'http://localhost:8014';
+const RECORD_SCAN_SERVICE  = process.env.RECORD_SCAN_URL  || 'http://localhost:8010';
 
 export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData();
 
-    const res = await fetch(`${SCAN_SERVICE}/api/analyze`, {
-      method: 'POST',
-      body: formData,
-    });
+    let rawData: any = null;
+    let success = false;
 
-    const rawData = await res.json();
-
-    if (!res.ok) {
-      return NextResponse.json(ensureEnglish(rawData), { status: res.status });
+    // 1. Primary: Try AI Document Analyzer (Port 8014 - Azure OpenAI GPT-5.4 Legal OCR & Structuring)
+    try {
+      const resDoc = await fetch(`${DOC_ANALYZER_SERVICE}/api/analyze`, {
+        method: 'POST',
+        body: formData,
+      });
+      if (resDoc.ok) {
+        rawData = await resDoc.json();
+        success = true;
+      }
+    } catch (docErr) {
+      console.warn('[/api/scan/upload] AI Document Analyzer (Port 8014) notice:', docErr);
     }
 
-    // Wrap the raw ai-document-analyzer data in the legacy ScanResult envelope
-    // so the RecordScan frontend doesn't crash on missing arrays
+    // 2. Fallback: RecordScan AI Service (Port 8010 - Khatauni Azure Document Intelligence)
+    if (!success) {
+      const resScan = await fetch(`${RECORD_SCAN_SERVICE}/scan/upload`, {
+        method: 'POST',
+        body: formData,
+      });
+      rawData = await resScan.json();
+      if (!resScan.ok) {
+        return NextResponse.json(ensureEnglish(rawData), { status: resScan.status });
+      }
+    }
+
+    const extractionData = rawData?.data || rawData?.extraction || rawData;
+
     const formattedData = ensureEnglish({
       scanId: `scan-${Date.now()}`,
       fileName: 'document.pdf',
@@ -103,9 +62,9 @@ export async function POST(req: NextRequest) {
       ipfsCID: 'QmPending',
       processingSteps: [
         { step: 'UPLOAD', label: 'Document uploaded', status: 'done' },
-        { step: 'AZURE_OCR', label: 'Azure Document Intelligence AI', status: 'done' }
+        { step: 'AZURE_OCR', label: 'Azure GPT-5.4 Legal Document Intelligence AI', status: 'done' }
       ],
-      extraction: rawData.data || rawData, 
+      extraction: extractionData,
       suggestedDlpiId: `DLPI-${Math.floor(Math.random() * 10000)}`,
       processingTimeMs: 1200,
       storedInDynamoDB: false
@@ -113,10 +72,10 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(formattedData);
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'RecordScan service unreachable';
+    const message = err instanceof Error ? err.message : 'Document analysis service unreachable';
     console.error('[/api/scan/upload] Error:', message);
     return NextResponse.json(
-      { detail: `RecordScan service unavailable: ${message}` },
+      { detail: `Document analysis service unavailable: ${message}` },
       { status: 503 }
     );
   }

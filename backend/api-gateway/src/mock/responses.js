@@ -25,33 +25,6 @@ const DEMO_DLPI = {
   updatedAt:         '2026-05-20T11:00:00Z',
 };
 
-const DEMO_TRIBAL_DLPI = {
-  dlpiId:            'DLPI-UP-DAD-00006',
-  khataNo:           '501',
-  khasraNo:          '120/501',
-  tehsilCode:        'DAD',
-  districtCode:      'UP-GBN',
-  ownerName:         'Ramkali Gond',
-  ownerAadhaarNumber:  'sha256:b4g9f3d2c8e1a7f0e6d5c4b3a2f1e0d9c8b7a6f5e4d3c2b1a0f9e8d7c6b5a',
-  landType:          'Tribal_FRA',
-  landTypeDesc:      'Tribal / forest rights patta',
-  areaHectares:      2.1,
-  encumbranceStatus: 'CLEAR',
-  claimStatus:       'VERIFIED',
-  transferLocked:    false,
-  successionStatus:  null,
-  jangananaFlags:    [],
-  tribalProtection: {
-    scheduleType:      'Schedule V',
-    fraPatteNumber:    'FRA/DAD/2011/0088',
-    gramSabhaVillage:  'Roja Yakubpur',
-    gramSabhaId:       'GSBH-DAD-0007',
-    protectionAct:     ['Constitution Art.244', 'FRA 2006 S.4', '5th Schedule'],
-  },
-  blockchainTxHash: '0xfabric-tx-t1r2i3b4a5l6g7u8a9r0',
-  createdAt:        '2023-06-10T10:00:00Z',
-  updatedAt:        '2025-12-01T08:00:00Z',
-};
 
 // My Parcels mock — returned for any citizen demo login
 const DEMO_MY_PARCELS = [
@@ -173,7 +146,6 @@ const DEMO_PENDING_REVIEW = [
     patwariName:      'Ramesh Yadav',
     scanId:           null,
     priority:         'URGENT',
-    isTribal:         false,
     isCoparcenary:    false,
     officerNotes:     '',
     verificationChecklist: {
@@ -201,7 +173,6 @@ const DEMO_PENDING_REVIEW = [
     patwariName:      'Ramesh Yadav',
     scanId:           null,
     priority:         'NORMAL',
-    isTribal:         false,
     isCoparcenary:    false,
     officerNotes:     '',
     verificationChecklist: {
@@ -229,7 +200,6 @@ const DEMO_PENDING_REVIEW = [
     patwariName:      'Ramesh Yadav',
     scanId:           'SCN-A1B2C3D4',
     priority:         'NORMAL',
-    isTribal:         false,
     isCoparcenary:    false,
     officerNotes:     'Partial boundary dispute with neighbouring plot reported by villagers.',
     verificationChecklist: {
@@ -257,7 +227,6 @@ const DEMO_PENDING_REVIEW = [
     patwariName:      'Ramesh Yadav',
     scanId:           'SCN-E5F6G7H8',
     priority:         'NORMAL',
-    isTribal:         false,
     isCoparcenary:    false,
     officerNotes:     'All documents verified. Plot within residential zone per Dadri master plan.',
     verificationChecklist: {
@@ -275,7 +244,6 @@ const DEMO_PENDING_REVIEW = [
     tehsil:           'Dadri',
     district:         'Gautam Buddha Nagar',
     ownerName:        'Ramkali Gond',
-    landType:         'Tribal_FRA',
     areaHectares:     0.6,
     encumbranceStatus:'CLEAR',
     claimStatus:      'CLAIM_SUBMITTED',
@@ -285,7 +253,6 @@ const DEMO_PENDING_REVIEW = [
     patwariName:      'Ramesh Yadav',
     scanId:           null,
     priority:         'URGENT',
-    isTribal:         true,
     isCoparcenary:    false,
     officerNotes:     'FRA claim — TribalGuard block active. Transfer restricted per Schedule V.',
     verificationChecklist: {
@@ -386,28 +353,6 @@ const DEMO_TRANSFER = {
   initiatedAt:         '2026-06-10T09:00:00Z',
 };
 
-const DEMO_TRIBAL_REJECTION = {
-  dlpiId:          'DLPI-UP-DAD-00006',
-  attemptId:       'TGA-DLPI-UP-DAD-00006-c3d4e5f6',
-  isTribalParcel:  true,
-  scheduleType:    'V',
-  community:       'Gond',
-  decision:        'HARD_REJECTED',
-  rejectionCode:   'SCHEDULE_V_NON_TRIBAL',
-  rejectionReason:
-    'HARD REJECT — Parcel DLPI-UP-DAD-00006 is located in a Fifth Schedule (Scheduled Area) in ' +
-    'Dadri tehsil, Gautam Buddha Nagar district, Uttar Pradesh. Buyer is not a registered Scheduled Tribe member. ' +
-    'Transfer of tribal land to non-tribal persons in Scheduled Areas is VOID AB INITIO per Supreme ' +
-    'Court ruling in Samatha v. State of AP (1997) 8 SCC 191. No revenue officer, SRO, or digital ' +
-    'signature can authorise this transaction.',
-  legalCitations: [
-    "Constitution of India, Fifth Schedule, Para 5(2) — Transfer of immovable property by or among members of a Scheduled Tribe in a Scheduled Area requires Governor's sanction",
-    "Samatha v. State of Andhra Pradesh (1997) 8 SCC 191 — Supreme Court held that transfer of tribal land to non-tribals in Fifth Schedule areas is unconstitutional and void ab initio",
-    "UP Zamindari Abolition and Land Reforms Act 1950, Section 157-B — Tribal land in Scheduled Areas cannot be transferred to non-tribal without Collector's permission",
-    "Forest Rights Act 2006, Section 4(5) — No eviction or displacement of forest dwelling Scheduled Tribes without recognition of forest rights",
-  ],
-  responseTimeMs: 147,
-};
 
 const DEMO_MUTATION = {
   mutationId:              'MUT-DLPI-UP-DAD-00100-d4e5f6a7',
@@ -627,10 +572,6 @@ const DEMO_WS_EVENTS = {
       autoRejected: true,
     },
   },
-  scene6_tribal_rejected: {
-    event:   'TribalTransferHardRejected',
-    payload: DEMO_TRIBAL_REJECTION,
-  },
   scene7_bhumi_gpt: {
     event: 'BhumiGPTResponse',
     payload: {
@@ -647,12 +588,10 @@ let MOCK_SUCCESSION_CASES = [];
 
 module.exports = {
   DEMO_DLPI,
-  DEMO_TRIBAL_DLPI,
   DEMO_MY_PARCELS,
   DEMO_PENDING_REVIEW,
   DEMO_SUCCESSION_CASE,
   DEMO_TRANSFER,
-  DEMO_TRIBAL_REJECTION,
   DEMO_MUTATION,
   DEMO_MUTATION_LIST,
   DEMO_EC,
@@ -1358,9 +1297,6 @@ module.exports = {
           { bidderHash: 'sha256:bid-anon-3', sealedAt: '2026-06-30T10:30:00Z', status: 'SEALED' },
           { bidderHash: 'sha256:bid-anon-4', sealedAt: '2026-06-30T11:45:00Z', status: 'SEALED' },
         ];
-
-      case 'tribal-guard::CheckTransfer':
-        return DEMO_TRIBAL_REJECTION;
       case 'encumbrance::GenerateEC':
         return DEMO_EC;
 
