@@ -240,8 +240,10 @@ export async function acceptNomination(nominationId: string) {
 
 export async function executeSuccessionClaim(payload: {
   dlpiId: string;
-  nominationId: string;
-  deathCertCID: string;
+  nominationId?: string;
+  deathCertCID?: string;
+  dateOfDeath?: string;
+  crsRegistrationNo?: string;
 }) {
   const res = await apiFetch(`/api/succession/execute-claim`, {
     method: 'POST',
