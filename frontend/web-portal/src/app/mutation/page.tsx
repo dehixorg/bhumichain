@@ -374,13 +374,13 @@ export default function MutationDashboard() {
   const getFilteredMutations = () => {
     if (activeTab === 'verify') {
       // Shows pending items matching user role
-      if (user?.role === 'patwari') {
+      if (['patwari', 'karmachari'].includes(user?.role || '')) {
         return mutations.filter(m => m.status === 'Pending at Patwari');
       }
-      if (user?.role === 'circle_inspector') {
+      if (['circle_inspector', 'anchalNirikshak', 'kanungo'].includes(user?.role || '')) {
         return mutations.filter(m => m.status === 'Pending at Kanungo');
       }
-      if (user?.role === 'circle_officer') {
+      if (['circle_officer', 'anchalAdhikari', 'tehsildar'].includes(user?.role || '')) {
         return mutations.filter(m => m.status === 'Pending at Circle Officer' || m.status === 'Objection Filed');
       }
       return [];
@@ -396,7 +396,7 @@ export default function MutationDashboard() {
 
   const isCitizen = user?.role === 'citizen';
   const displayRoleLabel = (r: string) => {
-    return { circle_officer: 'Circle Officer', circle_inspector: 'Kanungo / CI', patwari: 'Patwari', citizen: 'Citizen' }[r] ?? r;
+    return { circle_officer: 'Circle Officer', anchalAdhikari: 'Circle Officer', circle_inspector: 'Kanungo / CI', anchalNirikshak: 'Kanungo / CI', kanungo: 'Kanungo / CI', patwari: 'Patwari', karmachari: 'Patwari', citizen: 'Citizen' }[r] ?? r;
   };
 
   return (
@@ -486,7 +486,7 @@ export default function MutationDashboard() {
                 >
                   All Mutation Records
                 </button>
-                {user?.role === 'circle_officer' && (
+                {['circle_officer', 'anchalAdhikari', 'tehsildar'].includes(user?.role || '') && (
                   <>
                     <button
                       onClick={() => { setActiveTab('objections'); setSelectedMutation(null); }}
@@ -1032,7 +1032,7 @@ export default function MutationDashboard() {
                       {!isCitizen && (
                         <>
                           {/* Patwari actions */}
-                          {user?.role === 'patwari' && selectedMutation.status === 'Pending at Patwari' && (
+                          {['patwari', 'karmachari'].includes(user?.role || '') && selectedMutation.status === 'Pending at Patwari' && (
                             <div className="grid grid-cols-2 gap-3">
                               <button
                                 onClick={() => handleStatusTransition('Pending at Kanungo')}
@@ -1052,7 +1052,7 @@ export default function MutationDashboard() {
                           )}
 
                           {/* Kanungo actions */}
-                          {user?.role === 'circle_inspector' && selectedMutation.status === 'Pending at Kanungo' && (
+                          {['circle_inspector', 'anchalNirikshak', 'kanungo'].includes(user?.role || '') && selectedMutation.status === 'Pending at Kanungo' && (
                             <div className="grid grid-cols-2 gap-3">
                               <button
                                 onClick={() => handleStatusTransition('Pending at Circle Officer')}
@@ -1072,7 +1072,7 @@ export default function MutationDashboard() {
                           )}
 
                           {/* Circle Officer actions */}
-                          {user?.role === 'circle_officer' && (selectedMutation.status === 'Pending at Circle Officer' || selectedMutation.status === 'Objection Filed') && (
+                          {['circle_officer', 'anchalAdhikari', 'tehsildar'].includes(user?.role || '') && (selectedMutation.status === 'Pending at Circle Officer' || selectedMutation.status === 'Objection Filed') && (
                             <div className="grid grid-cols-2 gap-3">
                               <button
                                 onClick={() => handleStatusTransition('Approved')}
