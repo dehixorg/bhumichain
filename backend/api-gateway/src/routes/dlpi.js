@@ -439,9 +439,9 @@ router.get('/my-parcels', authenticate, requireRole(ROLES.CITIZEN), async (req, 
 
       // Demo citizen fallbacks for initial seeded data (ONLY if not transferred)
       if ((p.claimStatus !== 'VERIFIED' || !oHash) && (!p.atomicLock || p.atomicLock.status !== 'MUTATED_AND_TRANSFERRED')) {
-        if (userRawClean === '999900010010' && oName.includes('priya')) return true;
-        if (userRawClean === '999900010015' && oName.includes('sunita')) return true;
-        if (userRawClean === '999900010012' && oName.includes('suresh')) return true;
+        if ((userHashClean === '999900010010' || userRawClean === '999900010010') && oName.includes('priya')) return true;
+        if ((userHashClean === '999900010015' || userRawClean === '999900010015') && oName.includes('sunita')) return true;
+        if ((userHashClean === '999900010012' || userRawClean === '999900010012') && oName.includes('suresh')) return true;
       }
 
       return false;
