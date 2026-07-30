@@ -23,11 +23,10 @@ const NAV_CITIZEN = [
 
 const NAV_OFFICER = [
   { href: '/officer-dashboard', icon: Building2,      label: 'Officer Queue'      },
+  { href: '/officer-dashboard/audit-logs', icon: Shield, label: 'Audit & Chain Logs' },
   { href: '/map',               icon: Map,            label: 'GIS Map'            },
   { href: '/bhumibot',          icon: Scale,          label: 'BhumiBot AI'        },
   { href: '/scan',              icon: FileText,       label: 'RecordScan AI'      },
-  { href: '/mutation',          icon: GitMerge,       label: 'Mutation Manager'   },
-  { href: '/succession',        icon: Users,          label: 'Succession'         },
   { href: '/nyaya-ai',          icon: MessageSquare,  label: 'NyayaAI'           },
   { href: '/auction',           icon: Gavel,          label: 'BhumiAuction'       },
   { href: '/analytics',         icon: BarChart3,      label: 'Analytics'          },
@@ -35,9 +34,14 @@ const NAV_OFFICER = [
 ];
 
 const ROLE_LABEL: Record<string, string> = {
-  circle_officer:        'Circle Officer',
-  circle_inspector: 'Kanungo / CI',
-  karmachari:          'Patwari (Karmachari)',
+  circle_officer:   'Circle Officer (Tehsildar)',
+  anchalAdhikari:   'Circle Officer (Tehsildar)',
+  tehsildar:        'Circle Officer (Tehsildar)',
+  circle_inspector: 'Kanungo (Anchal Nirikshak)',
+  anchalNirikshak:  'Kanungo (Anchal Nirikshak)',
+  kanungo:          'Kanungo (Anchal Nirikshak)',
+  karmachari:       'Patwari (Karmachari)',
+  patwari:          'Patwari (Karmachari)',
   citizen:          'Citizen',
   kotwal:           'Kotwal',
 };
@@ -53,7 +57,18 @@ export default function Sidebar({ demoMode }: Props = {}) {
 
   useEffect(() => { setUser(getUser()); }, []);
 
-  const nav = user && isOfficer() ? NAV_OFFICER : NAV_CITIZEN;
+  let nav = user && isOfficer() ? NAV_OFFICER : NAV_CITIZEN;
+  const isTehsildarUser = user?.role && ['circle_officer', 'anchalAdhikari', 'tehsildar'].includes(user.role);
+
+  if (!isTehsildarUser) {
+    nav = nav.filter((item) => item.label !== 'Audit & Chain Logs');
+  }
+
+  if (user?.role === 'karmachari' || user?.role === 'patwari') {
+    nav = nav.filter((item) => !['Mutation Manager', 'Mutations', 'GIS Map', 'Analytics', 'Janganana', 'Audit & Chain Logs'].includes(item.label));
+  } else if (user?.role === 'circle_inspector' || user?.role === 'anchalNirikshak' || user?.role === 'kanungo') {
+    nav = nav.filter((item) => !['Mutation Manager', 'Mutations', 'GIS Map', 'Analytics', 'Janganana', 'Audit & Chain Logs'].includes(item.label));
+  }
   const initials = user?.name?.split(' ').filter(Boolean).map(w => w[0]).slice(0, 2).join('').toUpperCase() || 'U';
 
   return (

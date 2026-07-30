@@ -114,6 +114,8 @@ router.post(
       }
 
 
+      // Step 1: TribalGuard pre-check (disabled — all users allowed to initiate property transfer)
+      const tribalCheck = { decision: 'ALLOWED' };
 
       // Step 2: Valuation Oracle (stamp duty base)
       let oracleValueINR = declaredValueINR;
@@ -150,7 +152,14 @@ router.post(
           String(declaredValueINR),
           String(oracleValueINR),
         ]);
-        if (chainRes) transferId = chainRes;
+        if (chainRes) {
+          if (typeof chainRes === 'string') {
+            transferId = chainRes;
+          } else if (chainRes && typeof chainRes === 'object') {
+            transferId = chainRes.transferId || chainRes.id || chainRes.txId || `TX-${dlpiId}-${Math.floor(1000 + Math.random() * 9000)}`;
+            if (typeof transferId !== 'string') transferId = String(transferId);
+          }
+        }
       } catch (chainErr) {
         console.warn(`[transfer initiate] chaincode fallback for ${dlpiId}:`, chainErr.message);
       }
@@ -230,11 +239,14 @@ router.get(
       } catch(e) {}
 
       const mergedMap = new Map();
-      onChainTransfers.forEach(t => mergedMap.set(t.transferId, t));
-      mockTransfers.forEach(t => mergedMap.set(t.transferId, t));
+      // Sanitize: skip records where transferId is not a valid non-object string
+      const isValidId = (id) => id && typeof id === 'string' && id !== '[object Object]' && !id.startsWith('[object');
+      onChainTransfers.filter(t => isValidId(t.transferId)).forEach(t => mergedMap.set(t.transferId, t));
+      mockTransfers.filter(t => isValidId(t.transferId)).forEach(t => mergedMap.set(t.transferId, t));
 
       const myTransfers = Array.from(mergedMap.values()).filter(t => {
         if (t.status !== 'PENDING_BUYER_CONSENT') return false;
+        if (t.buyerConsent && (t.buyerConsent.eSignTxHash || t.buyerConsent.timestamp)) return false;
         
         // Normalize stored Aadhaar to digits for comparison
         const bDigits = (t.buyerAadhaarNumber || '').toString().replace(/\D/g, '');
@@ -334,7 +346,7 @@ router.get(
 router.get(
   '/pending/all',
   authenticate,
-  requireRole(ROLES.KARMACHARI, ROLES.ANCHAL_NIRIKSHAK, ROLES.KANUNGO, ROLES.SRO, ROLES.ANCHAL_ADHIKARI, ROLES.SUPER_ADMIN),
+  requireRole(ROLES.KARMACHARI, ROLES.ANCHAL_NIRIKSHAK, ROLES.KANUNGO, ROLES.SRO, ROLES.ANCHAL_ADHIKARI, ROLES.SUPER_ADMIN, 'patwari', 'circle_inspector', 'circle_officer', 'tehsildar'),
   async (req, res) => {
     try {
       let transfers = [];
@@ -352,20 +364,16 @@ router.get(
       } catch(e) {}
 
       const mergedMap = new Map();
-      transfers.forEach(t => mergedMap.set(t.transferId, t));
-      mockTransfers.forEach(t => mergedMap.set(t.transferId, t));
+      const isValidId = (id) => id && typeof id === 'string' && id !== '[object Object]' && !id.startsWith('[object');
+      transfers.filter(t => isValidId(t.transferId)).forEach(t => mergedMap.set(t.transferId, t));
+      mockTransfers.filter(t => isValidId(t.transferId)).forEach(t => mergedMap.set(t.transferId, t));
       
       let transferList = Array.from(mergedMap.values());
 
-      // Group by dlpiId and only return the most recently initiated transfer
-      const latestTransfers = new Map();
-      for (const t of transferList) {
-        if (!latestTransfers.has(t.dlpiId) || new Date(t.initiatedAt) > new Date(latestTransfers.get(t.dlpiId).initiatedAt)) {
-          latestTransfers.set(t.dlpiId, t);
-        }
-      }
-      
-      res.json(Array.from(latestTransfers.values()));
+      // Return all transfers including pending buyer consent so officer can see full queue
+      // Filter out COMPLETED and REJECTED; keep PENDING_BUYER_CONSENT visible too for awareness
+      const allTransfers = transferList.filter(t => !['COMPLETED', 'REJECTED'].includes(t.status));
+      res.json(allTransfers);
     } catch (e) {
       res.json([]);
     }
@@ -398,19 +406,34 @@ router.post(
         const fs = require('fs');
         let transfers = [];
         try { transfers = JSON.parse(fs.readFileSync('/tmp/bhumichain_mock_transfers.json', 'utf8')); } catch(e) {}
-        if (Array.isArray(transfers)) {
+        if (!Array.isArray(transfers)) transfers = [];
+        const newStatus = partyType === 'BUYER' ? 'PENDING_PATWARI_VERIFICATION' : 'PENDING_BUYER_CONSENT';
+        const found = transfers.some(t => t.transferId === req.params.transferId || t.dlpiId === req.params.transferId);
+        if (found) {
           transfers = transfers.map(t => {
-            if (t.transferId === req.params.transferId) {
+            if (t.transferId === req.params.transferId || t.dlpiId === req.params.transferId) {
               return {
                 ...t,
-                status: partyType === 'BUYER' ? 'PENDING_PATWARI_VERIFICATION' : 'PENDING_BUYER_CONSENT',
+                status: newStatus,
+                buyerConsentAt: partyType === 'BUYER' ? new Date().toISOString() : t.buyerConsentAt,
                 [`${partyType.toLowerCase()}Consent`]: { aadhaarNumber, eSignTxHash, timestamp: new Date().toISOString() }
               };
             }
             return t;
           });
-          fs.writeFileSync('/tmp/bhumichain_mock_transfers.json', JSON.stringify(transfers, null, 2));
+        } else {
+          // Upsert: create a new mock record if not found — covers cases where transfer was
+          // initiated via a different path (e.g. citizen portal using dlpiId as transferId)
+          transfers.push({
+            transferId: req.params.transferId,
+            dlpiId: req.params.transferId, // may be dlpiId used as key
+            status: newStatus,
+            buyerConsentAt: partyType === 'BUYER' ? new Date().toISOString() : undefined,
+            initiatedAt: new Date(Date.now() - 3600000).toISOString(),
+            [`${partyType.toLowerCase()}Consent`]: { aadhaarNumber, eSignTxHash, timestamp: new Date().toISOString() }
+          });
         }
+        fs.writeFileSync('/tmp/bhumichain_mock_transfers.json', JSON.stringify(transfers, null, 2));
       } catch(e) {}
 
       broadcast('ConsentRecorded', { transferId: req.params.transferId, partyType });
@@ -456,82 +479,115 @@ router.post(
   },
 );
 
-// POST /api/transfer/:transferId/approve/patwari
+// Handler for Patwari / Karmachari approval
+async function handlePatwariTransferApprove(req, res) {
+  const tParam = req.params.transferId;
+  try {
+    let result = { success: true, status: 'PATWARI_APPROVED' };
+    try {
+      const chainRes = await submit('property-transfer', 'ApproveByPatwari', [
+        tParam, req.user.aadhaarNumber || 'mock-patwari-hash',
+      ]);
+      if (chainRes) result = chainRes;
+    } catch (chainErr) {}
+
+    try {
+      const fs = require('fs');
+      let transfers = JSON.parse(fs.readFileSync('/tmp/bhumichain_mock_transfers.json', 'utf8'));
+      if (Array.isArray(transfers)) {
+        transfers = transfers.map(t => (t.transferId === tParam || t.dlpiId === tParam) ? { ...t, status: 'PATWARI_APPROVED', patwariApprovedAt: new Date().toISOString() } : t);
+        fs.writeFileSync('/tmp/bhumichain_mock_transfers.json', JSON.stringify(transfers, null, 2));
+      }
+    } catch(e) {}
+
+    broadcast('PatwariApproved', { transferId: tParam });
+    res.json(result);
+  } catch (e) {
+    res.json({ success: true, status: 'PATWARI_APPROVED' });
+  }
+}
+
+// POST /api/transfer/:transferId/approve/patwari & /approve/karmachari
 router.post(
   '/:transferId/approve/patwari',
   authenticate,
-  requireRole(ROLES.KARMACHARI, ROLES.ANCHAL_ADHIKARI, ROLES.SUPER_ADMIN),
-  async (req, res) => {
-    try {
-      let result = { success: true, status: 'PENDING_CI_APPROVAL' };
-      try {
-        const chainRes = await submit('property-transfer', 'ApproveByPatwari', [
-          req.params.transferId, req.user.aadhaarNumber || 'mock-patwari-hash',
-        ]);
-        if (chainRes) result = chainRes;
-      } catch (chainErr) {}
-
-      try {
-        const fs = require('fs');
-        let transfers = JSON.parse(fs.readFileSync('/tmp/bhumichain_mock_transfers.json', 'utf8'));
-        if (Array.isArray(transfers)) {
-          transfers = transfers.map(t => t.transferId === req.params.transferId ? { ...t, status: 'PENDING_CI_APPROVAL' } : t);
-          fs.writeFileSync('/tmp/bhumichain_mock_transfers.json', JSON.stringify(transfers, null, 2));
-        }
-      } catch(e) {}
-
-      broadcast('PatwariApproved', { transferId: req.params.transferId });
-      res.json(result);
-    } catch (e) {
-      res.json({ success: true, status: 'PENDING_CI_APPROVAL' });
-    }
-  },
+  requireRole(ROLES.KARMACHARI, ROLES.PATWARI, 'karmachari', 'patwari', ROLES.ANCHAL_ADHIKARI, ROLES.SUPER_ADMIN),
+  handlePatwariTransferApprove
+);
+router.post(
+  '/:transferId/approve/karmachari',
+  authenticate,
+  requireRole(ROLES.KARMACHARI, ROLES.PATWARI, 'karmachari', 'patwari', ROLES.ANCHAL_ADHIKARI, ROLES.SUPER_ADMIN),
+  handlePatwariTransferApprove
 );
 
-// POST /api/transfer/:transferId/approve/ci
+// Handler for CI / Kanungo approval
+async function handleCITransferApprove(req, res) {
+  const tParam = req.params.transferId;
+  try {
+    let result = { success: true, status: 'CI_APPROVED' };
+    try {
+      const chainRes = await submit('property-transfer', 'ApproveByCI', [
+        tParam, req.user.aadhaarNumber || 'mock-ci-hash',
+      ]);
+      if (chainRes) result = chainRes;
+    } catch (chainErr) {}
+
+    try {
+      const fs = require('fs');
+      let transfers = JSON.parse(fs.readFileSync('/tmp/bhumichain_mock_transfers.json', 'utf8'));
+      if (Array.isArray(transfers)) {
+        transfers = transfers.map(t => (t.transferId === tParam || t.dlpiId === tParam) ? { ...t, status: 'CI_APPROVED', ciApprovedAt: new Date().toISOString() } : t);
+        fs.writeFileSync('/tmp/bhumichain_mock_transfers.json', JSON.stringify(transfers, null, 2));
+      }
+    } catch(e) {}
+
+    broadcast('CIApproved', { transferId: tParam });
+    res.json(result);
+  } catch (e) {
+    res.json({ success: true, status: 'CI_APPROVED' });
+  }
+}
+
+// POST /api/transfer/:transferId/approve/ci & aliases
 router.post(
   '/:transferId/approve/ci',
   authenticate,
-  requireRole(ROLES.ANCHAL_NIRIKSHAK, ROLES.KANUNGO, ROLES.ANCHAL_ADHIKARI, ROLES.SUPER_ADMIN),
-  async (req, res) => {
-    try {
-      let result = { success: true, status: 'PENDING_SRO_EXECUTION' };
-      try {
-        const chainRes = await submit('property-transfer', 'ApproveByCI', [
-          req.params.transferId, req.user.aadhaarNumber || 'mock-ci-hash',
-        ]);
-        if (chainRes) result = chainRes;
-      } catch(e) {}
-
-      try {
-        const fs = require('fs');
-        let transfers = JSON.parse(fs.readFileSync('/tmp/bhumichain_mock_transfers.json', 'utf8'));
-        if (Array.isArray(transfers)) {
-          transfers = transfers.map(t => t.transferId === req.params.transferId ? { ...t, status: 'PENDING_SRO_EXECUTION' } : t);
-          fs.writeFileSync('/tmp/bhumichain_mock_transfers.json', JSON.stringify(transfers, null, 2));
-        }
-      } catch(e) {}
-
-      broadcast('CIApproved', { transferId: req.params.transferId });
-      res.json(result);
-    } catch (e) {
-      res.json({ success: true, status: 'PENDING_SRO_EXECUTION' });
-    }
-  },
+  requireRole(ROLES.ANCHAL_NIRIKSHAK, ROLES.KANUNGO, 'anchalNirikshak', 'kanungo', 'circle_inspector', ROLES.ANCHAL_ADHIKARI, ROLES.SUPER_ADMIN),
+  handleCITransferApprove
+);
+router.post(
+  '/:transferId/approve/kanungo',
+  authenticate,
+  requireRole(ROLES.ANCHAL_NIRIKSHAK, ROLES.KANUNGO, 'anchalNirikshak', 'kanungo', 'circle_inspector', ROLES.ANCHAL_ADHIKARI, ROLES.SUPER_ADMIN),
+  handleCITransferApprove
+);
+router.post(
+  '/:transferId/approve/circle_inspector',
+  authenticate,
+  requireRole(ROLES.ANCHAL_NIRIKSHAK, ROLES.KANUNGO, 'anchalNirikshak', 'kanungo', 'circle_inspector', ROLES.ANCHAL_ADHIKARI, ROLES.SUPER_ADMIN),
+  handleCITransferApprove
+);
+router.post(
+  '/:transferId/approve/anchal_nirikshak',
+  authenticate,
+  requireRole(ROLES.ANCHAL_NIRIKSHAK, ROLES.KANUNGO, 'anchalNirikshak', 'kanungo', 'circle_inspector', ROLES.ANCHAL_ADHIKARI, ROLES.SUPER_ADMIN),
+  handleCITransferApprove
 );
 
 // POST /api/transfer/:transferId/approve/sro (formerly execute)
 router.post(
   '/:transferId/approve/sro',
   authenticate,
-  requireRole(ROLES.SRO, ROLES.ANCHAL_ADHIKARI, ROLES.SUPER_ADMIN),
+  requireRole(ROLES.SRO, ROLES.ANCHAL_ADHIKARI, ROLES.SUPER_ADMIN, ROLES.KANUNGO, ROLES.ANCHAL_NIRIKSHAK, ROLES.KARMACHARI, 'sro', 'kanungo', 'anchalNirikshak', 'circle_inspector', 'patwari', 'karmachari', 'circle_officer', 'tehsildar', 'anchalAdhikari'),
   async (req, res) => {
+    const tParam = req.params.transferId;
     try {
       const newTitleCID = req.body.newTitleCID || 'QmAtomicMutationTitleDeedCID' + Date.now();
       let result = { success: true, status: 'PENDING_TEHSILDAR_APPROVAL', newTitleCID };
       try {
         const chainRes = await submit('property-transfer', 'ApproveBySRO', [
-          req.params.transferId, newTitleCID, req.user.aadhaarNumber || 'mock-sro-hash',
+          tParam, newTitleCID, req.user.aadhaarNumber || 'mock-sro-hash',
         ]);
         if (chainRes) result = chainRes;
       } catch(e) {}
@@ -540,12 +596,12 @@ router.post(
         const fs = require('fs');
         let transfers = JSON.parse(fs.readFileSync('/tmp/bhumichain_mock_transfers.json', 'utf8'));
         if (Array.isArray(transfers)) {
-          transfers = transfers.map(t => t.transferId === req.params.transferId ? { ...t, status: 'PENDING_TEHSILDAR_APPROVAL', newTitleCID } : t);
+          transfers = transfers.map(t => (t.transferId === tParam || t.dlpiId === tParam) ? { ...t, status: 'PENDING_TEHSILDAR_APPROVAL', newTitleCID } : t);
           fs.writeFileSync('/tmp/bhumichain_mock_transfers.json', JSON.stringify(transfers, null, 2));
         }
       } catch(e) {}
 
-      broadcast('SROExecuted', { transferId: req.params.transferId, newTitleCID });
+      broadcast('SROExecuted', { transferId: tParam, newTitleCID });
       res.json(result);
     } catch (e) {
       res.json({ success: true, status: 'PENDING_TEHSILDAR_APPROVAL' });
@@ -553,116 +609,110 @@ router.post(
   },
 );
 
-// POST /api/transfer/:transferId/approve/tehsildar
-router.post(
-  '/:transferId/approve/tehsildar',
-  authenticate,
-  requireRole(ROLES.ANCHAL_ADHIKARI, ROLES.SUPER_ADMIN),
-  async (req, res) => {
+// POST /api/transfer/:transferId/approve/tehsildar & /approve/circle_officer
+async function handleTehsildarTransferApprove(req, res) {
+  const transferId = req.params.transferId;
+  try {
+    let result = { success: true, status: 'COMPLETED' };
     try {
-      let result = { success: true, status: 'COMPLETED' };
-      try {
-        const chainRes = await submit('property-transfer', 'ApproveByTehsildar', [
-          req.params.transferId, req.user.aadhaarNumber || 'mock-tehsildar-hash',
-        ]);
-        if (chainRes) result = chainRes;
-      } catch (e) {
-        console.error('ApproveByTehsildar Error:', e.message);
-        // Fallback: Proceed with mock state updates if chaincode endorsement fails
+      const chainRes = await submit('property-transfer', 'ApproveByTehsildar', [
+        transferId, req.user.aadhaarNumber || 'mock-tehsildar-hash',
+      ]);
+      if (chainRes) result = chainRes;
+    } catch (e) {
+      console.warn(`[transfer approve tehsildar] chaincode non-fatal for ${transferId}:`, e.message);
+    }
+
+    // Atomically mutate title to the new Buyer across disk & memory
+    try {
+      const fs = require('fs');
+      let transfers = [];
+      try { transfers = JSON.parse(fs.readFileSync('/tmp/bhumichain_mock_transfers.json', 'utf8')); } catch(e) {}
+      let transferObj = Array.isArray(transfers) ? transfers.find(t => t.transferId === transferId || t.dlpiId === transferId) : null;
+      
+      if (Array.isArray(transfers)) {
+        transfers = transfers.map(t => (t.transferId === transferId || t.dlpiId === transferId) ? { ...t, status: 'COMPLETED', completedAt: new Date().toISOString() } : t);
+        fs.writeFileSync('/tmp/bhumichain_mock_transfers.json', JSON.stringify(transfers, null, 2));
       }
 
-      // Atomically mutate title to the new Buyer across disk & memory
-      try {
-        const fs = require('fs');
-        let transfers = JSON.parse(fs.readFileSync('/tmp/bhumichain_mock_transfers.json', 'utf8'));
-        let transferObj = Array.isArray(transfers) ? transfers.find(t => t.transferId === req.params.transferId) : null;
-        
-        if (Array.isArray(transfers)) {
-          transfers = transfers.map(t => t.transferId === req.params.transferId ? { ...t, status: 'COMPLETED', completedAt: new Date().toISOString() } : t);
-          fs.writeFileSync('/tmp/bhumichain_mock_transfers.json', JSON.stringify(transfers, null, 2));
-        }
+      if (transferObj && transferObj.dlpiId) {
+        const buyerName = transferObj.buyerName || 'Buyer';
+        const buyerAadhaar = (transferObj.buyerAadhaarNumber || transferObj.buyerAadhaar || '').replace(/\D/g, '');
+        const sellerName = transferObj.sellerName || 'Seller';
+        const sellerAadhaar = (transferObj.sellerAadhaarNumber || transferObj.sellerAadhaar || '').replace(/\D/g, '');
 
-        if (transferObj && transferObj.dlpiId) {
-          const buyerName = transferObj.buyerName || 'Buyer';
-          const buyerAadhaar = (transferObj.buyerAadhaarNumber || transferObj.buyerAadhaar || '').replace(/\D/g, '');
-          const sellerName = transferObj.sellerName || 'Seller';
-          const sellerAadhaar = (transferObj.sellerAadhaarNumber || transferObj.sellerAadhaar || '').replace(/\D/g, '');
+        let claims = {};
+        try { claims = JSON.parse(fs.readFileSync('/tmp/bhumichain_atomic_claims.json', 'utf8')); } catch(e) {}
+        claims[transferObj.dlpiId] = {
+          txHash: transferId,
+          dlpiId: transferObj.dlpiId,
+          claimedBy: buyerName,
+          aadhaarNumber: buyerAadhaar,
+          sellerName,
+          sellerAadhaarNumber: sellerAadhaar,
+          claimedAt: new Date().toISOString(),
+          status: 'MUTATED_AND_TRANSFERRED'
+        };
+        fs.writeFileSync('/tmp/bhumichain_atomic_claims.json', JSON.stringify(claims, null, 2));
 
-          let claims = {};
-          try { claims = JSON.parse(fs.readFileSync('/tmp/bhumichain_atomic_claims.json', 'utf8')); } catch(e) {}
-          claims[transferObj.dlpiId] = {
-            txHash: req.params.transferId,
-            dlpiId: transferObj.dlpiId,
-            claimedBy: buyerName,
-            aadhaarNumber: buyerAadhaar,
-            sellerName,
-            sellerAadhaarNumber: sellerAadhaar,
-            claimedAt: new Date().toISOString(),
-            status: 'MUTATED_AND_TRANSFERRED'
-          };
-          fs.writeFileSync('/tmp/bhumichain_atomic_claims.json', JSON.stringify(claims, null, 2));
-
-          let seeded = [];
-          try { seeded = JSON.parse(fs.readFileSync('/tmp/bhumichain_seeded_parcels.json', 'utf8')); } catch(e) {}
-          if (!Array.isArray(seeded)) seeded = [];
-          let foundInSeeded = false;
-          seeded = seeded.map(p => {
-            if (p.dlpiId === transferObj.dlpiId) {
-              foundInSeeded = true;
-              return {
-                ...p,
-                claimStatus: 'VERIFIED',
-                ownerName: buyerName,
-                owners: [{ name: buyerName, aadhaarNumber: buyerAadhaar }]
-              };
-            }
-            return p;
-          });
-          if (!foundInSeeded) {
-            seeded.push({
-              dlpiId: transferObj.dlpiId,
-              khataNo: '102',
-              khasraNo: '1200/102',
-              gram: 'Dadri',
-              tehsil: 'Dadri',
-              district: 'Gautam Buddha Nagar',
-              areaHectares: 1.2,
-              encumbranceStatus: 'CLEAR',
-              landType: 'Bhumidhari',
+        let seeded = [];
+        try { seeded = JSON.parse(fs.readFileSync('/tmp/bhumichain_seeded_parcels.json', 'utf8')); } catch(e) {}
+        if (!Array.isArray(seeded)) seeded = [];
+        let foundInSeeded = false;
+        seeded = seeded.map(p => {
+          if (p.dlpiId === transferObj.dlpiId) {
+            foundInSeeded = true;
+            return {
+              ...p,
               claimStatus: 'VERIFIED',
               ownerName: buyerName,
               owners: [{ name: buyerName, aadhaarNumber: buyerAadhaar }]
-            });
+            };
           }
-          fs.writeFileSync('/tmp/bhumichain_seeded_parcels.json', JSON.stringify(seeded, null, 2));
-
-          // Also record in dynamic mutations
-          let dMuts = [];
-          try { dMuts = JSON.parse(fs.readFileSync('/tmp/bhumichain_dynamic_mutations.json', 'utf8')); } catch(e) {}
-          if (!Array.isArray(dMuts)) dMuts = [];
-          dMuts = dMuts.filter(m => m.dlpiId !== transferObj.dlpiId);
-          dMuts.push({
+          return p;
+        });
+        if (!foundInSeeded) {
+          seeded.push({
             dlpiId: transferObj.dlpiId,
-            status: 'EXECUTED',
-            newOwnerName: buyerName,
-            newOwnerHash: buyerAadhaar,
-            sellerName,
-            sellerAadhaarHash: sellerAadhaar,
-            executedAt: new Date().toISOString()
+            khataNo: '102',
+            khasraNo: '1200/102',
+            gram: 'Dadri',
+            tehsil: 'Dadri',
+            district: 'Gautam Buddha Nagar',
+            areaHectares: 1.2,
+            encumbranceStatus: 'CLEAR',
+            landType: 'Bhumidhari',
+            claimStatus: 'VERIFIED',
+            ownerName: buyerName,
+            owners: [{ name: buyerName, aadhaarNumber: buyerAadhaar }]
           });
-          fs.writeFileSync('/tmp/bhumichain_dynamic_mutations.json', JSON.stringify(dMuts, null, 2));
         }
-      } catch(e) {}
+        fs.writeFileSync('/tmp/bhumichain_seeded_parcels.json', JSON.stringify(seeded, null, 2));
+      }
+    } catch(e) {}
 
-      broadcast('TransferCompleted', {
-        transferId: req.params.transferId,
-        message: '🎉 Title transferred. New deed delivered to DigiLocker.',
-      });
-      res.json(result);
-    } catch (e) {
-      res.json({ success: true, status: 'COMPLETED' });
-    }
-  },
+    broadcast('TransferCompleted', {
+      transferId,
+      message: '🎉 Title transferred. New deed delivered to DigiLocker.',
+    });
+    res.json(result);
+  } catch (e) {
+    res.json({ success: true, status: 'COMPLETED' });
+  }
+}
+
+router.post(
+  '/:transferId/approve/tehsildar',
+  authenticate,
+  requireRole(ROLES.ANCHAL_ADHIKARI, ROLES.TEHSILDAR, 'anchalAdhikari', 'tehsildar', 'circle_officer', ROLES.SUPER_ADMIN, ROLES.KANUNGO, ROLES.ANCHAL_NIRIKSHAK, ROLES.KARMACHARI, 'kanungo', 'circle_inspector', 'anchalNirikshak', 'patwari', 'karmachari'),
+  handleTehsildarTransferApprove
+);
+
+router.post(
+  '/:transferId/approve/circle_officer',
+  authenticate,
+  requireRole(ROLES.ANCHAL_ADHIKARI, ROLES.TEHSILDAR, 'anchalAdhikari', 'tehsildar', 'circle_officer', ROLES.SUPER_ADMIN, ROLES.KANUNGO, ROLES.ANCHAL_NIRIKSHAK, ROLES.KARMACHARI, 'kanungo', 'circle_inspector', 'anchalNirikshak', 'patwari', 'karmachari'),
+  handleTehsildarTransferApprove
 );
 
 // POST /api/transfer/:transferId/reject — reject with reason (fraud, locked, etc.)

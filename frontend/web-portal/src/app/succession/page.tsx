@@ -216,7 +216,52 @@ export default function SuccessionPage() {
                           {s.done ? <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" /> : <div className="w-4 h-4 border-2 border-gray-300 rounded-full shrink-0 animate-pulse" />}
                           {s.label}
                         </div>
-                      ))}
+                        <button type="button" onClick={addHeirRow} className="mt-3 flex items-center gap-1.5 text-[#0F4C81] hover:text-[#0a3860] text-sm font-bold transition-colors">
+                          <Plus className="w-4 h-4" /> Add Another Heir
+                        </button>
+                      </div>
+                      <button type="submit" disabled={isSubmittingHeirs || myParcels.length === 0}
+                        className="w-full bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed text-white font-bold py-3.5 px-6 rounded-xl flex items-center justify-center gap-2.5 shadow-md transition-all">
+                        {isSubmittingHeirs ? <><Loader2 className="w-5 h-5 animate-spin" /> Submitting…</> : <><BadgeCheck className="w-5 h-5" /> Save Legal Heirs &amp; Continue to Document Upload <ArrowRight className="w-4 h-4" /></>}
+                      </button>
+                    </form>
+                  </div>
+                  {parcelNominations.length > 0 && (
+                    <div className="card">
+                      <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-100">
+                        <LayoutList className="w-4 h-4 text-[#0F4C81]" />
+                        <span className="font-semibold text-gray-800 text-sm">Saved Legal Heirs ({selectedDlpiId})</span>
+                        <span className="ml-auto text-xs text-gray-400">{parcelNominations.length}</span>
+                      </div>
+                      <div className="space-y-2">
+                        {parcelNominations.map(n => (
+                          <div key={n.nominationId} className="flex items-center justify-between gap-2 p-3 bg-gray-50 rounded-lg border border-gray-100">
+                            <div className="min-w-0">
+                              <div className="font-semibold text-sm text-gray-800">{n.inheritorName}</div>
+                              <div className="text-xs text-gray-500 font-mono">{n.dlpiId} · Aadhaar: XXXX-{n.inheritorAadhaarNumber?.slice(8)}</div>
+                            </div>
+                            {n.status === 'APPROVED' ? (
+                              <span className="flex items-center gap-1 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full shrink-0"><CheckCircle className="w-3.5 h-3.5" /> Approved</span>
+                            ) : (
+                              <div className="flex items-center gap-2 shrink-0">
+                                <button
+                                  type="button"
+                                  onClick={() => approveNomination(n.nominationId)}
+                                  className="bg-[#0F4C81] hover:bg-[#0a3860] text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-sm flex items-center gap-1.5 transition-colors cursor-pointer"
+                                >
+                                  <BadgeCheck className="w-4 h-4 text-amber-300" />
+                                  Approve (Circle Officer)
+                                </button>
+                                <span className="text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-1 rounded-full hidden sm:inline">Pending</span>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                      <button onClick={() => setStep('upload_document')}
+                          className="mt-4 w-full bg-[#0F4C81] hover:bg-[#0a3860] text-white font-semibold py-2.5 rounded-lg flex items-center justify-center gap-2 text-sm transition-colors">
+                          <Upload className="w-4 h-4" /> Proceed to Upload Document <ArrowRight className="w-3.5 h-3.5" />
+                        </button>
                     </div>
                   ) : !crsExtraction ? (
                     <label className="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed border-gray-300 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer group">

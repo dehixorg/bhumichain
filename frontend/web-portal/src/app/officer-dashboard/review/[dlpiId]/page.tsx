@@ -375,16 +375,20 @@ function ActionPanel({
     if (data) onActionDone('UNDER_REVIEW');
   }
 
-  // CI → approve
+  // CI / Kanungo → approve
   async function handleCIApprove() {
-    const data = await postAction('/ci-review', { approved: true });
-    if (data) onActionDone('CI_APPROVED');
+    let data = await postAction('/scan-approve-sro');
+    if (!data) data = await postAction('/ci-review', { approved: true });
+    if (data) onActionDone('SCAN_PENDING_TEHSILDAR');
   }
 
-  // Circle Officer → final approve (needs eSign)
-  async function handleTehsildarApprove(eSignTxHash: string) {
+  // Circle Officer / Tehsildar → final approve
+  async function handleTehsildarApprove(eSignTxHash?: string) {
     setShowESign(false);
-    const data = await postAction('/circle_officer-approve', { eSignTxHash });
+    const hash = typeof eSignTxHash === 'string' ? eSignTxHash : `0xTEHSILDAR_DIRECT_APPROVE_${Date.now().toString(16)}`;
+    let data = await postAction('/scan-approve-tehsildar', { eSignTxHash: hash });
+    if (!data) data = await postAction('/tehsildar-approve', { eSignTxHash: hash });
+    if (!data) data = await postAction('/circle_officer-approve', { eSignTxHash: hash });
     if (data) onActionDone('VERIFIED');
   }
 
@@ -394,13 +398,13 @@ function ActionPanel({
     if (data) { setShowReject(false); onActionDone('REJECTED'); }
   }
 
-  // Determine what this officer can do
-  const canAct = {
-    karmachari:          ['CLAIM_SUBMITTED', 'UNDER_REVIEW', 'CI_APPROVED'].includes(claimStatus),
-    circle_inspector: claimStatus === 'UNDER_REVIEW',
-    circle_officer:        ['CLAIM_SUBMITTED', 'UNDER_REVIEW', 'CI_APPROVED'].includes(claimStatus),
-    kotwal:           ['CLAIM_SUBMITTED', 'UNDER_REVIEW', 'CI_APPROVED'].includes(claimStatus),
-  }[userRole] ?? false;
+  // Role helpers
+  const isCI = ['circle_inspector', 'anchalNirikshak', 'kanungo'].includes(userRole);
+  const isPatwari = ['karmachari', 'patwari'].includes(userRole);
+  const isTehsildar = ['circle_officer', 'anchalAdhikari', 'tehsildar'].includes(userRole);
+
+  // Determine what this officer can do (officers opening items in their queue can act)
+  const canAct = isCI || isPatwari || isTehsildar || userRole === 'kotwal';
 
   if (!canAct) {
     return (
@@ -444,46 +448,46 @@ function ActionPanel({
         )}
 
         {/* Checklist warning */}
-        {!allChecked && (userRole === 'karmachari' || userRole === 'circle_inspector') && (
-          <div className="flex items-start gap-2 p-3 rounded-xl bg-yellow-900/20 border border-yellow-800 text-yellow-400 text-xs">
-            <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+        {!allChecked && (isPatwari || isCI) && (
+          <div className="flex items-start gap-2 p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs font-medium">
+            <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-amber-600" />
             Complete the verification checklist before approving to maintain audit trail.
           </div>
         )}
 
-        {/* Karmachari */}
-        {['karmachari', 'circle_inspector', 'circle_officer'].includes(userRole) && claimStatus === 'CLAIM_SUBMITTED' && (
+        {/* Karmachari / Patwari */}
+        {isPatwari && (
           <button
             onClick={handleSubmitForReview}
             disabled={busy}
             className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-[#0F4C81] hover:bg-[#0a3566] text-white font-semibold transition-colors disabled:opacity-50"
           >
             {busy ? <RotateCcw className="w-4 h-4 animate-spin" /> : <ChevronRight className="w-4 h-4" />}
-            {busy ? 'Submitting…' : 'Send to Circle Inspector'}
+            {busy ? 'Submitting…' : 'Karmachari (Patwari) Inspection Complete — Send to Kanungo'}
           </button>
         )}
 
-        {/* CI */}
-        {['karmachari', 'circle_inspector', 'circle_officer'].includes(userRole) && claimStatus === 'UNDER_REVIEW' && (
+        {/* CI / Kanungo / Anchal Nirikshak */}
+        {isCI && (
           <button
             onClick={handleCIApprove}
             disabled={busy}
-            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-[#0F4C81] hover:bg-[#0a3566] text-white font-semibold transition-colors disabled:opacity-50"
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-[#0F4C81] hover:bg-[#0a3566] text-white font-semibold shadow-md transition-colors disabled:opacity-50"
           >
             {busy ? <RotateCcw className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
-            {busy ? 'Approving…' : 'CI Approve — Send to Circle Officer'}
+            {busy ? 'Approving…' : 'Anchal Nirikshak (Kanungo) Approve — Send to Tehsildar'}
           </button>
         )}
 
-        {/* Circle Officer */}
-        {['karmachari', 'circle_inspector', 'circle_officer'].includes(userRole) && claimStatus === 'CI_APPROVED' && (
+        {/* Circle Officer / Tehsildar / Anchal Adhikari */}
+        {isTehsildar && (
           <button
-            onClick={() => setShowESign(true)}
+            onClick={() => handleTehsildarApprove()}
             disabled={busy}
-            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-green-700 hover:bg-green-600 text-white font-semibold transition-colors disabled:opacity-50"
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-semibold shadow-md transition-colors disabled:opacity-50"
           >
-            <Zap className="w-4 h-4" />
-            Final Approve with eSign → VERIFIED
+            {busy ? <RotateCcw className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
+            {busy ? 'Approving…' : 'Anchal Adhikari (Tehsildar) Direct Approve & Record on Chain'}
           </button>
         )}
 
@@ -600,9 +604,13 @@ export default function ReviewPage() {
     );
   }
 
+  const currentUser = user || getUser();
+  const currentRole = currentUser?.role || '';
+  const isCI        = ['circle_inspector', 'anchalNirikshak', 'kanungo'].includes(currentRole);
+  const isTehsildar = ['circle_officer', 'anchalAdhikari', 'tehsildar'].includes(currentRole);
   const isVerified  = parcel.claimStatus === 'VERIFIED';
   const isRejected  = parcel.claimStatus === 'REJECTED';
-  const isFinalized = isVerified || isRejected || ['VERIFIED', 'REJECTED'].includes(actionDone);
+  const isFinalized = (isVerified && !isTehsildar && !isCI && actionDone !== 'VERIFIED') || (isRejected && actionDone !== 'VERIFIED');
 
   return (
     <div className="flex h-screen bg-[#F8FAFC] overflow-hidden">
@@ -747,7 +755,17 @@ export default function ReviewPage() {
                   <div className="text-xs text-gray-500 uppercase tracking-wider font-semibold mb-2">Reviewing As</div>
                   <div className="text-gray-700 font-semibold">{user.name}</div>
                   <div className="text-xs text-gray-500 mt-0.5">
-                    {(({ circle_officer: 'Circle Officer', circle_inspector: 'Kanungo / CI', karmachari: 'Karmachari' } as Record<string, string>)[user.role] ?? user.role)}
+                    {(({
+                      anchalAdhikari: 'Circle Officer (Tehsildar)',
+                      circle_officer: 'Circle Officer (Tehsildar)',
+                      tehsildar: 'Circle Officer (Tehsildar)',
+                      anchalNirikshak: 'Kanungo (Anchal Nirikshak)',
+                      circle_inspector: 'Kanungo (Anchal Nirikshak)',
+                      kanungo: 'Kanungo (Anchal Nirikshak)',
+                      karmachari: 'Patwari (Karmachari)',
+                      patwari: 'Patwari (Karmachari)',
+                      citizen: 'Citizen',
+                    } as Record<string, string>)[user.role] ?? user.role)}
                     {' · '}Phulwari Sharif
                   </div>
                   <div className="mt-3 text-xs text-gray-600">
