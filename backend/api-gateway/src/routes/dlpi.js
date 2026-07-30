@@ -150,7 +150,7 @@ router.get('/my-parcels', authenticate, requireRole(ROLES.CITIZEN), async (req, 
     }
     if (!Array.isArray(parcels)) parcels = [];
     
-    // Check RecordScan AI database for any scans verified/approved by Tehsildar or pending
+    // Check RecordScan AI database for any scans verified/approved by Circle Officer or pending
     let recordScans = [];
     try {
       // Fetch ALL scans (no status filter) — we filter by ownership, not status
@@ -158,9 +158,9 @@ router.get('/my-parcels', authenticate, requireRole(ROLES.CITIZEN), async (req, 
       const allScans = allScansRes.data || [];
       console.log(`[my-parcels] Total scans from RecordScan: ${allScans.length}`);
       recordScans = allScans.filter(s => {
-        // Under statutory registry rules, draft scanned records ONLY appear in citizen portal after Tehsildar approval
+        // Under statutory registry rules, draft scanned records ONLY appear in citizen portal after Circle Officer approval
         if (!['APPROVED', 'VERIFIED', 'COMPLETED'].includes(s.status)) {
-          console.log(`[my-parcels]   SKIP scan ${s.scanId} (status=${s.status} — awaiting Tehsildar approval)`);
+          console.log(`[my-parcels]   SKIP scan ${s.scanId} (status=${s.status} — awaiting Circle Officer approval)`);
           return false;
         }
         const khatedars = s.extraction?.khatedars || [];
@@ -414,7 +414,7 @@ router.get('/my-parcels', authenticate, requireRole(ROLES.CITIZEN), async (req, 
         return h && (h === userHashClean || h === userRawClean);
       })) return true;
 
-      // (Nominated inheritors do NOT see parcels in /my-parcels until succession is executed by Tehsildar)
+      // (Nominated inheritors do NOT see parcels in /my-parcels until succession is executed by Circle Officer)
 
       // Demo citizen fallbacks for initial seeded data (ONLY if not transferred)
       if (p.claimStatus !== 'VERIFIED' && (!p.atomicLock || p.atomicLock.status !== 'MUTATED_AND_TRANSFERRED')) {
@@ -444,7 +444,7 @@ router.get(
       if (req.user.role === ROLES.ANCHAL_NIRIKSHAK) {
         status = 'SCAN_PENDING_SRO';
       } else if (req.user.role === ROLES.ANCHAL_ADHIKARI) {
-        status = 'SCAN_PENDING_TEHSILDAR';
+        status = 'SCAN_PENDING_CO';
       }
 
       if (status) {
@@ -461,7 +461,7 @@ router.get(
             khasraNo: ext.khasraNo || '0',
             landType: ext.landType === 'Bhumidhari' ? 'Jirayat' : ext.landType,
             areaHectares: ext.areaHectares,
-            claimStatus: s.status, // SCAN_PENDING_SRO or SCAN_PENDING_TEHSILDAR
+            claimStatus: s.status, // SCAN_PENDING_SRO or SCAN_PENDING_CO
             ownerName: ext.khatedars && ext.khatedars.length > 0 ? ext.khatedars[0].name : 'Unknown',
             owners: (ext.khatedars || []).map(k => ({
               name: k.name,
@@ -706,7 +706,7 @@ router.post(
 
       // 3. Also sync with RecordScan AI Python service if available
       try {
-        await axios.post(`${RECORD_SCAN_URL}/scan/approve-tehsildar-by-dlpi/${req.params.dlpiId}`, {
+        await axios.post(`${RECORD_SCAN_URL}/scan/approve-circle_officer-by-dlpi/${req.params.dlpiId}`, {
           officerAadhaarNumber: req.user.aadhaarNumber,
           officerName: req.user.name || 'Citizen Claim'
         }).catch(() => {});
@@ -741,9 +741,9 @@ router.post(
   },
 );
 
-// POST /api/dlpi/:dlpiId/tehsildar-approve — final approval with eSign
+// POST /api/dlpi/:dlpiId/circle_officer-approve — final approval with eSign
 router.post(
-  '/:dlpiId/tehsildar-approve',
+  '/:dlpiId/circle_officer-approve',
   authenticate,
   requireRole(ROLES.ANCHAL_ADHIKARI),
   dlpiParam,
@@ -806,9 +806,9 @@ router.post(
 );
 
 
-// POST /api/dlpi/:dlpiId/scan-approve-tehsildar — Tehsildar finalizes pending scan
+// POST /api/dlpi/:dlpiId/scan-approve-circle_officer — Circle Officer finalizes pending scan
 router.post(
-  '/:dlpiId/scan-approve-tehsildar',
+  '/:dlpiId/scan-approve-circle_officer',
   authenticate,
   requireRole(ROLES.ANCHAL_ADHIKARI),
   dlpiParam,
@@ -827,9 +827,9 @@ router.post(
         }
       } catch (scanErr) {
         if (scanErr.response && scanErr.response.status === 404) {
-          console.warn(`[scan-approve-tehsildar] No scan found for DLPI ${dlpiId} in Python service — proceeding without Aadhaar check.`);
+          console.warn(`[scan-approve-circle_officer] No scan found for DLPI ${dlpiId} in Python service — proceeding without Aadhaar check.`);
         } else {
-          console.warn(`[scan-approve-tehsildar] Failed to query scan from Python service:`, scanErr.message);
+          console.warn(`[scan-approve-circle_officer] Failed to query scan from Python service:`, scanErr.message);
         }
       }
 
@@ -837,7 +837,7 @@ router.post(
       if (patwariAadhaar && (patwariAadhaar === '999988887777' || patwariAadhaar.startsWith('999988887777'))) {
         return res.status(400).json({
           error: 'PROPERTY_NOT_SEEN',
-          message: 'Tehsildar cannot commit this property: Owner Aadhaar number is a dummy/fallback value (999988887777). The citizen will not be able to see this parcel. Please have the Patwari re-upload or correct the Aadhaar first.'
+          message: 'Circle Officer cannot commit this property: Owner Aadhaar number is a dummy/fallback value (999988887777). The citizen will not be able to see this parcel. Please have the Patwari re-upload or correct the Aadhaar first.'
         });
       }
 
@@ -853,15 +853,15 @@ router.post(
           }
         }
       } catch (err) {
-        console.warn(`[scan-approve-tehsildar] GetDLPI failed:`, err.message);
+        console.warn(`[scan-approve-circle_officer] GetDLPI failed:`, err.message);
       }
 
       let txHash = `mock-tehsildar-tx-${Date.now()}`;
       let correctionDone = false;
 
       if (patwariAadhaar && dlpiOnChain && currentOwnerAadhaar !== patwariAadhaar) {
-        console.log(`[scan-approve-tehsildar] Owner mismatch! On-chain: '${currentOwnerAadhaar}', Patwari entered: '${patwariAadhaar}'.`);
-        console.log(`[scan-approve-tehsildar] dlpiOnChain.owners:`, JSON.stringify(dlpiOnChain.owners));
+        console.log(`[scan-approve-circle_officer] Owner mismatch! On-chain: '${currentOwnerAadhaar}', Patwari entered: '${patwariAadhaar}'.`);
+        console.log(`[scan-approve-circle_officer] dlpiOnChain.owners:`, JSON.stringify(dlpiOnChain.owners));
         const sellers = (dlpiOnChain.owners || []).map(o => o.aadhaarNumber || o.aadhaarNumber || "");
         const correctOwners = (scan.owners && scan.owners.length > 0)
           ? scan.owners.map(o => ({
@@ -889,7 +889,7 @@ router.post(
             JSON.stringify(sellers),
             JSON.stringify(correctOwners),
             'GENESIS_CORRECTION',
-            req.user.name || 'Tehsildar',
+            req.user.name || 'Circle Officer',
             req.user.aadhaarNumber || '999900010003',
             `MUT-CORR-${Date.now()}`,
             scan.ipfsCID || 'QmPending',
@@ -897,9 +897,9 @@ router.post(
           ]);
           txHash = txResult.txHash || txHash;
           correctionDone = true;
-          console.log(`[scan-approve-tehsildar] On-chain owner correction succeeded!`);
+          console.log(`[scan-approve-circle_officer] On-chain owner correction succeeded!`);
         } catch (updateErr) {
-          console.error(`[scan-approve-tehsildar] On-chain UpdateOwners failed:`, updateErr.message);
+          console.error(`[scan-approve-circle_officer] On-chain UpdateOwners failed:`, updateErr.message);
           throw new Error(`Failed to correct DLPI owner on-chain: ${updateErr.message}`);
         }
       }
@@ -907,14 +907,14 @@ router.post(
       // 1. Try on-chain approval (only if correction was not already done, since UpdateOwners already finalized it)
       if (!correctionDone) {
         try {
-          const txResult = await submit('dlpi', 'ApproveScanTehsildar', [dlpiId]);
+          const txResult = await submit('dlpi', 'ApproveScanCircle Officer', [dlpiId]);
           txHash = txResult.txHash || txHash;
-          console.log(`[scan-approve-tehsildar] On-chain approval succeeded for ${dlpiId}`);
+          console.log(`[scan-approve-circle_officer] On-chain approval succeeded for ${dlpiId}`);
         } catch (fabricErr) {
           const msg = fabricErr.message || '';
           const isNotFound = msg.includes('not found') || msg.includes('ABORTED') || msg.includes('does not exist');
           if (isNotFound) {
-            console.warn(`[scan-approve-tehsildar] Fabric says '${dlpiId}' not found (created in mock). Using mock approval.`);
+            console.warn(`[scan-approve-circle_officer] Fabric says '${dlpiId}' not found (created in mock). Using mock approval.`);
           } else {
             throw fabricErr;
           }
@@ -926,19 +926,19 @@ router.post(
         const payload = {
           officerAadhaarNumber: req.user.aadhaarNumber || ('sha256:' + '0'.repeat(64)),
           officerAadhaarNumber: req.user.aadhaarNumber || ('sha256:' + '0'.repeat(64)),
-          officerName: req.user.name || 'Tehsildar',
+          officerName: req.user.name || 'Circle Officer',
           token: req.headers.authorization ? req.headers.authorization.split(' ')[1] : '',
         };
-        await axios.post(`${RECORD_SCAN_URL}/scan/approve-tehsildar-by-dlpi/${dlpiId}`, payload);
+        await axios.post(`${RECORD_SCAN_URL}/scan/approve-circle_officer-by-dlpi/${dlpiId}`, payload);
       } catch (axErr) {
-        console.warn(`[scan-approve-tehsildar] Python approve-tehsildar failed:`, axErr.message);
+        console.warn(`[scan-approve-circle_officer] Python approve-tehsildar failed:`, axErr.message);
         throw new Error(`Python RecordScan service rejected the approval: ${axErr.response?.data?.detail || axErr.message}`);
       }
 
       res.json({ success: true, txHash });
     } catch (e) {
       const errMsg = e.message;
-      console.error('[scan-approve-tehsildar] error:', errMsg);
+      console.error('[scan-approve-circle_officer] error:', errMsg);
       res.status(500).json({ error: 'FABRIC_ERROR', message: errMsg });
     }
   },
@@ -987,9 +987,9 @@ router.post(
   },
 );
 
-// POST /api/dlpi/:dlpiId/tehsildar-approve — final approval with eSign
+// POST /api/dlpi/:dlpiId/circle_officer-approve — final approval with eSign
 router.post(
-  '/:dlpiId/tehsildar-approve',
+  '/:dlpiId/circle_officer-approve',
   authenticate,
   requireRole(ROLES.ANCHAL_ADHIKARI, ROLES.COLLECTOR, ROLES.SUPER_ADMIN),
   dlpiParam,

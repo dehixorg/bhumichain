@@ -33,7 +33,7 @@ const MUTATION_TYPES = [
 router.post(
   '/',
   authenticate,
-  requireRole(ROLES.CITIZEN, ROLES.TEHSILDAR, ROLES.ANCHAL_ADHIKARI),
+  requireRole(ROLES.CITIZEN, ROLES.ANCHAL_ADHIKARI, ROLES.ANCHAL_ADHIKARI),
   body('mutationType').isIn(['Sale', 'Gift', 'Inheritance', 'Partition', 'Government Land Allotment', 'Court Order Mutation', 'Suo-Moto Mutation', ...MUTATION_TYPES]),
   body('applicantDetails').notEmpty(),
   body('landDetails').notEmpty(),
@@ -50,8 +50,8 @@ router.post(
         newOwnerDetails: req.body.newOwnerDetails,
         dynamicFields: req.body.dynamicFields || {},
         status: 'Pending at Patwari',
-        officerName: req.user.role === 'citizen' ? 'Citizen' : 'Tehsildar',
-        officerRank: req.user.role === 'citizen' ? 'Citizen' : 'Tehsildar',
+        officerName: req.user.role === 'citizen' ? 'Citizen' : 'Circle Officer',
+        officerRank: req.user.role === 'citizen' ? 'Citizen' : 'Circle Officer',
       };
       const result = await submit('mutation-manager', 'CreateMutation', [
         JSON.stringify(data)
@@ -372,7 +372,7 @@ router.post(
         if (!dMuts[idx].telegramAlerts) dMuts[idx].telegramAlerts = [];
         dMuts[idx].telegramAlerts.push({
           channel: 'WHATSAPP', recipient: '+91 9876543210', 
-          message: `✅ E-Sign Consent Received for ${dMuts[idx].dlpiId}. Forwarding to Tehsildar for final execution.`, 
+          message: `✅ E-Sign Consent Received for ${dMuts[idx].dlpiId}. Forwarding to Circle Officer for final execution.`, 
           sentAt: new Date().toISOString(), delivered: true
         });
 

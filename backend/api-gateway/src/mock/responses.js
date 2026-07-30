@@ -914,7 +914,7 @@ module.exports = {
         return { dlpiId: args[0], claimStatus: 'CI_APPROVED', reviewedAt: new Date().toISOString() };
       }
 
-      case 'dlpi::TehsildarApprove': {
+      case 'dlpi::Circle OfficerApprove': {
         const p = DEMO_PENDING_REVIEW.find(x => x.dlpiId === args[0]);
         if (p) p.claimStatus = 'VERIFIED';
         const myP = DEMO_MY_PARCELS.find(x => x.dlpiId === args[0]);
@@ -960,8 +960,8 @@ module.exports = {
       case 'property-transfer::ApproveByCI':
         return { success: true, status: 'PENDING_SRO_EXECUTION' };
       case 'property-transfer::ApproveBySRO':
-        return { success: true, status: 'PENDING_TEHSILDAR_APPROVAL' };
-      case 'property-transfer::ApproveByTehsildar':
+        return { success: true, status: 'PENDING_CO_APPROVAL' };
+      case 'property-transfer::ApproveByCircle Officer':
         return { success: true, status: 'COMPLETED' };
       case 'property-transfer::RecordConsent':
         return { transferId: args[0], partyType: args[1], consentedAt: new Date().toISOString(), status: 'CONSENT_RECORDED' };
@@ -1008,7 +1008,7 @@ module.exports = {
             { step: 'SUBMITTED', label: 'Submitted', actor: data.applicantDetails?.fullName || 'Citizen', at: new Date().toISOString(), done: true },
             { step: 'PATWARI', label: 'Pending Patwari', actor: 'Patwari', at: null, done: false },
             { step: 'KANUNGO', label: 'Pending Kanungo', actor: 'Kanungo', at: null, done: false },
-            { step: 'TEHSILDAR', label: 'Pending Tehsildar', actor: 'Tehsildar', at: null, done: false }
+            { step: 'TEHSILDAR', label: 'Pending Circle Officer', actor: 'Circle Officer', at: null, done: false }
           ],
           telegramAlerts: []
         };
@@ -1037,7 +1037,7 @@ module.exports = {
             { step: 'SUBMITTED', label: 'Submitted', actor: args[2], at: new Date().toISOString(), done: true },
             { step: 'PATWARI', label: 'Pending Patwari', actor: 'Patwari', at: null, done: false },
             { step: 'KANUNGO', label: 'Pending Kanungo', actor: 'Kanungo', at: null, done: false },
-            { step: 'TEHSILDAR', label: 'Pending Tehsildar', actor: 'Tehsildar', at: null, done: false }
+            { step: 'TEHSILDAR', label: 'Pending Circle Officer', actor: 'Circle Officer', at: null, done: false }
           ],
           telegramAlerts: []
         };
@@ -1107,19 +1107,19 @@ module.exports = {
             { step: 'SUBMITTED', label: 'Submitted', actor: 'Citizen', at: m.initiatedAt || at, done: true },
             { step: 'PATWARI', label: 'Pending Patwari', actor: 'Patwari', at: null, done: false },
             { step: 'KANUNGO', label: 'Pending Kanungo', actor: 'Kanungo', at: null, done: false },
-            { step: 'TEHSILDAR', label: 'Pending Tehsildar', actor: 'Tehsildar', at: null, done: false }
+            { step: 'TEHSILDAR', label: 'Pending Circle Officer', actor: 'Circle Officer', at: null, done: false }
           ];
         }
 
         if (newStatus === 'Pending at Kanungo') {
           const step = m.timeline.find(t => t.step === 'PATWARI');
           if (step) { step.done = true; step.at = at; step.actor = actorName; step.label = 'Patwari Approved'; }
-        } else if (newStatus === 'Pending at Tehsildar') {
+        } else if (newStatus === 'Pending at Circle Officer') {
           const step = m.timeline.find(t => t.step === 'KANUNGO');
           if (step) { step.done = true; step.at = at; step.actor = actorName; step.label = 'Kanungo Approved'; }
         } else if (newStatus === 'Approved') {
           const step = m.timeline.find(t => t.step === 'TEHSILDAR');
-          if (step) { step.done = true; step.at = at; step.actor = actorName; step.label = 'Tehsildar Approved'; }
+          if (step) { step.done = true; step.at = at; step.actor = actorName; step.label = 'Circle Officer Approved'; }
           // Update Jamabandi records
           if (m.dlpiId) {
             const p = DEMO_MY_PARCELS.find(x => x.dlpiId === m.dlpiId);
@@ -1230,7 +1230,7 @@ module.exports = {
           const bCases = JSON.parse(fs.readFileSync('/tmp/bhumichain_succession_cases.json'));
           cases = [...cases, ...Object.values(bCases || {})];
         } catch(e) {}
-        return cases.filter(c => c && ['AWAITING_CONSENTS', 'HEIR_CONSENT_PENDING', 'PENDING_TEHSILDAR_APPROVAL', 'ALL_CONSENTED', 'PENDING_TEHSILDAR', 'SUCCESSION_PENDING_TEHSILDAR', 'COURT_REFERRED'].includes(c.status));
+        return cases.filter(c => c && ['AWAITING_CONSENTS', 'HEIR_CONSENT_PENDING', 'PENDING_CO_APPROVAL', 'ALL_CONSENTED', 'PENDING_CO', 'SUCCESSION_PENDING_CO', 'COURT_REFERRED'].includes(c.status));
       }
       case 'uttaradhikar::GetMyPendingSuccessions': {
         const myHashRaw = String(args[0] || '').replace(/\D/g, '');
@@ -1271,8 +1271,8 @@ module.exports = {
             heir.eSignTxHash = args[2];
           }
           if (sc.heirs.every(h => h.hasConsented)) {
-            sc.status = 'PENDING_TEHSILDAR';
-            returnedStatus = 'PENDING_TEHSILDAR_APPROVAL';
+            sc.status = 'PENDING_CO';
+            returnedStatus = 'PENDING_CO_APPROVAL';
           }
           fs.writeFileSync('/tmp/bhumichain_mock_cases.json', JSON.stringify(cases, null, 2));
         }
@@ -1312,7 +1312,7 @@ module.exports = {
             mutationTypeCode: 'Inheritance',
             officerName: 'Amit Saxena (Auto)',
             officerHash: 'tehsildar-hash',
-            officerRank: 'Tehsildar',
+            officerRank: 'Circle Officer',
             currentOwnerName: sc.deceasedName,
             newOwnerName: sc.heirs.map(h => h.name).join(', '),
             status: 'ALERT_SENT',
@@ -1380,10 +1380,10 @@ module.exports = {
 
       case 'dlpi::ApproveScanSRO':
         const scanSro = MOCK_SCANS.find(s => s.dlpiId === args[0]);
-        if (scanSro) scanSro.claimStatus = 'SCAN_PENDING_TEHSILDAR';
+        if (scanSro) scanSro.claimStatus = 'SCAN_PENDING_CO';
         return { success: true };
 
-      case 'dlpi::ApproveScanTehsildar':
+      case 'dlpi::ApproveScanCircle Officer':
         const scanTehsil = MOCK_SCANS.find(s => s.dlpiId === args[0]);
         if (scanTehsil) scanTehsil.claimStatus = 'SEEDED_UNVERIFIED';
         return { success: true };

@@ -78,7 +78,7 @@ interface Mutation {
 const STATUS_THEME: Record<string, { label: string; color: string; bg: string; border: string; icon: React.ElementType }> = {
   'Pending at Patwari':  { label: 'Pending at Patwari',  color: 'text-yellow-400', bg: 'bg-yellow-950/30', border: 'border-yellow-700/50', icon: Clock },
   'Pending at Kanungo':  { label: 'Pending at Kanungo',  color: 'text-orange-400', bg: 'bg-orange-950/30', border: 'border-orange-700/50', icon: Clock },
-  'Pending at Tehsildar':{ label: 'Pending at Tehsildar',color: 'text-blue-400',   bg: 'bg-blue-950/30',   border: 'border-blue-700/50',   icon: Clock },
+  'Pending at Circle Officer':{ label: 'Pending at Circle Officer',color: 'text-blue-400',   bg: 'bg-blue-950/30',   border: 'border-blue-700/50',   icon: Clock },
   'Approved':            { label: 'Approved',            color: 'text-green-400',  bg: 'bg-green-950/30',  border: 'border-green-700/50',  icon: CheckCircle },
   'Rejected':            { label: 'Rejected',            color: 'text-red-400',    bg: 'bg-red-950/30',    border: 'border-red-700/50',    icon: XCircle },
   'Objection Filed':     { label: 'Objection Filed',     color: 'text-purple-400', bg: 'bg-purple-950/30', border: 'border-purple-700/50', icon: AlertCircle },
@@ -96,7 +96,7 @@ export default function MutationDashboard() {
   // Active Tab state
   // Citizens: 'track' | 'apply'
   // Officers: 'verify' | 'track'
-  // Tehsildar: 'verify' | 'track' | 'special' | 'objections'
+  // Circle Officer: 'verify' | 'track' | 'special' | 'objections'
   const [activeTab, setActiveTab] = useState<string>('track');
 
   // Rejection Reason Modal/Input
@@ -307,7 +307,7 @@ export default function MutationDashboard() {
       });
       const updated = await statusRes.json();
 
-      setSuccess('Objection filed successfully! The application will be reviewed by the Tehsildar.');
+      setSuccess('Objection filed successfully! The application will be reviewed by the Circle Officer.');
       setSelectedMutation(updated);
       setFilingObjection(false);
       setObjectionText('');
@@ -380,8 +380,8 @@ export default function MutationDashboard() {
       if (user?.role === 'circle_inspector') {
         return mutations.filter(m => m.status === 'Pending at Kanungo');
       }
-      if (user?.role === 'tehsildar') {
-        return mutations.filter(m => m.status === 'Pending at Tehsildar' || m.status === 'Objection Filed');
+      if (user?.role === 'circle_officer') {
+        return mutations.filter(m => m.status === 'Pending at Circle Officer' || m.status === 'Objection Filed');
       }
       return [];
     }
@@ -396,7 +396,7 @@ export default function MutationDashboard() {
 
   const isCitizen = user?.role === 'citizen';
   const displayRoleLabel = (r: string) => {
-    return { tehsildar: 'Tehsildar', circle_inspector: 'Kanungo / CI', patwari: 'Patwari', citizen: 'Citizen' }[r] ?? r;
+    return { circle_officer: 'Circle Officer', circle_inspector: 'Kanungo / CI', patwari: 'Patwari', citizen: 'Citizen' }[r] ?? r;
   };
 
   return (
@@ -486,7 +486,7 @@ export default function MutationDashboard() {
                 >
                   All Mutation Records
                 </button>
-                {user?.role === 'tehsildar' && (
+                {user?.role === 'circle_officer' && (
                   <>
                     <button
                       onClick={() => { setActiveTab('objections'); setSelectedMutation(null); }}
@@ -520,7 +520,7 @@ export default function MutationDashboard() {
                     <div className="flex items-center gap-3 border-b border-gray-200 pb-4">
                       <FilePlus className="w-5 h-5 text-[#0F4C81]" />
                       <h2 className="text-lg font-bold text-gray-900">
-                        {activeTab === 'special' ? 'Special Mutation Creation (Tehsildar)' : 'New Land Mutation Application'}
+                        {activeTab === 'special' ? 'Special Mutation Creation (Circle Officer)' : 'New Land Mutation Application'}
                       </h2>
                     </div>
 
@@ -956,7 +956,7 @@ export default function MutationDashboard() {
                           </div>
                         </div>
 
-                        {/* 4. Tehsildar */}
+                        {/* 4. Circle Officer */}
                         <div className="relative">
                           <span className={clsx(
                             'absolute -left-[31px] top-0 w-4 h-4 rounded-full flex items-center justify-center border-2 border-gray-900',
@@ -966,11 +966,11 @@ export default function MutationDashboard() {
                           </span>
                           <div className="text-xs">
                             <div className={clsx('font-bold', 
-                              selectedMutation.status === 'Pending at Tehsildar' ? 'text-blue-400' : 
+                              selectedMutation.status === 'Pending at Circle Officer' ? 'text-blue-400' : 
                               selectedMutation.status === 'Approved' ? 'text-green-400' : 
                               selectedMutation.status === 'Rejected' ? 'text-red-400' : 'text-gray-800'
                             )}>
-                              Tehsildar final decision
+                              Circle Officer final decision
                             </div>
                             <div className="text-gray-400 text-[10px]">
                               {selectedMutation.status === 'Approved' ? 'Final Approved & Updated in Jamabandi' : 
@@ -1009,7 +1009,7 @@ export default function MutationDashboard() {
                       <div className="p-4 rounded-2xl bg-red-950/30 border border-red-900/60 text-xs space-y-2">
                         <div className="font-bold text-red-400 flex items-center gap-1.5">
                           <AlertCircle className="w-4 h-4" />
-                          Rejection Reason (Tehsildar)
+                          Rejection Reason (Circle Officer)
                         </div>
                         <p className="text-gray-400 italic">"{selectedMutation.rejectionReason}"</p>
                       </div>
@@ -1055,11 +1055,11 @@ export default function MutationDashboard() {
                           {user?.role === 'circle_inspector' && selectedMutation.status === 'Pending at Kanungo' && (
                             <div className="grid grid-cols-2 gap-3">
                               <button
-                                onClick={() => handleStatusTransition('Pending at Tehsildar')}
+                                onClick={() => handleStatusTransition('Pending at Circle Officer')}
                                 className="bg-[#0F4C81] hover:bg-[#0a3566] text-gray-900 font-bold py-2.5 px-4 rounded-xl text-xs transition-colors flex items-center justify-center gap-1"
                               >
                                 <CheckCircle className="w-4 h-4" />
-                                Approve to Tehsildar
+                                Approve to Circle Officer
                               </button>
                               <button
                                 onClick={() => setRejecting(true)}
@@ -1071,8 +1071,8 @@ export default function MutationDashboard() {
                             </div>
                           )}
 
-                          {/* Tehsildar actions */}
-                          {user?.role === 'tehsildar' && (selectedMutation.status === 'Pending at Tehsildar' || selectedMutation.status === 'Objection Filed') && (
+                          {/* Circle Officer actions */}
+                          {user?.role === 'circle_officer' && (selectedMutation.status === 'Pending at Circle Officer' || selectedMutation.status === 'Objection Filed') && (
                             <div className="grid grid-cols-2 gap-3">
                               <button
                                 onClick={() => handleStatusTransition('Approved')}
