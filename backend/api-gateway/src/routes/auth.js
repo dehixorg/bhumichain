@@ -286,6 +286,11 @@ router.post('/demo-token', (req, res) => {
       aadhaarNumber: '999900010001',
       jurisdictionCode: 'GBN-DAD', tehsilCode: 'DAD',
     },
+    sro: {
+      role: 'sro', name: 'Ravi Shankar',
+      aadhaarNumber: '999900010004',
+      jurisdictionCode: 'GBN-DAD', tehsilCode: 'DAD',
+    },
     circle_officer: {
       role: 'anchalAdhikari', name: 'Amit Saxena',
       aadhaarNumber: '999900010001',

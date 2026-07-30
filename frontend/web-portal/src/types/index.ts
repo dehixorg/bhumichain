@@ -3,7 +3,7 @@
 // Bihar land types (primary) + Maharashtra legacy
 export type LandType =
   | 'Raiyati' | 'Gair Mazarua' | 'Asamiyadar' | 'Residential' | 'Commercial'
-  | 'Tribal_FRA' | 'Govt_Reserved'
+  | 'Govt_Reserved'
   | 'Bagayat' | 'Jirayat' | 'Kharaba' | 'Government' | 'Forest';
 
 export type EncumbranceStatus = 'CLEAR' | 'MORTGAGED' | 'COURT_INJUNCTION' | 'IT_ATTACHMENT' | 'MULTIPLE';
@@ -15,7 +15,6 @@ export interface ParcelOwner {
   name: string;
   aadhaarNumber: string;
   dob?: string;
-  isTribal?: boolean;
 }
 
 export interface CoparcenaryHeir {
@@ -56,7 +55,6 @@ export interface Parcel {
   rakbaKatha?: number;
   rakbaDhur?: number;
   rakbaDecimal?: number;
-  isTribal: boolean;
   isCoparcenary: boolean;
   scheduleVArea: boolean;
   encumbranceStatus: EncumbranceStatus;
@@ -85,7 +83,6 @@ export interface GeoFeature {
   rakbaDhur?: number;
   rakbaDecimal?: number;
     encumbranceStatus: EncumbranceStatus;
-    isTribal: boolean;
     isCoparcenary: boolean;
     anchal: string;
     surveyNumber: string;
@@ -162,21 +159,7 @@ export interface Transfer {
   initiatedAt: string;
 }
 
-// ─── Tribal Guard ─────────────────────────────────────────────────────────────
 
-export interface TribalCheckResult {
-  dlpiId: string;
-  attemptId?: string;
-  isTribalParcel: boolean;
-  scheduleType?: string;
-  community?: string;
-  decision: 'ALLOWED_NOT_TRIBAL' | 'ALLOWED_PENDING_APPROVALS' | 'HARD_REJECTED' | 'APPROVED';
-  rejectionCode?: string;
-  rejectionReason?: string;
-  legalCitations?: string[];
-  requiredApprovals?: string[];
-  responseTimeMs: number;
-}
 
 // ─── WebSocket events ─────────────────────────────────────────────────────────
 

@@ -14,7 +14,6 @@ const dlpiRoutes        = require('./routes/dlpi');
 const transferRoutes    = require('./routes/transfer');
 const mutationRoutes    = require('./routes/mutation');
 const uttaradhikarRoutes = require('./routes/uttaradhikar');
-const tribalRoutes      = require('./routes/tribal');
 const encumbranceRoutes = require('./routes/encumbrance');
 const auctionRoutes     = require('./routes/auction');
 const { authenticate, ROLES } = require('./middleware/auth');
@@ -72,7 +71,6 @@ app.use('/api/dlpi',        dlpiRoutes);
 app.use('/api/transfer',    transferRoutes);
 app.use('/api/mutation',    mutationRoutes);
 app.use('/api/succession',  uttaradhikarRoutes);
-app.use('/api/tribal',      tribalRoutes);
 app.use('/api/encumbrance', encumbranceRoutes);
 app.use('/api/auction',     auctionRoutes);
 
