@@ -4,8 +4,8 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
-  Map, FileText, Users, Shield, MessageSquare,
-  BarChart3, Layers, LogOut, Gavel, Home, GitMerge,
+  Map, FileText, ArrowLeftRight, Users, Shield, MessageSquare,
+  BarChart3, Layers, LogOut, ScrollText, Gavel, Home, GitMerge,
   Building2, Scale,
 } from 'lucide-react';
 import clsx from 'clsx';
@@ -14,20 +14,30 @@ import { getUser, logout, isOfficer, type JWTUser } from '@/lib/auth';
 const NAV_CITIZEN = [
   { href: '/my-parcels', icon: Home,           label: 'My Parcels'         },
   { href: '/map',        icon: Map,            label: 'GIS Map'            },
+  { href: '/bhu-naksha', icon: Map,            label: 'Bhu-Naksha'         },
   { href: '/bhumibot',   icon: Scale,          label: 'BhumiBot AI'        },
+  { href: '/scan',       icon: FileText,       label: 'Add Property (Scan)' },
   { href: '/mutation',   icon: GitMerge,       label: 'Mutations'          },
+  { href: '/transfer',   icon: ArrowLeftRight, label: 'Property Transfer'  },
   { href: '/succession', icon: Users,          label: 'Succession'         },
-  { href: '/nyaya-ai',   icon: MessageSquare,  label: 'NyayaAI'           },
+  { href: '/nyaya-ai',   icon: MessageSquare,  label: 'NyayaAI'            },
+  { href: '/ec',         icon: ScrollText,     label: 'EC Certificate'     },
   { href: '/auction',    icon: Gavel,          label: 'BhumiAuction'       },
+  { href: '/tribal',     icon: Shield,         label: 'TribalGuard'        },
 ];
 
 const NAV_OFFICER = [
   { href: '/officer-dashboard', icon: Building2,      label: 'Officer Queue'      },
   { href: '/officer-dashboard/audit-logs', icon: Shield, label: 'Audit & Chain Logs' },
   { href: '/map',               icon: Map,            label: 'GIS Map'            },
+  { href: '/bhu-naksha',         icon: Map,            label: 'Bhu-Naksha'         },
   { href: '/bhumibot',          icon: Scale,          label: 'BhumiBot AI'        },
   { href: '/scan',              icon: FileText,       label: 'RecordScan AI'      },
-  { href: '/nyaya-ai',          icon: MessageSquare,  label: 'NyayaAI'           },
+  { href: '/mutation',          icon: GitMerge,       label: 'Mutation Manager'   },
+  { href: '/succession',        icon: Users,          label: 'Succession'         },
+  { href: '/transfer',          icon: ArrowLeftRight, label: 'Property Transfer'  },
+  { href: '/nyaya-ai',          icon: MessageSquare,  label: 'NyayaAI'            },
+  { href: '/tribal',            icon: Shield,         label: 'TribalGuard'        },
   { href: '/auction',           icon: Gavel,          label: 'BhumiAuction'       },
   { href: '/analytics',         icon: BarChart3,      label: 'Analytics'          },
   { href: '/janganana',         icon: Layers,         label: 'Janganana'          },

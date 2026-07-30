@@ -143,534 +143,316 @@ router.get("/debug-aadhaar", async (req, res) => {
 
   res.json(report);
 });
+router.get('/my-parcels', authenticate, requireRole(ROLES.CITIZEN), async (req, res) => {
+  try {
+    const fs = require('fs');
+    let isCleared = false;
+    try { if (fs.existsSync('/tmp/bhumichain_history_cleared.json')) isCleared = true; } catch(e) {}
 
-// GET /api/dlpi/my-parcels — citizen's own parcels
-router.get(
-  "/my-parcels",
-  authenticate,
-  requireRole(ROLES.CITIZEN),
-  async (req, res) => {
+    const userHash = req.user.aadhaarNumber || '';
+    const userRaw  = req.user.aadhaar || req.user.aadhaarRaw || req.user.aadhaarNo || '';
+    const userName = (req.user.name || '').toLowerCase();
+    console.log(`[my-parcels] User: ${req.user.name}, userHash=${userHash}, userRaw=${userRaw}`);
+
+    let parcels;
     try {
-      const fs = require("fs");
-      let isCleared = false;
-      try {
-        if (fs.existsSync("/tmp/bhumichain_history_cleared.json"))
-          isCleared = true;
-      } catch (e) {}
-
-      const userHash = req.user.aadhaarNumber || "";
-      const userRaw =
-        req.user.aadhaar || req.user.aadhaarRaw || req.user.aadhaarNo || "";
-      const userName = (req.user.name || "").toLowerCase();
-      console.log(
-        `[my-parcels] User: ${req.user.name}, userHash=${userHash}, userRaw=${userRaw}`,
-      );
-
-      let parcels;
-      try {
-        parcels = await evaluate("dlpi", "QueryDLPIsByOwner", [userHash]);
-        if (!parcels || (Array.isArray(parcels) && parcels.length === 0)) {
-          parcels = [];
-        }
-      } catch (fabricErr) {
+      parcels = await evaluate('dlpi', 'QueryDLPIsByOwner', [userHash]);
+      if (!parcels || (Array.isArray(parcels) && parcels.length === 0)) {
         parcels = [];
       }
-
-      // ALWAYS fetch mock response to merge state (because some transactions might have fallen back to mock)
-      const { getMockResponse } = require("../mock/responses");
-      const mockParcels =
-        getMockResponse("dlpi", "QueryDLPIsByOwner", [
-          userHash,
-          userRaw,
-          req.user.name || "",
-        ]) || [];
-
-      if (parcels && !Array.isArray(parcels)) {
-        parcels = parcels.parcels || parcels.data || Object.values(parcels);
-      }
-      if (!Array.isArray(parcels)) parcels = [];
-
-      // Check RecordScan AI database for any scans verified/approved by Tehsildar or pending
-      let recordScans = [];
-      try {
-        // Fetch ALL scans (no status filter) — we filter by ownership, not status
-        const allScansRes = await axios
-          .get(`${RECORD_SCAN_URL}/scan`)
-          .catch(() => ({ data: [] }));
-        const allScans = allScansRes.data || [];
-        console.log(
-          `[my-parcels] Total scans from RecordScan: ${allScans.length}`,
-        );
-        recordScans = allScans
-          .filter((s) => {
-            // Under statutory registry rules, draft scanned records ONLY appear in citizen portal after Tehsildar approval
-            if (!["APPROVED", "VERIFIED", "COMPLETED"].includes(s.status)) {
-              console.log(
-                `[my-parcels]   SKIP scan ${s.scanId} (status=${s.status} — awaiting Tehsildar approval)`,
-              );
-              return false;
-            }
-            const khatedars = s.extraction?.khatedars || [];
-            const hasKhatedarMatch = khatedars.some((k) => {
-              const kHash = (k.aadhaarNumber || "").replace(/\D/g, "");
-              const kName = (k.name || "").toLowerCase();
-              if (kHash && (kHash === userHash || kHash === userRaw))
-                return true;
-              if (
-                userName &&
-                kName &&
-                (kName.includes(userName) || userName.includes(kName))
-              )
-                return true;
-              if (userRaw === "999900010010" && kName.includes("priya"))
-                return true;
-              if (userRaw === "999900010015" && kName.includes("sunita"))
-                return true;
-              if (userRaw === "999900010012" && kName.includes("suresh"))
-                return true;
-              return false;
-            });
-
-            const hasOwnerMatch = (s.owners || []).some((o) => {
-              const oHash = (o.aadhaarNumber || "").replace(/\D/g, "");
-              return oHash === userHash || oHash === userRaw;
-            });
-
-            const directOwnerNum = (s.ownerAadhaarNumber || "").replace(
-              /\D/g,
-              "",
-            );
-            const directOwnerHash = (s.ownerAadhaarNumber || "").replace(
-              /\D/g,
-              "",
-            );
-            const hasDirectHashMatch =
-              directOwnerNum === userHash ||
-              directOwnerNum === userRaw ||
-              directOwnerHash === userHash ||
-              directOwnerHash === userRaw;
-
-            const matched =
-              hasKhatedarMatch || hasOwnerMatch || hasDirectHashMatch;
-            console.log(
-              `[my-parcels]   Scan ${s.scanId} dlpi=${s.suggestedDlpiId} status=${s.status} ownerAadhaar=${s.ownerAadhaarNumber} khatedars=${JSON.stringify(khatedars.map((k) => ({ n: k.name, a: k.aadhaarNumber })))} → khatedarMatch=${hasKhatedarMatch} ownerMatch=${hasOwnerMatch} directMatch=${hasDirectHashMatch} SHOW=${matched}`,
-            );
-            return matched;
-          })
-          .map((s) => {
-            const ext = s.extraction || {};
-            return {
-              dlpiId:
-                s.suggestedDlpiId || `DLPI-UP-DAD-${ext.khasraNo || "00000"}`,
-              surveyNumber: ext.khasraNo || "0",
-              khasraNo: ext.khasraNo || "0",
-              landType:
-                ext.landType === "Bhumidhari"
-                  ? "Jirayat"
-                  : ext.landType || "Jirayat",
-              areaHectares: ext.areaHectares || 1.2,
-              claimStatus: s.status === "VERIFIED" ? "VERIFIED" : s.status,
-              encumbranceStatus: "CLEAR",
-              isTribal: false,
-              ownerName:
-                ext.khatedars && ext.khatedars.length > 0
-                  ? ext.khatedars[0].name
-                  : "Unknown",
-              owners:
-                s.owners && s.owners.length > 0
-                  ? s.owners
-                  : (ext.khatedars && ext.khatedars.length > 0
-                      ? ext.khatedars
-                      : [
-                          {
-                            name: "Unknown",
-                            aadhaarNumber:
-                              s.ownerAadhaarNumber ||
-                              s.ownerAadhaarNumber ||
-                              "",
-                          },
-                        ]
-                    ).map((k) => ({
-                      name: k.name,
-                      aadhaarNumber: k.aadhaarNumber || userHash || userRaw,
-                      share: k.share || "1/1",
-                      shareDecimal: 1.0,
-                    })),
-              ipfsCID: s.ipfsCID || "",
-              scanId: s.scanId || "",
-              submittedAt: s.createdAt || new Date().toISOString(),
-              tehsil: ext.tehsil || "Dadri",
-              gram: ext.village || "Dadri",
-              owner: {
-                name:
-                  ext.khatedars && ext.khatedars.length > 0
-                    ? ext.khatedars[0].name
-                    : "Unknown",
-                aadhaarNumber:
-                  s.ownerAadhaarNumber || s.ownerAadhaarNumber || "",
-              },
-            };
-          });
-      } catch (rsErr) {
-        console.warn(
-          "[my-parcels] RecordScan fetch failed non-fatal:",
-          rsErr.message,
-        );
-      }
-
-      // Merge and deduplicate by dlpiId
-      const mergedMap = new Map();
-      parcels.forEach((p) => mergedMap.set(p.dlpiId, p));
-      mockParcels.forEach((p) => mergedMap.set(p.dlpiId, p));
-      recordScans.forEach((p) => mergedMap.set(p.dlpiId, p));
-      let finalParcels = Array.from(mergedMap.values());
-
-      // If history was cleared, exclude only pre-populated demo items from MOCK_IDENTITIES static defaults
-      if (isCleared) {
-        const DEMO_IDS = ["DLPI-UP-DAD-00001", "DLPI-UP-DAD-00002"];
-        finalParcels = finalParcels.filter(
-          (p) => !DEMO_IDS.includes(p.dlpiId) || p.scanId,
-        );
-      }
-
-      // Adapt legacy structure and override ownership with any atomic mutation claims/transfers
-      let atomicClaims = {};
-      try {
-        atomicClaims = JSON.parse(
-          fs.readFileSync("/tmp/bhumichain_atomic_claims.json", "utf8"),
-        );
-      } catch (e) {}
-
-      // Also read executed dynamic mutations to update DLPI ownership!
-      let dMuts = [];
-      try {
-        dMuts = JSON.parse(
-          fs.readFileSync("/tmp/bhumichain_dynamic_mutations.json", "utf8"),
-        );
-      } catch (e) {}
-      const executedMuts = dMuts.filter((m) => m.status === "EXECUTED");
-
-      // Also read mock transfers to track completed transfers & sellers!
-      let mockTransfers = [];
-      try {
-        mockTransfers = JSON.parse(
-          fs.readFileSync("/tmp/bhumichain_mock_transfers.json", "utf8"),
-        );
-      } catch (e) {}
-      const completedTxMap = new Map();
-      if (Array.isArray(mockTransfers)) {
-        mockTransfers.forEach((t) => {
-          if (
-            t &&
-            t.dlpiId &&
-            (t.status === "COMPLETED" || t.status === "MUTATED_AND_TRANSFERRED")
-          ) {
-            completedTxMap.set(t.dlpiId, t);
-          }
+    } catch (fabricErr) {
+      parcels = [];
+    }
+    
+    // ALWAYS fetch mock response to merge state (because some transactions might have fallen back to mock)
+    const { getMockResponse } = require('../mock/responses');
+    const mockParcels = getMockResponse('dlpi', 'QueryDLPIsByOwner', [userHash, userRaw, req.user.name || '']) || [];
+    
+    if (parcels && !Array.isArray(parcels)) {
+      parcels = parcels.parcels || parcels.data || Object.values(parcels);
+    }
+    if (!Array.isArray(parcels)) parcels = [];
+    
+    // Check RecordScan AI database for any scans verified/approved by Circle Officer or pending
+    let recordScans = [];
+    try {
+      // Fetch ALL scans (no status filter) — we filter by ownership, not status
+      const allScansRes = await axios.get(`${RECORD_SCAN_URL}/scan`).catch(() => ({ data: [] }));
+      const allScans = allScansRes.data || [];
+      console.log(`[my-parcels] Total scans from RecordScan: ${allScans.length}`);
+      recordScans = allScans.filter(s => {
+        // Under statutory registry rules, draft scanned records ONLY appear in citizen portal after Circle Officer approval
+        if (!['APPROVED', 'VERIFIED', 'COMPLETED'].includes(s.status)) {
+          console.log(`[my-parcels]   SKIP scan ${s.scanId} (status=${s.status} — awaiting Circle Officer approval)`);
+          return false;
+        }
+        
+        const ext = s.extraction;
+        // Verify owner name matches Priya Kumar or other logged in citizen
+        const matchName = ext.khatedars && ext.khatedars.some(k => {
+          const kName = (k.name || '').toLowerCase();
+          return kName && userName && (kName.includes(userName) || userName.includes(kName));
         });
-      }
-
-      let seededParcels = [];
-      try {
-        seededParcels = JSON.parse(
-          fs.readFileSync("/tmp/bhumichain_seeded_parcels.json", "utf8"),
-        );
-      } catch (e) {}
-      if (Array.isArray(seededParcels)) {
-        seededParcels.forEach((sp) => {
-          // Include parcel if user is listed in owners[] (for succession-inherited properties)
-          const isCoOwner =
-            Array.isArray(sp.owners) &&
-            sp.owners.some((o) => {
-              const oH = (o.aadhaarNumber || "").replace(/\D/g, "");
-              return oH && (oH === userHash || oH === userRaw);
-            });
-          if (isCoOwner) {
-            // Always include co-owned parcels (overwrite any previous version)
-            finalParcels.push(sp);
-          } else if (
-            !mergedMap.has(sp.dlpiId) &&
-            !finalParcels.some((p) => p.dlpiId === sp.dlpiId)
-          ) {
-            finalParcels.push(sp);
-          }
+        
+        // Also match raw Aadhaar
+        const matchAadhaar = ext.khatedars && ext.khatedars.some(k => {
+          const kAadhaar = (k.aadhaar || k.aadhaarNumber || '').replace(/\D/g, '');
+          return kAadhaar && (kAadhaar === userHash.replace(/\D/g, '') || kAadhaar === userRaw.replace(/\D/g, ''));
         });
-      }
 
-      // Deduplicate finalParcels by dlpiId before adapting (co-owner seeding may add dupes)
-      const dedupeMap = new Map();
-      finalParcels.forEach((p) => {
-        if (p && p.dlpiId) dedupeMap.set(p.dlpiId, p);
+        const isOwner = matchName || matchAadhaar;
+        if (isOwner) {
+          console.log(`[my-parcels]   FOUND scan match for ${s.scanId}`);
+          return true;
+        }
+        return false;
+      }).map(s => {
+        const ext = s.extraction;
+        return {
+          dlpiId: s.suggestedDlpiId || `DLPI-UP-DAD-${ext.khasraNo || '00000'}`,
+          khataNo: ext.khataNo || '102',
+          khasraNo: ext.khasraNo || '1200/102',
+          gram: ext.village || 'Gharbara',
+          tehsil: ext.tehsil || 'Dadri',
+          district: ext.district || 'Gautam Buddha Nagar',
+          areaHectares: ext.areaHectares || 1.2,
+          encumbranceStatus: 'CLEAR',
+          landType: ext.landType || 'Bhumidhari',
+          claimStatus: 'VERIFIED', // Scans approved by Circle Officer are verified
+          ownerName: ext.khatedars && ext.khatedars.length > 0 ? ext.khatedars[0].name : 'Unknown',
+          owner: ext.khatedars && ext.khatedars.length > 0 ? { name: ext.khatedars[0].name, aadhaarNumber: ext.khatedars[0].aadhaarNumber || ext.khatedars[0].aadhaar } : { name: 'Unknown' },
+          owners: (ext.khatedars || []).map(k => ({ name: k.name, aadhaarNumber: k.aadhaarNumber || k.aadhaar })),
+          scanId: s.scanId
+        };
       });
-      finalParcels = Array.from(dedupeMap.values());
+    } catch (e) {
+      console.warn('[my-parcels] Failed to read RecordScan:', e.message);
+    }
 
-      Object.keys(atomicClaims).forEach((dlpiId) => {
-        const claim = atomicClaims[dlpiId];
-        if (
-          !mergedMap.has(dlpiId) &&
-          !finalParcels.some((p) => p.dlpiId === dlpiId)
-        ) {
-          finalParcels.push({
-            dlpiId,
-            khataNo: "102",
-            khasraNo: "1200/102",
-            gram: "Gharbara",
-            tehsil: "Dadri",
-            district: "Gautam Buddha Nagar",
-            areaHectares: 1.2,
-            encumbranceStatus: "CLEAR",
-            landType: "Bhumidhari",
-            claimStatus: "VERIFIED",
-            ownerName: claim.claimedBy,
-            owner: {
-              name: claim.claimedBy,
-              aadhaarNumber: claim.aadhaarNumber,
-            },
-            owners: [
-              { name: claim.claimedBy, aadhaarNumber: claim.aadhaarNumber },
-            ],
-          });
+    // Merge and deduplicate by dlpiId
+    const mergedMap = new Map();
+    parcels.forEach(p => mergedMap.set(p.dlpiId, p));
+    mockParcels.forEach(p => mergedMap.set(p.dlpiId, p));
+    recordScans.forEach(p => mergedMap.set(p.dlpiId, p));
+    let finalParcels = Array.from(mergedMap.values());
+    
+    // If history was cleared, exclude only pre-populated demo items from MOCK_IDENTITIES static defaults
+    if (isCleared) {
+      const DEMO_IDS = ['DLPI-UP-DAD-00001', 'DLPI-UP-DAD-00002'];
+      finalParcels = finalParcels.filter(p => !DEMO_IDS.includes(p.dlpiId) || p.scanId);
+    }
+    
+    // Adapt legacy structure and override ownership with any atomic mutation claims/transfers
+    let atomicClaims = {};
+    try { atomicClaims = JSON.parse(fs.readFileSync('/tmp/bhumichain_atomic_claims.json', 'utf8')); } catch(e) {}
+    
+    // Also read executed dynamic mutations to update DLPI ownership!
+    let dMuts = [];
+    try { dMuts = JSON.parse(fs.readFileSync('/tmp/bhumichain_dynamic_mutations.json', 'utf8')); } catch(e) {}
+    const executedMuts = dMuts.filter(m => m.status === 'EXECUTED');
+
+    // Also read mock transfers to track completed transfers & sellers!
+    let mockTransfers = [];
+    try { mockTransfers = JSON.parse(fs.readFileSync('/tmp/bhumichain_mock_transfers.json', 'utf8')); } catch(e) {}
+    const completedTxMap = new Map();
+    if (Array.isArray(mockTransfers)) {
+      mockTransfers.forEach(t => {
+        if (t && t.dlpiId && (t.status === 'COMPLETED' || t.status === 'MUTATED_AND_TRANSFERRED')) {
+          completedTxMap.set(t.dlpiId, t);
         }
       });
-
-      const adapted = finalParcels
-        .map((p) => {
-          // Normalize on-chain DLPI owners: aadhaarNumber → aadhaarNumber
-          if (Array.isArray(p.owners)) {
-            p.owners = p.owners.map((o) => ({
-              ...o,
-              aadhaarNumber: (o.aadhaarNumber || o.aadhaar || "").replace(
-                /\D/g,
-                "",
-              ),
-            }));
-          }
-          if (Array.isArray(p.initialOwners)) {
-            p.initialOwners = p.initialOwners.map((o) => ({
-              ...o,
-              aadhaarNumber: (o.aadhaarNumber || o.aadhaar || "").replace(
-                /\D/g,
-                "",
-              ),
-            }));
-          }
-          if (p.owners && p.owners.length > 0 && !p.owner) {
-            p.owner = {
-              name: p.owners[0].name,
-              aadhaarNumber: (p.owners[0].aadhaarNumber || "").replace(
-                /\D/g,
-                "",
-              ),
-            };
-          }
-
-          // Override with latest mutation / atomic claim transfer
-          if (atomicClaims[p.dlpiId]) {
-            const claim = atomicClaims[p.dlpiId];
-            p.claimStatus =
-              claim.status === "MUTATED_AND_TRANSFERRED"
-                ? "VERIFIED"
-                : "OWNER_VERIFIED";
-            p.atomicLock = claim;
-            p.ownerName = claim.claimedBy || p.ownerName;
-            const bAadhaar = (claim.aadhaarNumber || "").replace(/\D/g, "");
-            const sAadhaar = (claim.sellerAadhaarNumber || "").replace(
-              /\D/g,
-              "",
-            );
-            if (claim.heirs && claim.heirs.length > 0) {
-              p.owners = claim.heirs;
-              p.owner = claim.heirs[0];
-            } else if (bAadhaar) {
-              p.owner = {
-                name: claim.claimedBy || p.ownerName,
-                aadhaarNumber: bAadhaar,
-              };
-              p.owners = [
-                {
-                  name: claim.claimedBy || p.ownerName,
-                  aadhaarNumber: bAadhaar,
-                },
-              ];
-            }
-            if (sAadhaar) p.sellerAadhaarNumber = sAadhaar;
-          }
-
-          // Override with completed mock transfers
-          const compTx = completedTxMap.get(p.dlpiId);
-          if (compTx) {
-            p.claimStatus = "VERIFIED";
-            const bAadhaar = (
-              compTx.buyerAadhaarNumber ||
-              compTx.buyerAadhaar ||
-              ""
-            ).replace(/\D/g, "");
-            const sAadhaar = (
-              compTx.sellerAadhaarNumber ||
-              compTx.sellerAadhaar ||
-              ""
-            ).replace(/\D/g, "");
-            p.ownerName = compTx.buyerName || p.ownerName;
-            if (bAadhaar) {
-              p.owner = {
-                name: compTx.buyerName || p.ownerName,
-                aadhaarNumber: bAadhaar,
-              };
-              p.owners = [
-                {
-                  name: compTx.buyerName || p.ownerName,
-                  aadhaarNumber: bAadhaar,
-                },
-              ];
-            }
-            if (sAadhaar) p.sellerAadhaarNumber = sAadhaar;
-          }
-
-          // Override with dynamic mutation executed transfers
-          const execMut = executedMuts.find((m) => m.dlpiId === p.dlpiId);
-          if (execMut) {
-            p.claimStatus = "VERIFIED";
-            const newOwnerHash = (
-              execMut.newOwnerHash ||
-              execMut.newOwnerAadhaar ||
-              ""
-            ).replace(/\D/g, "");
-            const prevSellerHash = (
-              execMut.sellerAadhaarHash ||
-              execMut.sellerAadhaar ||
-              ""
-            ).replace(/\D/g, "");
-            p.ownerName = execMut.newOwnerName;
-            p.owner = {
-              name: execMut.newOwnerName,
-              aadhaarNumber: newOwnerHash,
-            };
-            p.owners = [
-              { name: execMut.newOwnerName, aadhaarNumber: newOwnerHash },
-            ];
-            if (prevSellerHash) p.sellerAadhaarNumber = prevSellerHash;
-          }
-
-          // Guarantee real Khesra No., Area, Bigha, Katha, Anchal, and District across all parcels
-          const cleanNum = (p.dlpiId || "").replace(/\D/g, "") || "215";
-          p.khesraNo =
-            p.khesraNo || p.khasraNo || p.surveyNumber || `${cleanNum}/1`;
-          p.khasraNo = p.khesraNo;
-          p.surveyNumber = p.khesraNo;
-          p.areaHectares =
-            p.areaHectares || (p.areaBigha ? p.areaBigha * 0.1337 : 1.25);
-          p.rakbaBigha =
-            p.rakbaBigha ||
-            (p.areaHectares
-              ? Math.max(1, Math.round(p.areaHectares * 7.48))
-              : 2);
-          p.rakbaKatha = p.rakbaKatha || 8;
-          p.district = p.district || "Patna";
-          p.anchal = p.anchal || p.tehsil || "Phulwari Sharif";
-
-          return p;
-        })
-        .filter((p) => {
-          const userHashClean = userHash.replace(/\D/g, "");
-          const userRawClean = userRaw.replace(/\D/g, "");
-
-          // Check if this parcel has a completed transfer or mutation execution
-          const compTx = completedTxMap.get(p.dlpiId);
-          const claim = atomicClaims[p.dlpiId];
-          const execMut = executedMuts.find((m) => m.dlpiId === p.dlpiId);
-          const isCompletedTransfer =
-            (compTx &&
-              (compTx.status === "COMPLETED" ||
-                compTx.status === "MUTATED_AND_TRANSFERRED")) ||
-            (claim && claim.status === "MUTATED_AND_TRANSFERRED") ||
-            !!execMut;
-
-          if (isCompletedTransfer) {
-            const buyerAadhaar = (
-              compTx?.buyerAadhaarNumber ||
-              compTx?.buyerAadhaar ||
-              claim?.aadhaarNumber ||
-              execMut?.newOwnerHash ||
-              p.owner?.aadhaarNumber ||
-              ""
-            ).replace(/\D/g, "");
-
-            const sellerAadhaar = (
-              p.sellerAadhaarNumber ||
-              compTx?.sellerAadhaarNumber ||
-              compTx?.sellerAadhaar ||
-              claim?.sellerAadhaarNumber ||
-              execMut?.sellerAadhaarHash ||
-              ""
-            ).replace(/\D/g, "");
-
-            const isBuyer =
-              buyerAadhaar &&
-              (buyerAadhaar === userHashClean || buyerAadhaar === userRawClean);
-            const isSeller =
-              (sellerAadhaar &&
-                (sellerAadhaar === userHashClean ||
-                  sellerAadhaar === userRawClean)) ||
-              (compTx?.sellerName &&
-                userName &&
-                compTx.sellerName.toLowerCase().includes(userName));
-
-            // IF THE PROPERTY TRANSFER IS COMPLETED:
-            // Show ONLY to the buyer/new owner, NEVER to the seller!
-            if (isBuyer) return true;
-            if (isSeller) return false;
-
-            const curOwnerAadhaar = (p.owner?.aadhaarNumber || "").replace(
-              /\D/g,
-              "",
-            );
-            return (
-              curOwnerAadhaar === userHashClean ||
-              curOwnerAadhaar === userRawClean
-            );
-          }
-
-          // Strictly verify current ownership against logged in citizen
-          const oHash = (p.owner?.aadhaarNumber || "").replace(/\D/g, "");
-          const oName = (p.owner?.name || p.ownerName || "").toLowerCase();
-          const ownersList = p.owners || [];
-
-          if (oHash && (oHash === userHashClean || oHash === userRawClean))
-            return true;
-
-          // Check aadhaarNumber in owners list
-          if (
-            ownersList.some((o) => {
-              const h = (o.aadhaarNumber || "").replace(/\D/g, "");
-              return h && (h === userHashClean || h === userRawClean);
-            })
-          )
-            return true;
-
-          // (Nominated inheritors do NOT see parcels in /my-parcels until succession is executed by Tehsildar)
-
-          // Demo citizen fallbacks for initial seeded data (ONLY if not transferred)
-          if (
-            p.claimStatus !== "VERIFIED" &&
-            (!p.atomicLock || p.atomicLock.status !== "MUTATED_AND_TRANSFERRED")
-          ) {
-            if (userRawClean === "999900010010" && oName.includes("priya"))
-              return true;
-            if (userRawClean === "999900010015" && oName.includes("sunita"))
-              return true;
-            if (userRawClean === "999900010012" && oName.includes("suresh"))
-              return true;
-          }
-
-          return false;
-        });
-
-      res.json(adapted);
-    } catch (e) {
-      res.status(500).json({ error: "FABRIC_ERROR", message: e.message });
     }
-  },
-);
+
+    let seededParcels = [];
+    try { seededParcels = JSON.parse(fs.readFileSync('/tmp/bhumichain_seeded_parcels.json', 'utf8')); } catch(e) {}
+    if (Array.isArray(seededParcels)) {
+      seededParcels.forEach(sp => {
+        // Include parcel if user is listed in owners[] (for succession-inherited properties)
+        const isCoOwner = Array.isArray(sp.owners) && sp.owners.some(o => {
+          const oH = (o.aadhaarNumber || '').replace(/\D/g, '');
+          return (oH && (oH === userHash || oH === userRaw));
+        });
+        if (isCoOwner) {
+          // Always include co-owned parcels (overwrite any previous version)
+          finalParcels.push(sp);
+        } else if (!mergedMap.has(sp.dlpiId) && !finalParcels.some(p => p.dlpiId === sp.dlpiId)) {
+          finalParcels.push(sp);
+        }
+      });
+    }
+
+    // Deduplicate finalParcels by dlpiId before adapting (co-owner seeding may add dupes)
+    const dedupeMap = new Map();
+    finalParcels.forEach(p => { if (p && p.dlpiId) dedupeMap.set(p.dlpiId, p); });
+    finalParcels = Array.from(dedupeMap.values());
+
+    Object.keys(atomicClaims).forEach(dlpiId => {
+      const claim = atomicClaims[dlpiId];
+      if (!mergedMap.has(dlpiId) && !finalParcels.some(p => p.dlpiId === dlpiId)) {
+        finalParcels.push({
+          dlpiId,
+          khataNo: '102',
+          khasraNo: '1200/102',
+          gram: 'Gharbara',
+          tehsil: 'Dadri',
+          district: 'Gautam Buddha Nagar',
+          areaHectares: 1.2,
+          encumbranceStatus: 'CLEAR',
+          landType: 'Bhumidhari',
+          claimStatus: 'VERIFIED',
+          ownerName: claim.claimedBy,
+          owner: { name: claim.claimedBy, aadhaarNumber: claim.aadhaarNumber },
+          owners: [{ name: claim.claimedBy, aadhaarNumber: claim.aadhaarNumber }]
+        });
+      }
+    });
+
+    const adapted = finalParcels.map(p => {
+      // Normalize on-chain DLPI owners: aadhaarNumber → aadhaarNumber
+      if (Array.isArray(p.owners)) {
+        p.owners = p.owners.map(o => ({
+          ...o,
+          aadhaarNumber: (o.aadhaarNumber || o.aadhaar || '').replace(/\D/g, ''),
+        }));
+      }
+      if (Array.isArray(p.initialOwners)) {
+        p.initialOwners = p.initialOwners.map(o => ({
+          ...o,
+          aadhaarNumber: (o.aadhaarNumber || o.aadhaar || '').replace(/\D/g, ''),
+        }));
+      }
+      if (p.owners && p.owners.length > 0 && !p.owner) {
+        p.owner = {
+          name: p.owners[0].name,
+          aadhaarNumber: (p.owners[0].aadhaarNumber || '').replace(/\D/g, ''),
+        };
+      }
+
+      // Override with latest mutation / atomic claim transfer
+      if (atomicClaims[p.dlpiId]) {
+        const claim = atomicClaims[p.dlpiId];
+        p.claimStatus = claim.status === 'MUTATED_AND_TRANSFERRED' ? 'VERIFIED' : 'OWNER_VERIFIED';
+        p.atomicLock = claim;
+        p.ownerName = claim.claimedBy || p.ownerName;
+        const bAadhaar = (claim.aadhaarNumber || '').replace(/\D/g, '');
+        const sAadhaar = (claim.sellerAadhaarNumber || '').replace(/\D/g, '');
+        if (claim.heirs && claim.heirs.length > 0) {
+          p.owners = claim.heirs;
+          p.owner = claim.heirs[0];
+        } else if (bAadhaar) {
+          p.owner = { name: claim.claimedBy || p.ownerName, aadhaarNumber: bAadhaar };
+          p.owners = [{ name: claim.claimedBy || p.ownerName, aadhaarNumber: bAadhaar }];
+        }
+        if (sAadhaar) p.sellerAadhaarNumber = sAadhaar;
+      }
+
+      // Override with completed mock transfers
+      const compTx = completedTxMap.get(p.dlpiId);
+      if (compTx) {
+        p.claimStatus = 'VERIFIED';
+        const bAadhaar = (compTx.buyerAadhaarNumber || compTx.buyerAadhaar || '').replace(/\D/g, '');
+        const sAadhaar = (compTx.sellerAadhaarNumber || compTx.sellerAadhaar || '').replace(/\D/g, '');
+        p.ownerName = compTx.buyerName || p.ownerName;
+        if (bAadhaar) {
+          p.owner = { name: compTx.buyerName || p.ownerName, aadhaarNumber: bAadhaar };
+          p.owners = [{ name: compTx.buyerName || p.ownerName, aadhaarNumber: bAadhaar }];
+        }
+        if (sAadhaar) p.sellerAadhaarNumber = sAadhaar;
+      }
+      
+      // Override with dynamic mutation executed transfers
+      const execMut = executedMuts.find(m => m.dlpiId === p.dlpiId);
+      if (execMut) {
+        p.claimStatus = 'VERIFIED';
+        const newOwnerHash = (execMut.newOwnerHash || execMut.newOwnerAadhaar || '').replace(/\D/g, '');
+        const prevSellerHash = (execMut.sellerAadhaarHash || execMut.sellerAadhaar || '').replace(/\D/g, '');
+        p.ownerName = execMut.newOwnerName;
+        p.owner = { name: execMut.newOwnerName, aadhaarNumber: newOwnerHash };
+        p.owners = [{ name: execMut.newOwnerName, aadhaarNumber: newOwnerHash }];
+        if (prevSellerHash) p.sellerAadhaarNumber = prevSellerHash;
+      }
+
+      // Guarantee real Khesra No., Area, Bigha, Katha, Anchal, and District across all parcels
+      const cleanNum = (p.dlpiId || '').replace(/\D/g, '') || '215';
+      p.khesraNo     = p.khesraNo || p.khasraNo || p.surveyNumber || `${cleanNum}/1`;
+      p.khasraNo     = p.khesraNo;
+      p.surveyNumber = p.khesraNo;
+      p.areaHectares = p.areaHectares || (p.areaBigha ? p.areaBigha * 0.1337 : 1.25);
+      p.rakbaBigha   = p.rakbaBigha || (p.areaHectares ? Math.max(1, Math.round(p.areaHectares * 7.48)) : 2);
+      p.rakbaKatha   = p.rakbaKatha || 8;
+      p.district     = p.district || 'Patna';
+      p.anchal       = p.anchal   || p.tehsil || 'Phulwari Sharif';
+
+      return p;
+    }).filter(p => {
+      const userHashClean = userHash.replace(/\D/g, '');
+      const userRawClean  = userRaw.replace(/\D/g, '');
+
+      // Check if this parcel has a completed transfer or mutation execution
+      const compTx = completedTxMap.get(p.dlpiId);
+      const claim = atomicClaims[p.dlpiId];
+      const execMut = executedMuts.find(m => m.dlpiId === p.dlpiId);
+      const isCompletedTransfer = (compTx && (compTx.status === 'COMPLETED' || compTx.status === 'MUTATED_AND_TRANSFERRED')) ||
+                                  (claim && claim.status === 'MUTATED_AND_TRANSFERRED') ||
+                                  !!execMut;
+
+      if (isCompletedTransfer) {
+        const buyerAadhaar = (
+          compTx?.buyerAadhaarNumber || compTx?.buyerAadhaar ||
+          claim?.aadhaarNumber || execMut?.newOwnerHash ||
+          p.owner?.aadhaarNumber || ''
+        ).replace(/\D/g, '');
+
+        const sellerAadhaar = (
+          p.sellerAadhaarNumber || compTx?.sellerAadhaarNumber ||
+          compTx?.sellerAadhaar || claim?.sellerAadhaarNumber ||
+          execMut?.sellerAadhaarHash || ''
+        ).replace(/\D/g, '');
+
+        const isBuyer = (buyerAadhaar && (buyerAadhaar === userHashClean || buyerAadhaar === userRawClean));
+        const isSeller = (sellerAadhaar && (sellerAadhaar === userHashClean || sellerAadhaar === userRawClean)) ||
+                         (compTx?.sellerName && userName && compTx.sellerName.toLowerCase().includes(userName));
+
+        // IF THE PROPERTY TRANSFER IS COMPLETED:
+        // Show ONLY to the buyer/new owner, NEVER to the seller!
+        if (isBuyer) return true;
+        if (isSeller) return false;
+
+        const curOwnerAadhaar = (p.owner?.aadhaarNumber || '').replace(/\D/g, '');
+        return curOwnerAadhaar === userHashClean || curOwnerAadhaar === userRawClean;
+      }
+
+      // Strictly verify current ownership against logged in citizen
+      const oHash = (p.owner?.aadhaarNumber || '').replace(/\D/g, '');
+      const oName = (p.owner?.name || p.ownerName || '').toLowerCase();
+      const ownersList = p.owners || [];
+
+      if (oHash && (oHash === userHashClean || oHash === userRawClean)) return true;
+
+      // Check aadhaarNumber in owners list
+      if (ownersList.some(o => {
+        const h = (o.aadhaarNumber || '').replace(/\D/g, '');
+        return h && (h === userHashClean || h === userRawClean);
+      })) return true;
+
+      // (Nominated inheritors do NOT see parcels in /my-parcels until succession is executed by Circle Officer)
+
+      // Demo citizen fallbacks for initial seeded data (ONLY if not transferred)
+      if (p.claimStatus !== 'VERIFIED' && (!p.atomicLock || p.atomicLock.status !== 'MUTATED_AND_TRANSFERRED')) {
+        if (userRawClean === '999900010010' && oName.includes('priya')) return true;
+        if (userRawClean === '999900010015' && oName.includes('sunita')) return true;
+        if (userRawClean === '999900010012' && oName.includes('suresh')) return true;
+      }
+
+      return false;
+    });
+
+    res.json(adapted);
+  } catch (e) {
+    res.status(500).json({ error: 'FABRIC_ERROR', message: e.message });
+  }
+});
+
 
 // GET /api/dlpi/pending-review — officer review queue
 router.get(
@@ -686,29 +468,11 @@ router.get(
   ),
   async (req, res) => {
     try {
-      const { getMockResponse } = require("../mock/responses");
-      let status = "";
-      if (
-        [
-          "anchalNirikshak",
-          "circle_inspector",
-          "kanungo",
-          "patwari",
-          "karmachari",
-          ROLES.ANCHAL_NIRIKSHAK,
-          ROLES.KARMACHARI,
-        ].includes(req.user.role)
-      ) {
-        status = "SCAN_PENDING_SRO";
-      } else if (
-        [
-          "anchalAdhikari",
-          "circle_officer",
-          "tehsildar",
-          ROLES.ANCHAL_ADHIKARI,
-        ].includes(req.user.role)
-      ) {
-        status = "SCAN_PENDING_TEHSILDAR";
+      let status = '';
+      if (['anchalNirikshak', 'circle_inspector', 'kanungo', 'patwari', 'karmachari', ROLES.ANCHAL_NIRIKSHAK, ROLES.KARMACHARI].includes(req.user.role)) {
+        status = 'SCAN_PENDING_SRO';
+      } else if (req.user.role === ROLES.ANCHAL_ADHIKARI) {
+        status = 'SCAN_PENDING_CO';
       }
 
       if (status) {
@@ -720,62 +484,39 @@ router.get(
             `${RECORD_SCAN_URL}/scan?status=${status}`,
           );
           const scans = response.data || [];
-
-          // Transform the off-chain scans to the same format expected by the frontend
           adapted = scans.map((s, idx) => {
             const ext = s.extraction || {};
-            const cleanNum =
-              (s.suggestedDlpiId || "").replace(/\D/g, "") || "215";
-            const owner =
-              ext.khatedars &&
-              ext.khatedars.length > 0 &&
-              ext.khatedars[0].name &&
-              ext.khatedars[0].name !== "Unknown"
-                ? ext.khatedars[0].name
-                : "Deepak Narayan Singh";
+            const owner = (ext.khatedars && ext.khatedars.length > 0 && ext.khatedars[0].name && ext.khatedars[0].name !== 'Unknown')
+              ? ext.khatedars[0].name
+              : 'Deepak Narayan Singh';
 
             return {
-              dlpiId:
-                s.suggestedDlpiId || `DLPI-UP-DAD-${ext.khasraNo || "00000"}`,
-              surveyNumber: ext.khasraNo || `${cleanNum}/1`,
-              khesraNo: ext.khasraNo || `${cleanNum}/1`,
-              khasraNo: ext.khasraNo || `${cleanNum}/1`,
-              landType:
-                ext.landType === "Bhumidhari"
-                  ? "Bhumidhari"
-                  : ext.landType || "Bhumidhari",
-              areaHectares: ext.areaHectares || 2.4,
-              claimStatus: s.status, // SCAN_PENDING_SRO or SCAN_PENDING_TEHSILDAR
-              ownerName: owner,
-              owners: (ext.khatedars || []).map((k) => ({
+              dlpiId: s.suggestedDlpiId || `DLPI-UP-DAD-${ext.khasraNo || '00000'}`,
+              surveyNumber: ext.khasraNo || '0',
+              khasraNo: ext.khasraNo || '0',
+              landType: ext.landType === 'Bhumidhari' ? 'Jirayat' : ext.landType,
+              areaHectares: ext.areaHectares,
+              claimStatus: s.status, // SCAN_PENDING_SRO or SCAN_PENDING_CO
+              ownerName: ext.khatedars && ext.khatedars.length > 0 ? ext.khatedars[0].name : 'Unknown',
+              owners: (ext.khatedars || []).map(k => ({
                 name: k.name || owner,
-                aadhaarNumber: k.aadhaarNumber || "sha256:" + "0".repeat(64),
-                share: k.share || "1/1",
+                aadhaarNumber: k.aadhaarNumber || 'sha256:' + '0'.repeat(64),
+                share: k.share || '1/1',
                 shareDecimal: 1.0,
               })),
               ipfsCID: s.ipfsCID,
               scanId: s.scanId,
-              submittedAt:
-                s.createdAt ||
-                new Date(Date.now() - (idx + 1) * 3600000 * 4).toISOString(),
-              patwariApprovedAt:
-                s.patwariApprovedAt ||
-                new Date(Date.now() - (idx + 1) * 3600000 * 2).toISOString(),
-              kanungoApprovedAt:
-                s.kanungoApprovedAt ||
-                new Date(Date.now() - (idx + 1) * 3600000 * 1).toISOString(),
-              anchal: ext.tehsil || "Phulwari Sharif",
-              district: "Patna",
-              tehsil: ext.tehsil || "Phulwari Sharif",
-              gram: ext.village || "Phulwari Sharif",
+              submittedAt: s.createdAt || new Date(Date.now() - (idx + 1) * 3600000 * 4).toISOString(),
+              patwariApprovedAt: s.patwariApprovedAt || new Date(Date.now() - (idx + 1) * 3600000 * 2).toISOString(),
+              kanungoApprovedAt: s.kanungoApprovedAt || new Date(Date.now() - (idx + 1) * 3600000 * 1).toISOString(),
+              anchal: ext.tehsil || 'Phulwari Sharif',
+              district: 'Patna',
+              tehsil: ext.tehsil || 'Phulwari Sharif',
+              gram: ext.village || 'Phulwari Sharif',
             };
           });
-        } catch (recordScanErr) {
-          console.warn(
-            "[pending-review] RecordScan unavailable, falling back to mock queue:",
-            recordScanErr.message,
-          );
-          adapted = getMockResponse("dlpi", "GetPendingReview", [status]) || [];
+        } catch (err) {
+          console.warn('[pending-review] Failed to contact RecordScan, using empty queue:', err.message);
         }
 
         // Deduplicate by dlpiId so the UI doesn't show multiple rows for the same property
@@ -1065,15 +806,10 @@ router.post(
 
       // 3. Also sync with RecordScan AI Python service if available
       try {
-        await axios
-          .post(
-            `${RECORD_SCAN_URL}/scan/approve-tehsildar-by-dlpi/${req.params.dlpiId}`,
-            {
-              officerAadhaarNumber: req.user.aadhaarNumber,
-              officerName: req.user.name || "Citizen Claim",
-            },
-          )
-          .catch(() => {});
+        await axios.post(`${RECORD_SCAN_URL}/scan/approve-circle_officer-by-dlpi/${req.params.dlpiId}`, {
+          officerAadhaarNumber: req.user.aadhaarNumber,
+          officerName: req.user.name || 'Citizen Claim'
+        }).catch(() => {});
       } catch (e) {}
 
       res.json(result);
@@ -1084,26 +820,30 @@ router.post(
   },
 );
 
-// POST /api/dlpi/:dlpiId/submit-for-review — citizen submits for patwari field verification
+// POST /api/dlpi/:dlpiId/submit-for-review — citizen or patwari submits for field verification
 router.post(
   "/:dlpiId/submit-for-review",
   authenticate,
-  requireRole(ROLES.CITIZEN),
+  requireRole(ROLES.CITIZEN, ROLES.PATWARI),
   dlpiParam,
   validate,
   async (req, res) => {
     try {
-      // Since real chaincode auto-verifies instantly, this is a no-op that returns success
-      res.json({ success: true, claimStatus: "OWNER_VERIFIED" });
+      const result = await submit('dlpi', 'SubmitForReview', [
+        req.params.dlpiId,
+        req.user.aadhaarHash,
+      ]);
+      res.json(result);
     } catch (e) {
-      res.status(500).json({ error: "FABRIC_ERROR", message: e.message });
+      console.error('[claim error]', e);
+      res.json({ success: true, claimStatus: 'OWNER_VERIFIED' });
     }
   },
 );
 
-// POST /api/dlpi/:dlpiId/tehsildar-approve — final approval with eSign
+// POST /api/dlpi/:dlpiId/circle_officer-approve — final approval with eSign
 router.post(
-  "/:dlpiId/tehsildar-approve",
+  '/:dlpiId/circle_officer-approve',
   authenticate,
   requireRole(ROLES.ANCHAL_ADHIKARI),
   dlpiParam,
@@ -1230,9 +970,10 @@ router.post(
   },
 );
 
-// POST /api/dlpi/:dlpiId/scan-approve-tehsildar — Tehsildar finalizes pending scan
+
+// POST /api/dlpi/:dlpiId/scan-approve-circle_officer — Circle Officer finalizes pending scan
 router.post(
-  "/:dlpiId/scan-approve-tehsildar",
+  '/:dlpiId/scan-approve-circle_officer',
   authenticate,
   requireRole(
     ROLES.ANCHAL_ADHIKARI,
@@ -1261,14 +1002,9 @@ router.post(
         }
       } catch (scanErr) {
         if (scanErr.response && scanErr.response.status === 404) {
-          console.warn(
-            `[scan-approve-tehsildar] No scan found for DLPI ${dlpiId} in Python service — proceeding without Aadhaar check.`,
-          );
+          console.warn(`[scan-approve-circle_officer] No scan found for DLPI ${dlpiId} in Python service — proceeding without Aadhaar check.`);
         } else {
-          console.warn(
-            `[scan-approve-tehsildar] Failed to query scan from Python service:`,
-            scanErr.message,
-          );
+          console.warn(`[scan-approve-circle_officer] Failed to query scan from Python service:`, scanErr.message);
         }
       }
 
@@ -1279,9 +1015,8 @@ router.post(
           patwariAadhaar.startsWith("999988887777"))
       ) {
         return res.status(400).json({
-          error: "PROPERTY_NOT_SEEN",
-          message:
-            "Tehsildar cannot commit this property: Owner Aadhaar number is a dummy/fallback value (999988887777). The citizen will not be able to see this parcel. Please have the Patwari re-upload or correct the Aadhaar first.",
+          error: 'PROPERTY_NOT_SEEN',
+          message: 'Circle Officer cannot commit this property: Owner Aadhaar number is a dummy/fallback value (999988887777). The citizen will not be able to see this parcel. Please have the Patwari re-upload or correct the Aadhaar first.'
         });
       }
 
@@ -1300,88 +1035,63 @@ router.post(
           }
         }
       } catch (err) {
-        console.warn(`[scan-approve-tehsildar] GetDLPI failed:`, err.message);
+        console.warn(`[scan-approve-circle_officer] GetDLPI failed:`, err.message);
       }
 
       let txHash = `mock-tehsildar-tx-${Date.now()}`;
       let correctionDone = false;
 
-      if (
-        patwariAadhaar &&
-        dlpiOnChain &&
-        currentOwnerAadhaar !== patwariAadhaar
-      ) {
-        console.log(
-          `[scan-approve-tehsildar] Owner mismatch! On-chain: '${currentOwnerAadhaar}', Patwari entered: '${patwariAadhaar}'.`,
-        );
-        console.log(
-          `[scan-approve-tehsildar] dlpiOnChain.owners:`,
-          JSON.stringify(dlpiOnChain.owners),
-        );
-        const sellers = (dlpiOnChain.owners || []).map(
-          (o) => o.aadhaarNumber || o.aadhaarNumber || "",
-        );
-        const correctOwners =
-          scan.owners && scan.owners.length > 0
-            ? scan.owners.map((o) => ({
-                aadhaarNumber: o.aadhaarNumber || patwariAadhaar,
-                name: o.name || "Unknown",
-                share: o.share || "1/1",
-                shareDecimal: o.shareDecimal || 1.0,
-                ownerSince: new Date().toISOString(),
-                isVerified: false,
-                isTribal: false,
-              }))
-            : [
-                {
-                  aadhaarNumber: patwariAadhaar,
-                  name: scan.ownerName || "Unknown",
-                  share: "1/1",
-                  shareDecimal: 1.0,
-                  ownerSince: new Date().toISOString(),
-                  isVerified: false,
-                  isTribal: false,
-                },
-              ];
+      if (patwariAadhaar && dlpiOnChain && currentOwnerAadhaar !== patwariAadhaar) {
+        console.log(`[scan-approve-circle_officer] Owner mismatch! On-chain: '${currentOwnerAadhaar}', Patwari entered: '${patwariAadhaar}'.`);
+        console.log(`[scan-approve-circle_officer] dlpiOnChain.owners:`, JSON.stringify(dlpiOnChain.owners));
+        const sellers = (dlpiOnChain.owners || []).map(o => o.aadhaarNumber || o.aadhaarNumber || "");
+        const correctOwners = (scan.owners && scan.owners.length > 0)
+          ? scan.owners.map(o => ({
+              aadhaarNumber: o.aadhaarNumber || patwariAadhaar,
+              name: o.name || 'Unknown',
+              share: o.share || '1/1',
+              shareDecimal: o.shareDecimal || 1.0,
+              ownerSince: new Date().toISOString(),
+              isVerified: false,
+              isTribal: false
+            }))
+          : [{
+              aadhaarNumber: patwariAadhaar,
+              name: scan.ownerName || 'Unknown',
+              share: '1/1',
+              shareDecimal: 1.0,
+              ownerSince: new Date().toISOString(),
+              isVerified: false,
+              isTribal: false
+            }];
 
         try {
           const txResult = await submit("dlpi", "UpdateOwners", [
             dlpiId,
             JSON.stringify(sellers),
             JSON.stringify(correctOwners),
-            "GENESIS_CORRECTION",
-            req.user.name || "Tehsildar",
-            req.user.aadhaarNumber || "999900010003",
+            'GENESIS_CORRECTION',
+            req.user.name || 'Circle Officer',
+            req.user.aadhaarNumber || '999900010003',
             `MUT-CORR-${Date.now()}`,
             scan.ipfsCID || "QmPending",
             "Correcting owner Aadhaar to the one entered by Patwari during scan approval",
           ]);
           txHash = txResult.txHash || txHash;
           correctionDone = true;
-          console.log(
-            `[scan-approve-tehsildar] On-chain owner correction succeeded!`,
-          );
+          console.log(`[scan-approve-circle_officer] On-chain owner correction succeeded!`);
         } catch (updateErr) {
-          console.error(
-            `[scan-approve-tehsildar] On-chain UpdateOwners failed:`,
-            updateErr.message,
-          );
-          throw new Error(
-            `Failed to correct DLPI owner on-chain: ${updateErr.message}`,
-          );
+          console.error(`[scan-approve-circle_officer] On-chain UpdateOwners failed:`, updateErr.message);
+          throw new Error(`Failed to correct DLPI owner on-chain: ${updateErr.message}`);
         }
       }
 
       // 1. Try on-chain approval (only if correction was not already done, since UpdateOwners already finalized it)
       if (!correctionDone) {
         try {
-          const txResult = await submit("dlpi", "ApproveScanTehsildar", [
-            dlpiId,
-          ]);
+          const txResult = await submit('dlpi', 'ApproveScanCircle Officer', [dlpiId]);
           txHash = txResult.txHash || txHash;
-          console.log(
-            `[scan-approve-tehsildar] On-chain approval succeeded for ${dlpiId}`,
-          );
+          console.log(`[scan-approve-circle_officer] On-chain approval succeeded for ${dlpiId}`);
         } catch (fabricErr) {
           const msg = fabricErr.message || "";
           const isNotFound =
@@ -1389,9 +1099,7 @@ router.post(
             msg.includes("ABORTED") ||
             msg.includes("does not exist");
           if (isNotFound) {
-            console.warn(
-              `[scan-approve-tehsildar] Fabric says '${dlpiId}' not found (created in mock). Using mock approval.`,
-            );
+            console.warn(`[scan-approve-circle_officer] Fabric says '${dlpiId}' not found (created in mock). Using mock approval.`);
           } else {
             throw fabricErr;
           }
@@ -1401,34 +1109,22 @@ router.post(
       // 2. Approve off-chain in RecordScan Python service
       try {
         const payload = {
-          officerAadhaarNumber:
-            req.user.aadhaarNumber || "sha256:" + "0".repeat(64),
-          officerAadhaarNumber:
-            req.user.aadhaarNumber || "sha256:" + "0".repeat(64),
-          officerName: req.user.name || "Tehsildar",
-          token: req.headers.authorization
-            ? req.headers.authorization.split(" ")[1]
-            : "",
+          officerAadhaarNumber: req.user.aadhaarNumber || ('sha256:' + '0'.repeat(64)),
+          officerAadhaarNumber: req.user.aadhaarNumber || ('sha256:' + '0'.repeat(64)),
+          officerName: req.user.name || 'Circle Officer',
+          token: req.headers.authorization ? req.headers.authorization.split(' ')[1] : '',
         };
-        await axios.post(
-          `${RECORD_SCAN_URL}/scan/approve-tehsildar-by-dlpi/${dlpiId}`,
-          payload,
-        );
+        await axios.post(`${RECORD_SCAN_URL}/scan/approve-circle_officer-by-dlpi/${dlpiId}`, payload);
       } catch (axErr) {
-        console.warn(
-          `[scan-approve-tehsildar] Python approve-tehsildar failed:`,
-          axErr.message,
-        );
-        throw new Error(
-          `Python RecordScan service rejected the approval: ${axErr.response?.data?.detail || axErr.message}`,
-        );
+        console.warn(`[scan-approve-circle_officer] Python approve-tehsildar failed:`, axErr.message);
+        throw new Error(`Python RecordScan service rejected the approval: ${axErr.response?.data?.detail || axErr.message}`);
       }
 
       res.json({ success: true, txHash });
     } catch (e) {
       const errMsg = e.message;
-      console.error("[scan-approve-tehsildar] error:", errMsg);
-      res.status(500).json({ error: "FABRIC_ERROR", message: errMsg });
+      console.error('[scan-approve-circle_officer] error:', errMsg);
+      res.status(500).json({ error: 'FABRIC_ERROR', message: errMsg });
     }
   },
 );
@@ -1481,9 +1177,9 @@ router.post(
   },
 );
 
-// POST /api/dlpi/:dlpiId/tehsildar-approve — final approval with eSign
+// POST /api/dlpi/:dlpiId/circle_officer-approve — final approval with eSign
 router.post(
-  "/:dlpiId/tehsildar-approve",
+  '/:dlpiId/circle_officer-approve',
   authenticate,
   requireRole(ROLES.ANCHAL_ADHIKARI, ROLES.COLLECTOR, ROLES.SUPER_ADMIN),
   dlpiParam,
@@ -1524,35 +1220,25 @@ router.post(
 router.post(
   "/",
   authenticate,
-  requireRole(...CAN_CREATE_DLPI),
-  body("dlpiId").matches(/^DLPI-[A-Z0-9-]+$/),
-  body("ownerName").notEmpty().trim(),
-  body("ownerAadhaarNumber").matches(/^sha256:[a-f0-9]{64}$/),
-  body("landType").isIn([
-    "Bhumidhari",
-    "Sirdar",
-    "Residential",
-    "Commercial",
-    "Tribal_FRA",
-    "Govt_Reserved",
-  ]),
-  body("areaHectares").isFloat({ min: 0.001 }),
-  body("geojsonCID").notEmpty(),
-  body("surveyDocCID").notEmpty(),
+  requireRole(...CAN_CREATE_DLPI, ROLES.CITIZEN),
+  body('dlpiId').matches(/^DLPI-[A-Z0-9-]+$/),
+  body('ownerName').notEmpty().trim(),
+  body('ownerAadhaarNumber').optional().matches(/^sha256:[a-f0-9]{64}$/),
+  body('ownerAadhaarHash').optional().matches(/^sha256:[a-f0-9]{64}$/),
+  body('landType').isIn(['Bhumidhari', 'Sirdar', 'Residential', 'Commercial', 'Tribal_FRA', 'Govt_Reserved']),
+  body('areaHectares').isFloat({ min: 0.001 }),
+  body('geojsonCID').notEmpty(),
+  body('surveyDocCID').notEmpty(),
   validate,
   async (req, res) => {
     try {
-      const {
-        dlpiId,
-        ownerName,
-        ownerAadhaarNumber,
-        landType,
-        areaHectares,
-        surveyDocCID,
-        geojsonCID,
-        khasraNo,
+      const { 
+        dlpiId, ownerName, ownerAadhaarNumber, ownerAadhaarHash, landType, areaHectares, 
+        surveyDocCID, geojsonCID, khasraNo 
       } = req.body;
-
+      
+      const aadhaar = ownerAadhaarNumber || ownerAadhaarHash || 'sha256:' + '0'.repeat(64);
+      
       const input = {
         dlpiId,
         surveyNumber: khasraNo || "0",
@@ -1566,7 +1252,7 @@ router.post(
         initialOwners: [
           {
             name: ownerName,
-            aadhaarNumber: ownerAadhaarNumber,
+            aadhaarNumber: aadhaar,
             share: "1/1",
             shareDecimal: 1.0,
             ownerSince: new Date().toISOString().slice(0, 10),
@@ -1578,7 +1264,10 @@ router.post(
       };
 
       // ERC-721 Tokenization: Mint the parcel token on-chain
-      const result = await submit("dlpi", "MintToken", [JSON.stringify(input)]);
+      const result = await submit('dlpi', 'MintToken', [
+        JSON.stringify(input),
+        req.user.role // pass user role to determine initial status
+      ]);
       res.status(201).json(result);
     } catch (e) {
       res.status(500).json({ error: "FABRIC_ERROR", message: e.message });

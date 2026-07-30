@@ -16,6 +16,7 @@ const mutationRoutes    = require('./routes/mutation');
 const uttaradhikarRoutes = require('./routes/uttaradhikar');
 const encumbranceRoutes = require('./routes/encumbrance');
 const auctionRoutes     = require('./routes/auction');
+const bhuNakshaRoutes   = require('./routes/bhu-naksha');
 const { authenticate, ROLES } = require('./middleware/auth');
 const { init: initWs, triggerMockEvent } = require('./services/websocket');
 const { isMock } = require('./services/fabric');
@@ -74,6 +75,7 @@ app.use('/api/mutation',    mutationRoutes);
 app.use('/api/succession',  uttaradhikarRoutes);
 app.use('/api/encumbrance', encumbranceRoutes);
 app.use('/api/auction',     auctionRoutes);
+app.use('/api/bhu-naksha',  bhuNakshaRoutes);
 
 // Oracle proxy — forward to oracle-service (avoids CORS on frontend)
 const axios = require('axios');

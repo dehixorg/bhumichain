@@ -29,6 +29,46 @@ const MUTATION_TYPES = [
   'Govt_Acquisition', 'Exchange', 'Will', 'Bhudan', 'Mortgage_Lien',
 ];
 
+// POST /api/mutation - citizen or officer files a new mutation application
+router.post(
+  '/',
+  authenticate,
+  requireRole(ROLES.CITIZEN, ROLES.ANCHAL_ADHIKARI),
+  body('mutationType').isIn([
+    'Sale', 'Gift', 'Inheritance', 'Partition', 
+    'Government Land Allotment', 'Court Order Mutation',
+    'Suo-Moto Mutation', 'Govt Land Allocation', 'Administrative Correction',
+    'Special: Suo-Moto Mutation', 'Special: Govt Land Allocation', 'Special: Administrative Correction',
+    ...MUTATION_TYPES
+  ]),
+  body('applicantDetails').notEmpty(),
+  body('landDetails').notEmpty(),
+  body('previousOwnerDetails').notEmpty(),
+  body('newOwnerDetails').notEmpty(),
+  validate,
+  async (req, res) => {
+    try {
+      const data = {
+        mutationType: req.body.mutationType,
+        applicantDetails: req.body.applicantDetails,
+        landDetails: req.body.landDetails,
+        previousOwnerDetails: req.body.previousOwnerDetails,
+        newOwnerDetails: req.body.newOwnerDetails,
+        dynamicFields: req.body.dynamicFields || {},
+        status: 'Pending at Patwari',
+        officerName: req.user.role === 'citizen' ? 'Citizen' : 'Circle Officer',
+        officerRank: req.user.role === 'citizen' ? 'Citizen' : 'Circle Officer',
+      };
+      const result = await submit('mutation-manager', 'CreateMutation', [
+        JSON.stringify(data)
+      ]);
+      res.status(201).json(result);
+    } catch (e) {
+      res.status(500).json({ error: 'FABRIC_ERROR', message: e.message });
+    }
+  }
+);
+
 // POST /api/mutation/initiate — officer initiates; 60-sec alert SLA starts
 router.post(
   '/initiate',
@@ -166,6 +206,42 @@ router.post(
   },
 );
 
+function filterCitizenMutations(allMuts, user) {
+  const h = user.aadhaarNumber || user.aadhaar || '';
+  const userRaw = user.aadhaar || user.aadhaarRaw || user.aadhaarNumber || '';
+  const computedHash = userRaw ? computeAadhaarNumber(userRaw) : '';
+  const userName = (user.name || '').toLowerCase();
+  
+  return allMuts.filter(m => {
+    // 1. Check applicant Aadhaar
+    const appAadhaar = m.applicantDetails?.aadhaarNumber || m.applicantDetails?.aadhaar || '';
+    if (h && appAadhaar && appAadhaar.replace(/\D/g, '') === h.replace(/\D/g, '')) return true;
+    
+    // 2. Check previous owner Aadhaar
+    const prevAadhaar = m.previousOwnerDetails?.aadhaarNumber || m.previousOwnerDetails?.aadhaar || '';
+    if (h && prevAadhaar && prevAadhaar.replace(/\D/g, '') === h.replace(/\D/g, '')) return true;
+    
+    // 3. Check new owner Aadhaar
+    const newAadhaar = m.newOwnerDetails?.aadhaarNumber || m.newOwnerDetails?.aadhaar || '';
+    if (h && newAadhaar && newAadhaar.replace(/\D/g, '') === h.replace(/\D/g, '')) return true;
+    
+    // 4. Fallbacks: Name checking
+    const mCurName = (m.currentOwnerName || m.previousOwnerDetails?.fullName || '').toLowerCase();
+    const mNewName = (m.newOwnerName || m.newOwnerDetails?.fullName || '').toLowerCase();
+    const mAppName = (m.applicantDetails?.fullName || '').toLowerCase();
+    
+    if (userName && mCurName && (mCurName.includes(userName) || userName.includes(mCurName))) return true;
+    if (userName && mNewName && (mNewName.includes(userName) || userName.includes(mNewName))) return true;
+    if (userName && mAppName && (mAppName.includes(userName) || userName.includes(mAppName))) return true;
+    
+    // 5. Fallbacks: Hash checking
+    if (m.currentOwnerHash && (m.currentOwnerHash === h || m.currentOwnerHash === computedHash)) return true;
+    if (m.newOwnerHash && (m.newOwnerHash === h || m.newOwnerHash === computedHash)) return true;
+
+    return false;
+  });
+}
+
 // GET /api/mutation — all mutations (officer queue view)
 router.get('/', authenticate, async (req, res) => {
   try {
@@ -174,22 +250,7 @@ router.get('/', authenticate, async (req, res) => {
       let dMuts = [];
       try { dMuts = JSON.parse(fs.readFileSync('/tmp/bhumichain_dynamic_mutations.json')); } catch(e) {}
       if (req.user.role === 'citizen') {
-        const h = req.user.aadhaarNumber || '';
-        const userRaw = req.user.aadhaar || req.user.aadhaarRaw || req.user.aadhaarNumber || '';
-        const computedHash = userRaw ? computeAadhaarNumber(userRaw) : '';
-        const userName = (req.user.name || '').toLowerCase();
-        
-        dMuts = dMuts.filter(m => {
-          const mCurName = (m.currentOwnerName || '').toLowerCase();
-          const mNewName = (m.newOwnerName || '').toLowerCase();
-          
-          if (m.currentOwnerHash && (m.currentOwnerHash === h || m.currentOwnerHash === computedHash)) return true;
-          if (m.newOwnerHash && (m.newOwnerHash === h || m.newOwnerHash === computedHash)) return true;
-          if (userName && mCurName && (mCurName.includes(userName) || userName.includes(mCurName))) return true;
-          if (userName && mNewName && (mNewName.includes(userName) || userName.includes(mNewName))) return true;
-          
-          return false;
-        });
+        dMuts = filterCitizenMutations(dMuts, req.user);
       }
       return res.json(dMuts);
     }
@@ -217,24 +278,9 @@ router.get('/', authenticate, async (req, res) => {
     
     let allMuts = Array.from(mergedMap.values());
     
-    // STRICT FILTER: If citizen, only show mutations matching their Aadhaar Hash OR their exact name
+    // STRICT FILTER: If citizen, only show mutations matching their Aadhaar or Name
     if (req.user.role === 'citizen') {
-      const h = req.user.aadhaarNumber || '';
-      const userRaw = req.user.aadhaar || req.user.aadhaarRaw || req.user.aadhaarNumber || '';
-      const computedHash = userRaw ? computeAadhaarNumber(userRaw) : '';
-      const userName = (req.user.name || '').toLowerCase();
-      
-      allMuts = allMuts.filter(m => {
-        const mCurName = (m.currentOwnerName || '').toLowerCase();
-        const mNewName = (m.newOwnerName || '').toLowerCase();
-        
-        if (m.currentOwnerHash && (m.currentOwnerHash === h || m.currentOwnerHash === computedHash)) return true;
-        if (m.newOwnerHash && (m.newOwnerHash === h || m.newOwnerHash === computedHash)) return true;
-        if (userName && mCurName && (mCurName.includes(userName) || userName.includes(mCurName))) return true;
-        if (userName && mNewName && (mNewName.includes(userName) || userName.includes(mNewName))) return true;
-        
-        return false;
-      });
+      allMuts = filterCitizenMutations(allMuts, req.user);
     }
     
     res.json(allMuts);
@@ -338,7 +384,7 @@ router.post(
         if (!dMuts[idx].telegramAlerts) dMuts[idx].telegramAlerts = [];
         dMuts[idx].telegramAlerts.push({
           channel: 'WHATSAPP', recipient: '+91 9876543210', 
-          message: `✅ E-Sign Consent Received for ${dMuts[idx].dlpiId}. Forwarding to Tehsildar for final execution.`, 
+          message: `✅ E-Sign Consent Received for ${dMuts[idx].dlpiId}. Forwarding to Circle Officer for final execution.`, 
           sentAt: new Date().toISOString(), delivered: true
         });
 
@@ -456,6 +502,89 @@ router.post(
     broadcast('MutationExecuted', { mutationId: req.params.mutationId });
     res.json(result);
   },
+);
+
+// PATCH /api/mutation/:mutationId/status — Approve/Reject workflow transitions
+router.patch(
+  '/:mutationId/status',
+  authenticate,
+  requireRole(ROLES.KARMACHARI, ROLES.ANCHAL_NIRIKSHAK, ROLES.KANUNGO, ROLES.ANCHAL_ADHIKARI),
+  body('status').isIn(['Pending at Kanungo', 'Pending at Circle Officer', 'Approved', 'Rejected', 'Objection Filed']),
+  body('reason').optional().trim(),
+  validate,
+  async (req, res) => {
+    try {
+      const { status, reason } = req.body;
+      const { mutationId } = req.params;
+      const actorName = req.user.name || 'Officer';
+      
+      const result = await submit('mutation-manager', 'UpdateMutationStatus', [
+        mutationId,
+        status,
+        actorName,
+        reason || ''
+      ]);
+
+      // Synchronize changes to `/tmp/bhumichain_dynamic_mutations.json` if history clearing is active
+      try {
+        const fs = require('fs');
+        let dMuts = [];
+        try { dMuts = JSON.parse(fs.readFileSync('/tmp/bhumichain_dynamic_mutations.json', 'utf8')); } catch(e){}
+        const idx = dMuts.findIndex(x => x.mutationId === mutationId);
+        if (idx >= 0) {
+          dMuts[idx].status = status;
+          if (reason) {
+            if (status === 'Rejected') {
+              dMuts[idx].rejectionReason = reason;
+            } else if (status === 'Objection Filed') {
+              dMuts[idx].objectionReason = reason;
+            }
+          }
+          
+          // Initialize timeline if not present
+          if (!dMuts[idx].timeline) {
+            dMuts[idx].timeline = [
+              { step: 'SUBMITTED', label: 'Submitted', actor: 'Citizen', at: dMuts[idx].initiatedAt || new Date().toISOString(), done: true },
+              { step: 'PATWARI', label: 'Pending Patwari', actor: 'Patwari', at: null, done: false },
+              { step: 'KANUNGO', label: 'Pending Kanungo', actor: 'Kanungo', at: null, done: false },
+              { step: 'TEHSILDAR', label: 'Pending Circle Officer', actor: 'Circle Officer', at: null, done: false }
+            ];
+          }
+          
+          const at = new Date().toISOString();
+          if (status === 'Pending at Kanungo') {
+            const step = dMuts[idx].timeline.find(t => t.step === 'PATWARI');
+            if (step) { step.done = true; step.at = at; step.actor = actorName; step.label = 'Patwari Approved'; }
+          } else if (status === 'Pending at Circle Officer') {
+            const step = dMuts[idx].timeline.find(t => t.step === 'KANUNGO');
+            if (step) { step.done = true; step.at = at; step.actor = actorName; step.label = 'Kanungo Approved'; }
+          } else if (status === 'Approved') {
+            const step = dMuts[idx].timeline.find(t => t.step === 'TEHSILDAR');
+            if (step) { step.done = true; step.at = at; step.actor = actorName; step.label = 'Circle Officer Approved'; }
+          } else if (status === 'Rejected') {
+            const step = dMuts[idx].timeline.find(t => !t.done);
+            if (step) { step.done = true; step.at = at; step.actor = actorName; step.label = `Rejected by ${actorName}`; }
+          } else if (status === 'Objection Filed') {
+            const step = dMuts[idx].timeline.find(t => t.step === 'TEHSILDAR');
+            if (step) { step.done = true; step.at = at; step.actor = actorName; step.label = 'Objection Filed'; }
+          }
+          
+          fs.writeFileSync('/tmp/bhumichain_dynamic_mutations.json', JSON.stringify(dMuts, null, 2));
+        }
+      } catch (err) {}
+
+      broadcast('MutationStatusUpdated', {
+        mutationId,
+        status,
+        actorName,
+        message: `🔄 Mutation ${mutationId} status updated to: ${status} by ${actorName}`,
+      });
+
+      res.json(result);
+    } catch (e) {
+      res.status(500).json({ error: 'FABRIC_ERROR', message: e.message });
+    }
+  }
 );
 
 module.exports = router;
