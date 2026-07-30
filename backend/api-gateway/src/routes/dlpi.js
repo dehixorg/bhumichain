@@ -438,7 +438,7 @@ router.get('/my-parcels', authenticate, requireRole(ROLES.CITIZEN), async (req, 
       // (Nominated inheritors do NOT see parcels in /my-parcels until succession is executed by Circle Officer)
 
       // Demo citizen fallbacks for initial seeded data (ONLY if not transferred)
-      if (p.claimStatus !== 'VERIFIED' && (!p.atomicLock || p.atomicLock.status !== 'MUTATED_AND_TRANSFERRED')) {
+      if ((p.claimStatus !== 'VERIFIED' || !oHash) && (!p.atomicLock || p.atomicLock.status !== 'MUTATED_AND_TRANSFERRED')) {
         if (userRawClean === '999900010010' && oName.includes('priya')) return true;
         if (userRawClean === '999900010015' && oName.includes('sunita')) return true;
         if (userRawClean === '999900010012' && oName.includes('suresh')) return true;
