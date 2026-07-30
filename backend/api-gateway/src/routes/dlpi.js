@@ -151,6 +151,7 @@ router.get(
   requireRole(
     ...CAN_APPROVE_MUTATION,
     ROLES.KARMACHARI,
+    ROLES.CITIZEN,
     "patwari",
     "circle_inspector",
     "circle_officer",

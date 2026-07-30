@@ -508,7 +508,7 @@ router.post(
 router.patch(
   '/:mutationId/status',
   authenticate,
-  requireRole(ROLES.KARMACHARI, ROLES.ANCHAL_NIRIKSHAK, ROLES.KANUNGO, ROLES.ANCHAL_ADHIKARI),
+  requireRole(ROLES.KARMACHARI, ROLES.ANCHAL_NIRIKSHAK, ROLES.KANUNGO, ROLES.ANCHAL_ADHIKARI, ROLES.CITIZEN),
   body('status').isIn(['Pending at Kanungo', 'Pending at Circle Officer', 'Approved', 'Rejected', 'Objection Filed']),
   body('reason').optional().trim(),
   validate,
@@ -517,6 +517,10 @@ router.patch(
       const { status, reason } = req.body;
       const { mutationId } = req.params;
       const actorName = req.user.name || 'Officer';
+      
+      if (req.user.role === ROLES.CITIZEN && status !== 'Objection Filed' && status !== 'OBJECTION_FILED') {
+        return res.status(403).json({ error: 'UNAUTHORIZED_STATUS_TRANSITION', message: 'Citizens are only allowed to file objections.' });
+      }
       
       const result = await submit('mutation-manager', 'UpdateMutationStatus', [
         mutationId,
