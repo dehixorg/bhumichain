@@ -43,14 +43,14 @@ const NAV_OFFICER = [
 ];
 
 const ROLE_LABEL: Record<string, string> = {
-  circle_officer:   'Circle Officer',
-  anchalAdhikari:   'Circle Officer',
-  tehsildar:        'Circle Officer / Tehsildar',
-  circle_inspector: 'Kanungo / CI',
-  anchalNirikshak:  'Kanungo / CI',
-  kanungo:          'Kanungo / CI',
+  circle_officer:   'Circle Officer (Tehsildar)',
+  anchalAdhikari:   'Circle Officer (Tehsildar)',
+  tehsildar:        'Circle Officer (Tehsildar)',
+  circle_inspector: 'Kanungo (Anchal Nirikshak)',
+  anchalNirikshak:  'Kanungo (Anchal Nirikshak)',
+  kanungo:          'Kanungo (Anchal Nirikshak)',
   karmachari:       'Patwari (Karmachari)',
-  patwari:          'Patwari',
+  patwari:          'Patwari (Karmachari)',
   citizen:          'Citizen',
   kotwal:           'Kotwal',
 };
