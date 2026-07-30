@@ -525,6 +525,54 @@ router.patch(
         reason || ''
       ]);
 
+      // Synchronize changes to `/tmp/bhumichain_dynamic_mutations.json` if history clearing is active
+      try {
+        const fs = require('fs');
+        let dMuts = [];
+        try { dMuts = JSON.parse(fs.readFileSync('/tmp/bhumichain_dynamic_mutations.json', 'utf8')); } catch(e){}
+        const idx = dMuts.findIndex(x => x.mutationId === mutationId);
+        if (idx >= 0) {
+          dMuts[idx].status = status;
+          if (reason) {
+            if (status === 'Rejected') {
+              dMuts[idx].rejectionReason = reason;
+            } else if (status === 'Objection Filed') {
+              dMuts[idx].objectionReason = reason;
+            }
+          }
+          
+          // Initialize timeline if not present
+          if (!dMuts[idx].timeline) {
+            dMuts[idx].timeline = [
+              { step: 'SUBMITTED', label: 'Submitted', actor: 'Citizen', at: dMuts[idx].initiatedAt || new Date().toISOString(), done: true },
+              { step: 'PATWARI', label: 'Pending Patwari', actor: 'Patwari', at: null, done: false },
+              { step: 'KANUNGO', label: 'Pending Kanungo', actor: 'Kanungo', at: null, done: false },
+              { step: 'TEHSILDAR', label: 'Pending Circle Officer', actor: 'Circle Officer', at: null, done: false }
+            ];
+          }
+          
+          const at = new Date().toISOString();
+          if (status === 'Pending at Kanungo') {
+            const step = dMuts[idx].timeline.find(t => t.step === 'PATWARI');
+            if (step) { step.done = true; step.at = at; step.actor = actorName; step.label = 'Patwari Approved'; }
+          } else if (status === 'Pending at Circle Officer') {
+            const step = dMuts[idx].timeline.find(t => t.step === 'KANUNGO');
+            if (step) { step.done = true; step.at = at; step.actor = actorName; step.label = 'Kanungo Approved'; }
+          } else if (status === 'Approved') {
+            const step = dMuts[idx].timeline.find(t => t.step === 'TEHSILDAR');
+            if (step) { step.done = true; step.at = at; step.actor = actorName; step.label = 'Circle Officer Approved'; }
+          } else if (status === 'Rejected') {
+            const step = dMuts[idx].timeline.find(t => !t.done);
+            if (step) { step.done = true; step.at = at; step.actor = actorName; step.label = `Rejected by ${actorName}`; }
+          } else if (status === 'Objection Filed') {
+            const step = dMuts[idx].timeline.find(t => t.step === 'TEHSILDAR');
+            if (step) { step.done = true; step.at = at; step.actor = actorName; step.label = 'Objection Filed'; }
+          }
+          
+          fs.writeFileSync('/tmp/bhumichain_dynamic_mutations.json', JSON.stringify(dMuts, null, 2));
+        }
+      } catch (err) {}
+
       broadcast('MutationStatusUpdated', {
         mutationId,
         status,
