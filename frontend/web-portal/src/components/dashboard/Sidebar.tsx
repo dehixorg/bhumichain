@@ -6,7 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import {
   Map, FileText, Users, Shield, MessageSquare,
   BarChart3, Layers, LogOut, Gavel, Home, GitMerge,
-  Building2,
+  Building2, Scale,
 } from 'lucide-react';
 import clsx from 'clsx';
 import { getUser, logout, isOfficer, type JWTUser } from '@/lib/auth';
@@ -14,6 +14,7 @@ import { getUser, logout, isOfficer, type JWTUser } from '@/lib/auth';
 const NAV_CITIZEN = [
   { href: '/my-parcels', icon: Home,           label: 'My Parcels'         },
   { href: '/map',        icon: Map,            label: 'GIS Map'            },
+  { href: '/bhumibot',   icon: Scale,          label: 'BhumiBot AI'        },
   { href: '/mutation',   icon: GitMerge,       label: 'Mutations'          },
   { href: '/succession', icon: Users,          label: 'Succession'         },
   { href: '/nyaya-ai',   icon: MessageSquare,  label: 'NyayaAI'           },
@@ -23,6 +24,8 @@ const NAV_CITIZEN = [
 const NAV_OFFICER = [
   { href: '/officer-dashboard', icon: Building2,      label: 'Officer Queue'      },
   { href: '/officer-dashboard/audit-logs', icon: Shield, label: 'Audit & Chain Logs' },
+  { href: '/map',               icon: Map,            label: 'GIS Map'            },
+  { href: '/bhumibot',          icon: Scale,          label: 'BhumiBot AI'        },
   { href: '/scan',              icon: FileText,       label: 'RecordScan AI'      },
   { href: '/nyaya-ai',          icon: MessageSquare,  label: 'NyayaAI'           },
   { href: '/auction',           icon: Gavel,          label: 'BhumiAuction'       },

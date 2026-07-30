@@ -14,7 +14,7 @@ import clsx from 'clsx';
 import CitizenHeader from '@/components/dashboard/CitizenHeader';
 import CitizenFooter from '@/components/dashboard/CitizenFooter';
 import { getUser, apiFetch, type JWTUser, formatMaskedAadhaar, formatLastLogin } from '@/lib/auth';
-import { recordHeirConsent, initiateTransfer, recordConsent, getMyPendingTransfers } from '@/lib/api';
+import { recordHeirConsent, initiateTransfer, recordConsent, getMyPendingTransfers, nominateHeirs, getInheritorNominations, acceptNomination } from '@/lib/api';
 import toast from 'react-hot-toast';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -30,7 +30,6 @@ interface Parcel {
   encumbranceStatus: string;
   claimStatus: string;
   successionStatus?: string;
-  isTribal?: boolean;
   isCoparcenary?: boolean;
   owners?: any[];
   ownershipType?: string;
@@ -55,7 +54,6 @@ const VAULT_DOCS = [
 
 const ANNOUNCEMENTS = [
   { badge: 'NEW', title: 'BhumiChain Pilot expands to 500 villages in Patna.' },
-  { badge: 'ALERT', title: 'Schedule V (Tribal) land transfers strictly require Collector NOC.' },
   { badge: 'INFO', title: 'Link Aadhaar before 31st August 2026 to claim unverified parcels.' },
 ];
 
@@ -89,6 +87,12 @@ export default function CitizenDashboard() {
   const [homeAadhaarInputs, setHomeAadhaarInputs] = useState<Record<string, string>>({});
   const [generatedEcs, setGeneratedEcs] = useState<Record<string, boolean>>({});
 
+  // Nomination State
+  const [nominations, setNominations] = useState<any[]>([]);
+  const [nominateModalParcel, setNominateModalParcel] = useState<Parcel | null>(null);
+  const [nominateHeirsList, setNominateHeirsList] = useState<{name: string, aadhaarNumber: string, share: string}[]>([{name: '', aadhaarNumber: '', share: ''}]);
+  const [nominateBusy, setNominateBusy] = useState(false);
+
   useEffect(() => {
     try {
       const saved = localStorage.getItem('bhumichain_generated_ecs');
@@ -113,6 +117,10 @@ export default function CitizenDashboard() {
     getMyPendingTransfers()
       .then(d => { if (Array.isArray(d)) setPendingTransfers(d); })
       .catch(e => console.error("Failed to fetch pending transfers", e));
+
+    getInheritorNominations()
+      .then(d => { if (Array.isArray(d)) setNominations(d); })
+      .catch(e => console.error("Failed to fetch nominations", e));
   }, [router]);
 
   const handleClaimParcel = async (parcel: any) => {
@@ -179,6 +187,56 @@ export default function CitizenDashboard() {
       toast.error(msg, { id: 'init-sale' });
     } finally {
       setSellBusy(false);
+    }
+  };
+
+  const handleInitiateNomination = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!nominateModalParcel || !user) return;
+
+    for (const h of nominateHeirsList) {
+      if (!h.aadhaarNumber || h.aadhaarNumber.length !== 12) {
+        toast.error('Each heir must have exactly a 12-digit Aadhaar Number.');
+        return;
+      }
+      if (!h.name) {
+        toast.error('Each heir must have a valid name.');
+        return;
+      }
+    }
+
+    setNominateBusy(true);
+    try {
+      toast.loading('Registering digital will (nomination) on blockchain...', { id: 'init-nom' });
+      await new Promise(r => setTimeout(r, 1000));
+      await nominateHeirs({
+        dlpiId: nominateModalParcel.dlpiId,
+        heirs: nominateHeirsList,
+      });
+      toast.success(`🎉 Digital Will (Nomination) Registered! Notifications sent to heirs.`, { id: 'init-nom' });
+      setNominateModalParcel(null);
+      // Refresh
+      const r = await getInheritorNominations();
+      if (Array.isArray(r)) setNominations(r);
+    } catch (e: any) {
+      const msg = e.response?.data?.message || e.message || 'Failed to nominate heirs';
+      toast.error(msg, { id: 'init-nom' });
+    } finally {
+      setNominateBusy(false);
+    }
+  };
+
+  const handleAcceptNomination = async (nominationId: string) => {
+    if (!user) return;
+    try {
+      toast.loading('Digitally signing acceptance of nomination...', { id: 'accept-nom' });
+      await new Promise(r => setTimeout(r, 1200));
+      await acceptNomination(nominationId);
+      toast.success('🎉 Successfully accepted the inheritance nomination! It is now permanently logged on-chain.', { id: 'accept-nom' });
+      const r = await getInheritorNominations();
+      if (Array.isArray(r)) setNominations(r);
+    } catch (e: any) {
+      toast.error(e.message || 'Failed to accept nomination', { id: 'accept-nom' });
     }
   };
 
@@ -332,15 +390,42 @@ export default function CitizenDashboard() {
 
           {/* ── Left Column (Main Content) ─────────────────────────────────── */}
           <div className="lg:col-span-2 space-y-10">
-
-            {/* Pending Actions Alert (Succession & Transfers) */}
-            {(pendingSuccessions.length > 0 || pendingTransfers.length > 0) && (
+            {/* Pending Actions Alert */}
+            {(pendingSuccessions.length > 0 || pendingTransfers.length > 0 || (nominations && nominations.some(n => n.status === 'NOMINATED' && n.heirs.some((h:any) => h.aadhaarNumber === (((user as any)?.aadhaarNumber || user?.aadhaarNumber || '').replace(/\D/g, '')))))) && (
               <section id="pending-actions" className="mb-8">
                 <div className="flex items-center gap-2 mb-4">
                   <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-                  <h2 className="text-xl font-black text-gray-900 tracking-tight">Action Required ({pendingSuccessions.length + pendingTransfers.length})</h2>
+                  <h2 className="text-xl font-black text-gray-900 tracking-tight">Action Required</h2>
                 </div>
                 <div className="space-y-4">
+
+                  {nominations.filter(n => n.status === 'NOMINATED' && n.heirs.some((h:any) => h.aadhaarNumber === (((user as any)?.aadhaarNumber || user?.aadhaarNumber || '').replace(/\D/g, '')))).map((n: any) => (
+                    <div key={n.nominationId} className="bg-[#f0fdf4] border border-green-300 rounded-2xl p-5 shadow-sm">
+                      <div className="flex items-start gap-4">
+                        <div className="w-12 h-12 rounded-xl bg-green-100 flex items-center justify-center shrink-0">
+                          <Landmark className="w-6 h-6 text-green-700" />
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between">
+                            <h3 className="text-base font-bold text-green-900">Digital Will (Nomination) Notification</h3>
+                            <span className="text-xs font-bold bg-green-200 text-green-900 px-2 py-0.5 rounded">Action Required</span>
+                          </div>
+                          <p className="text-sm text-green-900 mt-1">
+                            You have been nominated as a legal heir for property <strong className="font-mono">{n.dlpiId}</strong> by its owner (Aadhaar: {n.ownerAadhaar}).
+                            Please accept this nomination to register your future succession claim on the blockchain.
+                          </p>
+                          <div className="mt-4">
+                            <button
+                              onClick={() => handleAcceptNomination(n.nominationId)}
+                              className="bg-green-600 hover:bg-green-700 text-white text-sm font-bold py-2 px-5 rounded-lg shadow-sm transition-colors flex items-center gap-2"
+                            >
+                              <CheckCircle className="w-4 h-4" /> Accept Nomination (eSign)
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                   {pendingSuccessions.map((scase: any) => (
                     <div key={scase.caseId} className="bg-[#FFFbeb] border border-amber-300 rounded-2xl p-5 shadow-sm">
                       <div className="flex items-start gap-4">
@@ -538,17 +623,28 @@ export default function CitizenDashboard() {
                               )}
                             </button>
                           ) : p.encumbranceStatus === 'CLEAR' && !(p as any).transferLocked && (
-                            <button
-                              onClick={() => {
-                                setSellModalParcel(p);
-                                setSellBuyerName('');
-                                setSellBuyerAadhaar('');
-                                setSellDeclaredVal('4500000');
-                              }}
-                              className="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs py-2 px-3 rounded-lg flex items-center justify-center gap-1.5 transition-colors shadow-sm min-w-[100px]"
-                            >
-                              <ArrowLeftRight className="w-3.5 h-3.5" /> Sell Property
-                            </button>
+                            <>
+                              <button
+                                onClick={() => {
+                                  setNominateModalParcel(p);
+                                  setNominateHeirsList([{name: '', aadhaarNumber: '', share: ''}]);
+                                }}
+                                className="bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs py-2 px-3 rounded-lg flex items-center justify-center gap-1.5 transition-colors shadow-sm min-w-[150px]"
+                              >
+                                <Landmark className="w-3.5 h-3.5" /> Nominate Legal Heirs
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setSellModalParcel(p);
+                                  setSellBuyerName('');
+                                  setSellBuyerAadhaar('');
+                                  setSellDeclaredVal('4500000');
+                                }}
+                                className="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs py-2 px-3 rounded-lg flex items-center justify-center gap-1.5 transition-colors shadow-sm min-w-[100px]"
+                              >
+                                <ArrowLeftRight className="w-3.5 h-3.5" /> Sell Property
+                              </button>
+                            </>
                           )}
                         </div>
                       </div>
@@ -794,6 +890,146 @@ export default function CitizenDashboard() {
                   >
                     <ArrowLeftRight className="w-4 h-4" />
                     {sellBusy ? 'Initiating...' : 'Initiate Sale'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Nominate Heirs Modal */}
+        {nominateModalParcel && (
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="bg-white rounded-3xl max-w-lg w-full shadow-2xl overflow-hidden border border-gray-200 animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
+              <div className="bg-[#0F4C81] p-6 text-white flex items-center justify-between sticky top-0 z-10">
+                <div>
+                  <h3 className="text-xl font-black">Nominate Legal Heirs (Digital Will)</h3>
+                  <p className="text-xs text-blue-200 mt-0.5">DLPI: {nominateModalParcel.dlpiId}</p>
+                </div>
+                <button
+                  onClick={() => setNominateModalParcel(null)}
+                  className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <form onSubmit={handleInitiateNomination} className="p-6 space-y-5">
+                <div className="bg-purple-50 border border-purple-200 rounded-2xl p-4">
+                  <div className="flex items-center gap-2 text-xs font-bold text-purple-700 uppercase tracking-wider mb-1">
+                    <UserCheck className="w-4 h-4" /> Owner Verification
+                  </div>
+                  <p className="text-sm text-gray-800 font-medium">
+                    Owner: <span className="font-bold">{user?.name}</span>
+                  </p>
+                  <p className="text-xs text-gray-600 font-mono mt-0.5">
+                    Aadhaar No: <span className="font-bold text-gray-900">{((user as any)?.aadhaarNumber || user?.aadhaarNumber || '').replace(/\D/g, '') || '999900010010'}</span>
+                  </p>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider">
+                      Legal Heirs (Co-parceners)
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setNominateHeirsList([
+                          {name: 'Ramesh Singh', aadhaarNumber: '999900010008', share: '50'},
+                          {name: 'Priya Singh', aadhaarNumber: '999900010009', share: '50'},
+                        ]);
+                      }}
+                      className="text-[11px] font-bold text-[#0F4C81] hover:underline"
+                    >
+                      Prefill 2 Demo Heirs
+                    </button>
+                  </div>
+                  {nominateHeirsList.map((heir, idx) => (
+                    <div key={idx} className="p-4 bg-gray-50 border border-gray-200 rounded-xl relative">
+                      {nominateHeirsList.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => setNominateHeirsList(prev => prev.filter((_, i) => i !== idx))}
+                          className="absolute top-2 right-2 p-1 text-gray-400 hover:text-red-500 transition-colors"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      )}
+                      <div className="space-y-3">
+                        <div>
+                          <input
+                            type="text"
+                            required
+                            value={heir.name}
+                            onChange={(e) => {
+                              const newHeirs = [...nominateHeirsList];
+                              newHeirs[idx].name = e.target.value;
+                              setNominateHeirsList(newHeirs);
+                            }}
+                            placeholder="Heir Full Name"
+                            className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0F4C81]"
+                          />
+                        </div>
+                        <div>
+                          <input
+                            type="text"
+                            required
+                            maxLength={12}
+                            value={heir.aadhaarNumber}
+                            onChange={(e) => {
+                              const newHeirs = [...nominateHeirsList];
+                              newHeirs[idx].aadhaarNumber = e.target.value.replace(/\D/g, '');
+                              setNominateHeirsList(newHeirs);
+                            }}
+                            placeholder="12-digit Aadhaar Number"
+                            className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm font-mono text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0F4C81]"
+                          />
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="number"
+                            required
+                            min="1"
+                            max="100"
+                            value={heir.share}
+                            onChange={(e) => {
+                              const newHeirs = [...nominateHeirsList];
+                              newHeirs[idx].share = e.target.value;
+                              setNominateHeirsList(newHeirs);
+                            }}
+                            placeholder="Share %"
+                            className="w-24 bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0F4C81]"
+                          />
+                          <span className="text-xs font-bold text-gray-500">% Share of Property</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => setNominateHeirsList([...nominateHeirsList, {name: '', aadhaarNumber: '', share: ''}])}
+                    className="w-full py-2 border-2 border-dashed border-gray-300 rounded-xl text-gray-500 font-bold text-sm hover:border-[#0F4C81] hover:text-[#0F4C81] transition-colors flex items-center justify-center gap-2"
+                  >
+                    <Plus className="w-4 h-4" /> Add Another Heir
+                  </button>
+                </div>
+
+                <div className="pt-2 flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setNominateModalParcel(null)}
+                    className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold text-sm py-3 rounded-xl transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={nominateBusy || nominateHeirsList.some(h => h.aadhaarNumber.length !== 12 || !h.name)}
+                    className="flex-1 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white font-bold text-sm py-3 rounded-xl transition-colors flex items-center justify-center gap-2 shadow-md"
+                  >
+                    <Landmark className="w-4 h-4" />
+                    {nominateBusy ? 'Registering...' : 'Register Will'}
                   </button>
                 </div>
               </form>

@@ -14,7 +14,6 @@ const dlpiRoutes        = require('./routes/dlpi');
 const transferRoutes    = require('./routes/transfer');
 const mutationRoutes    = require('./routes/mutation');
 const uttaradhikarRoutes = require('./routes/uttaradhikar');
-const tribalRoutes      = require('./routes/tribal');
 const encumbranceRoutes = require('./routes/encumbrance');
 const auctionRoutes     = require('./routes/auction');
 const { authenticate, ROLES } = require('./middleware/auth');
@@ -73,7 +72,6 @@ app.use('/api/dlpi',        dlpiRoutes);
 app.use('/api/transfer',    transferRoutes);
 app.use('/api/mutation',    mutationRoutes);
 app.use('/api/succession',  uttaradhikarRoutes);
-app.use('/api/tribal',      tribalRoutes);
 app.use('/api/encumbrance', encumbranceRoutes);
 app.use('/api/auction',     auctionRoutes);
 
@@ -91,6 +89,24 @@ app.use('/api/oracle', authenticate, async (req, res) => {
   } catch (e) {
     const status = e.response?.status || 502;
     res.status(status).json(e.response?.data || { error: 'ORACLE_UNREACHABLE' });
+  }
+});
+
+// BhumiBot AI proxy — forward to BhumiBot microservice (port 8015)
+app.use('/api/bhumibot', async (req, res) => {
+  try {
+    const targetUrl = `${process.env.BHUMIBOT_SERVICE_URL || 'http://localhost:8015'}${req.path}`;
+    const botRes = await axios({
+      method: req.method,
+      url: targetUrl,
+      data: req.body,
+      params: req.query,
+      headers: { 'Content-Type': 'application/json' }
+    });
+    res.status(botRes.status).json(botRes.data);
+  } catch (e) {
+    const status = e.response?.status || 502;
+    res.status(status).json(e.response?.data || { error: 'BHUMIBOT_SERVICE_UNREACHABLE', message: e.message });
   }
 });
 
