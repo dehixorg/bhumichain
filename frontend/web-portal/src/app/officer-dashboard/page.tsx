@@ -25,6 +25,8 @@ interface QueueItem {
   ownerName:         string;
   landType:          string;
   areaHectares:      number;
+  rakbaBigha?:       number;
+  rakbaKatha?:       number;
   encumbranceStatus: string;
   claimStatus:       string;
   submittedAt:       string;
