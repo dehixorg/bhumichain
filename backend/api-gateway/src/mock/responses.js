@@ -1001,20 +1001,30 @@ module.exports = {
       // ── DLPI reads ──────────────────────────────────────────────────────────
       case 'dlpi::GetParcelsByAadhaar': {
         const hash = args[0];
-        const rawAadhaar = args[1];
-        const aadhaarToOwner = {
-          '999900010010': 'Priya Kumar',
-          '999900010011': 'Arun Sharma',
-          '999900010012': 'Suresh Yadav',
-          '999900010013': 'Meena Devi',
-        };
-        const ownerName = aadhaarToOwner[rawAadhaar] || 'Unknown Owner';
+        const rawAadhaar = (args[1] || '').replace(/\D/g, '');
+        
+        // Dynamic search in DEMO_MY_PARCELS by owner's Aadhaar
         const matchingParcels = DEMO_MY_PARCELS.filter(p => {
-          const pName = p.ownerName || p.owner?.name;
-          if (pName && ownerName && pName.toLowerCase() === ownerName.toLowerCase()) return true;
-          if (p.ownerAadhaarHash === `sha256:${hash}` || p.ownerAadhaarHash === hash) return true;
-          return false;
+          const oH = (p.owner?.aadhaarNumber || '').replace(/\D/g, '');
+          return oH && (oH === rawAadhaar || oH === hash);
         });
+
+        // Determine owner name
+        let ownerName = 'Unknown Owner';
+        if (matchingParcels.length > 0) {
+          ownerName = matchingParcels[0].owner?.name || matchingParcels[0].ownerName || ownerName;
+        } else {
+          const fallbackMap = {
+            '999900010010': 'Priya Kumar',
+            '999900010011': 'Rakesh Agarwal',
+            '999900010012': 'Suresh Yadav',
+            '999900010013': 'Meena Devi',
+            '999900010014': 'Arun Kumar',
+            '999900010015': 'Sunita Kumar',
+          };
+          ownerName = fallbackMap[rawAadhaar] || ownerName;
+        }
+
         return { ownerName, parcels: matchingParcels };
       }
 
