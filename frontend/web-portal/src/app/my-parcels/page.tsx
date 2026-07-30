@@ -13,6 +13,7 @@ import {
 import clsx from 'clsx';
 import CitizenHeader from '@/components/dashboard/CitizenHeader';
 import CitizenFooter from '@/components/dashboard/CitizenFooter';
+import LegalDeedPDFModal, { LegalDeedData } from '@/components/dashboard/LegalDeedPDFModal';
 import { getUser, apiFetch, type JWTUser, formatMaskedAadhaar, formatLastLogin } from '@/lib/auth';
 import { recordHeirConsent, initiateTransfer, recordConsent, getMyPendingTransfers, nominateHeirs, getInheritorNominations, acceptNomination } from '@/lib/api';
 import toast from 'react-hot-toast';
@@ -92,6 +93,10 @@ export default function CitizenDashboard() {
   const [nominateModalParcel, setNominateModalParcel] = useState<Parcel | null>(null);
   const [nominateHeirsList, setNominateHeirsList] = useState<{name: string, aadhaarNumber: string, share: string}[]>([{name: '', aadhaarNumber: '', share: ''}]);
   const [nominateBusy, setNominateBusy] = useState(false);
+
+  // Legal Deed PDF Modal State
+  const [deedModalOpen, setDeedModalOpen] = useState(false);
+  const [selectedDeedData, setSelectedDeedData] = useState<LegalDeedData | null>(null);
 
   useEffect(() => {
     try {
@@ -592,10 +597,36 @@ export default function CitizenDashboard() {
                         </div>
 
                         <div className="flex flex-wrap gap-2">
+                          {(p.claimStatus === 'OWNER_VERIFIED' || p.claimStatus === 'VERIFIED' || p.claimStatus === 'COMPLETED' || p.claimStatus === 'MUTATED_AND_TRANSFERRED') && (
+                            <button
+                              onClick={() => {
+                                const ha = p.areaHectares || 0.15;
+                                const bigha = (p as any).rakbaBigha || Math.max(1, Math.round(ha * 7.48));
+                                const katha = (p as any).rakbaKatha || 8;
+                                setSelectedDeedData({
+                                  dlpiId: p.dlpiId,
+                                  ownerName: user?.name || (p.owners && p.owners[0]?.name) || 'Rameshwar Prasad Singh',
+                                  khesraNo: p.khesraNo || (p as any).khasraNo || '101',
+                                  khataNo: p.khataNo || '108',
+                                  district: p.district || 'Patna',
+                                  anchal: p.anchal || 'Phulwari Sharif',
+                                  areaHectares: ha,
+                                  rakbaBigha: bigha,
+                                  rakbaKatha: katha,
+                                  encumbranceStatus: p.encumbranceStatus || 'CLEAR',
+                                  ownershipType: p.ownershipType === 'JOINT' ? 'Joint' : 'Sole (Bhumidhari)',
+                                });
+                                setDeedModalOpen(true);
+                              }}
+                              className="bg-[#0F4C81] hover:bg-[#0B3A64] text-white text-xs font-bold py-2 px-3 rounded-lg flex-1 text-center justify-center min-w-[140px] flex items-center gap-1.5 shadow-sm cursor-pointer"
+                            >
+                              <Download className="w-3.5 h-3.5" /> Download Legal Deed (PDF)
+                            </button>
+                          )}
                           <Link
                             href={`/ec/${p.dlpiId}`}
                             className={clsx(
-                              "btn-primary text-xs py-2 px-3 rounded-lg flex-1 text-center justify-center min-w-[120px] flex items-center gap-1.5",
+                              "btn-secondary text-xs py-2 px-3 rounded-lg flex-1 text-center justify-center min-w-[120px] flex items-center gap-1.5 bg-white",
                               generatedEcs[p.dlpiId] && "bg-emerald-700 hover:bg-emerald-800 border-emerald-600 text-white font-bold"
                             )}
                           >
@@ -1037,6 +1068,12 @@ export default function CitizenDashboard() {
           </div>
         )}
       </main>
+
+      <LegalDeedPDFModal
+        isOpen={deedModalOpen}
+        onClose={() => setDeedModalOpen(false)}
+        data={selectedDeedData}
+      />
 
       <CitizenFooter />
     </div>
