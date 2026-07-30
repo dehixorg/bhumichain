@@ -16,6 +16,7 @@ const mutationRoutes    = require('./routes/mutation');
 const uttaradhikarRoutes = require('./routes/uttaradhikar');
 const encumbranceRoutes = require('./routes/encumbrance');
 const auctionRoutes     = require('./routes/auction');
+const bhuNakshaRoutes   = require('./routes/bhu-naksha');
 const { authenticate, ROLES } = require('./middleware/auth');
 const { init: initWs, triggerMockEvent } = require('./services/websocket');
 const { isMock } = require('./services/fabric');
@@ -33,9 +34,10 @@ app.use(morgan('dev'));
 app.use(
   rateLimit({
     windowMs: Number(process.env.RATE_LIMIT_WINDOW_MS) || 60_000,
-    max: Number(process.env.RATE_LIMIT_MAX) || 100,
+    max: Number(process.env.RATE_LIMIT_MAX) || 2000,
     standardHeaders: true,
     legacyHeaders: false,
+    message: { error: 'Too many requests, please try again in a minute.' },
   }),
 );
 
@@ -73,6 +75,7 @@ app.use('/api/mutation',    mutationRoutes);
 app.use('/api/succession',  uttaradhikarRoutes);
 app.use('/api/encumbrance', encumbranceRoutes);
 app.use('/api/auction',     auctionRoutes);
+app.use('/api/bhu-naksha',  bhuNakshaRoutes);
 
 // Oracle proxy — forward to oracle-service (avoids CORS on frontend)
 const axios = require('axios');
@@ -88,6 +91,24 @@ app.use('/api/oracle', authenticate, async (req, res) => {
   } catch (e) {
     const status = e.response?.status || 502;
     res.status(status).json(e.response?.data || { error: 'ORACLE_UNREACHABLE' });
+  }
+});
+
+// BhumiBot AI proxy — forward to BhumiBot microservice (port 8015)
+app.use('/api/bhumibot', async (req, res) => {
+  try {
+    const targetUrl = `${process.env.BHUMIBOT_SERVICE_URL || 'http://localhost:8015'}${req.path}`;
+    const botRes = await axios({
+      method: req.method,
+      url: targetUrl,
+      data: req.body,
+      params: req.query,
+      headers: { 'Content-Type': 'application/json' }
+    });
+    res.status(botRes.status).json(botRes.data);
+  } catch (e) {
+    const status = e.response?.status || 502;
+    res.status(status).json(e.response?.data || { error: 'BHUMIBOT_SERVICE_UNREACHABLE', message: e.message });
   }
 });
 

@@ -105,16 +105,27 @@ export function getRole(): string | null {
 }
 
 export function isOfficer(): boolean {
-  return ['karmachari', 'circle_inspector', 'circle_officer', 'kotwal'].includes(getRole() ?? '');
+  const role = getRole() ?? '';
+  return ['karmachari', 'patwari', 'circle_inspector', 'anchalNirikshak', 'kanungo', 'circle_officer', 'anchalAdhikari', 'tehsildar', 'sro', 'collector', 'super_admin', 'kotwal', 'revenue_officer'].includes(role);
 }
 
 export function isTehsildar(): boolean {
-  return getRole() === 'circle_officer';
+  const role = getRole() ?? '';
+  return ['circle_officer', 'anchalAdhikari', 'tehsildar'].includes(role);
 }
 
 export function getRedirectPath(role: string): string {
   if (role === 'citizen') return '/my-parcels';
   return '/officer-dashboard';
+}
+
+async function safeParseJson(res: Response): Promise<any> {
+  const text = await res.text();
+  try {
+    return JSON.parse(text);
+  } catch {
+    return { error: text || `Server error (${res.status})` };
+  }
 }
 
 // ─── Auth API calls ───────────────────────────────────────────────────────────
@@ -125,7 +136,7 @@ export async function requestOTP(aadhaarNumber: string): Promise<{ maskedPhone: 
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ aadhaarNumber }),
   });
-  const data = await res.json();
+  const data = await safeParseJson(res);
   if (!res.ok) throw new Error(data.message || data.error || 'Failed to send OTP');
   return data;
 }
@@ -136,7 +147,7 @@ export async function verifyOTP(aadhaarNumber: string, otp: string): Promise<JWT
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ aadhaarNumber, otp }),
   });
-  const data = await res.json();
+  const data = await safeParseJson(res);
   if (!res.ok) throw new Error(data.message || data.error || 'Login failed');
   setToken(data.token);
   return data.user;
@@ -152,7 +163,7 @@ export async function officerLogin(
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ aadhaarNumber, deptEmail, otp }),
   });
-  const data = await res.json();
+  const data = await safeParseJson(res);
   if (!res.ok) throw new Error(data.message || data.error || 'Officer login failed');
   setToken(data.token);
   return data.user;
@@ -164,8 +175,8 @@ export async function demoLogin(persona: string): Promise<JWTUser> {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ persona }),
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'Demo login failed');
+  const data = await safeParseJson(res);
+  if (!res.ok) throw new Error(data.error || data.message || 'Demo login failed');
   setToken(data.token);
   return data.user;
 }

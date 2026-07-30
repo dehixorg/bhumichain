@@ -105,6 +105,7 @@ export interface SuccessionHeir {
   heirId: string;
   name: string;
   aadhaarNumber: string;
+  aadhaar?: string;
   relation: string;
   gender: string;
   dob: string;

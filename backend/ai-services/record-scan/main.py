@@ -17,8 +17,16 @@ import httpx
 from typing import Optional
 from dotenv import load_dotenv
 
-env_path = os.path.join(os.path.dirname(__file__), ".env")
-load_dotenv(env_path, override=True)
+# Load main backend api-gateway .env first (centralized config)
+base_dir = os.path.dirname(__file__)
+gw_env = os.path.abspath(os.path.join(base_dir, "../../api-gateway/.env"))
+if os.path.exists(gw_env):
+    load_dotenv(gw_env, override=False)
+
+# Load local .env if present (optional service-specific overrides)
+local_env = os.path.join(base_dir, ".env")
+if os.path.exists(local_env):
+    load_dotenv(local_env, override=True)
 
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, BackgroundTasks, Request
 from fastapi.responses import JSONResponse
@@ -575,7 +583,7 @@ async def _post_to_gateway(payload: dict, token: str):
 
 if __name__ == "__main__":
     import uvicorn
-    port = int(os.getenv("PORT", 8010))
+    port = int(os.getenv("RECORD_SCAN_PORT", 8010))
     print(f"\n RecordScan AI -- UP Khatauni Edition")
     print(f"   REST  -> http://localhost:{port}")
     print(f"   Docs  -> http://localhost:{port}/docs")

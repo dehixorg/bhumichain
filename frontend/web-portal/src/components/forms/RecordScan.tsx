@@ -7,7 +7,7 @@ import {
   Cpu, Database, Shield, Zap, Edit3, ChevronRight, X,
 } from 'lucide-react';
 import clsx from 'clsx';
-import { getToken, apiFetch } from '@/lib/auth';
+import { getToken, apiFetch, getUser, type JWTUser } from '@/lib/auth';
 
 // Proxy route: browser → /api/scan/upload (Next.js) → localhost:8010 (VM internal)
 const SCAN_PROXY = '/api/scan/upload';
@@ -97,6 +97,13 @@ export default function RecordScan({ onDlpiCreated, mode = 'genesis', onScanComp
   const [dlpiId, setDlpiId]   = useState('');
   const [dragOver, setDragOver] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const [user, setUser]       = useState<JWTUser | null>(null);
+
+  React.useEffect(() => {
+    setUser(getUser());
+  }, []);
+
+  const isCitizen = user?.role === 'citizen';
 
 // ─── Strict English Sanitizer (translates any Devanagari / Hindi strings) ─────
 function ensureEnglish(obj: any): any {
@@ -299,18 +306,20 @@ function ensureEnglish(obj: any): any {
     }
 
     try {
+      const name = user ? `${user.name} (${user.role.toUpperCase()})` : 'Vijay Singh (Patwari DAD-P1)';
+      const hashVal = user ? user.aadhaarHash : 'sha256:' + '0'.repeat(64);
       const res = await fetch('/api/scan/approve', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify({
           scanId:              result.scanId,
           dlpiId,
-          officerAadhaarNumber: '999900010003', // mock karmachari for now
-          officerAadhaarNumber:  'sha256:' + '0'.repeat(64),
+          officerAadhaarNumber: hashVal.startsWith('sha256:') ? hashVal : `sha256:${hashVal}`,
+          officerAadhaarHash:   hashVal.startsWith('sha256:') ? hashVal : `sha256:${hashVal}`,
           ownerAadhaarNumbers: ownerAadhaarNumbers,
           ownerAadhaarNumberes:  ownerAadhaarNumbers,
-          owners:              legacyOwners.length > 0 ? legacyOwners : [],  // Fallback for older remote backend versions
-          officerName:         'Vijay Singh (Karmachari PHU-P1)',
+          owners:              legacyOwners.length > 0 ? legacyOwners : [],  // Fallback for older remote versions
+          officerName:         name,
           correctedFields:     Object.keys(edited).length ? edited : undefined,
           token,
         }),
@@ -576,7 +585,7 @@ function ensureEnglish(obj: any): any {
             </button>
             <button onClick={approve} className="btn-primary flex items-center gap-2 ml-auto">
               <Shield className="w-4 h-4" />
-              {mode === 'transfer' ? 'Accept Scan' : 'Submit for Kanungo Approval'}
+              {isCitizen ? 'Submit Property for Patwari Review' : (mode === 'transfer' ? 'Accept Scan' : 'Submit for Kanungo Approval')}
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
@@ -586,26 +595,32 @@ function ensureEnglish(obj: any): any {
       {/* ── APPROVING ───────────────────────────────────────────────────── */}
       {stage === 'approving' && (
         <div className="card text-center py-12">
-          <div className="w-10 h-10 border-2 border-[#0F4C81]/60 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <div className="text-gray-700 font-semibold">Submitting to Kanungo Queue...</div>
-          <div className="text-gray-500 text-sm mt-1">Pending SRO Verification</div>
+          <div className={clsx("w-10 h-10 border-2 border-t-transparent rounded-full animate-spin mx-auto mb-4", isCitizen ? "border-brand-500" : "border-[#0F4C81]/60")} />
+          <div className={clsx("font-semibold", isCitizen ? "text-gray-200" : "text-gray-700")}>
+            {isCitizen ? 'Submitting Property Application...' : 'Submitting to Kanungo Queue...'}
+          </div>
+          <div className="text-gray-500 text-sm mt-1">
+            {isCitizen ? 'Registering claim · Notifying Tehsil office' : 'Pending SRO Verification'}
+          </div>
         </div>
       )}
 
       {/* ── DONE ────────────────────────────────────────────────────────── */}
       {stage === 'done' && (
         <div className="card text-center py-10 animate-fade-in">
-          <div className="w-14 h-14 rounded-full bg-[#DBEAFE] flex items-center justify-center mx-auto mb-4">
-            <CheckCircle className="w-8 h-8 text-[#0F4C81]" />
+          <div className={clsx("w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4", isCitizen ? "bg-brand-900" : "bg-[#DBEAFE]")}>
+            <CheckCircle className={clsx("w-8 h-8", isCitizen ? "text-brand-400" : "text-[#0F4C81]")} />
           </div>
-          <div className="text-[#0F4C81] font-bold text-lg mb-1">
-            {mode === 'transfer' ? 'Scan Completed!' : 'Sent for Approval!'}
+          <div className={clsx("font-bold text-lg mb-1", isCitizen ? "text-brand-300" : "text-[#0F4C81]")}>
+            {isCitizen ? 'Property Submitted for Review!' : (mode === 'transfer' ? 'Scan Completed!' : 'Sent for Approval!')}
           </div>
-          {mode === 'genesis' && <div className="font-mono text-gray-600 text-sm mb-1">{dlpiId}</div>}
+          {mode === 'genesis' && <div className={clsx("font-mono text-sm mb-1", isCitizen ? "text-gray-300" : "text-gray-600")}>{dlpiId}</div>}
           <div className="text-gray-500 text-xs mb-6">
-            {mode === 'transfer' 
-              ? 'Document has been digitized and verified via RecordScan AI.' 
-              : 'Scan submitted to Kanungo/Circle Inspector for review before being recorded on blockchain.'}
+            {isCitizen
+              ? 'Your land parcel has been submitted and is pending verification by the Patwari.'
+              : (mode === 'transfer' 
+                  ? 'Document has been digitized and verified via RecordScan AI.' 
+                  : 'Scan submitted to Kanungo/Circle Inspector for review before being recorded on blockchain.')}
           </div>
           <div className="flex items-center justify-center gap-3">
             <button onClick={() => setStage('idle')} className="btn-ghost text-sm">Scan another</button>
