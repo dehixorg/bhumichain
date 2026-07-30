@@ -33,8 +33,14 @@ const MUTATION_TYPES = [
 router.post(
   '/',
   authenticate,
-  requireRole(ROLES.CITIZEN, ROLES.ANCHAL_ADHIKARI, ROLES.ANCHAL_ADHIKARI),
-  body('mutationType').isIn(['Sale', 'Gift', 'Inheritance', 'Partition', 'Government Land Allotment', 'Court Order Mutation', 'Suo-Moto Mutation', ...MUTATION_TYPES]),
+  requireRole(ROLES.CITIZEN, ROLES.ANCHAL_ADHIKARI),
+  body('mutationType').isIn([
+    'Sale', 'Gift', 'Inheritance', 'Partition', 
+    'Government Land Allotment', 'Court Order Mutation',
+    'Suo-Moto Mutation', 'Govt Land Allocation', 'Administrative Correction',
+    'Special: Suo-Moto Mutation', 'Special: Govt Land Allocation', 'Special: Administrative Correction',
+    ...MUTATION_TYPES
+  ]),
   body('applicantDetails').notEmpty(),
   body('landDetails').notEmpty(),
   body('previousOwnerDetails').notEmpty(),
