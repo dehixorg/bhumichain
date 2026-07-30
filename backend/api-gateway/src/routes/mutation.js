@@ -504,4 +504,39 @@ router.post(
   },
 );
 
+// PATCH /api/mutation/:mutationId/status — Approve/Reject workflow transitions
+router.patch(
+  '/:mutationId/status',
+  authenticate,
+  requireRole(ROLES.KARMACHARI, ROLES.ANCHAL_NIRIKSHAK, ROLES.KANUNGO, ROLES.ANCHAL_ADHIKARI),
+  body('status').isIn(['Pending at Kanungo', 'Pending at Circle Officer', 'Approved', 'Rejected', 'Objection Filed']),
+  body('reason').optional().trim(),
+  validate,
+  async (req, res) => {
+    try {
+      const { status, reason } = req.body;
+      const { mutationId } = req.params;
+      const actorName = req.user.name || 'Officer';
+      
+      const result = await submit('mutation-manager', 'UpdateMutationStatus', [
+        mutationId,
+        status,
+        actorName,
+        reason || ''
+      ]);
+
+      broadcast('MutationStatusUpdated', {
+        mutationId,
+        status,
+        actorName,
+        message: `🔄 Mutation ${mutationId} status updated to: ${status} by ${actorName}`,
+      });
+
+      res.json(result);
+    } catch (e) {
+      res.status(500).json({ error: 'FABRIC_ERROR', message: e.message });
+    }
+  }
+);
+
 module.exports = router;
