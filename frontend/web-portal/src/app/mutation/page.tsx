@@ -400,18 +400,18 @@ export default function MutationDashboard() {
   };
 
   return (
-    <div className="flex h-screen bg-gray-950 overflow-hidden font-sans text-gray-200">
+    <div className="flex h-screen bg-[#F8FAFC] overflow-hidden font-sans text-gray-800">
       <style dangerouslySetInnerHTML={{ __html: `
         input:-webkit-autofill,
         input:-webkit-autofill:hover, 
         input:-webkit-autofill:focus, 
         input:-webkit-autofill:active {
-            -webkit-box-shadow: 0 0 0 30px #111827 inset !important;
-            -webkit-text-fill-color: #f3f4f6 !important;
+            -webkit-box-shadow: 0 0 0 30px #ffffff inset !important;
+            -webkit-text-fill-color: #111827 !important;
             transition: background-color 5000s ease-in-out 0s;
         }
         input[type="date"] {
-            color-scheme: dark;
+            color-scheme: light;
         }
       `}} />
       <Sidebar />
@@ -420,54 +420,54 @@ export default function MutationDashboard() {
         <div className="max-w-6xl mx-auto px-6 py-8 space-y-6">
 
           {/* Header Banner */}
-          <div className="flex items-center justify-between border-b border-gray-800 pb-5">
+          <div className="flex items-center justify-between border-b border-gray-200 pb-5">
             <div>
               <div className="flex items-center gap-2">
-                <GitMerge className="w-6 h-6 text-brand-500" />
-                <h1 className="text-2xl font-bold tracking-tight text-white">Mutation Portal</h1>
+                <GitMerge className="w-6 h-6 text-[#0F4C81]" />
+                <h1 className="text-2xl font-bold tracking-tight text-gray-900">Mutation Portal</h1>
               </div>
               <p className="text-gray-400 text-sm mt-1">
-                Role: <span className="font-semibold text-brand-400">{displayRoleLabel(user?.role || '')}</span>
+                Role: <span className="font-semibold text-[#0F4C81]">{displayRoleLabel(user?.role || '')}</span>
                 {user?.jurisdictionCode && ` · Jurisdiction: ${user.jurisdictionCode}`}
               </p>
             </div>
             <button
               onClick={fetchMutations}
               disabled={loading}
-              className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-semibold border border-gray-800 bg-gray-900 hover:bg-gray-800 hover:text-white transition-all disabled:opacity-50"
+              className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-semibold border border-gray-200 bg-white hover:bg-gray-800 hover:text-gray-900 transition-all disabled:opacity-50"
             >
-              <RefreshCw className={clsx('w-4 h-4 text-brand-400', loading && 'animate-spin')} />
+              <RefreshCw className={clsx('w-4 h-4 text-[#0F4C81]', loading && 'animate-spin')} />
               Sync Ledger
             </button>
           </div>
 
           {/* Toast Notifications */}
           {error && (
-            <div className="flex items-center gap-3 p-4 rounded-2xl bg-red-900/20 border border-red-800/60 text-red-300 text-sm animate-fade-in">
+            <div className="flex items-center gap-3 p-4 rounded-2xl bg-red-50 border border-red-200 text-red-850 text-sm animate-fade-in">
               <AlertTriangle className="w-5 h-5 shrink-0 text-red-400" />
               {error}
             </div>
           )}
           {success && (
-            <div className="flex items-center gap-3 p-4 rounded-2xl bg-green-900/20 border border-green-800/60 text-green-300 text-sm animate-fade-in">
+            <div className="flex items-center gap-3 p-4 rounded-2xl bg-green-50 border border-green-200 text-green-850 text-sm animate-fade-in">
               <CheckCircle className="w-5 h-5 shrink-0 text-green-400" />
               {success}
             </div>
           )}
 
           {/* TABS NAVIGATION */}
-          <div className="flex gap-2 border-b border-gray-850 p-1 bg-gray-900/40 rounded-xl max-w-fit">
+          <div className="flex gap-2 border-b border-gray-200 p-1 bg-white/40 rounded-xl max-w-fit">
             {isCitizen ? (
               <>
                 <button
                   onClick={() => { setActiveTab('track'); setSelectedMutation(null); }}
-                  className={clsx('px-4 py-2 text-sm font-semibold rounded-lg transition-all', activeTab === 'track' ? 'bg-brand-600 text-white shadow-lg' : 'text-gray-400 hover:text-gray-200')}
+                  className={clsx('px-4 py-2 text-sm font-semibold rounded-lg transition-all', activeTab === 'track' ? 'bg-[#0F4C81] text-gray-900 shadow-lg' : 'text-gray-400 hover:text-gray-800')}
                 >
                   Track Applications
                 </button>
                 <button
                   onClick={() => { setActiveTab('apply'); setSelectedMutation(null); }}
-                  className={clsx('px-4 py-2 text-sm font-semibold rounded-lg transition-all', activeTab === 'apply' ? 'bg-brand-600 text-white shadow-lg' : 'text-gray-400 hover:text-gray-200')}
+                  className={clsx('px-4 py-2 text-sm font-semibold rounded-lg transition-all', activeTab === 'apply' ? 'bg-[#0F4C81] text-gray-900 shadow-lg' : 'text-gray-400 hover:text-gray-800')}
                 >
                   Apply Mutation
                 </button>
@@ -476,13 +476,13 @@ export default function MutationDashboard() {
               <>
                 <button
                   onClick={() => { setActiveTab('verify'); setSelectedMutation(null); }}
-                  className={clsx('px-4 py-2 text-sm font-semibold rounded-lg transition-all', activeTab === 'verify' ? 'bg-brand-600 text-white shadow-lg' : 'text-gray-400 hover:text-gray-200')}
+                  className={clsx('px-4 py-2 text-sm font-semibold rounded-lg transition-all', activeTab === 'verify' ? 'bg-[#0F4C81] text-gray-900 shadow-lg' : 'text-gray-400 hover:text-gray-800')}
                 >
                   My Work Queue ({getFilteredMutations().length})
                 </button>
                 <button
                   onClick={() => { setActiveTab('track'); setSelectedMutation(null); }}
-                  className={clsx('px-4 py-2 text-sm font-semibold rounded-lg transition-all', activeTab === 'track' ? 'bg-brand-600 text-white shadow-lg' : 'text-gray-400 hover:text-gray-200')}
+                  className={clsx('px-4 py-2 text-sm font-semibold rounded-lg transition-all', activeTab === 'track' ? 'bg-[#0F4C81] text-gray-900 shadow-lg' : 'text-gray-400 hover:text-gray-800')}
                 >
                   All Mutation Records
                 </button>
@@ -490,13 +490,13 @@ export default function MutationDashboard() {
                   <>
                     <button
                       onClick={() => { setActiveTab('objections'); setSelectedMutation(null); }}
-                      className={clsx('px-4 py-2 text-sm font-semibold rounded-lg transition-all', activeTab === 'objections' ? 'bg-brand-600 text-white shadow-lg' : 'text-gray-400 hover:text-gray-200')}
+                      className={clsx('px-4 py-2 text-sm font-semibold rounded-lg transition-all', activeTab === 'objections' ? 'bg-[#0F4C81] text-gray-900 shadow-lg' : 'text-gray-400 hover:text-gray-800')}
                     >
                       Objections Queue ({mutations.filter(m => m.status === 'Objection Filed').length})
                     </button>
                     <button
                       onClick={() => { setActiveTab('special'); setSelectedMutation(null); }}
-                      className={clsx('px-4 py-2 text-sm font-semibold rounded-lg transition-all', activeTab === 'special' ? 'bg-brand-600 text-white shadow-lg' : 'text-gray-400 hover:text-gray-200')}
+                      className={clsx('px-4 py-2 text-sm font-semibold rounded-lg transition-all', activeTab === 'special' ? 'bg-[#0F4C81] text-gray-900 shadow-lg' : 'text-gray-400 hover:text-gray-800')}
                     >
                       Create Special Mutation
                     </button>
@@ -515,11 +515,11 @@ export default function MutationDashboard() {
               {/* Form Render (Apply/Special) */}
               {(activeTab === 'apply' || activeTab === 'special') ? (
                 <form onSubmit={(e) => handleApplyMutation(e, activeTab === 'special')} className="space-y-6">
-                  <div className="bg-gray-900 border border-gray-800 rounded-3xl p-6 shadow-2xl space-y-6">
+                  <div className="bg-white border border-gray-200 rounded-3xl p-6 shadow-2xl space-y-6">
                     
-                    <div className="flex items-center gap-3 border-b border-gray-800 pb-4">
-                      <FilePlus className="w-5 h-5 text-brand-400" />
-                      <h2 className="text-lg font-bold text-white">
+                    <div className="flex items-center gap-3 border-b border-gray-200 pb-4">
+                      <FilePlus className="w-5 h-5 text-[#0F4C81]" />
+                      <h2 className="text-lg font-bold text-gray-900">
                         {activeTab === 'special' ? 'Special Mutation Creation (Tehsildar)' : 'New Land Mutation Application'}
                       </h2>
                     </div>
@@ -530,7 +530,7 @@ export default function MutationDashboard() {
                       <select
                         value={mutationType}
                         onChange={(e) => setMutationType(e.target.value)}
-                        className="w-full bg-gray-950 border border-gray-800 rounded-xl px-4 py-3 text-sm focus:border-brand-500 outline-none text-gray-200 transition-colors"
+                        className="w-full bg-[#F8FAFC] border border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-[#0F4C81]/60 outline-none text-gray-800 transition-colors"
                       >
                         {activeTab === 'special' ? (
                           <>
@@ -552,12 +552,12 @@ export default function MutationDashboard() {
                     </div>
 
                     {/* Aadhaar Seller & Property Lookup Card */}
-                    <div className="bg-gray-950/80 border border-brand-500/30 p-5 rounded-2xl space-y-4">
-                      <div className="flex items-center justify-between border-b border-gray-800 pb-2">
-                        <span className="text-xs font-bold text-brand-400 uppercase tracking-wider flex items-center gap-1.5">
+                    <div className="bg-[#F8FAFC]/80 border border-[#0F4C81]/30 p-5 rounded-2xl space-y-4">
+                      <div className="flex items-center justify-between border-b border-gray-200 pb-2">
+                        <span className="text-xs font-bold text-[#0F4C81] uppercase tracking-wider flex items-center gap-1.5">
                           <Search className="w-3.5 h-3.5" /> Seller &amp; Property lookup by Aadhaar
                         </span>
-                        <span className="text-[10px] text-gray-500 font-mono">Real-time BhumiChain Query</span>
+                        <span className="text-[10px] text-gray-400 font-mono">Real-time BhumiChain Query</span>
                       </div>
                       
                       <div className="flex gap-3">
@@ -568,14 +568,14 @@ export default function MutationDashboard() {
                             placeholder="Enter Seller Aadhaar Number (12 digits) e.g. 999900010010"
                             value={searchAadhaar}
                             onChange={(e) => setSearchAadhaar(e.target.value.replace(/\D/g, ''))}
-                            className="w-full bg-gray-900 border border-gray-800 rounded-xl px-4 py-2.5 text-xs text-gray-200 outline-none focus:border-brand-500 font-mono"
+                            className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-xs text-gray-800 outline-none focus:border-[#0F4C81]/60 font-mono"
                           />
                         </div>
                         <button
                           type="button"
                           disabled={searchLoading || searchAadhaar.length !== 12}
                           onClick={handleAadhaarSearch}
-                          className="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-semibold disabled:opacity-50 flex items-center gap-1.5"
+                          className="px-4 py-2 bg-[#0F4C81] hover:bg-[#0a3566] text-gray-900 rounded-xl text-xs font-semibold disabled:opacity-50 flex items-center gap-1.5"
                         >
                           {searchLoading ? 'Fetching...' : 'Fetch Details'}
                         </button>
@@ -586,10 +586,10 @@ export default function MutationDashboard() {
                       )}
 
                       {fetchedSellerName && (
-                        <div className="bg-gray-900/60 p-4 rounded-xl border border-gray-800 space-y-3">
-                          <div className="flex justify-between items-center text-xs text-gray-300">
+                        <div className="bg-white/60 p-4 rounded-xl border border-gray-200 space-y-3">
+                          <div className="flex justify-between items-center text-xs text-gray-700">
                             <span>Seller Name: <strong>{fetchedSellerName}</strong></span>
-                            <span className="text-[10px] bg-brand-900/40 border border-brand-700/60 px-2 py-0.5 rounded text-brand-400">Match Found</span>
+                            <span className="text-[10px] bg-blue-50 border border-blue-200 px-2 py-0.5 rounded text-[#0F4C81]">Match Found</span>
                           </div>
 
                           <div className="space-y-1.5">
@@ -597,7 +597,7 @@ export default function MutationDashboard() {
                             <select
                               value={selectedParcelId}
                               onChange={(e) => handleSelectParcel(e.target.value)}
-                              className="w-full bg-gray-950 border border-gray-800 rounded-xl px-3 py-2 text-xs text-gray-200 outline-none focus:border-brand-500"
+                              className="w-full bg-[#F8FAFC] border border-gray-200 rounded-xl px-3 py-2 text-xs text-gray-800 outline-none focus:border-[#0F4C81]/60"
                             >
                               <option value="">-- Choose a property --</option>
                               {fetchedParcels.map(p => (
@@ -615,114 +615,114 @@ export default function MutationDashboard() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       
                       {/* Section 1: Applicant */}
-                      <div className="bg-gray-950/60 border border-gray-850 p-5 rounded-2xl space-y-3">
-                        <span className="text-xs font-bold text-brand-400 uppercase">1. Applicant Details</span>
+                      <div className="bg-[#F8FAFC]/60 border border-gray-200 p-5 rounded-2xl space-y-3">
+                        <span className="text-xs font-bold text-[#0F4C81] uppercase">1. Applicant Details</span>
                         <input
                           type="text" required placeholder="Applicant Full Name"
                           value={applicantName} onChange={e => setApplicantName(e.target.value)}
-                          className="w-full bg-gray-900 border border-gray-800/80 rounded-xl px-3 py-2.5 text-xs text-gray-200 outline-none focus:border-brand-500"
+                          className="w-full bg-white border border-gray-200/80 rounded-xl px-3 py-2.5 text-xs text-gray-800 outline-none focus:border-[#0F4C81]/60"
                         />
                         <input
                           type="text" required placeholder="Father's Name"
                           value={applicantFather} onChange={e => setApplicantFather(e.target.value)}
-                          className="w-full bg-gray-900 border border-gray-800/80 rounded-xl px-3 py-2.5 text-xs text-gray-200 outline-none focus:border-brand-500"
+                          className="w-full bg-white border border-gray-200/80 rounded-xl px-3 py-2.5 text-xs text-gray-800 outline-none focus:border-[#0F4C81]/60"
                         />
                         <input
                           type="text" required maxLength={12} placeholder="Aadhaar Number (12 digits)"
                           value={applicantAadhaar} onChange={e => setApplicantAadhaar(e.target.value.replace(/\D/g,''))}
-                          className="w-full bg-gray-900 border border-gray-800/80 rounded-xl px-3 py-2.5 text-xs text-gray-200 outline-none focus:border-brand-500 font-mono"
+                          className="w-full bg-white border border-gray-200/80 rounded-xl px-3 py-2.5 text-xs text-gray-800 outline-none focus:border-[#0F4C81]/60 font-mono"
                         />
                         <input
                           type="tel" required placeholder="Mobile Number"
                           value={applicantMobile} onChange={e => setApplicantMobile(e.target.value)}
-                          className="w-full bg-gray-900 border border-gray-800/80 rounded-xl px-3 py-2.5 text-xs text-gray-200 outline-none focus:border-brand-500"
+                          className="w-full bg-white border border-gray-200/80 rounded-xl px-3 py-2.5 text-xs text-gray-800 outline-none focus:border-[#0F4C81]/60"
                         />
                       </div>
 
                       {/* Section 2: Land Details */}
-                      <div className="bg-gray-950/60 border border-gray-850 p-5 rounded-2xl space-y-3">
-                        <span className="text-xs font-bold text-brand-400 uppercase">2. Land Details</span>
+                      <div className="bg-[#F8FAFC]/60 border border-gray-200 p-5 rounded-2xl space-y-3">
+                        <span className="text-xs font-bold text-[#0F4C81] uppercase">2. Land Details</span>
                         <input
                           type="text" required placeholder="District"
                           value={landDistrict} onChange={e => setLandDistrict(e.target.value)}
-                          className="w-full bg-gray-900 border border-gray-800/80 rounded-xl px-3 py-2.5 text-xs text-gray-200 outline-none focus:border-brand-500"
+                          className="w-full bg-white border border-gray-200/80 rounded-xl px-3 py-2.5 text-xs text-gray-800 outline-none focus:border-[#0F4C81]/60"
                         />
                         <input
                           type="text" required placeholder="Tehsil"
                           value={landTehsil} onChange={e => setLandTehsil(e.target.value)}
-                          className="w-full bg-gray-900 border border-gray-800/80 rounded-xl px-3 py-2.5 text-xs text-gray-200 outline-none focus:border-brand-500"
+                          className="w-full bg-white border border-gray-200/80 rounded-xl px-3 py-2.5 text-xs text-gray-800 outline-none focus:border-[#0F4C81]/60"
                         />
                         <input
                           type="text" required placeholder="Village"
                           value={landVillage} onChange={e => setLandVillage(e.target.value)}
-                          className="w-full bg-gray-900 border border-gray-800/80 rounded-xl px-3 py-2.5 text-xs text-gray-200 outline-none focus:border-brand-500"
+                          className="w-full bg-white border border-gray-200/80 rounded-xl px-3 py-2.5 text-xs text-gray-800 outline-none focus:border-[#0F4C81]/60"
                         />
                         <div className="grid grid-cols-3 gap-2">
                           <input
                             type="text" required placeholder="Khata No"
                             value={landKhata} onChange={e => setLandKhata(e.target.value)}
-                            className="w-full bg-gray-900 border border-gray-800/80 rounded-xl px-2 py-2.5 text-xs text-gray-200 outline-none focus:border-brand-500 font-mono"
+                            className="w-full bg-white border border-gray-200/80 rounded-xl px-2 py-2.5 text-xs text-gray-800 outline-none focus:border-[#0F4C81]/60 font-mono"
                           />
                           <input
                             type="text" required placeholder="Plot No"
                             value={landPlot} onChange={e => setLandPlot(e.target.value)}
-                            className="w-full bg-gray-900 border border-gray-800/80 rounded-xl px-2 py-2.5 text-xs text-gray-200 outline-none focus:border-brand-500 font-mono"
+                            className="w-full bg-white border border-gray-200/80 rounded-xl px-2 py-2.5 text-xs text-gray-800 outline-none focus:border-[#0F4C81]/60 font-mono"
                           />
                           <input
                             type="text" required placeholder="Area (Hect)"
                             value={landArea} onChange={e => setLandArea(e.target.value)}
-                            className="w-full bg-gray-900 border border-gray-800/80 rounded-xl px-2 py-2.5 text-xs text-gray-200 outline-none focus:border-brand-500 font-mono"
+                            className="w-full bg-white border border-gray-200/80 rounded-xl px-2 py-2.5 text-xs text-gray-800 outline-none focus:border-[#0F4C81]/60 font-mono"
                           />
                         </div>
                       </div>
 
                       {/* Section 3: Previous Owner */}
-                      <div className="bg-gray-950/60 border border-gray-850 p-5 rounded-2xl space-y-3">
-                        <span className="text-xs font-bold text-brand-400 uppercase">3. Previous Owner Details</span>
+                      <div className="bg-[#F8FAFC]/60 border border-gray-200 p-5 rounded-2xl space-y-3">
+                        <span className="text-xs font-bold text-[#0F4C81] uppercase">3. Previous Owner Details</span>
                         <input
                           type="text" required placeholder="Full Name"
                           value={prevOwnerName} onChange={e => setPrevOwnerName(e.target.value)}
-                          className="w-full bg-gray-900 border border-gray-800/80 rounded-xl px-3 py-2.5 text-xs text-gray-200 outline-none focus:border-brand-500"
+                          className="w-full bg-white border border-gray-200/80 rounded-xl px-3 py-2.5 text-xs text-gray-800 outline-none focus:border-[#0F4C81]/60"
                         />
                         <input
                           type="text" required maxLength={12} placeholder="Aadhaar Number (12 digits)"
                           value={prevOwnerAadhaar} onChange={e => setPrevOwnerAadhaar(e.target.value.replace(/\D/g,''))}
-                          className="w-full bg-gray-900 border border-gray-800/80 rounded-xl px-3 py-2.5 text-xs text-gray-200 outline-none focus:border-brand-500 font-mono"
+                          className="w-full bg-white border border-gray-200/80 rounded-xl px-3 py-2.5 text-xs text-gray-800 outline-none focus:border-[#0F4C81]/60 font-mono"
                         />
                       </div>
 
                       {/* Section 4: New Owner */}
-                      <div className="bg-gray-950/60 border border-gray-850 p-5 rounded-2xl space-y-3">
-                        <span className="text-xs font-bold text-brand-400 uppercase">4. New Owner Details</span>
+                      <div className="bg-[#F8FAFC]/60 border border-gray-200 p-5 rounded-2xl space-y-3">
+                        <span className="text-xs font-bold text-[#0F4C81] uppercase">4. New Owner Details</span>
                         <input
                           type="text" required placeholder="Full Name"
                           value={newOwnerName} onChange={e => setNewOwnerName(e.target.value)}
-                          className="w-full bg-gray-900 border border-gray-800/80 rounded-xl px-3 py-2.5 text-xs text-gray-200 outline-none focus:border-brand-500"
+                          className="w-full bg-white border border-gray-200/80 rounded-xl px-3 py-2.5 text-xs text-gray-800 outline-none focus:border-[#0F4C81]/60"
                         />
                         <input
                           type="text" required maxLength={12} placeholder="Aadhaar Number"
                           value={newOwnerAadhaar} onChange={e => setNewOwnerAadhaar(e.target.value.replace(/\D/g,''))}
-                          className="w-full bg-gray-900 border border-gray-800/80 rounded-xl px-3 py-2.5 text-xs text-gray-200 outline-none focus:border-brand-500 font-mono"
+                          className="w-full bg-white border border-gray-200/80 rounded-xl px-3 py-2.5 text-xs text-gray-800 outline-none focus:border-[#0F4C81]/60 font-mono"
                         />
                       </div>
 
                     </div>
 
                     {/* Section 5: Dynamic Mutation-Type Fields */}
-                    <div className="bg-gray-950/60 border border-gray-850 p-5 rounded-2xl space-y-3">
-                      <span className="text-xs font-bold text-brand-400 uppercase block">5. Mutation-Type Dynamic Fields</span>
+                    <div className="bg-[#F8FAFC]/60 border border-gray-200 p-5 rounded-2xl space-y-3">
+                      <span className="text-xs font-bold text-[#0F4C81] uppercase block">5. Mutation-Type Dynamic Fields</span>
                       
                       {mutationType === 'Sale' && (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <input
                             type="text" required placeholder="Registry Document Number"
                             value={registryNumber} onChange={e => setRegistryNumber(e.target.value)}
-                            className="w-full bg-gray-900 border border-gray-800/80 rounded-xl px-3 py-2.5 text-xs text-gray-200 outline-none focus:border-brand-500 font-mono"
+                            className="w-full bg-white border border-gray-200/80 rounded-xl px-3 py-2.5 text-xs text-gray-800 outline-none focus:border-[#0F4C81]/60 font-mono"
                           />
                           <input
                             type="date" required
                             value={registryDate} onChange={e => setRegistryDate(e.target.value)}
-                            className="w-full bg-gray-900 border border-gray-800/80 rounded-xl px-3 py-2.5 text-xs text-gray-200 outline-none focus:border-brand-500 font-mono"
+                            className="w-full bg-white border border-gray-200/80 rounded-xl px-3 py-2.5 text-xs text-gray-800 outline-none focus:border-[#0F4C81]/60 font-mono"
                           />
                         </div>
                       )}
@@ -731,7 +731,7 @@ export default function MutationDashboard() {
                         <input
                           type="text" required placeholder="Court Case Reference Number"
                           value={caseNumber} onChange={e => setCaseNumber(e.target.value)}
-                          className="w-full bg-gray-900 border border-gray-800/80 rounded-xl px-3 py-2.5 text-xs text-gray-200 outline-none focus:border-brand-500 font-mono"
+                          className="w-full bg-white border border-gray-200/80 rounded-xl px-3 py-2.5 text-xs text-gray-800 outline-none focus:border-[#0F4C81]/60 font-mono"
                         />
                       )}
 
@@ -739,44 +739,44 @@ export default function MutationDashboard() {
                         <input
                           type="text" required placeholder="Government Scheme Name"
                           value={schemeName} onChange={e => setSchemeName(e.target.value)}
-                          className="w-full bg-gray-900 border border-gray-800/80 rounded-xl px-3 py-2.5 text-xs text-gray-200 outline-none focus:border-brand-500"
+                          className="w-full bg-white border border-gray-200/80 rounded-xl px-3 py-2.5 text-xs text-gray-800 outline-none focus:border-[#0F4C81]/60"
                         />
                       )}
 
                       {(!['Sale', 'Court Order Mutation', 'Suo-Moto Mutation', 'Government Land Allotment', 'Govt Land Allocation'].includes(mutationType)) && (
-                        <p className="text-xs text-gray-500 italic">No additional custom fields required for {mutationType} mutation.</p>
+                        <p className="text-xs text-gray-400 italic">No additional custom fields required for {mutationType} mutation.</p>
                       )}
                     </div>
 
                     {/* Section 6: Document Upload (Mock) */}
-                    <div className="bg-gray-950/60 border border-gray-850 p-5 rounded-2xl space-y-4">
-                      <span className="text-xs font-bold text-brand-400 uppercase block">6. Document Upload Section</span>
+                    <div className="bg-[#F8FAFC]/60 border border-gray-200 p-5 rounded-2xl space-y-4">
+                      <span className="text-xs font-bold text-[#0F4C81] uppercase block">6. Document Upload Section</span>
                       
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                         <div 
                           onClick={() => { setUploadProgress(true); setTimeout(() => setUploadProgress(false), 800); }}
-                          className="border border-dashed border-gray-850 hover:border-brand-500/60 bg-gray-900/60 p-4 rounded-xl flex flex-col items-center justify-center cursor-pointer text-center transition-colors group"
+                          className="border border-dashed border-gray-200 hover:border-brand-500/60 bg-white/60 p-4 rounded-xl flex flex-col items-center justify-center cursor-pointer text-center transition-colors group"
                         >
-                          <Upload className="w-5 h-5 text-gray-500 group-hover:text-brand-400 mb-2" />
-                          <span className="text-xs font-semibold text-gray-300">Registry Copy</span>
+                          <Upload className="w-5 h-5 text-gray-400 group-hover:text-[#0F4C81] mb-2" />
+                          <span className="text-xs font-semibold text-gray-700">Registry Copy</span>
                           <span className="text-[10px] text-gray-600 mt-1">PDF or image (max 10MB)</span>
                         </div>
 
                         <div 
                           onClick={() => { setUploadProgress(true); setTimeout(() => setUploadProgress(false), 800); }}
-                          className="border border-dashed border-gray-850 hover:border-brand-500/60 bg-gray-900/60 p-4 rounded-xl flex flex-col items-center justify-center cursor-pointer text-center transition-colors group"
+                          className="border border-dashed border-gray-200 hover:border-brand-500/60 bg-white/60 p-4 rounded-xl flex flex-col items-center justify-center cursor-pointer text-center transition-colors group"
                         >
-                          <Upload className="w-5 h-5 text-gray-500 group-hover:text-brand-400 mb-2" />
-                          <span className="text-xs font-semibold text-gray-300">Aadhaar / ID Proof</span>
+                          <Upload className="w-5 h-5 text-gray-400 group-hover:text-[#0F4C81] mb-2" />
+                          <span className="text-xs font-semibold text-gray-700">Aadhaar / ID Proof</span>
                           <span className="text-[10px] text-gray-600 mt-1">PDF or image (max 10MB)</span>
                         </div>
 
                         <div 
                           onClick={() => { setUploadProgress(true); setTimeout(() => setUploadProgress(false), 800); }}
-                          className="border border-dashed border-gray-850 hover:border-brand-500/60 bg-gray-900/60 p-4 rounded-xl flex flex-col items-center justify-center cursor-pointer text-center transition-colors group"
+                          className="border border-dashed border-gray-200 hover:border-brand-500/60 bg-white/60 p-4 rounded-xl flex flex-col items-center justify-center cursor-pointer text-center transition-colors group"
                         >
-                          <Upload className="w-5 h-5 text-gray-500 group-hover:text-brand-400 mb-2" />
-                          <span className="text-xs font-semibold text-gray-300">Supporting Docs</span>
+                          <Upload className="w-5 h-5 text-gray-400 group-hover:text-[#0F4C81] mb-2" />
+                          <span className="text-xs font-semibold text-gray-700">Supporting Docs</span>
                           <span className="text-[10px] text-gray-600 mt-1">Multi-upload field</span>
                         </div>
                       </div>
@@ -789,11 +789,11 @@ export default function MutationDashboard() {
                     </div>
 
                     {/* Section 7: Declaration Checkbox */}
-                    <div className="flex items-start gap-3 bg-gray-950/40 p-4 border border-gray-850 rounded-2xl">
+                    <div className="flex items-start gap-3 bg-[#F8FAFC]/40 p-4 border border-gray-200 rounded-2xl">
                       <input
                         type="checkbox" required id="decl"
                         checked={declaration} onChange={e => setDeclaration(e.target.checked)}
-                        className="mt-1 w-4 h-4 rounded border-gray-850 bg-gray-900 text-brand-600 focus:ring-brand-500"
+                        className="mt-1 w-4 h-4 rounded border-gray-200 bg-white text-brand-600 focus:ring-brand-500"
                       />
                       <label htmlFor="decl" className="text-xs text-gray-400 leading-relaxed cursor-pointer select-none">
                         I hereby declare that all details filled above are accurate to the best of my knowledge. I understand that fraudulent submissions can lead to strict administrative/legal actions under UP Land Revenue rules.
@@ -803,7 +803,7 @@ export default function MutationDashboard() {
                     {/* Section 8: Submit */}
                     <button
                       type="submit" disabled={loading}
-                      className="w-full bg-brand-600 hover:bg-brand-700 text-white font-bold py-3 px-4 rounded-xl transition-all shadow-lg text-sm disabled:opacity-50"
+                      className="w-full bg-[#0F4C81] hover:bg-[#0a3566] text-gray-900 font-bold py-3 px-4 rounded-xl transition-all shadow-lg text-sm disabled:opacity-50"
                     >
                       Submit Mutation Application
                     </button>
@@ -812,12 +812,12 @@ export default function MutationDashboard() {
                 </form>
               ) : (
                 /* List View of Active Queue */
-                <div className="bg-gray-900 border border-gray-800 rounded-3xl p-5 shadow-xl space-y-4">
+                <div className="bg-white border border-gray-200 rounded-3xl p-5 shadow-xl space-y-4">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-md font-bold text-white">
+                    <h3 className="text-md font-bold text-gray-900">
                       {activeTab === 'verify' ? 'Mutations Awaiting Action' : 'All Ledger Mutations'}
                     </h3>
-                    <span className="text-xs font-medium text-gray-500 font-mono bg-gray-950 px-2 py-1 rounded">
+                    <span className="text-xs font-medium text-gray-400 font-mono bg-[#F8FAFC] px-2 py-1 rounded">
                       Count: {getFilteredMutations().length}
                     </span>
                   </div>
@@ -828,9 +828,9 @@ export default function MutationDashboard() {
                         <div key={n} className="h-20 bg-gray-850 rounded-2xl animate-pulse" />
                       ))
                     ) : getFilteredMutations().length === 0 ? (
-                      <div className="py-16 text-center border border-dashed border-gray-850 rounded-2xl">
+                      <div className="py-16 text-center border border-dashed border-gray-200 rounded-2xl">
                         <GitMerge className="w-8 h-8 text-gray-700 mx-auto mb-3" />
-                        <p className="text-xs text-gray-500">No mutations found in this queue</p>
+                        <p className="text-xs text-gray-400">No mutations found in this queue</p>
                       </div>
                     ) : (
                       getFilteredMutations().map(m => {
@@ -844,19 +844,19 @@ export default function MutationDashboard() {
                             onClick={() => { setSelectedMutation(m); setFilingObjection(false); }}
                             className={clsx(
                               'p-4 rounded-2xl border cursor-pointer hover:bg-gray-850/60 transition-all flex flex-col md:flex-row md:items-center justify-between gap-3 text-left',
-                              isSelected ? 'bg-gray-800 border-brand-500/60 shadow-lg' : 'bg-gray-950/40 border-gray-850'
+                              isSelected ? 'bg-gray-800 border-brand-500/60 shadow-lg' : 'bg-[#F8FAFC]/40 border-gray-200'
                             )}
                           >
                             <div className="space-y-1">
                               <div className="flex items-center gap-2">
-                                <span className="font-mono text-xs font-bold text-brand-400">{m.mutationId}</span>
-                                <span className="text-[10px] text-gray-500 font-mono">{m.dlpiId}</span>
+                                <span className="font-mono text-xs font-bold text-[#0F4C81]">{m.mutationId}</span>
+                                <span className="text-[10px] text-gray-400 font-mono">{m.dlpiId}</span>
                               </div>
-                              <div className="text-sm font-bold text-gray-200">{m.mutationType}</div>
-                              <div className="text-xs text-gray-500 flex items-center gap-1.5">
+                              <div className="text-sm font-bold text-gray-800">{m.mutationType}</div>
+                              <div className="text-xs text-gray-400 flex items-center gap-1.5">
                                 <span>{m.currentOwnerName}</span>
                                 <ArrowRight className="w-3 h-3 text-gray-600" />
-                                <span className="text-gray-300 font-medium">{m.newOwnerName}</span>
+                                <span className="text-gray-700 font-medium">{m.newOwnerName}</span>
                               </div>
                             </div>
 
@@ -883,17 +883,17 @@ export default function MutationDashboard() {
             {activeTab !== 'apply' && activeTab !== 'special' && (
               <div className="lg:col-span-5 space-y-4">
                 {selectedMutation ? (
-                  <div className="bg-gray-900 border border-gray-800 rounded-3xl p-6 shadow-2xl space-y-6 animate-slide-in">
+                  <div className="bg-white border border-gray-200 rounded-3xl p-6 shadow-2xl space-y-6 animate-slide-in">
                     
                     {/* Unique Tracking ID */}
-                    <div className="border-b border-gray-800 pb-4 flex items-center justify-between">
+                    <div className="border-b border-gray-200 pb-4 flex items-center justify-between">
                       <div>
-                        <span className="text-[10px] text-gray-500 uppercase font-mono block">Unique ID</span>
-                        <h3 className="font-mono text-md font-extrabold text-brand-400">{selectedMutation.mutationId}</h3>
+                        <span className="text-[10px] text-gray-400 uppercase font-mono block">Unique ID</span>
+                        <h3 className="font-mono text-md font-extrabold text-[#0F4C81]">{selectedMutation.mutationId}</h3>
                       </div>
                       <div>
-                        <span className="text-[10px] text-gray-500 uppercase font-mono block text-right">Plot</span>
-                        <span className="font-mono text-xs text-gray-300 font-semibold">{selectedMutation.dlpiId}</span>
+                        <span className="text-[10px] text-gray-400 uppercase font-mono block text-right">Plot</span>
+                        <span className="font-mono text-xs text-gray-700 font-semibold">{selectedMutation.dlpiId}</span>
                       </div>
                     </div>
 
@@ -901,18 +901,18 @@ export default function MutationDashboard() {
                     <div className="space-y-4">
                       <span className="text-xs font-semibold text-gray-400 uppercase block tracking-wider">Mutation Stages Timeline</span>
                       
-                      <div className="relative pl-6 space-y-5 border-l-2 border-gray-800">
+                      <div className="relative pl-6 space-y-5 border-l-2 border-gray-200">
                         {/* 1. Submitted */}
                         <div className="relative">
                           <span className={clsx(
                             'absolute -left-[31px] top-0 w-4 h-4 rounded-full flex items-center justify-center border-2 border-gray-900',
                             selectedMutation.timeline?.find(t => t.step === 'SUBMITTED')?.done ? 'bg-brand-500' : 'bg-gray-800'
                           )}>
-                            <Check className="w-2.5 h-2.5 text-white" />
+                            <Check className="w-2.5 h-2.5 text-gray-900" />
                           </span>
                           <div className="text-xs">
-                            <div className="font-bold text-gray-200">Mutation Submitted</div>
-                            <div className="text-gray-500 text-[10px]">By: {selectedMutation.timeline?.find(t => t.step === 'SUBMITTED')?.actor || 'Applicant'}</div>
+                            <div className="font-bold text-gray-800">Mutation Submitted</div>
+                            <div className="text-gray-400 text-[10px]">By: {selectedMutation.timeline?.find(t => t.step === 'SUBMITTED')?.actor || 'Applicant'}</div>
                           </div>
                         </div>
 
@@ -922,13 +922,13 @@ export default function MutationDashboard() {
                             'absolute -left-[31px] top-0 w-4 h-4 rounded-full flex items-center justify-center border-2 border-gray-900',
                             selectedMutation.timeline?.find(t => t.step === 'PATWARI')?.done ? 'bg-brand-500' : 'bg-gray-800'
                           )}>
-                            {selectedMutation.timeline?.find(t => t.step === 'PATWARI')?.done && <Check className="w-2.5 h-2.5 text-white" />}
+                            {selectedMutation.timeline?.find(t => t.step === 'PATWARI')?.done && <Check className="w-2.5 h-2.5 text-gray-900" />}
                           </span>
                           <div className="text-xs">
-                            <div className={clsx('font-bold', selectedMutation.status === 'Pending at Patwari' ? 'text-yellow-400' : 'text-gray-200')}>
+                            <div className={clsx('font-bold', selectedMutation.status === 'Pending at Patwari' ? 'text-yellow-400' : 'text-gray-800')}>
                               Patwari Verification
                             </div>
-                            <div className="text-gray-500 text-[10px]">
+                            <div className="text-gray-400 text-[10px]">
                               {selectedMutation.timeline?.find(t => t.step === 'PATWARI')?.at 
                                 ? `Approved at: ${new Date(selectedMutation.timeline?.find(t => t.step === 'PATWARI')?.at || '').toLocaleDateString()}`
                                 : 'Pending verification'}
@@ -942,13 +942,13 @@ export default function MutationDashboard() {
                             'absolute -left-[31px] top-0 w-4 h-4 rounded-full flex items-center justify-center border-2 border-gray-900',
                             selectedMutation.timeline?.find(t => t.step === 'KANUNGO')?.done ? 'bg-brand-500' : 'bg-gray-800'
                           )}>
-                            {selectedMutation.timeline?.find(t => t.step === 'KANUNGO')?.done && <Check className="w-2.5 h-2.5 text-white" />}
+                            {selectedMutation.timeline?.find(t => t.step === 'KANUNGO')?.done && <Check className="w-2.5 h-2.5 text-gray-900" />}
                           </span>
                           <div className="text-xs">
-                            <div className={clsx('font-bold', selectedMutation.status === 'Pending at Kanungo' ? 'text-orange-400' : 'text-gray-200')}>
+                            <div className={clsx('font-bold', selectedMutation.status === 'Pending at Kanungo' ? 'text-orange-400' : 'text-gray-800')}>
                               Kanungo (CI) Review
                             </div>
-                            <div className="text-gray-500 text-[10px]">
+                            <div className="text-gray-400 text-[10px]">
                               {selectedMutation.timeline?.find(t => t.step === 'KANUNGO')?.at 
                                 ? `Approved at: ${new Date(selectedMutation.timeline?.find(t => t.step === 'KANUNGO')?.at || '').toLocaleDateString()}`
                                 : 'Pending review'}
@@ -962,17 +962,17 @@ export default function MutationDashboard() {
                             'absolute -left-[31px] top-0 w-4 h-4 rounded-full flex items-center justify-center border-2 border-gray-900',
                             selectedMutation.status === 'Approved' ? 'bg-green-500' : selectedMutation.status === 'Rejected' ? 'bg-red-500' : 'bg-gray-800'
                           )}>
-                            {selectedMutation.status === 'Approved' && <Check className="w-2.5 h-2.5 text-white" />}
+                            {selectedMutation.status === 'Approved' && <Check className="w-2.5 h-2.5 text-gray-900" />}
                           </span>
                           <div className="text-xs">
                             <div className={clsx('font-bold', 
                               selectedMutation.status === 'Pending at Tehsildar' ? 'text-blue-400' : 
                               selectedMutation.status === 'Approved' ? 'text-green-400' : 
-                              selectedMutation.status === 'Rejected' ? 'text-red-400' : 'text-gray-200'
+                              selectedMutation.status === 'Rejected' ? 'text-red-400' : 'text-gray-800'
                             )}>
                               Tehsildar final decision
                             </div>
-                            <div className="text-gray-500 text-[10px]">
+                            <div className="text-gray-400 text-[10px]">
                               {selectedMutation.status === 'Approved' ? 'Final Approved & Updated in Jamabandi' : 
                                selectedMutation.status === 'Rejected' ? 'Application Rejected' : 'Awaiting final sign-off'}
                             </div>
@@ -983,23 +983,23 @@ export default function MutationDashboard() {
                     </div>
 
                     {/* Land & Owner Card */}
-                    <div className="bg-gray-950/40 p-4 border border-gray-850 rounded-2xl text-xs space-y-3">
+                    <div className="bg-[#F8FAFC]/40 p-4 border border-gray-200 rounded-2xl text-xs space-y-3">
                       <div className="flex justify-between">
-                        <span className="text-gray-500 font-semibold">Land Type:</span>
-                        <span className="text-gray-300 font-mono">Bhumidhari</span>
+                        <span className="text-gray-400 font-semibold">Land Type:</span>
+                        <span className="text-gray-700 font-mono">Bhumidhari</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-gray-500 font-semibold">Previous Owner:</span>
-                        <span className="text-gray-300 font-medium">{selectedMutation.currentOwnerName}</span>
+                        <span className="text-gray-400 font-semibold">Previous Owner:</span>
+                        <span className="text-gray-700 font-medium">{selectedMutation.currentOwnerName}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-gray-500 font-semibold">New Title Owner:</span>
-                        <span className="text-gray-300 font-semibold text-brand-400">{selectedMutation.newOwnerName}</span>
+                        <span className="text-gray-400 font-semibold">New Title Owner:</span>
+                        <span className="text-gray-700 font-semibold text-[#0F4C81]">{selectedMutation.newOwnerName}</span>
                       </div>
                       {selectedMutation.dynamicFields?.registryNumber && (
-                        <div className="flex justify-between border-t border-gray-850/60 pt-2">
-                          <span className="text-gray-500 font-semibold">Registry No:</span>
-                          <span className="text-gray-300 font-mono">{selectedMutation.dynamicFields.registryNumber}</span>
+                        <div className="flex justify-between border-t border-gray-200/60 pt-2">
+                          <span className="text-gray-400 font-semibold">Registry No:</span>
+                          <span className="text-gray-700 font-mono">{selectedMutation.dynamicFields.registryNumber}</span>
                         </div>
                       )}
                     </div>
@@ -1036,14 +1036,14 @@ export default function MutationDashboard() {
                             <div className="grid grid-cols-2 gap-3">
                               <button
                                 onClick={() => handleStatusTransition('Pending at Kanungo')}
-                                className="bg-brand-600 hover:bg-brand-700 text-white font-bold py-2.5 px-4 rounded-xl text-xs transition-colors flex items-center justify-center gap-1"
+                                className="bg-[#0F4C81] hover:bg-[#0a3566] text-gray-900 font-bold py-2.5 px-4 rounded-xl text-xs transition-colors flex items-center justify-center gap-1"
                               >
                                 <CheckCircle className="w-4 h-4" />
                                 Approve to Kanungo
                               </button>
                               <button
                                 onClick={() => setRejecting(true)}
-                                className="bg-gray-850 hover:bg-red-900/40 border border-gray-700 hover:border-red-800 text-gray-300 hover:text-red-300 font-semibold py-2.5 px-4 rounded-xl text-xs transition-colors flex items-center justify-center gap-1"
+                                className="bg-gray-850 hover:bg-red-900/40 border border-gray-350 hover:border-red-800 text-gray-700 hover:text-red-300 font-semibold py-2.5 px-4 rounded-xl text-xs transition-colors flex items-center justify-center gap-1"
                               >
                                 <XCircle className="w-4 h-4" />
                                 Reject Application
@@ -1056,14 +1056,14 @@ export default function MutationDashboard() {
                             <div className="grid grid-cols-2 gap-3">
                               <button
                                 onClick={() => handleStatusTransition('Pending at Tehsildar')}
-                                className="bg-brand-600 hover:bg-brand-700 text-white font-bold py-2.5 px-4 rounded-xl text-xs transition-colors flex items-center justify-center gap-1"
+                                className="bg-[#0F4C81] hover:bg-[#0a3566] text-gray-900 font-bold py-2.5 px-4 rounded-xl text-xs transition-colors flex items-center justify-center gap-1"
                               >
                                 <CheckCircle className="w-4 h-4" />
                                 Approve to Tehsildar
                               </button>
                               <button
                                 onClick={() => setRejecting(true)}
-                                className="bg-gray-850 hover:bg-red-900/40 border border-gray-700 hover:border-red-800 text-gray-300 hover:text-red-300 font-semibold py-2.5 px-4 rounded-xl text-xs transition-colors flex items-center justify-center gap-1"
+                                className="bg-gray-850 hover:bg-red-900/40 border border-gray-350 hover:border-red-800 text-gray-700 hover:text-red-300 font-semibold py-2.5 px-4 rounded-xl text-xs transition-colors flex items-center justify-center gap-1"
                               >
                                 <XCircle className="w-4 h-4" />
                                 Reject Application
@@ -1076,14 +1076,14 @@ export default function MutationDashboard() {
                             <div className="grid grid-cols-2 gap-3">
                               <button
                                 onClick={() => handleStatusTransition('Approved')}
-                                className="bg-green-600 hover:bg-green-700 text-white font-bold py-2.5 px-4 rounded-xl text-xs transition-colors flex items-center justify-center gap-1"
+                                className="bg-green-600 hover:bg-green-700 text-gray-900 font-bold py-2.5 px-4 rounded-xl text-xs transition-colors flex items-center justify-center gap-1"
                               >
                                 <FileCheck className="w-4 h-4" />
                                 Final Approval
                               </button>
                               <button
                                 onClick={() => setRejecting(true)}
-                                className="bg-gray-800 hover:bg-red-900/40 border border-gray-700 hover:border-red-800 text-gray-300 hover:text-red-300 font-semibold py-2.5 px-4 rounded-xl text-xs transition-colors flex items-center justify-center gap-1"
+                                className="bg-gray-800 hover:bg-red-900/40 border border-gray-350 hover:border-red-800 text-gray-700 hover:text-red-300 font-semibold py-2.5 px-4 rounded-xl text-xs transition-colors flex items-center justify-center gap-1"
                               >
                                 <XCircle className="w-4 h-4" />
                                 Reject Application
@@ -1097,7 +1097,7 @@ export default function MutationDashboard() {
                       {isCitizen && selectedMutation.status === 'Rejected' && !filingObjection && (
                         <button
                           onClick={() => setFilingObjection(true)}
-                          className="w-full bg-purple-700 hover:bg-purple-800 text-white font-semibold py-2.5 px-4 rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5"
+                          className="w-full bg-purple-700 hover:bg-purple-800 text-gray-900 font-semibold py-2.5 px-4 rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5"
                         >
                           <AlertCircle className="w-4 h-4" />
                           File Legal Objection
@@ -1108,18 +1108,18 @@ export default function MutationDashboard() {
 
                     {/* Objection filing form panel inline */}
                     {isCitizen && filingObjection && (
-                      <form onSubmit={handleFileObjection} className="space-y-4 border-t border-gray-800 pt-4 animate-fade-in">
+                      <form onSubmit={handleFileObjection} className="space-y-4 border-t border-gray-200 pt-4 animate-fade-in">
                         <span className="text-xs font-bold text-purple-400 block uppercase tracking-wider">File Objection Arguments</span>
                         <div className="space-y-2">
                           <textarea
                             required rows={3} placeholder="Type detailed arguments/reasons why the mutation should not be rejected..."
                             value={objectionText} onChange={e => setObjectionText(e.target.value)}
-                            className="w-full bg-gray-950 border border-gray-850 rounded-xl p-3 text-xs outline-none focus:border-purple-500 text-gray-300"
+                            className="w-full bg-[#F8FAFC] border border-gray-200 rounded-xl p-3 text-xs outline-none focus:border-purple-500 text-gray-700"
                           />
                         </div>
                         <div className="space-y-2">
-                          <label className="block text-[10px] text-gray-500">Upload supporting evidence</label>
-                          <div className="border border-dashed border-gray-800 p-3 rounded-xl flex items-center justify-center bg-gray-950 cursor-pointer">
+                          <label className="block text-[10px] text-gray-400">Upload supporting evidence</label>
+                          <div className="border border-dashed border-gray-200 p-3 rounded-xl flex items-center justify-center bg-[#F8FAFC] cursor-pointer">
                             <Upload className="w-4 h-4 text-gray-600 mr-2" />
                             <span className="text-xs text-gray-400">Add documents / certificates</span>
                           </div>
@@ -1127,13 +1127,13 @@ export default function MutationDashboard() {
                         <div className="grid grid-cols-2 gap-2">
                           <button
                             type="submit"
-                            className="bg-purple-700 hover:bg-purple-850 text-white font-bold py-2 rounded-xl text-xs"
+                            className="bg-purple-700 hover:bg-purple-850 text-gray-900 font-bold py-2 rounded-xl text-xs"
                           >
                             Submit Objection
                           </button>
                           <button
                             type="button" onClick={() => setFilingObjection(false)}
-                            className="bg-gray-800 hover:bg-gray-700 text-gray-300 py-2 rounded-xl text-xs"
+                            className="bg-gray-800 hover:bg-gray-700 text-gray-700 py-2 rounded-xl text-xs"
                           >
                             Cancel
                           </button>
@@ -1143,23 +1143,23 @@ export default function MutationDashboard() {
 
                     {/* Rejection input box panel inline (for officers) */}
                     {rejecting && (
-                      <div className="space-y-3 border-t border-gray-800 pt-4 animate-fade-in">
+                      <div className="space-y-3 border-t border-gray-200 pt-4 animate-fade-in">
                         <span className="text-xs font-bold text-red-400 block uppercase tracking-wider">Describe Rejection Reason</span>
                         <textarea
                           required rows={2} placeholder="Explain why this record cannot be verified or approved..."
                           value={rejectReason} onChange={e => setRejectReason(e.target.value)}
-                          className="w-full bg-gray-950 border border-gray-850 rounded-xl p-3 text-xs outline-none focus:border-red-500 text-gray-300"
+                          className="w-full bg-[#F8FAFC] border border-gray-200 rounded-xl p-3 text-xs outline-none focus:border-red-500 text-gray-700"
                         />
                         <div className="grid grid-cols-2 gap-2">
                           <button
                             onClick={() => handleStatusTransition('Rejected', rejectReason)}
-                            className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 rounded-xl text-xs"
+                            className="bg-red-600 hover:bg-red-700 text-gray-900 font-bold py-2 rounded-xl text-xs"
                           >
                             Confirm Reject
                           </button>
                           <button
                             onClick={() => setRejecting(false)}
-                            className="bg-gray-800 hover:bg-gray-700 text-gray-300 py-2 rounded-xl text-xs"
+                            className="bg-gray-800 hover:bg-gray-700 text-gray-700 py-2 rounded-xl text-xs"
                           >
                             Cancel
                           </button>
@@ -1169,7 +1169,7 @@ export default function MutationDashboard() {
 
                   </div>
                 ) : (
-                  <div className="h-full border border-dashed border-gray-850 rounded-3xl p-16 flex flex-col items-center justify-center text-center text-gray-600 bg-gray-900/10">
+                  <div className="h-full border border-dashed border-gray-200 rounded-3xl p-16 flex flex-col items-center justify-center text-center text-gray-600 bg-white/10">
                     <Shield className="w-12 h-12 text-gray-800 mb-4" />
                     <p className="text-xs font-semibold">Select an application from the queue to view status details and perform workflows.</p>
                   </div>
