@@ -8,13 +8,13 @@ import {
   FileText, Shield, Search, ArrowUpRight, Download, Send,
   Landmark, Map, FileSignature, HelpCircle, FileCheck,
   TrendingUp, BellRing, Activity, ArrowLeftRight, X, UserCheck, DollarSign, Edit3,
-  Plus, Database
+  Plus, Database, Gavel
 } from 'lucide-react';
 import clsx from 'clsx';
 import CitizenHeader from '@/components/dashboard/CitizenHeader';
 import CitizenFooter from '@/components/dashboard/CitizenFooter';
 import { getUser, apiFetch, type JWTUser, formatMaskedAadhaar, formatLastLogin } from '@/lib/auth';
-import { recordHeirConsent, initiateTransfer, recordConsent, getMyPendingTransfers, nominateHeirs, getInheritorNominations, acceptNomination } from '@/lib/api';
+import { recordHeirConsent, initiateTransfer, recordConsent, getMyPendingTransfers, nominateHeirs, getInheritorNominations, acceptNomination, createAuction } from '@/lib/api';
 import toast from 'react-hot-toast';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -92,6 +92,11 @@ export default function CitizenDashboard() {
   const [nominateModalParcel, setNominateModalParcel] = useState<Parcel | null>(null);
   const [nominateHeirsList, setNominateHeirsList] = useState<{name: string, aadhaarNumber: string, share: string}[]>([{name: '', aadhaarNumber: '', share: ''}]);
   const [nominateBusy, setNominateBusy] = useState(false);
+
+  const [auctionModalParcel, setAuctionModalParcel] = useState<any>(null);
+  const [auctionReservePrice, setAuctionReservePrice] = useState('4500000');
+  const [auctionDuration, setAuctionDuration] = useState('7');
+  const [auctionBusy, setAuctionBusy] = useState(false);
 
   useEffect(() => {
     try {
@@ -204,6 +209,27 @@ export default function CitizenDashboard() {
       toast.error(msg, { id: 'init-sale' });
     } finally {
       setSellBusy(false);
+    }
+  };
+
+  const handleListAuction = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!auctionModalParcel || !user) return;
+    setAuctionBusy(true);
+    try {
+      toast.loading('Listing property on Voluntary Open Market...', { id: 'list-auction' });
+      await createAuction({
+        dlpiId: auctionModalParcel.dlpiId,
+        reservePrice: Number(auctionReservePrice),
+        durationDays: Number(auctionDuration),
+      });
+      toast.success(`🎉 Property Listed on BhumiAuction!`, { id: 'list-auction' });
+      setAuctionModalParcel(null);
+    } catch (e: any) {
+      const msg = e.response?.data?.message || e.message || 'Failed to list property';
+      toast.error(msg, { id: 'list-auction' });
+    } finally {
+      setAuctionBusy(false);
     }
   };
 
@@ -612,6 +638,16 @@ export default function CitizenDashboard() {
                               >
                                 <ArrowLeftRight className="w-3.5 h-3.5" /> Sell Property
                               </button>
+                              <button
+                                onClick={() => {
+                                  setAuctionModalParcel(p);
+                                  setAuctionReservePrice('4500000');
+                                  setAuctionDuration('7');
+                                }}
+                                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs py-2 px-3 rounded-lg flex items-center justify-center gap-1.5 transition-colors shadow-sm min-w-[100px]"
+                              >
+                                <Gavel className="w-3.5 h-3.5" /> List on Market
+                              </button>
                             </>
                           )}
                         </div>
@@ -998,6 +1034,83 @@ export default function CitizenDashboard() {
                   >
                     <Landmark className="w-4 h-4" />
                     {nominateBusy ? 'Registering...' : 'Register Will'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+        {/* Auction Modal */}
+        {auctionModalParcel && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-0">
+            <div className="absolute inset-0 bg-[#0F4C81]/40 backdrop-blur-sm" onClick={() => setAuctionModalParcel(null)} />
+            <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md relative z-10 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+              <div className="bg-gradient-to-r from-emerald-600 to-emerald-800 p-6 text-white relative">
+                <button onClick={() => setAuctionModalParcel(null)} className="absolute top-4 right-4 text-white/70 hover:text-white">
+                  <X className="w-5 h-5" />
+                </button>
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-md border border-white/30">
+                    <DollarSign className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-black">List on Open Market</h3>
+                    <p className="text-emerald-100 text-sm font-medium">Voluntary Auction</p>
+                  </div>
+                </div>
+              </div>
+
+              <form onSubmit={handleListAuction} className="p-6 space-y-5">
+                <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 mb-2">
+                  <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Target Property</p>
+                  <p className="font-mono text-[#0F4C81] font-bold">{auctionModalParcel.dlpiId}</p>
+                  <p className="text-sm text-gray-600 mt-1">Area: {auctionModalParcel.areaHectares} Ha | Khesra: {auctionModalParcel.khesraNo}</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-1.5">Reserve Price (₹)</label>
+                  <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-bold">₹</span>
+                    <input
+                      type="number"
+                      required
+                      min="1"
+                      value={auctionReservePrice}
+                      onChange={e => setAuctionReservePrice(e.target.value)}
+                      className="w-full pl-8 pr-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:border-emerald-500 focus:ring-0 font-mono font-bold text-lg text-gray-900 transition-colors"
+                      placeholder="e.g. 5000000"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-1.5">Auction Duration (Days)</label>
+                  <input
+                    type="number"
+                    required
+                    min="1"
+                    max="30"
+                    value={auctionDuration}
+                    onChange={e => setAuctionDuration(e.target.value)}
+                    className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:border-emerald-500 focus:ring-0 font-bold text-gray-900 transition-colors"
+                  />
+                </div>
+
+                <div className="pt-2 flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setAuctionModalParcel(null)}
+                    className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold text-sm py-3 rounded-xl transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={auctionBusy || !auctionReservePrice}
+                    className="flex-1 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold text-sm py-3 rounded-xl transition-colors flex items-center justify-center gap-2 shadow-md"
+                  >
+                    <Gavel className="w-4 h-4" />
+                    {auctionBusy ? 'Listing...' : 'Confirm Listing'}
                   </button>
                 </div>
               </form>
