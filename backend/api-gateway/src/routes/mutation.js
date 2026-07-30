@@ -206,6 +206,42 @@ router.post(
   },
 );
 
+function filterCitizenMutations(allMuts, user) {
+  const h = user.aadhaarNumber || user.aadhaar || '';
+  const userRaw = user.aadhaar || user.aadhaarRaw || user.aadhaarNumber || '';
+  const computedHash = userRaw ? computeAadhaarNumber(userRaw) : '';
+  const userName = (user.name || '').toLowerCase();
+  
+  return allMuts.filter(m => {
+    // 1. Check applicant Aadhaar
+    const appAadhaar = m.applicantDetails?.aadhaarNumber || m.applicantDetails?.aadhaar || '';
+    if (h && appAadhaar && appAadhaar.replace(/\D/g, '') === h.replace(/\D/g, '')) return true;
+    
+    // 2. Check previous owner Aadhaar
+    const prevAadhaar = m.previousOwnerDetails?.aadhaarNumber || m.previousOwnerDetails?.aadhaar || '';
+    if (h && prevAadhaar && prevAadhaar.replace(/\D/g, '') === h.replace(/\D/g, '')) return true;
+    
+    // 3. Check new owner Aadhaar
+    const newAadhaar = m.newOwnerDetails?.aadhaarNumber || m.newOwnerDetails?.aadhaar || '';
+    if (h && newAadhaar && newAadhaar.replace(/\D/g, '') === h.replace(/\D/g, '')) return true;
+    
+    // 4. Fallbacks: Name checking
+    const mCurName = (m.currentOwnerName || m.previousOwnerDetails?.fullName || '').toLowerCase();
+    const mNewName = (m.newOwnerName || m.newOwnerDetails?.fullName || '').toLowerCase();
+    const mAppName = (m.applicantDetails?.fullName || '').toLowerCase();
+    
+    if (userName && mCurName && (mCurName.includes(userName) || userName.includes(mCurName))) return true;
+    if (userName && mNewName && (mNewName.includes(userName) || userName.includes(mNewName))) return true;
+    if (userName && mAppName && (mAppName.includes(userName) || userName.includes(mAppName))) return true;
+    
+    // 5. Fallbacks: Hash checking
+    if (m.currentOwnerHash && (m.currentOwnerHash === h || m.currentOwnerHash === computedHash)) return true;
+    if (m.newOwnerHash && (m.newOwnerHash === h || m.newOwnerHash === computedHash)) return true;
+
+    return false;
+  });
+}
+
 // GET /api/mutation — all mutations (officer queue view)
 router.get('/', authenticate, async (req, res) => {
   try {
@@ -214,22 +250,7 @@ router.get('/', authenticate, async (req, res) => {
       let dMuts = [];
       try { dMuts = JSON.parse(fs.readFileSync('/tmp/bhumichain_dynamic_mutations.json')); } catch(e) {}
       if (req.user.role === 'citizen') {
-        const h = req.user.aadhaarNumber || '';
-        const userRaw = req.user.aadhaar || req.user.aadhaarRaw || req.user.aadhaarNumber || '';
-        const computedHash = userRaw ? computeAadhaarNumber(userRaw) : '';
-        const userName = (req.user.name || '').toLowerCase();
-        
-        dMuts = dMuts.filter(m => {
-          const mCurName = (m.currentOwnerName || '').toLowerCase();
-          const mNewName = (m.newOwnerName || '').toLowerCase();
-          
-          if (m.currentOwnerHash && (m.currentOwnerHash === h || m.currentOwnerHash === computedHash)) return true;
-          if (m.newOwnerHash && (m.newOwnerHash === h || m.newOwnerHash === computedHash)) return true;
-          if (userName && mCurName && (mCurName.includes(userName) || userName.includes(mCurName))) return true;
-          if (userName && mNewName && (mNewName.includes(userName) || userName.includes(mNewName))) return true;
-          
-          return false;
-        });
+        dMuts = filterCitizenMutations(dMuts, req.user);
       }
       return res.json(dMuts);
     }
@@ -257,24 +278,9 @@ router.get('/', authenticate, async (req, res) => {
     
     let allMuts = Array.from(mergedMap.values());
     
-    // STRICT FILTER: If citizen, only show mutations matching their Aadhaar Hash OR their exact name
+    // STRICT FILTER: If citizen, only show mutations matching their Aadhaar or Name
     if (req.user.role === 'citizen') {
-      const h = req.user.aadhaarNumber || '';
-      const userRaw = req.user.aadhaar || req.user.aadhaarRaw || req.user.aadhaarNumber || '';
-      const computedHash = userRaw ? computeAadhaarNumber(userRaw) : '';
-      const userName = (req.user.name || '').toLowerCase();
-      
-      allMuts = allMuts.filter(m => {
-        const mCurName = (m.currentOwnerName || '').toLowerCase();
-        const mNewName = (m.newOwnerName || '').toLowerCase();
-        
-        if (m.currentOwnerHash && (m.currentOwnerHash === h || m.currentOwnerHash === computedHash)) return true;
-        if (m.newOwnerHash && (m.newOwnerHash === h || m.newOwnerHash === computedHash)) return true;
-        if (userName && mCurName && (mCurName.includes(userName) || userName.includes(mCurName))) return true;
-        if (userName && mNewName && (mNewName.includes(userName) || userName.includes(mNewName))) return true;
-        
-        return false;
-      });
+      allMuts = filterCitizenMutations(allMuts, req.user);
     }
     
     res.json(allMuts);
