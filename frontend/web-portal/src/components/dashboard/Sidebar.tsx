@@ -13,6 +13,7 @@ import { getUser, logout, isOfficer, type JWTUser } from '@/lib/auth';
 const NAV_CITIZEN = [
   { href: '/my-parcels', icon: Home,           label: 'My Parcels',        scene: null },
   { href: '/map',        icon: Map,            label: 'GIS Map',           scene: 1    },
+  { href: '/bhu-naksha', icon: Map,            label: 'Bhu-Naksha',        scene: null },
   { href: '/scan',       icon: FileText,       label: 'Add Property (Scan)', scene: 2   },
   { href: '/mutation',   icon: GitMerge,       label: 'Mutations',         scene: null },
   { href: '/transfer',   icon: ArrowLeftRight, label: 'Property Transfer', scene: 4    },
@@ -26,6 +27,7 @@ const NAV_CITIZEN = [
 const NAV_OFFICER = [
   { href: '/officer-dashboard', icon: Home,           label: 'Officer Queue',     scene: null },
   { href: '/map',               icon: Map,            label: 'GIS Map',           scene: 1    },
+  { href: '/bhu-naksha',         icon: Map,            label: 'Bhu-Naksha',        scene: null },
   { href: '/scan',              icon: FileText,       label: 'RecordScan AI',     scene: 2    },
   { href: '/mutation',          icon: GitMerge,       label: 'Mutation Manager',  scene: null },
   { href: '/succession',        icon: Users,          label: 'Succession',        scene: 3    },
