@@ -28,6 +28,7 @@ const DEMO_DLPI = {
 
 // My Parcels mock — returned for any citizen demo login
 const DEMO_MY_PARCELS = [
+  // 5 Bihar Properties for Priya Kumar (999900010010)
   {
     dlpiId:            'DLPI-Bihar-PHU-00101',
     khataNo:           '401',
@@ -41,7 +42,7 @@ const DEMO_MY_PARCELS = [
     areaHectares:      0.15,
     encumbranceStatus: 'CLEAR',
     claimStatus:       'VERIFIED',
-    owner:             { name: 'Priya Kumar' },
+    owner:             { name: 'Priya Kumar', aadhaarNumber: '999900010010' },
     location:          { latitude: 25.5510, longitude: 85.0810 },
     valuation:         { circleRateINR: 4_500_000 },
     txHash:            '0xdemo_bihar1_tx',
@@ -60,7 +61,7 @@ const DEMO_MY_PARCELS = [
     areaHectares:      0.22,
     encumbranceStatus: 'CLEAR',
     claimStatus:       'VERIFIED',
-    owner:             { name: 'Priya Kumar' },
+    owner:             { name: 'Priya Kumar', aadhaarNumber: '999900010010' },
     location:          { latitude: 25.5525, longitude: 85.0830 },
     valuation:         { circleRateINR: 2_200_000 },
     txHash:            '0xdemo_bihar2_tx',
@@ -79,7 +80,7 @@ const DEMO_MY_PARCELS = [
     areaHectares:      0.08,
     encumbranceStatus: 'CLEAR',
     claimStatus:       'VERIFIED',
-    owner:             { name: 'Priya Kumar' },
+    owner:             { name: 'Priya Kumar', aadhaarNumber: '999900010010' },
     location:          { latitude: 25.5540, longitude: 85.0850 },
     valuation:         { circleRateINR: 2_400_000 },
     txHash:            '0xdemo_bihar3_tx',
@@ -98,7 +99,7 @@ const DEMO_MY_PARCELS = [
     areaHectares:      0.34,
     encumbranceStatus: 'CLEAR',
     claimStatus:       'VERIFIED',
-    owner:             { name: 'Priya Kumar' },
+    owner:             { name: 'Priya Kumar', aadhaarNumber: '999900010010' },
     location:          { latitude: 25.5560, longitude: 85.0870 },
     valuation:         { circleRateINR: 3_400_000 },
     txHash:            '0xdemo_bihar4_tx',
@@ -117,12 +118,311 @@ const DEMO_MY_PARCELS = [
     areaHectares:      0.11,
     encumbranceStatus: 'CLEAR',
     claimStatus:       'VERIFIED',
-    owner:             { name: 'Priya Kumar' },
+    owner:             { name: 'Priya Kumar', aadhaarNumber: '999900010010' },
     location:          { latitude: 25.5580, longitude: 85.0890 },
     valuation:         { circleRateINR: 5_500_000 },
     txHash:            '0xdemo_bihar5_tx',
     updatedAt:         '2026-06-20T09:00:00Z',
   },
+
+  // 3 Bihar Properties for Rakesh Agarwal (999900010011)
+  {
+    dlpiId:            'DLPI-Bihar-PHU-00106',
+    khataNo:           '501',
+    khasraNo:          '106',
+    tehsil:            'Phulwari Sharif',
+    tehsilCode:        'PHU',
+    district:          'Patna',
+    state:             'Bihar',
+    landType:          'Agricultural',
+    landTypeDesc:      'Agricultural plot',
+    areaHectares:      0.45,
+    encumbranceStatus: 'CLEAR',
+    claimStatus:       'VERIFIED',
+    owner:             { name: 'Rakesh Agarwal', aadhaarNumber: '999900010011' },
+    location:          { latitude: 25.5600, longitude: 85.0910 },
+    valuation:         { circleRateINR: 1_850_000 },
+    txHash:            '0xdemo_bihar6_tx',
+    updatedAt:         '2026-07-29T10:00:00Z',
+  },
+  {
+    dlpiId:            'DLPI-Bihar-PHU-00107',
+    khataNo:           '501',
+    khasraNo:          '107',
+    tehsil:            'Phulwari Sharif',
+    tehsilCode:        'PHU',
+    district:          'Patna',
+    state:             'Bihar',
+    landType:          'Residential',
+    landTypeDesc:      'Residential plot',
+    areaHectares:      0.19,
+    encumbranceStatus: 'CLEAR',
+    claimStatus:       'VERIFIED',
+    owner:             { name: 'Rakesh Agarwal', aadhaarNumber: '999900010011' },
+    location:          { latitude: 25.5615, longitude: 85.0930 },
+    valuation:         { circleRateINR: 950_000 },
+    txHash:            '0xdemo_bihar7_tx',
+    updatedAt:         '2026-07-29T10:00:00Z',
+  },
+  {
+    dlpiId:            'DLPI-Bihar-PHU-00108',
+    khataNo:           '502',
+    khasraNo:          '108',
+    tehsil:            'Phulwari Sharif',
+    tehsilCode:        'PHU',
+    district:          'Patna',
+    state:             'Bihar',
+    landType:          'Agricultural',
+    landTypeDesc:      'Agricultural plot',
+    areaHectares:      0.27,
+    encumbranceStatus: 'CLEAR',
+    claimStatus:       'VERIFIED',
+    owner:             { name: 'Rakesh Agarwal', aadhaarNumber: '999900010011' },
+    location:          { latitude: 25.5630, longitude: 85.0950 },
+    valuation:         { circleRateINR: 1_250_000 },
+    txHash:            '0xdemo_bihar8_tx',
+    updatedAt:         '2026-07-29T10:00:00Z',
+  },
+
+  // 3 Bihar Properties for Suresh Yadav (999900010012)
+  {
+    dlpiId:            'DLPI-Bihar-PHU-00109',
+    khataNo:           '601',
+    khasraNo:          '109',
+    tehsil:            'Phulwari Sharif',
+    tehsilCode:        'PHU',
+    district:          'Patna',
+    state:             'Bihar',
+    landType:          'Agricultural',
+    landTypeDesc:      'Agricultural plot',
+    areaHectares:      0.85,
+    encumbranceStatus: 'CLEAR',
+    claimStatus:       'VERIFIED',
+    owner:             { name: 'Suresh Yadav', aadhaarNumber: '999900010012' },
+    location:          { latitude: 25.5645, longitude: 85.0970 },
+    valuation:         { circleRateINR: 4_250_000 },
+    txHash:            '0xdemo_bihar9_tx',
+    updatedAt:         '2026-07-29T10:00:00Z',
+  },
+  {
+    dlpiId:            'DLPI-Bihar-PHU-00110',
+    khataNo:           '602',
+    khasraNo:          '110',
+    tehsil:            'Phulwari Sharif',
+    tehsilCode:        'PHU',
+    district:          'Patna',
+    state:             'Bihar',
+    landType:          'Residential',
+    landTypeDesc:      'Residential plot',
+    areaHectares:      0.52,
+    encumbranceStatus: 'CLEAR',
+    claimStatus:       'VERIFIED',
+    owner:             { name: 'Suresh Yadav', aadhaarNumber: '999900010012' },
+    location:          { latitude: 25.5660, longitude: 85.0990 },
+    valuation:         { circleRateINR: 2_600_000 },
+    txHash:            '0xdemo_bihar10_tx',
+    updatedAt:         '2026-07-29T10:00:00Z',
+  },
+  {
+    dlpiId:            'DLPI-Bihar-PHU-00111',
+    khataNo:           '602',
+    khasraNo:          '111',
+    tehsil:            'Phulwari Sharif',
+    tehsilCode:        'PHU',
+    district:          'Patna',
+    state:             'Bihar',
+    landType:          'Agricultural',
+    landTypeDesc:      'Agricultural plot',
+    areaHectares:      0.33,
+    encumbranceStatus: 'CLEAR',
+    claimStatus:       'VERIFIED',
+    owner:             { name: 'Suresh Yadav', aadhaarNumber: '999900010012' },
+    location:          { latitude: 25.5480, longitude: 85.0780 },
+    valuation:         { circleRateINR: 1_650_000 },
+    txHash:            '0xdemo_bihar11_tx',
+    updatedAt:         '2026-07-29T10:00:00Z',
+  },
+
+  // 2 Bihar Properties for Meena Devi (999900010013)
+  {
+    dlpiId:            'DLPI-Bihar-PHU-00112',
+    khataNo:           '701',
+    khasraNo:          '112',
+    tehsil:            'Phulwari Sharif',
+    tehsilCode:        'PHU',
+    district:          'Patna',
+    state:             'Bihar',
+    landType:          'Residential',
+    landTypeDesc:      'Residential plot',
+    areaHectares:      0.16,
+    encumbranceStatus: 'CLEAR',
+    claimStatus:       'VERIFIED',
+    owner:             { name: 'Meena Devi', aadhaarNumber: '999900010013' },
+    location:          { latitude: 25.5460, longitude: 85.0760 },
+    valuation:         { circleRateINR: 800_000 },
+    txHash:            '0xdemo_bihar12_tx',
+    updatedAt:         '2026-07-29T10:00:00Z',
+  },
+  {
+    dlpiId:            'DLPI-Bihar-PHU-00113',
+    khataNo:           '701',
+    khasraNo:          '113',
+    tehsil:            'Phulwari Sharif',
+    tehsilCode:        'PHU',
+    district:          'Patna',
+    state:             'Bihar',
+    landType:          'Agricultural',
+    landTypeDesc:      'Agricultural plot',
+    areaHectares:      0.64,
+    encumbranceStatus: 'CLEAR',
+    claimStatus:       'VERIFIED',
+    owner:             { name: 'Meena Devi', aadhaarNumber: '999900010013' },
+    location:          { latitude: 25.5440, longitude: 85.0740 },
+    valuation:         { circleRateINR: 3_200_000 },
+    txHash:            '0xdemo_bihar13_tx',
+    updatedAt:         '2026-07-29T10:00:00Z',
+  },
+
+  // 2 Bihar Properties for Arun Kumar (999900010014)
+  {
+    dlpiId:            'DLPI-Bihar-PHU-00114',
+    khataNo:           '801',
+    khasraNo:          '114',
+    tehsil:            'Phulwari Sharif',
+    tehsilCode:        'PHU',
+    district:          'Patna',
+    state:             'Bihar',
+    landType:          'Agricultural',
+    landTypeDesc:      'Agricultural plot',
+    areaHectares:      0.41,
+    encumbranceStatus: 'CLEAR',
+    claimStatus:       'VERIFIED',
+    owner:             { name: 'Arun Kumar', aadhaarNumber: '999900010014' },
+    location:          { latitude: 25.5420, longitude: 85.0720 },
+    valuation:         { circleRateINR: 2_050_000 },
+    txHash:            '0xdemo_bihar14_tx',
+    updatedAt:         '2026-07-29T10:00:00Z',
+  },
+  {
+    dlpiId:            'DLPI-Bihar-PHU-00115',
+    khataNo:           '802',
+    khasraNo:          '115',
+    tehsil:            'Phulwari Sharif',
+    tehsilCode:        'PHU',
+    district:          'Patna',
+    state:             'Bihar',
+    landType:          'Residential',
+    landTypeDesc:      'Residential plot',
+    areaHectares:      0.28,
+    encumbranceStatus: 'CLEAR',
+    claimStatus:       'VERIFIED',
+    owner:             { name: 'Arun Kumar', aadhaarNumber: '999900010014' },
+    location:          { latitude: 25.5400, longitude: 85.0700 },
+    valuation:         { circleRateINR: 1_400_000 },
+    txHash:            '0xdemo_bihar15_tx',
+    updatedAt:         '2026-07-29T10:00:00Z',
+  },
+
+  // 2 Bihar Government Properties
+  {
+    dlpiId:            'DLPI-Bihar-PHU-00116',
+    khataNo:           '1001',
+    khasraNo:          '116',
+    tehsil:            'Phulwari Sharif',
+    tehsilCode:        'PHU',
+    district:          'Patna',
+    state:             'Bihar',
+    landType:          'Government Land',
+    landTypeDesc:      'Public land',
+    areaHectares:      1.20,
+    encumbranceStatus: 'CLEAR',
+    claimStatus:       'VERIFIED',
+    owner:             { name: 'Government of Bihar', aadhaarNumber: 'govt-land' },
+    location:          { latitude: 25.5380, longitude: 85.0680 },
+    valuation:         { circleRateINR: 6_000_000 },
+    txHash:            '0xdemo_bihar16_tx',
+    updatedAt:         '2026-07-29T10:00:00Z',
+  },
+  {
+    dlpiId:            'DLPI-Bihar-PHU-00117',
+    khataNo:           '1001',
+    khasraNo:          '117',
+    tehsil:            'Phulwari Sharif',
+    tehsilCode:        'PHU',
+    district:          'Patna',
+    state:             'Bihar',
+    landType:          'Government Land',
+    landTypeDesc:      'Public land',
+    areaHectares:      2.45,
+    encumbranceStatus: 'CLEAR',
+    claimStatus:       'VERIFIED',
+    owner:             { name: 'Government of Bihar', aadhaarNumber: 'govt-land' },
+    location:          { latitude: 25.5360, longitude: 85.0660 },
+    valuation:         { circleRateINR: 12_250_000 },
+    txHash:            '0xdemo_bihar17_tx',
+    updatedAt:         '2026-07-29T10:00:00Z',
+  },
+
+  // 3 Bihar Properties for dummy/unknown Aadhaar numbers
+  {
+    dlpiId:            'DLPI-Bihar-PHU-00118',
+    khataNo:           '1002',
+    khasraNo:          '118',
+    tehsil:            'Phulwari Sharif',
+    tehsilCode:        'PHU',
+    district:          'Patna',
+    state:             'Bihar',
+    landType:          'Agricultural',
+    landTypeDesc:      'Agricultural plot',
+    areaHectares:      0.95,
+    encumbranceStatus: 'CLEAR',
+    claimStatus:       'VERIFIED',
+    owner:             { name: 'Deepak Narayan Singh', aadhaarNumber: '999900019999' },
+    location:          { latitude: 25.5340, longitude: 85.0640 },
+    valuation:         { circleRateINR: 4_750_000 },
+    txHash:            '0xdemo_bihar18_tx',
+    updatedAt:         '2026-07-29T10:00:00Z',
+  },
+  {
+    dlpiId:            'DLPI-Bihar-PHU-00119',
+    khataNo:           '1003',
+    khasraNo:          '119',
+    tehsil:            'Phulwari Sharif',
+    tehsilCode:        'PHU',
+    district:          'Patna',
+    state:             'Bihar',
+    landType:          'Residential',
+    landTypeDesc:      'Residential plot',
+    areaHectares:      0.77,
+    encumbranceStatus: 'CLEAR',
+    claimStatus:       'VERIFIED',
+    owner:             { name: 'Amit Kumar', aadhaarNumber: '999900019999' },
+    location:          { latitude: 25.5320, longitude: 85.0620 },
+    valuation:         { circleRateINR: 3_850_000 },
+    txHash:            '0xdemo_bihar19_tx',
+    updatedAt:         '2026-07-29T10:00:00Z',
+  },
+  {
+    dlpiId:            'DLPI-Bihar-PHU-00120',
+    khataNo:           '1004',
+    khasraNo:          '120',
+    tehsil:            'Phulwari Sharif',
+    tehsilCode:        'PHU',
+    district:          'Patna',
+    state:             'Bihar',
+    landType:          'Agricultural',
+    landTypeDesc:      'Agricultural land',
+    areaHectares:      0.48,
+    encumbranceStatus: 'CLEAR',
+    claimStatus:       'VERIFIED',
+    owner:             { name: 'Vikram Singh', aadhaarNumber: '999900019999' },
+    location:          { latitude: 25.5300, longitude: 85.0600 },
+    valuation:         { circleRateINR: 2_400_000 },
+    txHash:            '0xdemo_bihar20_tx',
+    updatedAt:         '2026-07-29T10:00:00Z',
+  },
+
+  // Original Dadri, UP default properties (with explicit owner.aadhaarNumber bound!)
   {
     dlpiId:            'DLPI-UP-DAD-00001',
     khataNo:           '101',
@@ -136,7 +436,7 @@ const DEMO_MY_PARCELS = [
     areaHectares:      0.025,
     encumbranceStatus: 'CLEAR',
     claimStatus:       'VERIFIED',
-    owner:             { name: 'Priya Kumar' },
+    owner:             { name: 'Priya Kumar', aadhaarNumber: '999900010010' },
     location:          { latitude: 28.5706, longitude: 77.5413 },
     valuation:         { circleRateINR: 3_750_000 },
     txHash:            '0xdemo_priya1_tx',
@@ -155,7 +455,7 @@ const DEMO_MY_PARCELS = [
     areaHectares:      1.2,
     encumbranceStatus: 'MORTGAGED',
     claimStatus:       'UNDER_REVIEW',
-    owner:             { name: 'Priya Kumar' },
+    owner:             { name: 'Priya Kumar', aadhaarNumber: '999900010010' },
     location:          { latitude: 28.5480, longitude: 77.5620 },
     valuation:         { circleRateINR: 1_440_000 },
     txHash:            '0xdemo_priya2_tx',
@@ -174,7 +474,7 @@ const DEMO_MY_PARCELS = [
     areaHectares:      2.4,
     encumbranceStatus: 'CLEAR',
     claimStatus:       'SEEDED_UNVERIFIED',
-    owner:             { name: 'Rakesh Agarwal' },
+    owner:             { name: 'Rakesh Agarwal', aadhaarNumber: '999900010011' },
     location:          { latitude: 28.6010, longitude: 77.4850 },
     valuation:         { circleRateINR: 2_880_000 },
     txHash:            '0xdemo_arun_tx',
@@ -194,7 +494,7 @@ const DEMO_MY_PARCELS = [
     encumbranceStatus: 'COURT_INJUNCTION',
     claimStatus:       'DISPUTED',
     disputeNote:       'Boundary encroachment alleged by adjacent plot owner. Civil suit filed in Dadri court (CS/2025/0441).',
-    owner:             { name: 'Suresh Yadav' },
+    owner:             { name: 'Suresh Yadav', aadhaarNumber: '999900010012' },
     location:          { latitude: 28.5280, longitude: 77.6100 },
     valuation:         { circleRateINR: 4_800_000 },
     txHash:            '0xdemo_suresh_tx',
@@ -213,12 +513,12 @@ const DEMO_MY_PARCELS = [
     areaHectares:      0.8,
     encumbranceStatus: 'CLEAR',
     claimStatus:       'CLAIM_SUBMITTED',
-    owner:             { name: 'Meena Devi' },
+    owner:             { name: 'Meena Devi', aadhaarNumber: '999900010013' },
     location:          { latitude: 28.5900, longitude: 77.4700 },
     valuation:         { circleRateINR: 720_000 },
     txHash:            '0xdemo_meena_tx',
     updatedAt:         '2026-06-20T09:00:00Z',
-  },
+  }
 ];
 
 // Pending review mock — for officer dashboards
@@ -738,13 +1038,16 @@ module.exports = {
           { txId: '0xfabric-tx-000003', timestamp: '2025-09-01T14:00:00Z', action: 'ENCUMBRANCE_RELEASED', actor: 'SBI Noida Branch' },
         ];
 
+      case 'dlpi::GetAllParcels': {
+        return DEMO_MY_PARCELS;
+      }
+
       case 'dlpi::QueryDLPIsByOwner':
       case 'dlpi::GetMyParcels': {
         const fs = require('fs');
         const ownerHash = args[0] || '';
         const userRaw   = args[1] || '';
         const userName  = (args[2] || '').toLowerCase();
-        const PRIYA_AADHAAR = '999900010010';
         
         let dynamicScans = [...MOCK_SCANS];
         // Read executed mock cases to persist property mutations across restarts
@@ -822,7 +1125,22 @@ module.exports = {
                  (userRaw === '999900010015' && (p.ownerName || '').toLowerCase().includes('sunita'));
         }) : [];
 
-        const demoParcels = (ownerHash === PRIYA_AADHAAR && !isCleared) ? DEMO_MY_PARCELS.filter(p => !myScans.find(s => s.dlpiId === p.dlpiId) && !atomicClaims[p.dlpiId]) : [];
+        const demoParcels = !isCleared
+          ? DEMO_MY_PARCELS.filter(p => {
+              const oHash = (p.owner?.aadhaarNumber || '').replace(/\D/g, '');
+              const userHashClean = ownerHash.replace(/\D/g, '');
+              const userRawClean  = userRaw.replace(/\D/g, '');
+              const oName = (p.ownerName || p.owner?.name || '').toLowerCase();
+              
+              if (oHash && (oHash === userHashClean || oHash === userRawClean)) return true;
+              
+              // Mock name-based fallbacks for general users
+              if (userRawClean === '999900010010' && oName.includes('priya')) return true;
+              if (userRawClean === '999900010015' && oName.includes('sunita')) return true;
+              if (userRawClean === '999900010012' && oName.includes('suresh')) return true;
+              return false;
+            }).filter(p => !myScans.find(s => s.dlpiId === p.dlpiId) && !atomicClaims[p.dlpiId])
+          : [];
         const claimedDemoParcels = DEMO_MY_PARCELS.filter(p => {
           if (atomicClaims[p.dlpiId]) {
             const claim = atomicClaims[p.dlpiId];
