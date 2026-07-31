@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, Suspense } from 'react';
 import dynamic from 'next/dynamic';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Sidebar from '@/components/dashboard/Sidebar';
 import AppHeader from '@/components/dashboard/AppHeader';
 import { getUser, JWTUser } from '@/lib/auth';
@@ -28,8 +28,12 @@ interface Parcel {
   longitude: number;
 }
 
-export default function BhuNakshaPage() {
+function BhuNakshaContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const initialDlpi = searchParams ? searchParams.get('dlpi') : null;
+  const initialAadhaar = searchParams ? searchParams.get('aadhaar') : null;
+
   const [user, setUser] = useState<JWTUser | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -46,7 +50,7 @@ export default function BhuNakshaPage() {
   const selectedParcel = parcels.find(p => p.dlpiId === selectedParcelId);
 
   // Fetch parcels based on role and Aadhaar
-  const loadParcels = useCallback(async (aadhaarQuery: string = '') => {
+  const loadParcels = useCallback(async (aadhaarQuery: string = '', selectDlpiId: string = '') => {
     setLoading(true);
     setError('');
     setSuccess('');
@@ -61,7 +65,12 @@ export default function BhuNakshaPage() {
       
       const results = Array.isArray(data) ? data : [];
       setParcels(results);
-      setSelectedParcelId(''); // Reset selection
+      
+      if (selectDlpiId) {
+        setSelectedParcelId(selectDlpiId);
+      } else {
+        setSelectedParcelId('');
+      }
 
       if (results.length > 0) {
         if (aadhaarQuery) {
@@ -90,9 +99,16 @@ export default function BhuNakshaPage() {
     
     // Automatically load citizen's own properties on page entry
     if (u.role === 'citizen') {
+      loadParcels('', initialDlpi || '');
+    } else if (initialAadhaar) {
+      loadParcels(initialAadhaar, initialDlpi || '');
+      setSearchAadhaar(initialAadhaar);
+    } else if (initialDlpi) {
+      loadParcels('', initialDlpi);
+    } else {
       loadParcels();
     }
-  }, [router, loadParcels]);
+  }, [router, loadParcels, initialDlpi, initialAadhaar]);
 
   const handleOfficerSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -277,5 +293,13 @@ export default function BhuNakshaPage() {
         </div>
       </main>
     </div>
+  );
+}
+
+export default function BhuNakshaPage() {
+  return (
+    <Suspense fallback={<div className="h-screen w-screen bg-[#F8FAFC] flex items-center justify-center text-xs text-gray-400">Loading Bhu-Naksha...</div>}>
+      <BhuNakshaContent />
+    </Suspense>
   );
 }

@@ -638,7 +638,7 @@ export default function CitizenDashboard() {
                               <>Download RoR</>
                             )}
                           </Link>
-                          <Link href={`/map?dlpi=${p.dlpiId}`} className="btn-secondary text-xs py-2 px-3 rounded-lg flex-1 text-center justify-center bg-white min-w-[100px]">
+                          <Link href={`/bhu-naksha?dlpi=${p.dlpiId}`} className="btn-secondary text-xs py-2 px-3 rounded-lg flex-1 text-center justify-center bg-white min-w-[100px]">
                             <Map className="w-4 h-4 mr-1.5 inline" /> View Map
                           </Link>
                           {p.claimStatus !== 'OWNER_VERIFIED' && p.claimStatus !== 'VERIFIED' ? (
@@ -690,12 +690,12 @@ export default function CitizenDashboard() {
               <div className="bg-[#0F4C81] rounded-2xl p-8 text-white relative overflow-hidden shadow-lg">
                 <div className="absolute right-0 top-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
                 <div className="relative z-10 max-w-sm">
-                  <h2 className="text-2xl font-black mb-2">Bhu-Naksha (GIS Map)</h2>
+                  <h2 className="text-2xl font-black mb-2">Bhu-Naksha</h2>
                   <p className="text-blue-100 text-sm mb-6 leading-relaxed">
                     Explore your land boundaries overlaid with SVAMITVA satellite imagery and live blockchain ownership layers.
                   </p>
-                  <Link href="/map" className="inline-flex items-center gap-2 bg-white text-[#0F4C81] px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-gray-50 transition-colors shadow-sm">
-                    Open GIS Viewer <ArrowUpRight className="w-4 h-4" />
+                  <Link href="/bhu-naksha" className="inline-flex items-center gap-2 bg-white text-[#0F4C81] px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-gray-50 transition-colors shadow-sm">
+                    Open Bhu-Naksha <ArrowUpRight className="w-4 h-4" />
                   </Link>
                 </div>
                 {/* Decorative Map Graphic */}
