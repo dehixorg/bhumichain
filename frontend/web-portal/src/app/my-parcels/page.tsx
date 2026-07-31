@@ -16,6 +16,7 @@ import BlockchainAuditTrail from '@/components/modals/BlockchainAuditTrail';
 import clsx from 'clsx';
 import CitizenHeader from '@/components/dashboard/CitizenHeader';
 import CitizenFooter from '@/components/dashboard/CitizenFooter';
+import LegalDeedPDFModal, { LegalDeedData } from '@/components/dashboard/LegalDeedPDFModal';
 import { getUser, apiFetch, type JWTUser, formatMaskedAadhaar, formatLastLogin } from '@/lib/auth';
 import { recordHeirConsent, initiateTransfer, recordConsent, getMyPendingTransfers, nominateHeirs, getInheritorNominations, acceptNomination, createAuction } from '@/lib/api';
 import toast from 'react-hot-toast';
@@ -110,6 +111,10 @@ export default function CitizenDashboard() {
   const [leaseRentAmount, setLeaseRentAmount] = useState('');
   const [leaseDuration, setLeaseDuration] = useState('12');
   const [leaseBusy, setLeaseBusy] = useState(false);
+
+  // Legal Deed PDF Modal State
+  const [deedModalOpen, setDeedModalOpen] = useState(false);
+  const [selectedDeedData, setSelectedDeedData] = useState<any>(null);
 
   useEffect(() => {
     try {
@@ -793,10 +798,36 @@ export default function CitizenDashboard() {
                         </div>
 
                         <div className="flex flex-wrap gap-2">
+                          {(p.claimStatus === 'OWNER_VERIFIED' || p.claimStatus === 'VERIFIED' || p.claimStatus === 'COMPLETED' || p.claimStatus === 'MUTATED_AND_TRANSFERRED') && (
+                            <button
+                              onClick={() => {
+                                const ha = p.areaHectares || 0.15;
+                                const bigha = (p as any).rakbaBigha || Math.max(1, Math.round(ha * 7.48));
+                                const katha = (p as any).rakbaKatha || 8;
+                                setSelectedDeedData({
+                                  dlpiId: p.dlpiId,
+                                  ownerName: user?.name || (p.owners && p.owners[0]?.name) || 'Rameshwar Prasad Singh',
+                                  khesraNo: p.khesraNo || (p as any).khasraNo || '101',
+                                  khataNo: p.khataNo || '108',
+                                  district: p.district || 'Patna',
+                                  anchal: p.anchal || 'Phulwari Sharif',
+                                  areaHectares: ha,
+                                  rakbaBigha: bigha,
+                                  rakbaKatha: katha,
+                                  encumbranceStatus: p.encumbranceStatus || 'CLEAR',
+                                  ownershipType: p.ownershipType === 'JOINT' ? 'Joint' : 'Sole (Bhumidhari)',
+                                });
+                                setDeedModalOpen(true);
+                              }}
+                              className="bg-[#0F4C81] hover:bg-[#0B3A64] text-white text-xs font-bold py-2 px-3 rounded-lg flex-1 text-center justify-center min-w-[140px] flex items-center gap-1.5 shadow-sm cursor-pointer"
+                            >
+                              <Download className="w-3.5 h-3.5" /> Download Legal Deed (PDF)
+                            </button>
+                          )}
                           <Link
                             href={`/ec/${p.dlpiId}`}
                             className={clsx(
-                              "btn-primary text-xs py-2 px-3 rounded-lg flex-1 text-center justify-center min-w-[120px] flex items-center gap-1.5",
+                              "btn-secondary text-xs py-2 px-3 rounded-lg flex-1 text-center justify-center min-w-[120px] flex items-center gap-1.5 bg-white",
                               generatedEcs[p.dlpiId] && "bg-emerald-700 hover:bg-emerald-800 border-emerald-600 text-white font-bold"
                             )}
                           >
@@ -808,7 +839,7 @@ export default function CitizenDashboard() {
                               <>Download RoR</>
                             )}
                           </Link>
-                          <Link href={`/map?dlpi=${p.dlpiId}`} className="btn-secondary text-xs py-2 px-3 rounded-lg flex-1 text-center justify-center bg-white min-w-[100px]">
+                          <Link href={`/bhu-naksha?dlpi=${p.dlpiId}`} className="btn-secondary text-xs py-2 px-3 rounded-lg flex-1 text-center justify-center bg-white min-w-[100px]">
                             <Map className="w-4 h-4 mr-1.5 inline" /> View Map
                           </Link>
                           {p.claimStatus === 'PENDING' && <span className="bg-amber-100 text-amber-800 px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wide border border-amber-200">Pending Review</span>}
@@ -894,12 +925,12 @@ export default function CitizenDashboard() {
               <div className="bg-[#0F4C81] rounded-2xl p-8 text-white relative overflow-hidden shadow-lg">
                 <div className="absolute right-0 top-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
                 <div className="relative z-10 max-w-sm">
-                  <h2 className="text-2xl font-black mb-2">Bhu-Naksha (GIS Map)</h2>
+                  <h2 className="text-2xl font-black mb-2">Bhu-Naksha</h2>
                   <p className="text-blue-100 text-sm mb-6 leading-relaxed">
                     Explore your land boundaries overlaid with SVAMITVA satellite imagery and live blockchain ownership layers.
                   </p>
-                  <Link href="/map" className="inline-flex items-center gap-2 bg-white text-[#0F4C81] px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-gray-50 transition-colors shadow-sm">
-                    Open GIS Viewer <ArrowUpRight className="w-4 h-4" />
+                  <Link href="/bhu-naksha" className="inline-flex items-center gap-2 bg-white text-[#0F4C81] px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-gray-50 transition-colors shadow-sm">
+                    Open Bhu-Naksha <ArrowUpRight className="w-4 h-4" />
                   </Link>
                 </div>
                 {/* Decorative Map Graphic */}
@@ -1436,6 +1467,12 @@ export default function CitizenDashboard() {
           </div>
         )}
       </main>
+
+      <LegalDeedPDFModal
+        isOpen={deedModalOpen}
+        onClose={() => setDeedModalOpen(false)}
+        data={selectedDeedData}
+      />
 
       <CitizenFooter />
       {/* Audit Trail Modal */}

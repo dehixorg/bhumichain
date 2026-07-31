@@ -41,7 +41,7 @@ export default function ScanPage() {
                 <div className="w-2 h-2 rounded-full bg-brand-400 animate-pulse" />
                 <span className="text-[#0F4C81] text-sm font-semibold">{lastDlpi} is live on BhumiChain</span>
                 <button
-                  onClick={() => router.push('/map')}
+                  onClick={() => router.push(`/bhu-naksha?dlpi=${lastDlpi}`)}
                   className="ml-auto btn-primary text-xs py-1.5"
                 >
                   View on Map

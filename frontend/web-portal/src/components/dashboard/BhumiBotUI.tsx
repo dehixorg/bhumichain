@@ -530,7 +530,9 @@ export default function BhumiBotUI({ className }: BhumiBotUIProps) {
       file: file,
     });
 
-    e.target.value = '';
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   const handleCopy = (id: string, text: string) => {
@@ -681,6 +683,15 @@ export default function BhumiBotUI({ className }: BhumiBotUIProps) {
 
   return (
     <div className={clsx('flex h-full w-full bg-[#F8FAFC] font-sans text-slate-900 antialiased overflow-hidden relative', className)}>
+      {/* Global Hidden File Input (Always mounted across all views) */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".pdf,.png,.jpg,.jpeg,.webp,.doc,.docx"
+        onChange={handleFileUpload}
+        className="hidden"
+      />
+
       {/* ── 1. Main Legal Workspace (Center / Left View) ── */}
       <div className="flex-1 flex flex-col h-full min-w-0 bg-[#F8FAFC] relative">
         <div className="h-14 bg-white/80 backdrop-blur-md border-b border-slate-200/80 flex items-center px-5 justify-between shrink-0 z-10">
@@ -697,6 +708,14 @@ export default function BhumiBotUI({ className }: BhumiBotUIProps) {
           </div>
 
           <div className="flex items-center gap-2">
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 rounded-xl text-xs font-bold text-emerald-800 transition cursor-pointer shadow-xs"
+              title="Upload Property Document for AI Legal Analysis"
+            >
+              <Paperclip className="w-3.5 h-3.5 text-emerald-700" />
+              <span>Upload Document</span>
+            </button>
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
               className="flex items-center gap-1.5 px-3 py-1.5 bg-[#0F4C81]/10 hover:bg-[#0F4C81]/20 border border-[#0F4C81]/25 rounded-xl text-xs font-bold text-[#0F4C81] transition cursor-pointer"
@@ -749,13 +768,6 @@ export default function BhumiBotUI({ className }: BhumiBotUIProps) {
                   }}
                   className="relative flex items-end bg-white border border-slate-200/90 focus-within:border-[#0F4C81] focus-within:ring-2 focus-within:ring-[#0F4C81]/10 rounded-2xl p-2.5 shadow-lg transition-all"
                 >
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept=".pdf,.png,.jpg,.jpeg,.webp,.doc,.docx"
-                    onChange={handleFileUpload}
-                    className="hidden"
-                  />
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
