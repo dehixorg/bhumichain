@@ -87,6 +87,12 @@ services:
       NEXT_PUBLIC_MAP_CENTER_LAT: "28.5706"
       NEXT_PUBLIC_MAP_CENTER_LNG: "77.5413"
       NEXT_PUBLIC_MAP_ZOOM: "12"
+      # Internal Next.js API Proxies
+      RECORD_SCAN_URL: http://record-scan:8010
+      RECORD_SCAN_PYTHON_URL: http://record-scan:8010
+      BHUMIBOT_SERVICE_URL: http://bhumibot:8015
+      AZURE_DOC_INTEL_ENDPOINT: ${AZURE_DOC_INTEL_ENDPOINT:-https://dehixchatbot-resource.services.ai.azure.com}
+      AZURE_DOC_INTEL_KEY: ${AZURE_OPENAI_API_KEY:-}
     depends_on:
       api-gateway:
         condition: service_healthy
