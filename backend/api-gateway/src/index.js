@@ -71,6 +71,18 @@ app.post('/api/demo/trigger', authenticate, (req, res) => {
   res.json({ fired: true, key });
 });
 
+// POST /api/system/reset
+// Used to reset all mock data to the initial state for the next demo.
+app.post('/api/system/reset', authenticate, async (req, res) => {
+  try {
+    const { resetDemoData } = require('./mock/responses');
+    await resetDemoData();
+    res.json({ success: true, message: 'Demo data reset successfully.' });
+  } catch (err) {
+    res.status(500).json({ error: 'RESET_FAILED', message: err.message });
+  }
+});
+
 // ─── API Routes ───────────────────────────────────────────────────────────────
 
 app.use('/api/auth',        authRoutes);

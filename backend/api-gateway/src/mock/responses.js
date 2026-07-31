@@ -1017,6 +1017,19 @@ module.exports = {
   DEMO_AUCTION_ACTIVE,
   DEMO_AUCTION_UPCOMING,
   DEMO_WS_EVENTS,
+  resetDemoData: async () => {
+    const mongoStore = require('../services/mongoStore');
+    MOCK_SCANS = [];
+    MOCK_SUCCESSION_CASES = [];
+    const Transfer = require('../models/Transfer');
+    const Lease = require('../models/Lease');
+    const Mutation = require('../models/Mutation');
+    await Transfer.deleteMany({});
+    await Lease.deleteMany({});
+    await Mutation.deleteMany({});
+    await mongoStore.initializeMongo(DEMO_MY_PARCELS);
+    return true;
+  },
 
   getMockResponse(chaincode, fn, args = []) {
     const key = `${chaincode}::${fn}`;
