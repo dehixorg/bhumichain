@@ -390,7 +390,7 @@ function ParcelDetail({ parcel }: { parcel: Parcel }) {
           </div>
         </div>
         <Link
-          href={`/map?dlpi=${parcel.dlpiId}`}
+          href={`/bhu-naksha?dlpi=${parcel.dlpiId}`}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#F8FAFC] hover:bg-gray-700 text-gray-600 text-xs transition-colors"
         >
           <MapPin className="w-3 h-3" />

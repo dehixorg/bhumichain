@@ -1,6 +1,7 @@
 'use strict';
 
 const { Router } = require('express');
+const mongoStore = require('../services/mongoStore');
 const crypto = require('crypto');
 const { body, param, validationResult } = require('express-validator');
 const axios = require('axios');
@@ -332,7 +333,7 @@ router.get('/my-pending', authenticate, requireRole(ROLES.CITIZEN), async (req, 
     try {
       global.successionCases = global.successionCases || {};
       if (fs.existsSync('/tmp/bhumichain_succession_cases.json')) {
-        const diskCases = JSON.parse(fs.readFileSync('/tmp/bhumichain_succession_cases.json', 'utf8'));
+        const diskCases = await mongoStore.getSuccessions();
         // Merge disk into memory (disk has priority for persisted state)
         Object.assign(global.successionCases, diskCases);
       }
@@ -395,7 +396,7 @@ router.get('/pending/all', authenticate, requireRole(ROLES.ANCHAL_ADHIKARI, ROLE
     global.successionCases = global.successionCases || {};
     try {
       if (fs.existsSync('/tmp/bhumichain_succession_cases.json')) {
-        global.successionCases = Object.assign({}, JSON.parse(fs.readFileSync('/tmp/bhumichain_succession_cases.json', 'utf8')), global.successionCases);
+        global.successionCases = Object.assign({}, await mongoStore.getSuccessions(), global.successionCases);
       }
     } catch (e) {}
 
@@ -420,7 +421,7 @@ router.post('/:caseId/mark-ready', authenticate, async (req, res) => {
     // Load from disk first
     try {
       if (fs.existsSync(diskPath)) {
-        const diskCases = JSON.parse(fs.readFileSync(diskPath, 'utf8'));
+        const diskCases = await mongoStore.getSuccessions();
         Object.assign(global.successionCases, diskCases);
       }
     } catch (e) {}
@@ -447,7 +448,7 @@ router.post('/:caseId/mark-ready', authenticate, async (req, res) => {
 
     // Save to disk
     try {
-      fs.writeFileSync(diskPath, JSON.stringify(global.successionCases, null, 2));
+      await mongoStore.saveSuccessions(global.successionCases);
     } catch (e) {
       console.warn('[mark-ready] Disk write failed:', e.message);
     }
@@ -471,7 +472,7 @@ router.get('/:caseId', authenticate, async (req, res) => {
     global.successionCases = global.successionCases || {};
     try {
       if (fs.existsSync('/tmp/bhumichain_succession_cases.json')) {
-        global.successionCases = Object.assign({}, JSON.parse(fs.readFileSync('/tmp/bhumichain_succession_cases.json', 'utf8')), global.successionCases);
+        global.successionCases = Object.assign({}, await mongoStore.getSuccessions(), global.successionCases);
       }
     } catch (e) {}
 
@@ -560,7 +561,7 @@ router.post(
       // Update local atomic persistence so divided property immediately appears
       try {
         let claims = {};
-        try { claims = JSON.parse(fs.readFileSync('/tmp/bhumichain_atomic_claims.json', 'utf8')); } catch(e) {}
+        claims = await mongoStore.getAtomicClaims();
         claims[dlpiId] = {
           txHash: caseId,
           dlpiId: dlpiId,
@@ -571,10 +572,10 @@ router.post(
           claimedAt: new Date().toISOString(),
           status: 'MUTATED_AND_TRANSFERRED'
         };
-        fs.writeFileSync('/tmp/bhumichain_atomic_claims.json', JSON.stringify(claims, null, 2));
+        await mongoStore.saveAtomicClaims(claims);
 
         let seeded = [];
-        try { seeded = JSON.parse(fs.readFileSync('/tmp/bhumichain_seeded_parcels.json', 'utf8')); } catch(e) {}
+        seeded = await mongoStore.getDLPIs();
         if (!Array.isArray(seeded)) seeded = [];
         const multiOwners = heirs.map(h => ({
           name: h.name,
@@ -617,7 +618,7 @@ router.post(
             owners: multiOwners
           });
         }
-        fs.writeFileSync('/tmp/bhumichain_seeded_parcels.json', JSON.stringify(seeded, null, 2));
+        await mongoStore.saveDLPIs(seeded);
       } catch (persistenceErr) {}
       
       broadcast('SuccessionExecuted', {
@@ -715,7 +716,7 @@ router.post(
         global.successionCases = global.successionCases || {};
         const diskPath = '/tmp/bhumichain_succession_cases.json';
         if (fs.existsSync(diskPath)) {
-          const diskCases = JSON.parse(fs.readFileSync(diskPath, 'utf8'));
+          const diskCases = await mongoStore.getSuccessions();
           Object.assign(global.successionCases, diskCases);
         }
         const sc = global.successionCases[req.params.caseId];
@@ -737,7 +738,7 @@ router.post(
             sc.status = sc.status || 'HEIR_CONSENT_PENDING';
           }
           global.successionCases[req.params.caseId] = sc;
-          fs.writeFileSync(diskPath, JSON.stringify(global.successionCases, null, 2));
+          await mongoStore.saveSuccessions(global.successionCases);
         }
       } catch (consentTrackErr) {
         console.warn('[Consent] Track non-fatal:', consentTrackErr.message);
@@ -825,7 +826,7 @@ router.get('/pending/all', authenticate, requireRole(ROLES.ANCHAL_ADHIKARI, ROLE
     let diskList = [];
     try { diskList = JSON.parse(fs.readFileSync('/tmp/bhumichain_mock_cases.json', 'utf8')) || []; } catch(e) {}
     try {
-      const bCases = JSON.parse(fs.readFileSync('/tmp/bhumichain_succession_cases.json', 'utf8'));
+      const bCases = await mongoStore.getSuccessions();
       diskList = [...diskList, ...Object.values(bCases || {})];
     } catch(e) {}
 

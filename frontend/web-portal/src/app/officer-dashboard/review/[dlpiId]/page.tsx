@@ -808,12 +808,12 @@ export default function ReviewPage() {
 
               {/* Map link */}
               <Link
-                href={`/map?dlpi=${dlpiId}`}
+                href={`/bhu-naksha?dlpi=${dlpiId}`}
                 className="flex items-center justify-between p-3 rounded-xl bg-white border border-gray-200 hover:border-gray-600 transition-colors text-sm text-gray-400 hover:text-gray-700"
               >
                 <div className="flex items-center gap-2">
                   <MapPin className="w-4 h-4 text-[#0F4C81]" />
-                  View on GIS Map
+                  View on Bhu-Naksha
                 </div>
                 <ChevronRight className="w-4 h-4" />
               </Link>

@@ -98,13 +98,26 @@ interface DemoAuction {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function AuctionPage() {
+  const [auctions, setAuctions]     = useState<DemoAuction[]>(DEMO_AUCTIONS);
   const [selected, setSelected]     = useState<DemoAuction>(DEMO_AUCTIONS[0]);
   const [showBidModal, setShowBid]  = useState(false);
   const [bids, setBids]             = useState<PlacedBid[]>([]);
   const [timeLeft, setTimeLeft]     = useState('');
+  const [user, setUser]             = useState<any>(null);
+  const [closing, setClosing]       = useState(false);
 
   useEffect(() => {
-    getDemoToken('citizen', 'Demo Citizen').catch(() => {});
+    import('@/lib/api').then(({ getAuctions }) => {
+      getAuctions().then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          setAuctions(data);
+          setSelected(data[0]);
+        }
+      }).catch(() => {});
+    });
+    getDemoToken('citizen', 'Demo Citizen').then(t => {
+      if(t && t.user) setUser(t.user);
+    }).catch(() => {});
   }, []);
 
   // Countdown timer
@@ -128,6 +141,28 @@ export default function AuctionPage() {
     toast.success(`Sealed bid ₹${fmtINR(bid.amount)} recorded on BhumiChain`);
   };
 
+  const handleCloseAuction = async () => {
+    setClosing(true);
+    try {
+      const { closeAuction } = await import('@/lib/api');
+      toast.loading('Closing auction and accepting highest bid...', { id: 'close-auction' });
+      await closeAuction(selected.auctionId);
+      toast.success('🎉 Auction closed! Transfer initiated to highest bidder.', { id: 'close-auction' });
+      // Refresh
+      const { getAuctions } = await import('@/lib/api');
+      const data = await getAuctions();
+      if (Array.isArray(data)) {
+        setAuctions(data);
+        const updated = data.find(a => a.auctionId === selected.auctionId);
+        if (updated) setSelected(updated);
+      }
+    } catch (e: any) {
+      toast.error(e.message || 'Failed to close auction', { id: 'close-auction' });
+    } finally {
+      setClosing(false);
+    }
+  };
+
   return (
     <div className="flex flex-col h-screen bg-[#F8FAFC]">
       <AppHeader />
@@ -137,6 +172,7 @@ export default function AuctionPage() {
       {showBidModal && (
         <BidModal
           auction={selected}
+          user={user}
           onBid={handleBidPlaced}
           onClose={() => setShowBid(false)}
         />
@@ -151,7 +187,7 @@ export default function AuctionPage() {
           <span className="text-xs text-gray-500">— e-Auction Platform for Land Parcels</span>
           <div className="ml-auto flex items-center gap-1.5 text-xs text-[#0F4C81]">
             <div className="w-1.5 h-1.5 rounded-full bg-brand-400 animate-pulse" />
-            {DEMO_AUCTIONS.filter((a) => a.status === 'ACTIVE').length} Live Auction
+            {auctions.filter((a) => a.status === 'ACTIVE').length} Live Auction
           </div>
         </div>
 
@@ -165,7 +201,7 @@ export default function AuctionPage() {
               </div>
             </div>
             <div className="flex-1 p-3 space-y-2">
-              {DEMO_AUCTIONS.map((auction) => (
+              {auctions.map((auction) => (
                 <button
                   key={auction.auctionId}
                   onClick={() => setSelected(auction)}
@@ -324,16 +360,29 @@ export default function AuctionPage() {
                 </div>
               )}
 
-              {/* Place bid CTA */}
+              {/* CTAs */}
               {selected.status === 'ACTIVE' && timeLeft !== 'CLOSED' && (
-                <button
-                  onClick={() => setShowBid(true)}
-                  className="btn-primary w-full flex items-center justify-center gap-2 py-3"
-                >
-                  <Gavel className="w-5 h-5" />
-                  Place Sealed Bid
-                  <ChevronRight className="w-4 h-4" />
-                </button>
+                <>
+                  {user && user.aadhaarNumber === selected.ownerAadhaar ? (
+                    <button
+                      onClick={handleCloseAuction}
+                      disabled={closing}
+                      className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl py-3 flex items-center justify-center gap-2 shadow-sm transition-colors"
+                    >
+                      <CheckCircle className="w-5 h-5" />
+                      {closing ? 'Closing...' : 'Close Auction & Accept Highest Bid'}
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => setShowBid(true)}
+                      className="btn-primary w-full flex items-center justify-center gap-2 py-3"
+                    >
+                      <Gavel className="w-5 h-5" />
+                      Place Sealed Bid
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  )}
+                </>
               )}
             </div>
           </div>
@@ -403,10 +452,12 @@ interface PlacedBid { amount: number; txHash: string; at: string }
 
 function BidModal({
   auction,
+  user,
   onBid,
   onClose,
 }: {
   auction: DemoAuction;
+  user?: any;
   onBid: (b: PlacedBid) => void;
   onClose: () => void;
 }) {
@@ -427,10 +478,21 @@ function BidModal({
       return;
     }
     setSub(true);
-    await delay(800);
-    const txHash = `bid-seal-${Date.now().toString(36).toUpperCase()}`;
-    onBid({ amount: parsed, txHash, at: new Date().toISOString() });
-    onClose();
+    try {
+      const { placeBid } = await import('@/lib/api');
+      const res = await placeBid(auction.auctionId, {
+        bidAmountINR: parsed,
+        bidderAadhaarNumber: aadhaar,
+        bidderName: user?.name || 'Demo Bidder'
+      });
+      const txHash = res.txHash || `bid-seal-${Date.now().toString(36).toUpperCase()}`;
+      onBid({ amount: parsed, txHash, at: new Date().toISOString() });
+      onClose();
+    } catch (e: any) {
+      toast.error(e.message || 'Failed to place bid');
+    } finally {
+      setSub(false);
+    }
   };
 
   return (

@@ -71,6 +71,13 @@ const DEMO_PRESETS = [
     color: 'amber',
     icon:  AlertTriangle,
   },
+  {
+    id:    'demo_kaithi',
+    label: 'Historical Kaithi Document (Phase 3)',
+    sub:   '1950s Kaithi Script · Transliterated & Extracted',
+    color: 'brand',
+    icon:  FileText,
+  },
 ];
 
 const STEP_LABELS = [

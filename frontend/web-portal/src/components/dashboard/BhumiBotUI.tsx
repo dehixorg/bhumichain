@@ -36,6 +36,8 @@ import {
   Landmark,
   RotateCw,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import axios from 'axios';
 import { getUser, isOfficer, JWTUser } from '@/lib/auth';
@@ -80,20 +82,56 @@ const uid = () => Math.random().toString(36).slice(2, 11);
 
 // ─── Brand Avatars ────────────────────────────────────────────────────────────
 
+// ─── Distinct Brand & Legal Feature SVGs ────────────────────────────────────────────
+
+// ─── Minimalist Brand & Legal Vector SVGs ────────────────────────────────────
+
+// 1. AI Legal Bot Avatar (Clean minimalist scales of justice)
 function BhumiBotAvatar({ className = "w-7 h-7" }: { className?: string }) {
   return (
     <svg viewBox="0 0 32 32" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
       <rect width="32" height="32" rx="8" fill="#0F4C81" />
-      <text x="16" y="22" fontFamily="serif" fontSize="17" fontWeight="bold" fill="#FFFFFF" textAnchor="middle">भू</text>
+      <path d="M16 8V24M11 13H21M11 13L8 18C8 19 9 20 11 20C13 20 14 19 14 18L11 13ZM21 13L18 18C18 19 19 20 21 20C23 20 24 19 24 18L21 13ZM13 24H19" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="25" cy="7" r="1.5" fill="#FF9933" />
     </svg>
   );
 }
 
+// 2. Hero Welcome Emblem SVG (Inverted clean white background)
 function BhumiBotAvatarInverted({ className = "w-10 h-10" }: { className?: string }) {
   return (
     <svg viewBox="0 0 32 32" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
       <rect width="32" height="32" rx="8" fill="#FFFFFF" />
-      <text x="16" y="22" fontFamily="serif" fontSize="17" fontWeight="bold" fill="#0F4C81" textAnchor="middle">भू</text>
+      <path d="M16 8V24M11 13H21M11 13L8 18C8 19 9 20 11 20C13 20 14 19 14 18L11 13ZM21 13L18 18C18 19 19 20 21 20C23 20 24 19 24 18L21 13ZM13 24H19" stroke="#0F4C81" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="25" cy="7" r="1.5" fill="#FF9933" />
+    </svg>
+  );
+}
+
+// 3. Legal History Vault Icon (Refined minimalist document vault with Saffron history accent)
+function LegalVaultIcon({ className = "w-7 h-7" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 32 32" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="32" height="32" rx="8" fill="#0F4C81" stroke="rgba(255,255,255,0.2)" strokeWidth="1" />
+      {/* Legal Deed Page geometry */}
+      <path d="M10 8H18L22 12V23C22 24.1 21.1 25 20 25H12C10.9 25 10 24.1 10 23V8Z" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M18 8V12H22" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      {/* Saffron deed lines */}
+      <path d="M13 14H17M13 17H16" stroke="#FF9933" strokeWidth="1.8" strokeLinecap="round" />
+      {/* History clock node */}
+      <circle cx="21" cy="21" r="3" fill="#FF9933" />
+      <path d="M21 19.5V21H22.2" stroke="#0F4C81" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+// 4. Clean minimalist Expand AI History Panel icon matching section colors (#0F4C81 Navy & #FF9933 Saffron)
+function ExpandHistoryIcon({ className = "w-6 h-6" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 32 32" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="32" height="32" rx="8" fill="#0F4C81" stroke="rgba(255,255,255,0.2)" strokeWidth="1" />
+      <path d="M10 16H22M10 11H22M10 21H17" stroke="white" strokeWidth="2" strokeLinecap="round" />
+      <path d="M22 19L25 21L22 23" stroke="#FF9933" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
@@ -275,6 +313,26 @@ export default function BhumiBotUI({ className }: BhumiBotUIProps) {
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const flyoutRef = useRef<HTMLDivElement>(null);
+
+  // Close hover flyout popover when clicking anywhere outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+      if (flyoutRef.current && !flyoutRef.current.contains(event.target as Node)) {
+        setActiveFlyout(null);
+      }
+    };
+
+    if (activeFlyout) {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('touchstart', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, [activeFlyout]);
 
   const getUserStorageKey = useCallback(() => {
     if (typeof window === 'undefined') return 'bhumibot_v5_threads_guest';
@@ -472,7 +530,9 @@ export default function BhumiBotUI({ className }: BhumiBotUIProps) {
       file: file,
     });
 
-    e.target.value = '';
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   const handleCopy = (id: string, text: string) => {
@@ -622,315 +682,17 @@ export default function BhumiBotUI({ className }: BhumiBotUIProps) {
   }
 
   return (
-    <div className={clsx('flex h-full w-full bg-[#F8FAFC] font-sans text-slate-900 antialiased rounded-2xl border border-slate-200/90 shadow-2xl overflow-hidden relative', className)}>
-      
-      {/* ── 1. Royal Navy Sidebar (#0F4C81) with Subtle Tiranga Accent ── */}
-      <div
-        className={clsx(
-          'bg-[#0F4C81] text-white flex flex-col border-r border-[#0F4C81]/30 transition-all duration-300 shrink-0 z-20 shadow-xl overflow-visible relative',
-          sidebarOpen ? 'w-64 md:w-72' : 'w-14'
-        )}
-      >
-        {/* Sleek Top Indian Tricolor (Tiranga) Accent Line */}
-        <div className="h-1 w-full bg-gradient-to-r from-[#FF9933] via-white to-[#138808] shrink-0" />
+    <div className={clsx('flex h-full w-full bg-[#F8FAFC] font-sans text-slate-900 antialiased overflow-hidden relative', className)}>
+      {/* Global Hidden File Input (Always mounted across all views) */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".pdf,.png,.jpg,.jpeg,.webp,.doc,.docx"
+        onChange={handleFileUpload}
+        className="hidden"
+      />
 
-        {!sidebarOpen ? (
-          <div className="flex flex-col items-center py-3 h-full relative justify-between">
-            <div className="flex flex-col items-center space-y-3.5">
-              <button
-                onClick={() => setSidebarOpen(true)}
-                className="p-2 hover:bg-white/15 rounded-xl text-white transition cursor-pointer"
-                title="Expand Sidebar"
-              >
-                <BhumiBotAvatarInverted className="w-6 h-6 rounded-md shadow-sm" />
-              </button>
-
-              <button
-                onClick={handleNewChat}
-                className="p-2.5 hover:bg-white/15 rounded-xl text-white/90 hover:text-white transition cursor-pointer relative group"
-                title="New Legal Analysis"
-              >
-                <Plus className="w-5 h-5" />
-                <div className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-[#FF9933]" />
-              </button>
-
-              <div className="relative">
-                <button
-                  onClick={() => setActiveFlyout(activeFlyout === 'search' ? null : 'search')}
-                  onMouseEnter={() => setActiveFlyout('search')}
-                  className="p-2.5 hover:bg-white/15 rounded-xl text-white/90 hover:text-white transition cursor-pointer"
-                  title="Search History"
-                >
-                  <Search className="w-5 h-5" />
-                </button>
-
-                {activeFlyout === 'search' && (
-                  <div
-                    onMouseLeave={() => setActiveFlyout(null)}
-                    className="absolute left-14 top-0 w-64 bg-[#1E293B] border border-slate-700 text-white rounded-2xl shadow-2xl p-3 z-50 space-y-2"
-                  >
-                    <div className="font-bold text-xs text-white">Search History</div>
-                    <input
-                      type="text"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder="Type query title..."
-                      autoFocus
-                      className="w-full bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1 text-xs text-white placeholder-slate-400 focus:outline-none"
-                    />
-                    <div className="max-h-48 overflow-y-auto space-y-1 custom-scrollbar">
-                      {threads
-                        .filter((t) => t.title.toLowerCase().includes(searchQuery.toLowerCase()))
-                        .map((t) => (
-                          <button
-                            key={t.id}
-                            onClick={() => {
-                              setActiveThreadId(t.id);
-                              setActiveFlyout(null);
-                            }}
-                            className="w-full text-left px-2.5 py-1.5 hover:bg-slate-800 rounded-lg text-xs font-medium text-slate-200 truncate block"
-                          >
-                            {t.title}
-                          </button>
-                        ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <div className="relative">
-                <button
-                  onClick={() => setActiveFlyout(activeFlyout === 'pinned' ? null : 'pinned')}
-                  onMouseEnter={() => setActiveFlyout('pinned')}
-                  className={clsx(
-                    'p-2.5 rounded-xl transition cursor-pointer',
-                    pinnedThreads.length > 0 ? 'text-amber-300 hover:bg-white/15' : 'text-white/90 hover:bg-white/15'
-                  )}
-                  title="Pinned Chats"
-                >
-                  <Pin className="w-5 h-5" />
-                </button>
-
-                {activeFlyout === 'pinned' && (
-                  <div
-                    onMouseLeave={() => setActiveFlyout(null)}
-                    className="absolute left-14 top-0 w-64 bg-[#262626] border border-zinc-700 text-white rounded-2xl shadow-2xl p-3.5 z-50 space-y-2.5"
-                  >
-                    <div className="font-bold text-xs text-zinc-200 tracking-wide">Pinned</div>
-                    {pinnedThreads.length === 0 ? (
-                      <div className="text-[11px] text-zinc-400 py-1">No pinned analyses yet.</div>
-                    ) : (
-                      <div className="max-h-56 overflow-y-auto space-y-1 custom-scrollbar">
-                        {pinnedThreads.map((t) => (
-                          <button
-                            key={t.id}
-                            onClick={() => {
-                              setActiveThreadId(t.id);
-                              setActiveFlyout(null);
-                            }}
-                            className="w-full text-left px-2.5 py-2 hover:bg-zinc-800 rounded-xl text-xs text-zinc-200 group transition"
-                          >
-                            <span className="truncate block">{t.title}</span>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              <div className="relative">
-                <button
-                  onClick={() => setActiveFlyout(activeFlyout === 'recents' ? null : 'recents')}
-                  onMouseEnter={() => setActiveFlyout('recents')}
-                  className="p-2.5 hover:bg-white/15 rounded-xl text-white/90 hover:text-white transition cursor-pointer"
-                  title="Recents"
-                >
-                  <MessageSquare className="w-5 h-5" />
-                </button>
-
-                {activeFlyout === 'recents' && (
-                  <div
-                    onMouseLeave={() => setActiveFlyout(null)}
-                    className="absolute left-14 top-0 w-64 bg-[#262626] border border-zinc-700 text-white rounded-2xl shadow-2xl p-3.5 z-50 space-y-2.5"
-                  >
-                    <div className="font-bold text-xs text-zinc-200 tracking-wide">Recents</div>
-                    <div className="max-h-64 overflow-y-auto space-y-1 custom-scrollbar">
-                      {threads.map((t) => (
-                        <button
-                          key={t.id}
-                          onClick={() => {
-                            setActiveThreadId(t.id);
-                            setActiveFlyout(null);
-                          }}
-                          className="w-full text-left flex items-center gap-2 px-2.5 py-2 hover:bg-zinc-800 rounded-xl text-xs text-zinc-200 group transition"
-                        >
-                          <MessageSquare className="w-3.5 h-3.5 text-zinc-400 group-hover:text-white shrink-0" />
-                          <span className="truncate">{t.title}</span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <Link
-                href={portalLink}
-                className="p-2.5 hover:bg-white/15 rounded-xl text-white/90 hover:text-white transition cursor-pointer"
-                title="Back to Main Portal"
-              >
-                <Home className="w-5 h-5" />
-              </Link>
-            </div>
-
-            {/* ── User Profile Footer (Collapsed Panel - Pinned to absolute bottom end) ── */}
-            <div className="w-full p-3 border-t border-white/15 shrink-0 bg-black/10 flex items-center justify-center min-h-[57px]">
-              {user && (
-                <div
-                  className="w-8 h-8 rounded-lg bg-white text-[#0F4C81] font-black text-xs flex items-center justify-center shrink-0 shadow-xs cursor-pointer hover:scale-105 transition border border-[#FF9933]/50"
-                  title={`${user.name} (${ROLE_LABEL[user.role] ?? user.role})`}
-                >
-                  {userInitials}
-                </div>
-              )}
-            </div>
-          </div>
-        ) : (
-          <>
-            <div className="p-4 border-b border-white/10 space-y-3 shrink-0">
-              <div className="flex items-center justify-between">
-                <Link
-                  href={portalLink}
-                  className="flex items-center gap-2 text-white/80 hover:text-white text-xs font-semibold group transition"
-                  title="Return to Main Portal"
-                >
-                  <div className="p-1 rounded-md bg-white/10 group-hover:bg-white/20 transition">
-                    <ArrowLeft className="w-3.5 h-3.5" />
-                  </div>
-                  <span>Back to Portal</span>
-                </Link>
-
-                <button
-                  onClick={() => setSidebarOpen(false)}
-                  className="p-1.5 text-white/70 hover:text-white transition rounded-lg hover:bg-white/10 cursor-pointer"
-                  title="Collapse History Sidebar"
-                >
-                  <SidebarIcon className="w-4 h-4" />
-                </button>
-              </div>
-
-              <div className="flex items-center gap-2.5 pt-1">
-                <BhumiBotAvatarInverted className="w-8 h-8 rounded-lg shadow-sm" />
-                <div>
-                  <div className="font-extrabold text-sm text-white tracking-wide leading-tight">BhumiBot AI</div>
-                  <div className="flex items-center gap-1 mt-0.5">
-                    <div className="flex h-1.5 w-3.5 rounded-full overflow-hidden shrink-0 border border-white/30">
-                      <div className="w-1/3 bg-[#FF9933]" />
-                      <div className="w-1/3 bg-white" />
-                      <div className="w-1/3 bg-[#138808]" />
-                    </div>
-                    <span className="text-[10px] text-white/70 font-medium leading-tight">Indian Land Law AI</span>
-                  </div>
-                </div>
-              </div>
-
-              <button
-                onClick={handleNewChat}
-                className="w-full flex items-center justify-center gap-2 px-3.5 py-2.5 bg-white text-[#0F4C81] hover:bg-slate-100 rounded-xl font-bold text-xs transition shadow-md border-t-2 border-t-[#FF9933] cursor-pointer"
-              >
-                <Plus className="w-4 h-4 text-[#FF9933]" />
-                <span>New Legal Analysis</span>
-              </button>
-            </div>
-
-            <div className="p-3 pb-1 shrink-0">
-              <div className="relative">
-                <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-white/50" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search history..."
-                  className="w-full bg-white/10 border border-white/15 rounded-xl pl-8 pr-3 py-1.5 text-xs text-white placeholder-white/50 focus:outline-none focus:border-white/40 transition"
-                />
-              </div>
-            </div>
-
-            <div className="flex-1 overflow-y-auto p-2 space-y-3 custom-scrollbar">
-              {filteredPinned.length > 0 && (
-                <div className="space-y-1">
-                  <div className="px-2 text-[10px] uppercase font-bold tracking-wider text-amber-300 flex items-center gap-1">
-                    <Pin className="w-3 h-3 text-amber-300" />
-                    <span>Pinned</span>
-                  </div>
-                  {filteredPinned.map((thread) => (
-                    <ThreadListItem
-                      key={thread.id}
-                      thread={thread}
-                      activeThreadId={activeThreadId}
-                      editingThreadId={editingThreadId}
-                      editingTitle={editingTitle}
-                      setActiveThreadId={setActiveThreadId}
-                      setEditingTitle={setEditingTitle}
-                      handleSaveRename={handleSaveRename}
-                      handleStartRename={handleStartRename}
-                      handleTogglePin={handleTogglePin}
-                      handleDeleteThread={handleDeleteThread}
-                    />
-                  ))}
-                </div>
-              )}
-
-              <div className="space-y-1">
-                {filteredPinned.length > 0 && (
-                  <div className="px-2 text-[10px] uppercase font-bold tracking-wider text-white/50 pt-1">
-                    <span>Recents</span>
-                  </div>
-                )}
-                {filteredUnpinned.map((thread) => (
-                  <ThreadListItem
-                    key={thread.id}
-                    thread={thread}
-                    activeThreadId={activeThreadId}
-                    editingThreadId={editingThreadId}
-                    editingTitle={editingTitle}
-                    setActiveThreadId={setActiveThreadId}
-                    setEditingTitle={setEditingTitle}
-                    handleSaveRename={handleSaveRename}
-                    handleStartRename={handleStartRename}
-                    handleTogglePin={handleTogglePin}
-                    handleDeleteThread={handleDeleteThread}
-                  />
-                ))}
-              </div>
-            </div>
-
-            {/* ── User Profile Footer (Left Panel) ── */}
-            <div className="p-3 border-t border-white/15 shrink-0 bg-black/10">
-              {user ? (
-                <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-white/10 border border-white/15 backdrop-blur-xs shadow-xs">
-                  <div className="w-8 h-8 rounded-lg bg-white text-[#0F4C81] font-black text-xs flex items-center justify-center shrink-0 shadow-xs">
-                    {userInitials}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="text-white text-xs font-extrabold truncate leading-tight">{user.name}</div>
-                    <div className="text-white/70 text-[10px] font-medium leading-tight mt-0.5">{ROLE_LABEL[user.role] ?? user.role}</div>
-                    {user.jurisdictionCode && (
-                      <div className="text-amber-300 text-[9px] font-mono mt-0.5 truncate">{user.jurisdictionCode}</div>
-                    )}
-                  </div>
-                </div>
-              ) : (
-                <div className="text-[10px] text-white/60 flex items-center justify-between">
-                  <span>BhumiChain Legal AI</span>
-                </div>
-              )}
-            </div>
-          </>
-        )}
-      </div>
-
-      {/* ── 2. Fresh Workspace ── */}
+      {/* ── 1. Main Legal Workspace (Center / Left View) ── */}
       <div className="flex-1 flex flex-col h-full min-w-0 bg-[#F8FAFC] relative">
         <div className="h-14 bg-white/80 backdrop-blur-md border-b border-slate-200/80 flex items-center px-5 justify-between shrink-0 z-10">
           <div className="flex items-center gap-3">
@@ -945,14 +707,23 @@ export default function BhumiBotUI({ className }: BhumiBotUIProps) {
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <Link
-              href={portalLink}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 transition shadow-2xs"
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 rounded-xl text-xs font-bold text-emerald-800 transition cursor-pointer shadow-xs"
+              title="Upload Property Document for AI Legal Analysis"
             >
-              <Home className="w-3.5 h-3.5 text-[#0F4C81]" />
-              <span className="hidden sm:inline">Main Dashboard</span>
-            </Link>
+              <Paperclip className="w-3.5 h-3.5 text-emerald-700" />
+              <span>Upload Document</span>
+            </button>
+            <button
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-[#0F4C81]/10 hover:bg-[#0F4C81]/20 border border-[#0F4C81]/25 rounded-xl text-xs font-bold text-[#0F4C81] transition cursor-pointer"
+              title={sidebarOpen ? "Collapse AI History Panel" : "Expand AI History Panel"}
+            >
+              <SidebarIcon className="w-3.5 h-3.5 text-[#0F4C81]" />
+              <span>{sidebarOpen ? "Hide History" : "AI History"}</span>
+            </button>
           </div>
         </div>
 
@@ -997,13 +768,6 @@ export default function BhumiBotUI({ className }: BhumiBotUIProps) {
                   }}
                   className="relative flex items-end bg-white border border-slate-200/90 focus-within:border-[#0F4C81] focus-within:ring-2 focus-within:ring-[#0F4C81]/10 rounded-2xl p-2.5 shadow-lg transition-all"
                 >
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept=".pdf,.png,.jpg,.jpeg,.webp,.doc,.docx"
-                    onChange={handleFileUpload}
-                    className="hidden"
-                  />
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
@@ -1085,8 +849,8 @@ export default function BhumiBotUI({ className }: BhumiBotUIProps) {
               </div>
             </div>
           ) : (
-            /* ── Active Stream ── */
-            <div className="w-full max-w-4xl mx-auto space-y-6">
+            /* ── Message Stream ── */
+            <div className="max-w-4xl mx-auto space-y-6">
               {messages.map((msg) => (
                 <div
                   key={msg.id}
@@ -1169,21 +933,23 @@ export default function BhumiBotUI({ className }: BhumiBotUIProps) {
                 </div>
               ))}
 
+              {/* ── Ultra-Clean Minimalist Typing Loader ── */}
               {isTyping && (
-                <div className="flex gap-3 justify-start items-center">
-                  <BhumiBotAvatar className="w-8 h-8 rounded-xl shadow-xs shrink-0" />
-                  <div className="bg-white border border-slate-200/90 px-4 py-2.5 rounded-2xl flex items-center gap-2 shadow-2xs">
-                    {((messages.length > 0 && messages[messages.length - 1].role === 'user' && !!messages[messages.length - 1].attachment) || !!attachment) ? (
-                      <>
-                        <FileText className="w-3.5 h-3.5 text-[#0F4C81] animate-pulse shrink-0" />
-                        <span className="text-xs font-semibold text-slate-600">Analyzing document</span>
-                      </>
-                    ) : null}
-                    <div className="flex items-center gap-1.5 py-0.5">
-                      <div className="w-2 h-2 rounded-full bg-[#0F4C81] animate-bounce [animation-delay:-0.3s]" />
-                      <div className="w-2 h-2 rounded-full bg-[#0F4C81] animate-bounce [animation-delay:-0.15s]" />
-                      <div className="w-2 h-2 rounded-full bg-[#0F4C81] animate-bounce" />
-                    </div>
+                <div className="flex items-center gap-3">
+                  <BhumiBotAvatar className="w-8 h-8 rounded-lg shrink-0 shadow-xs" />
+                  <div className="bg-white border border-slate-200/90 rounded-2xl px-4 py-3 text-xs md:text-sm text-slate-700 shadow-2xs flex items-center gap-2.5">
+                    {attachment ? (
+                      <FileText className="w-4 h-4 text-[#0F4C81] animate-bounce" />
+                    ) : (
+                      <div className="flex items-center gap-1">
+                        <span className="w-2 h-2 rounded-full bg-[#0F4C81] animate-bounce [animation-delay:-0.3s]" />
+                        <span className="w-2 h-2 rounded-full bg-[#0F4C81] animate-bounce [animation-delay:-0.15s]" />
+                        <span className="w-2 h-2 rounded-full bg-[#0F4C81] animate-bounce" />
+                      </div>
+                    )}
+                    <span className="font-semibold text-slate-700">
+                      {attachment ? 'Analyzing property document...' : 'BhumiBot AI is analyzing legal sources...'}
+                    </span>
                   </div>
                 </div>
               )}
@@ -1193,20 +959,16 @@ export default function BhumiBotUI({ className }: BhumiBotUIProps) {
           )}
         </div>
 
-        {/* Bottom Input Area */}
+        {/* ── Active Stream Bottom Input Form ── */}
         {messages.length > 0 && (
-          <div className="p-4 bg-transparent shrink-0">
-            <div className="w-full max-w-4xl mx-auto space-y-2">
+          <div className="p-4 bg-white/90 backdrop-blur-md border-t border-slate-200/80 shrink-0">
+            <div className="max-w-4xl mx-auto space-y-2">
               {attachment && (
-                <div className="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-200 shadow-xs rounded-xl text-xs md:text-sm text-slate-900 w-fit">
-                  <FileText className="w-4 h-4 text-[#0F4C81]" />
-                  <span className="font-bold truncate max-w-[240px]">{attachment.name}</span>
-                  <span className="text-xs text-slate-500">({attachment.size})</span>
-                  <button
-                    onClick={() => setAttachment(null)}
-                    className="p-0.5 hover:bg-slate-100 rounded text-slate-500 hover:text-slate-900 transition"
-                  >
-                    <X className="w-4 h-4" />
+                <div className="flex items-center gap-2 px-3 py-1 bg-slate-100 border border-slate-200 rounded-lg text-xs text-slate-800 w-fit">
+                  <FileText className="w-3.5 h-3.5 text-[#0F4C81]" />
+                  <span className="font-bold truncate max-w-[200px]">{attachment.name}</span>
+                  <button onClick={() => setAttachment(null)} className="p-0.5 hover:bg-slate-200 rounded">
+                    <X className="w-3 h-3 text-slate-500" />
                   </button>
                 </div>
               )}
@@ -1216,22 +978,15 @@ export default function BhumiBotUI({ className }: BhumiBotUIProps) {
                   e.preventDefault();
                   handleSendMessage();
                 }}
-                className="relative flex items-end bg-white border border-slate-200/90 focus-within:border-[#0F4C81] focus-within:ring-2 focus-within:ring-[#0F4C81]/10 rounded-2xl p-2.5 shadow-lg transition-all"
+                className="flex items-end bg-slate-100/90 border border-slate-200/90 focus-within:border-[#0F4C81] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#0F4C81]/10 rounded-2xl p-2 transition-all shadow-inner"
               >
-                <input
-                  ref={messages.length > 0 ? fileInputRef : undefined}
-                  type="file"
-                  accept=".pdf,.png,.jpg,.jpeg,.webp,.doc,.docx"
-                  onChange={handleFileUpload}
-                  className="hidden"
-                />
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="p-2.5 text-slate-500 hover:text-[#0F4C81] hover:bg-slate-100 rounded-xl transition cursor-pointer shrink-0 mb-0.5"
+                  className="p-2 text-slate-500 hover:text-[#0F4C81] hover:bg-white rounded-xl transition shrink-0 mb-0.5 cursor-pointer"
                   title="Attach Property Document (PDF, Image, DOCX)"
                 >
-                  <Paperclip className="w-5 h-5" />
+                  <Paperclip className="w-4 h-4" />
                 </button>
 
                 <textarea
@@ -1245,8 +1000,8 @@ export default function BhumiBotUI({ className }: BhumiBotUIProps) {
                       handleSendMessage();
                     }
                   }}
-                  placeholder="Ask any legal question or analyze attached document..."
-                  className="flex-1 bg-transparent px-3.5 py-2 text-sm md:text-base text-slate-900 placeholder-slate-400 focus:outline-none font-medium resize-none max-h-44 custom-scrollbar leading-relaxed"
+                  placeholder="Ask a follow-up property legal question..."
+                  className="flex-1 bg-transparent px-3 py-2 text-xs md:text-sm text-slate-900 placeholder-slate-400 focus:outline-none resize-none max-h-40 custom-scrollbar leading-relaxed font-medium"
                   disabled={isTyping}
                 />
 
@@ -1260,6 +1015,285 @@ export default function BhumiBotUI({ className }: BhumiBotUIProps) {
               </form>
             </div>
           </div>
+        )}
+      </div>
+
+      {/* ── 2. Sleek Royal Navy Right-Side History & Tools Panel (#0F4C81) ── */}
+      <div
+        className={clsx(
+          'bg-[#0F4C81] text-white flex flex-col border-l border-white/15 transition-all duration-300 shrink-0 z-20 shadow-2xl overflow-visible relative',
+          sidebarOpen ? 'w-64 md:w-72' : 'w-16'
+        )}
+      >
+        {/* Sleek Top Indian Tricolor (Tiranga) Accent Line */}
+        <div className="h-1 w-full bg-gradient-to-r from-[#FF9933] via-white to-[#138808] shrink-0" />
+
+        {!sidebarOpen ? (
+          /* ── COLLAPSED RIGHT RAIL VIEW (w-16) WITH HEAVY HOVER FLYOUT POPUPS ── */
+          <div ref={flyoutRef} className="flex flex-col items-center py-4 h-full justify-between select-none">
+            <div className="flex flex-col items-center space-y-4 w-full px-2">
+              {/* Expand Toggle */}
+              <button
+                onClick={() => setSidebarOpen(true)}
+                className="p-2.5 hover:bg-white/15 rounded-xl text-white/90 hover:text-white transition cursor-pointer group relative"
+                title="Expand Legal History Panel"
+              >
+                <ExpandHistoryIcon className="w-6 h-6 rounded-md shadow-sm group-hover:scale-105 transition" />
+              </button>
+
+              {/* New Analysis Action */}
+              <button
+                onClick={handleNewChat}
+                className="p-2.5 bg-white/10 hover:bg-white/20 border border-white/20 rounded-xl text-white transition cursor-pointer relative group shadow-sm"
+                title="New Legal Analysis"
+              >
+                <Plus className="w-5 h-5 text-[#FF9933]" />
+                <div className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-[#FF9933]" />
+              </button>
+
+              <div className="w-8 h-px bg-white/15 my-1" />
+
+              {/* Search Toggle with Rich Heavy Hover Flyout */}
+              <div className="relative">
+                <button
+                  onClick={() => setActiveFlyout(activeFlyout === 'search' ? null : 'search')}
+                  onMouseEnter={() => setActiveFlyout('search')}
+                  className="p-2.5 hover:bg-white/15 rounded-xl text-white/80 hover:text-white transition cursor-pointer"
+                  title="Search History"
+                >
+                  <Search className="w-5 h-5" />
+                </button>
+
+                {activeFlyout === 'search' && (
+                  <div
+                    onMouseLeave={() => setActiveFlyout(null)}
+                    className="absolute right-16 top-0 w-72 bg-[#1E293B] border border-slate-700 text-white rounded-2xl shadow-2xl p-4 z-50 space-y-3 animate-in fade-in zoom-in-95 duration-150"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-extrabold text-xs text-white uppercase tracking-wider">Search History</span>
+                      <span className="text-[10px] text-slate-400 font-mono">{threads.length} items</span>
+                    </div>
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Type query or title..."
+                      autoFocus
+                      className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-slate-500 transition"
+                    />
+                    <div className="max-h-56 overflow-y-auto space-y-1.5 custom-scrollbar">
+                      {threads
+                        .filter((t) => t.title.toLowerCase().includes(searchQuery.toLowerCase()))
+                        .map((t) => (
+                          <button
+                            key={t.id}
+                            onClick={() => {
+                              setActiveThreadId(t.id);
+                              setActiveFlyout(null);
+                            }}
+                            className="w-full text-left px-3 py-2 hover:bg-slate-800/90 rounded-xl text-xs font-medium text-slate-200 truncate block border border-transparent hover:border-slate-700 transition"
+                          >
+                            {t.title}
+                          </button>
+                        ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Pinned Badge Icon with Rich Heavy Hover Flyout */}
+              <div className="relative">
+                <button
+                  onClick={() => setActiveFlyout(activeFlyout === 'pinned' ? null : 'pinned')}
+                  onMouseEnter={() => setActiveFlyout('pinned')}
+                  className={clsx(
+                    'p-2.5 rounded-xl transition cursor-pointer relative',
+                    pinnedThreads.length > 0 ? 'text-amber-300 hover:bg-white/15' : 'text-white/70 hover:bg-white/15'
+                  )}
+                  title={`Pinned Analyses (${pinnedThreads.length})`}
+                >
+                  <Pin className="w-5 h-5" />
+                  {pinnedThreads.length > 0 && (
+                    <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-amber-300 ring-2 ring-[#0F4C81]" />
+                  )}
+                </button>
+
+                {activeFlyout === 'pinned' && (
+                  <div
+                    onMouseLeave={() => setActiveFlyout(null)}
+                    className="absolute right-16 top-0 w-72 bg-[#1E293B] border border-zinc-700 text-white rounded-2xl shadow-2xl p-4 z-50 space-y-3 animate-in fade-in zoom-in-95 duration-150"
+                  >
+                    <div className="flex items-center gap-1.5 font-extrabold text-xs text-amber-300 uppercase tracking-wider">
+                      <Pin className="w-3.5 h-3.5 text-amber-300" />
+                      <span>Pinned Legal Drafts</span>
+                    </div>
+                    {pinnedThreads.length === 0 ? (
+                      <div className="text-xs text-slate-400 py-2 text-center italic">No pinned legal analyses yet.</div>
+                    ) : (
+                      <div className="max-h-60 overflow-y-auto space-y-1.5 custom-scrollbar">
+                        {pinnedThreads.map((t) => (
+                          <button
+                            key={t.id}
+                            onClick={() => {
+                              setActiveThreadId(t.id);
+                              setActiveFlyout(null);
+                            }}
+                            className="w-full text-left px-3 py-2 hover:bg-zinc-800 rounded-xl text-xs text-zinc-200 truncate block border border-amber-400/20 bg-amber-400/5 font-semibold"
+                          >
+                            {t.title}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Recents Icon with Rich Heavy Hover Flyout */}
+              <div className="relative">
+                <button
+                  onClick={() => setActiveFlyout(activeFlyout === 'recents' ? null : 'recents')}
+                  onMouseEnter={() => setActiveFlyout('recents')}
+                  className="p-2.5 hover:bg-white/15 rounded-xl text-white/80 hover:text-white transition cursor-pointer"
+                  title="Recent Sessions"
+                >
+                  <MessageSquare className="w-5 h-5" />
+                </button>
+
+                {activeFlyout === 'recents' && (
+                  <div
+                    onMouseLeave={() => setActiveFlyout(null)}
+                    className="absolute right-16 top-0 w-72 bg-[#1E293B] border border-zinc-700 text-white rounded-2xl shadow-2xl p-4 z-50 space-y-3 animate-in fade-in zoom-in-95 duration-150"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-extrabold text-xs text-white uppercase tracking-wider">Recent Sessions</span>
+                      <span className="text-[10px] text-slate-400 font-mono">{threads.length}</span>
+                    </div>
+                    <div className="max-h-64 overflow-y-auto space-y-1.5 custom-scrollbar">
+                      {threads.map((t) => (
+                        <button
+                          key={t.id}
+                          onClick={() => {
+                            setActiveThreadId(t.id);
+                            setActiveFlyout(null);
+                          }}
+                          className="w-full text-left flex items-center gap-2 px-3 py-2 hover:bg-zinc-800 rounded-xl text-xs text-zinc-200 transition"
+                        >
+                          <MessageSquare className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+                          <span className="truncate">{t.title}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Bottom Expand Hint Button */}
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="p-2.5 hover:bg-white/15 rounded-xl text-white/70 hover:text-white transition cursor-pointer mb-2"
+              title="Expand Panel"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+          </div>
+        ) : (
+          /* ── EXPANDED RIGHT PANEL VIEW (w-72 / w-80) ── */
+          <>
+            {/* Panel Header */}
+            <div className="p-4 border-b border-white/10 space-y-3 shrink-0 bg-black/10">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <LegalVaultIcon className="w-7 h-7 rounded-lg shadow-sm" />
+                  <div>
+                    <div className="font-extrabold text-sm text-white tracking-wide leading-tight">Legal History</div>
+                    <div className="text-[10px] text-white/70 font-medium leading-tight mt-0.5">Saved Analyses &amp; Deeds</div>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => setSidebarOpen(false)}
+                  className="p-1.5 text-white/70 hover:text-white transition rounded-lg hover:bg-white/10 cursor-pointer"
+                  title="Collapse Right Panel"
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* New Legal Analysis Button */}
+              <button
+                onClick={handleNewChat}
+                className="w-full flex items-center justify-center gap-2 px-3.5 py-2.5 bg-white text-[#0F4C81] hover:bg-slate-100 rounded-xl font-bold text-xs transition shadow-md border-t-2 border-t-[#FF9933] cursor-pointer"
+              >
+                <Plus className="w-4 h-4 text-[#FF9933]" />
+                <span>New Legal Analysis</span>
+              </button>
+            </div>
+
+            {/* Search Bar */}
+            <div className="p-3 pb-1 shrink-0">
+              <div className="relative">
+                <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-white/50" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Filter history..."
+                  className="w-full bg-white/10 border border-white/15 rounded-xl pl-8 pr-3 py-1.5 text-xs text-white placeholder-white/50 focus:outline-none focus:border-white/40 transition"
+                />
+              </div>
+            </div>
+
+            {/* Thread History Lists */}
+            <div className="flex-1 overflow-y-auto p-3 space-y-4 custom-scrollbar">
+              {filteredPinned.length > 0 && (
+                <div className="space-y-1.5">
+                  <div className="px-2 text-[10px] uppercase font-bold tracking-wider text-amber-300 flex items-center gap-1.5">
+                    <Pin className="w-3 h-3 text-amber-300" />
+                    <span>Pinned Legal Drafts</span>
+                  </div>
+                  {filteredPinned.map((thread) => (
+                    <ThreadListItem
+                      key={thread.id}
+                      thread={thread}
+                      activeThreadId={activeThreadId}
+                      editingThreadId={editingThreadId}
+                      editingTitle={editingTitle}
+                      setActiveThreadId={setActiveThreadId}
+                      setEditingTitle={setEditingTitle}
+                      handleSaveRename={handleSaveRename}
+                      handleStartRename={handleStartRename}
+                      handleTogglePin={handleTogglePin}
+                      handleDeleteThread={handleDeleteThread}
+                    />
+                  ))}
+                </div>
+              )}
+
+              <div className="space-y-1.5">
+                <div className="px-2 text-[10px] uppercase font-bold tracking-wider text-white/60 flex items-center justify-between">
+                  <span>Recent Legal Sessions</span>
+                  <span className="font-mono text-[9px] text-white/40">{threads.length}</span>
+                </div>
+                {filteredUnpinned.map((thread) => (
+                  <ThreadListItem
+                    key={thread.id}
+                    thread={thread}
+                    activeThreadId={activeThreadId}
+                    editingThreadId={editingThreadId}
+                    editingTitle={editingTitle}
+                    setActiveThreadId={setActiveThreadId}
+                    setEditingTitle={setEditingTitle}
+                    handleSaveRename={handleSaveRename}
+                    handleStartRename={handleStartRename}
+                    handleTogglePin={handleTogglePin}
+                    handleDeleteThread={handleDeleteThread}
+                  />
+                ))}
+              </div>
+            </div>
+          </>
         )}
       </div>
     </div>

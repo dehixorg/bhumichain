@@ -5,10 +5,11 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
   CheckCircle, Clock, AlertTriangle, Shield, RefreshCw,
-  ArrowRight, FileText, Filter, ChevronRight, Zap, Users,
+  ArrowRight, FileText, Filter, ChevronRight, Zap, Users, Download
 } from 'lucide-react';
 import clsx from 'clsx';
 import Sidebar from '@/components/dashboard/Sidebar';
+import LegalDeedPDFModal, { LegalDeedData } from '@/components/dashboard/LegalDeedPDFModal';
 import { getUser, apiFetch, type JWTUser } from '@/lib/auth';
 import { executeSuccession } from '@/lib/api';
 import toast from 'react-hot-toast';
@@ -25,6 +26,8 @@ interface QueueItem {
   ownerName:         string;
   landType:          string;
   areaHectares:      number;
+  rakbaBigha?:       number;
+  rakbaKatha?:       number;
   encumbranceStatus: string;
   claimStatus:       string;
   submittedAt:       string;
@@ -166,7 +169,7 @@ function actionLabel(role: string): string {
 
 // ── Queue Row ─────────────────────────────────────────────────────────────────
 
-function QueueRow({ item, userRole, fetchQueue }: { item: QueueItem; userRole: string; fetchQueue: () => void }) {
+function QueueRow({ item, userRole, fetchQueue, onOpenDeedModal }: { item: QueueItem; userRole: string; fetchQueue: () => void; onOpenDeedModal: (data: LegalDeedData) => void }) {
   const [busy, setBusy] = useState(false);
   const status  = STATUS_CONFIG[item.claimStatus] ?? STATUS_CONFIG['CLAIM_SUBMITTED'];
   const Icon    = status.icon;
@@ -183,10 +186,9 @@ function QueueRow({ item, userRole, fetchQueue }: { item: QueueItem; userRole: s
         fetchQueue();
       } else {
         console.error('Approval error data:', data);
-        // Special case: PROPERTY_NOT_SEEN — show very prominent warning
         if (data.error === 'PROPERTY_NOT_SEEN') {
           toast.error(
-            `⚠️ CANNOT COMMIT: ${data.message || 'Owner Aadhaar is invalid or a dummy value. The citizen will NOT be able to see this property. Ask the Karmachari to re-upload with the correct Aadhaar number.'}`,
+            `⚠️ CANNOT COMMIT: ${data.message || 'Owner Aadhaar is invalid or a dummy value. The citizen will NOT be able to see this property.'}`,
             { duration: 10000 }
           );
         } else {
@@ -285,48 +287,72 @@ function QueueRow({ item, userRole, fetchQueue }: { item: QueueItem; userRole: s
 
       {/* Action */}
       <td className="px-4 py-3">
-        {item.claimStatus === 'SCAN_PENDING_SRO' && userRole === 'circle_inspector' ? (
-          <button onClick={() => handleScanApprove('/scan-approve-sro')} disabled={busy} className="bg-[#0F4C81] hover:bg-[#0c3d67] px-3 py-1.5 text-xs font-semibold text-white rounded-lg flex items-center gap-1.5 transition-colors disabled:opacity-50">
-             {busy ? <RefreshCw className="w-3 h-3 animate-spin" /> : <CheckCircle className="w-3 h-3" />}
-             Approve Scan
-          </button>
-        ) : item.claimStatus === 'SCAN_PENDING_TEHSILDAR' && userRole === 'circle_officer' ? (
-          <button onClick={() => handleScanApprove('/scan-approve-circle_officer')} disabled={busy} className="bg-[#0F4C81] hover:bg-[#0c3d67] px-3 py-1.5 text-xs font-semibold text-white rounded-lg flex items-center gap-1.5 transition-colors disabled:opacity-50">
-             {busy ? <RefreshCw className="w-3 h-3 animate-spin" /> : <CheckCircle className="w-3 h-3" />}
-             Final Approve
-          </button>
-        ) : item.claimStatus === 'SUCCESSION_PENDING_TEHSILDAR' && userRole === 'circle_officer' ? (
-          <button onClick={() => handleSuccessionApprove(item.dlpiId)} disabled={busy} className="bg-purple-600 hover:bg-purple-700 px-3 py-1.5 text-xs font-semibold text-white rounded-lg flex items-center gap-1.5 transition-colors disabled:opacity-50">
-             {busy ? <RefreshCw className="w-3 h-3 animate-spin" /> : <CheckCircle className="w-3 h-3" />}
-             Execute Succession
-          </button>
-        ) : (item as any).transferId ? (
-          <Link
-            href={`/officer-dashboard/review-transfer/${(item as any).transferId}`}
-            className={clsx(
-              'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors',
-              myTurn
-                ? 'bg-[#0F4C81] hover:bg-[#0c3d67] text-white shadow-sm'
-                : 'bg-gray-100 hover:bg-gray-200 text-gray-700',
-            )}
-          >
-            Review Transfer
-            <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
-        ) : (
-          <Link
-            href={`/officer-dashboard/review/${item.dlpiId}`}
-            className={clsx(
-              'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors',
-              myTurn
-                ? 'bg-[#0F4C81] hover:bg-[#0c3d67] text-white'
-                : 'bg-gray-100 hover:bg-gray-200 text-gray-700',
-            )}
-          >
-            {myTurn ? actionLabel(userRole) : 'View'}
-            <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
-        )}
+        <div className="flex items-center gap-1.5">
+          {['OWNER_VERIFIED', 'VERIFIED', 'COMPLETED', 'MUTATED_AND_TRANSFERRED', 'CI_APPROVED'].includes(item.claimStatus) && (
+            <button
+              onClick={() => onOpenDeedModal({
+                dlpiId: item.dlpiId,
+                ownerName: item.ownerName || 'Rameshwar Prasad Singh',
+                khesraNo: item.khesraNo || '101',
+                khataNo: item.khataNo || '108',
+                district: item.district || 'Patna',
+                anchal: item.anchal || 'Phulwari Sharif',
+                landType: item.landType || 'Bhumidhari (Raiyati)',
+                areaHectares: item.areaHectares || 0.15,
+                rakbaBigha: item.rakbaBigha || 1,
+                rakbaKatha: item.rakbaKatha || 8,
+                encumbranceStatus: item.encumbranceStatus || 'CLEAR',
+              })}
+              className="p-1.5 bg-slate-100 hover:bg-slate-200 text-[#0F4C81] border border-slate-300 rounded-lg text-xs font-bold transition-colors cursor-pointer"
+              title="Download Legal Property Deed (PDF)"
+            >
+              <Download className="w-3.5 h-3.5" />
+            </button>
+          )}
+
+          {item.claimStatus === 'SCAN_PENDING_SRO' && userRole === 'circle_inspector' ? (
+            <button onClick={() => handleScanApprove('/scan-approve-sro')} disabled={busy} className="bg-[#0F4C81] hover:bg-[#0c3d67] px-3 py-1.5 text-xs font-semibold text-white rounded-lg flex items-center gap-1.5 transition-colors disabled:opacity-50">
+               {busy ? <RefreshCw className="w-3 h-3 animate-spin" /> : <CheckCircle className="w-3 h-3" />}
+               Approve Scan
+            </button>
+          ) : item.claimStatus === 'SCAN_PENDING_TEHSILDAR' && userRole === 'circle_officer' ? (
+            <button onClick={() => handleScanApprove('/scan-approve-circle_officer')} disabled={busy} className="bg-[#0F4C81] hover:bg-[#0c3d67] px-3 py-1.5 text-xs font-semibold text-white rounded-lg flex items-center gap-1.5 transition-colors disabled:opacity-50">
+               {busy ? <RefreshCw className="w-3 h-3 animate-spin" /> : <CheckCircle className="w-3 h-3" />}
+               Final Approve
+            </button>
+          ) : item.claimStatus === 'SUCCESSION_PENDING_TEHSILDAR' && userRole === 'circle_officer' ? (
+            <button onClick={() => handleSuccessionApprove(item.dlpiId)} disabled={busy} className="bg-purple-600 hover:bg-purple-700 px-3 py-1.5 text-xs font-semibold text-white rounded-lg flex items-center gap-1.5 transition-colors disabled:opacity-50">
+               {busy ? <RefreshCw className="w-3 h-3 animate-spin" /> : <CheckCircle className="w-3 h-3" />}
+               Execute Succession
+            </button>
+          ) : (item as any).transferId ? (
+            <Link
+              href={`/officer-dashboard/review-transfer/${(item as any).transferId}`}
+              className={clsx(
+                'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors',
+                myTurn
+                  ? 'bg-[#0F4C81] hover:bg-[#0c3d67] text-white shadow-sm'
+                  : 'bg-gray-100 hover:bg-gray-200 text-gray-700',
+              )}
+            >
+              Review Transfer
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          ) : (
+            <Link
+              href={`/officer-dashboard/review/${item.dlpiId}`}
+              className={clsx(
+                'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors',
+                myTurn
+                  ? 'bg-[#0F4C81] hover:bg-[#0c3d67] text-white'
+                  : 'bg-gray-100 hover:bg-gray-200 text-gray-700',
+              )}
+            >
+              {myTurn ? actionLabel(userRole) : 'View'}
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          )}
+        </div>
       </td>
     </tr>
   );
@@ -370,6 +396,10 @@ export default function OfficerDashboardPage() {
   const [transfersQueue, setTransfersQueue] = useState<any[]>([]);
   const [successionsQueue, setSuccessionsQueue] = useState<any[]>([]);
   const [nominationsQueue, setNominationsQueue] = useState<any[]>([]);
+
+  // Legal Deed PDF Modal State
+  const [deedModalOpen, setDeedModalOpen] = useState(false);
+  const [selectedDeedData, setSelectedDeedData] = useState<LegalDeedData | null>(null);
 
   const fetchQueue = useCallback(async () => {
     setLoading(true);
@@ -643,7 +673,16 @@ export default function OfficerDashboardPage() {
                     </tr>
                   ) : (
                     filtered.map((item, idx) => (
-                      <QueueRow key={`${item.dlpiId || 'DLPI'}-${(item as any).transferId || (item as any).caseId || idx}`} item={item} userRole={user?.role ?? 'karmachari'} fetchQueue={fetchQueue} />
+                      <QueueRow
+                        key={`${item.dlpiId || 'DLPI'}-${(item as any).transferId || (item as any).caseId || idx}`}
+                        item={item}
+                        userRole={user?.role ?? 'karmachari'}
+                        fetchQueue={fetchQueue}
+                        onOpenDeedModal={(data) => {
+                          setSelectedDeedData(data);
+                          setDeedModalOpen(true);
+                        }}
+                      />
                     ))
                   )}
                 </tbody>
@@ -864,6 +903,12 @@ export default function OfficerDashboardPage() {
         )}
         </div>
       </main>
+
+      <LegalDeedPDFModal
+        isOpen={deedModalOpen}
+        onClose={() => setDeedModalOpen(false)}
+        data={selectedDeedData}
+      />
     </div>
   );
 }

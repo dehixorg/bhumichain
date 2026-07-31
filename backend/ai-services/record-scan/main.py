@@ -583,7 +583,7 @@ async def _post_to_gateway(payload: dict, token: str):
 
 if __name__ == "__main__":
     import uvicorn
-    port = int(os.getenv("PORT", 8010))
+    port = int(os.getenv("RECORD_SCAN_PORT", 8010))
     print(f"\n RecordScan AI -- UP Khatauni Edition")
     print(f"   REST  -> http://localhost:{port}")
     print(f"   Docs  -> http://localhost:{port}/docs")

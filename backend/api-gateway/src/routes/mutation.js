@@ -1,6 +1,7 @@
 'use strict';
 
 const { Router } = require('express');
+const mongoStore = require('../services/mongoStore');
 const { body, param, validationResult } = require('express-validator');
 const crypto = require('crypto');
 const axios = require('axios');
@@ -73,7 +74,7 @@ router.post(
 router.post(
   '/initiate',
   authenticate,
-  requireRole(ROLES.ANCHAL_NIRIKSHAK, ROLES.KANUNGO, ROLES.ANCHAL_ADHIKARI, ROLES.COLLECTOR, ROLES.SUPER_ADMIN, ROLES.KARMACHARI, ROLES.CITIZEN),
+  requireRole(ROLES.ANCHAL_NIRIKSHAK, ROLES.KANUNGO, ROLES.ANCHAL_ADHIKARI, ROLES.COLLECTOR, ROLES.SUPER_ADMIN, ROLES.KARMACHARI, ROLES.CITIZEN, ROLES.SRO, 'sro'),
   body('dlpiId').notEmpty(),
   body('mutationType').isIn(MUTATION_TYPES),
   body('officerName').notEmpty().trim(),
@@ -149,6 +150,11 @@ router.post(
         console.warn(`[InitiateMutation] Real chaincode failed, creating dynamic record:`, fabricErr.message);
       }
 
+      if (result && result.mutationId) {
+        result.mutationId = result.mutationId + '-' + Math.floor(Math.random() * 10000);
+        result.dlpiId = dlpiId; // Ensure mock result has correct dlpiId
+      }
+
       if (!result || !result.mutationId) {
         const mutId = 'MUT-' + new Date().getFullYear() + '-' + String(Math.floor(Math.random() * 9000) + 1000);
         result = {
@@ -182,15 +188,20 @@ router.post(
 
       // Persist to dynamic mutations file
       try {
-        const fs = require('fs');
         let dMuts = [];
-        if (fs.existsSync('/tmp/bhumichain_dynamic_mutations.json')) {
-          try { dMuts = JSON.parse(fs.readFileSync('/tmp/bhumichain_dynamic_mutations.json', 'utf8')); } catch (err) {}
-        }
+        try { dMuts = await mongoStore.getMutations(); } catch (err) {}
         if (!Array.isArray(dMuts)) dMuts = [];
+        
+        // Ensure caseId is set since schema requires it
+        if (result && !result.caseId) {
+          result.caseId = result.mutationId || result.txId || ('MUT-' + Date.now());
+        }
+        
         dMuts.unshift(result);
-        fs.writeFileSync('/tmp/bhumichain_dynamic_mutations.json', JSON.stringify(dMuts, null, 2));
-      } catch (err) {}
+        await mongoStore.saveMutations(dMuts);
+      } catch (err) {
+        console.error('Failed to save mutation to mongo', err);
+      }
 
       broadcast('MutationInitiated', {
         mutationId: result.mutationId,
@@ -248,7 +259,7 @@ router.get('/', authenticate, async (req, res) => {
     const fs = require('fs');
     if (fs.existsSync('/tmp/bhumichain_history_cleared.json')) {
       let dMuts = [];
-      try { dMuts = JSON.parse(fs.readFileSync('/tmp/bhumichain_dynamic_mutations.json')); } catch(e) {}
+      try { dMuts = await mongoStore.getMutations(); } catch(e) {}
       if (req.user.role === 'citizen') {
         dMuts = filterCitizenMutations(dMuts, req.user);
       }
@@ -305,7 +316,7 @@ router.get('/:mutationId', authenticate, async (req, res) => {
   try {
     const fs = require('fs');
     if (fs.existsSync('/tmp/bhumichain_dynamic_mutations.json')) {
-      const dMuts = JSON.parse(fs.readFileSync('/tmp/bhumichain_dynamic_mutations.json', 'utf8'));
+      const dMuts = await mongoStore.getMutations();
       const found = Array.isArray(dMuts) ? dMuts.find(x => x.mutationId === req.params.mutationId) : null;
       if (found) return res.json(found);
     }
@@ -369,7 +380,7 @@ router.post(
     if (!result) {
       const fs = require('fs');
       let dMuts = [];
-      try { dMuts = JSON.parse(fs.readFileSync('/tmp/bhumichain_dynamic_mutations.json', 'utf8')); } catch(e){}
+      dMuts = await mongoStore.getMutations();
       const idx = dMuts.findIndex(m => m.mutationId === req.params.mutationId);
       if (idx >= 0) {
         // STRICT AADHAAR VERIFICATION: only the true owner can consent
@@ -388,7 +399,7 @@ router.post(
           sentAt: new Date().toISOString(), delivered: true
         });
 
-        fs.writeFileSync('/tmp/bhumichain_dynamic_mutations.json', JSON.stringify(dMuts, null, 2));
+        await mongoStore.saveMutations(dMuts);
         result = dMuts[idx];
       } else {
         return res.status(500).json({ error: 'FABRIC_ERROR', message: fabricErr ? fabricErr.message : 'Mutation not found' });
@@ -425,7 +436,7 @@ router.post(
     if (!result) {
       const fs = require('fs');
       let dMuts = [];
-      try { dMuts = JSON.parse(fs.readFileSync('/tmp/bhumichain_dynamic_mutations.json', 'utf8')); } catch(e){}
+      dMuts = await mongoStore.getMutations();
       const idx = dMuts.findIndex(m => m.mutationId === req.params.mutationId);
       if (idx >= 0) {
         // STRICT AADHAAR VERIFICATION: only the true owner can object
@@ -444,7 +455,7 @@ router.post(
           sentAt: new Date().toISOString(), delivered: true
         });
 
-        fs.writeFileSync('/tmp/bhumichain_dynamic_mutations.json', JSON.stringify(dMuts, null, 2));
+        await mongoStore.saveMutations(dMuts);
         result = dMuts[idx];
       } else {
         return res.status(500).json({ error: 'FABRIC_ERROR', message: fabricErr ? fabricErr.message : 'Mutation not found' });
@@ -477,7 +488,7 @@ router.post(
     if (!result) {
       const fs = require('fs');
       let dMuts = [];
-      try { dMuts = JSON.parse(fs.readFileSync('/tmp/bhumichain_dynamic_mutations.json', 'utf8')); } catch(e){}
+      dMuts = await mongoStore.getMutations();
       const idx = dMuts.findIndex(m => m.mutationId === req.params.mutationId);
       if (idx >= 0) {
         dMuts[idx].status = 'EXECUTED';
@@ -492,7 +503,7 @@ router.post(
           sentAt: new Date().toISOString(), delivered: true
         });
 
-        fs.writeFileSync('/tmp/bhumichain_dynamic_mutations.json', JSON.stringify(dMuts, null, 2));
+        await mongoStore.saveMutations(dMuts);
         result = dMuts[idx];
       } else {
         return res.status(500).json({ error: 'FABRIC_ERROR', message: fabricErr ? fabricErr.message : 'Mutation not found' });
@@ -533,7 +544,7 @@ router.patch(
       try {
         const fs = require('fs');
         let dMuts = [];
-        try { dMuts = JSON.parse(fs.readFileSync('/tmp/bhumichain_dynamic_mutations.json', 'utf8')); } catch(e){}
+        dMuts = await mongoStore.getMutations();
         const idx = dMuts.findIndex(x => x.mutationId === mutationId);
         if (idx >= 0) {
           dMuts[idx].status = status;
@@ -573,7 +584,7 @@ router.patch(
             if (step) { step.done = true; step.at = at; step.actor = actorName; step.label = 'Objection Filed'; }
           }
           
-          fs.writeFileSync('/tmp/bhumichain_dynamic_mutations.json', JSON.stringify(dMuts, null, 2));
+          await mongoStore.saveMutations(dMuts);
         }
       } catch (err) {}
 
