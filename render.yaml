@@ -6,7 +6,7 @@ services:
     region: singapore
     rootDir: backend/api-gateway
     buildCommand: npm install
-    startCommand: npm start
+    startCommand: node src/scripts/seedMongo.js && npm start
     envVars:
       - key: NODE_ENV
         value: production
