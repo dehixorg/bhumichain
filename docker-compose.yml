@@ -100,7 +100,7 @@ services:
     ports:
       - "8010:8010"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8010/health"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8010/health')"]
       interval: 15s
       timeout: 5s
       retries: 3
@@ -115,7 +115,7 @@ services:
     ports:
       - "8011:8011"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8011/health"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8011/health')"]
       interval: 15s
       timeout: 5s
       retries: 3
@@ -130,7 +130,7 @@ services:
     ports:
       - "8012:8012"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8012/health"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8012/health')"]
       interval: 15s
       timeout: 5s
       retries: 3
@@ -145,7 +145,7 @@ services:
     ports:
       - "8013:8013"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8013/health"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8013/health')"]
       interval: 15s
       timeout: 5s
       retries: 3
@@ -160,7 +160,7 @@ services:
     ports:
       - "8001:8001"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/health')"]
       interval: 15s
       timeout: 5s
       retries: 3
@@ -184,7 +184,7 @@ services:
       BHUMIBOT_AZURE_AI_MODEL: ${BHUMIBOT_AZURE_AI_MODEL:-gpt-5.4}
       BHUMIBOT_AZURE_AI_VERSION: ${BHUMIBOT_AZURE_AI_VERSION:-2024-05-01-preview}
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8015/health"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8015/health')"]
       interval: 15s
       timeout: 5s
       retries: 3
