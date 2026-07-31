@@ -3,7 +3,7 @@ services:
   - type: web
     name: bhumichain-api-gateway
     env: node
-    region: singapore # Adjust based on preference
+    region: singapore
     rootDir: backend/api-gateway
     buildCommand: npm install
     startCommand: npm start
@@ -13,17 +13,39 @@ services:
       - key: PORT
         value: 4000
       - key: FABRIC_MODE
-        value: mock # Using mock for prototype deployment
-      - key: ORACLE_MODE
         value: mock
       - key: CORS_ORIGIN
-        value: "*" # Update this to your Vercel URL in production
+        value: "*"
       - key: ORACLE_SERVICE_URL
-        value: "https://bhumichain-oracle-service.onrender.com"
-      - key: AI_SERVICE_URL
-        value: "https://bhumichain-record-scan.onrender.com"
-      - key: BHUMI_GPT_URL
-        value: "https://bhumichain-bhumi-gpt.onrender.com"
+        fromService:
+          type: web
+          name: bhumichain-oracle-service
+          envVarKey: RENDER_EXTERNAL_URL
+      - key: RECORD_SCAN_URL
+        fromService:
+          type: web
+          name: bhumichain-record-scan
+          envVarKey: RENDER_EXTERNAL_URL
+      - key: NYAYA_URL
+        fromService:
+          type: web
+          name: bhumichain-nyaya-ai
+          envVarKey: RENDER_EXTERNAL_URL
+      - key: COPARCENARY_URL
+        fromService:
+          type: web
+          name: bhumichain-coparcenary
+          envVarKey: RENDER_EXTERNAL_URL
+      - key: SETTLE_URL
+        fromService:
+          type: web
+          name: bhumichain-settle
+          envVarKey: RENDER_EXTERNAL_URL
+      - key: BHUMIBOT_SERVICE_URL
+        fromService:
+          type: web
+          name: bhumichain-bhumibot
+          envVarKey: RENDER_EXTERNAL_URL
 
   # ─── Oracle Service ─────────────────────────────────────────────────────────
   - type: web
@@ -36,8 +58,6 @@ services:
     envVars:
       - key: ORACLE_MODE
         value: mock
-      - key: CORS_ORIGINS
-        value: "https://bhumichain-api-gateway.onrender.com"
 
   # ─── RecordScan AI ──────────────────────────────────────────────────────────
   - type: web
@@ -49,24 +69,40 @@ services:
     startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: RECORD_SCAN_MODE
-        value: mock
-      - key: API_GATEWAY_URL
-        value: "https://bhumichain-api-gateway.onrender.com"
-      - key: CORS_ORIGINS
-        value: "https://bhumichain-api-gateway.onrender.com"
-      # IMPORTANT: Add AZURE_FORM_RECOGNIZER_ENDPOINT and KEY in the Render Dashboard if using real mode
+        value: real
 
-  # ─── BhumiGPT ───────────────────────────────────────────────────────────────
+  # ─── Nyaya AI ───────────────────────────────────────────────────────────────
   - type: web
-    name: bhumichain-bhumi-gpt
+    name: bhumichain-nyaya-ai
     env: python
     region: singapore
-    rootDir: backend/ai-services/bhumi-gpt
+    rootDir: backend/ai-services/nyaya-ai
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
-    envVars:
-      - key: BHUMI_GPT_MODE
-        value: mock
-      - key: CORS_ORIGINS
-        value: "https://bhumichain-api-gateway.onrender.com"
-      # IMPORTANT: Add ANTHROPIC_API_KEY in the Render Dashboard if using real mode
+
+  # ─── Coparcenary Mapper ─────────────────────────────────────────────────────
+  - type: web
+    name: bhumichain-coparcenary
+    env: python
+    region: singapore
+    rootDir: backend/ai-services/coparcenary-mapper
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+
+  # ─── Bhumi Settle ───────────────────────────────────────────────────────────
+  - type: web
+    name: bhumichain-settle
+    env: python
+    region: singapore
+    rootDir: backend/ai-services/bhumi-settle
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+
+  # ─── BhumiBot ───────────────────────────────────────────────────────────────
+  - type: web
+    name: bhumichain-bhumibot
+    env: python
+    region: singapore
+    rootDir: backend/ai-services/bhumibot
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
