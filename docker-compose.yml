@@ -28,6 +28,7 @@ services:
       COPARCENARY_URL: http://coparcenary-mapper:8011
       NYAYA_URL: http://nyaya-ai:8012
       SETTLE_URL: http://bhumi-settle:8013
+      BHUMIBOT_SERVICE_URL: http://bhumibot:8015
       CORS_ORIGIN: http://localhost:3000
       FRONTEND_URL: http://localhost:3000
       RATE_LIMIT_WINDOW_MS: "60000"
@@ -36,6 +37,11 @@ services:
       AZURE_AI_ENDPOINT: ${AZURE_AI_ENDPOINT:-}
       AZURE_AI_KEY: ${AZURE_AI_KEY:-}
       AZURE_AI_MODEL: ${AZURE_AI_MODEL:-gpt-5.4}
+      AZURE_OPENAI_ENDPOINT: ${AZURE_OPENAI_ENDPOINT:-}
+      AZURE_OPENAI_API_KEY: ${AZURE_OPENAI_API_KEY:-}
+      DEPLOYMENT_NAME: ${DEPLOYMENT_NAME:-}
+      # MongoDB
+      MONGODB_URI: ${MONGODB_URI:-}
       # AWS — set real values in .env file
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
@@ -52,6 +58,8 @@ services:
       coparcenary-mapper:
         condition: service_healthy
       bhumi-settle:
+        condition: service_healthy
+      bhumibot:
         condition: service_healthy
       valuation-oracle:
         condition: service_healthy
@@ -153,6 +161,30 @@ services:
       - "8001:8001"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - bhumichain
+
+  # ── BhumiBot (Chatbot AI) — port 8015 ──────────────────────────────────────────
+  bhumibot:
+    build: ./backend/ai-services/bhumibot
+    container_name: bhumichain-bhumibot
+    ports:
+      - "8015:8015"
+    environment:
+      BHUMIBOT_ENV: development
+      BHUMIBOT_MODEL_NAME: ${BHUMIBOT_MODEL_NAME:-gpt-5.4}
+      BHUMIBOT_TEMPERATURE: 0.2
+      BHUMIBOT_MAX_TOKENS: 2048
+      BHUMIBOT_AZURE_AI_ENDPOINT: ${BHUMIBOT_AZURE_AI_ENDPOINT:-}
+      BHUMIBOT_AZURE_AI_KEY: ${BHUMIBOT_AZURE_AI_KEY:-}
+      BHUMIBOT_AZURE_AI_MODEL: ${BHUMIBOT_AZURE_AI_MODEL:-gpt-5.4}
+      BHUMIBOT_AZURE_AI_VERSION: ${BHUMIBOT_AZURE_AI_VERSION:-2024-05-01-preview}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8015/health"]
       interval: 15s
       timeout: 5s
       retries: 3
