@@ -12,9 +12,11 @@ const leaseSchema = new mongoose.Schema({
   endDate: { type: Date },
   status: { 
     type: String, 
-    enum: ['INITIATED', 'ACTIVE', 'EXPIRED', 'TERMINATED'], 
+    enum: ['PENDING_CO_OWNER_CONSENT', 'INITIATED', 'ACTIVE', 'EXPIRED', 'TERMINATED'], 
     default: 'INITIATED' 
   },
+  pendingCoOwners: [String],
+  coOwnerSignatures: { type: Map, of: String },
   signatures: {
     owner: { type: String }, // Owner eSign hash
     tenant: { type: String } // Tenant eSign hash

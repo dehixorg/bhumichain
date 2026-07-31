@@ -357,6 +357,46 @@ export default function CitizenDashboard() {
       toast.error('Failed to eSign purchase offer: ' + (err?.message || err), { id: 'buyer-esign' });
       console.error(err);
     }
+  };
+
+  const handleCoOwnerTransferESign = async (transferId: string) => {
+    try {
+      toast.loading('Verifying identity & executing co-owner eSign...', { id: 'co-owner-esign' });
+      await new Promise(r => setTimeout(r, 1000));
+      const res = await apiFetch(`/api/transfer/${transferId}/co-owner-consent`, {
+        method: 'POST'
+      });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.message || 'eSign failed');
+      }
+      toast.success('Successfully provided co-owner consent!', { id: 'co-owner-esign' });
+      setPendingTransfers(prev => prev.filter(t => t.transferId !== transferId));
+    } catch (err: any) {
+      toast.error('Failed to provide co-owner consent: ' + (err?.message || err), { id: 'co-owner-esign' });
+      console.error(err);
+    }
+  };
+
+  const handleCoOwnerLeaseESign = async (leaseId: string) => {
+    try {
+      toast.loading('Verifying identity & executing co-owner lease eSign...', { id: 'co-owner-lease-esign' });
+      await new Promise(r => setTimeout(r, 1000));
+      const res = await apiFetch(`/api/lease/${leaseId}/co-owner-consent`, {
+        method: 'POST'
+      });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.message || 'eSign failed');
+      }
+      toast.success('Successfully provided co-owner lease consent!', { id: 'co-owner-lease-esign' });
+      setPendingLeases(prev => prev.filter(l => l.leaseId !== leaseId));
+    } catch (err: any) {
+      toast.error('Failed to provide co-owner lease consent: ' + (err?.message || err), { id: 'co-owner-lease-esign' });
+      console.error(err);
+    }
+  };
+
   const handleInitiateLease = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!leaseModalParcel || !user) return;
@@ -554,21 +594,43 @@ export default function CitizenDashboard() {
                           <ArrowLeftRight className="w-6 h-6 text-[#0F4C81]" />
                         </div>
                         <div className="flex-1">
-                          <div className="flex items-center justify-between">
-                            <h3 className="text-base font-bold text-[#0F4C81]">Property Purchase Offer ({t.dlpiId})</h3>
-                            <span className="text-xs font-bold bg-blue-200 text-[#0F4C81] px-2 py-0.5 rounded">eSign Required</span>
-                          </div>
-                          <p className="text-sm text-blue-900 mt-1">
-                            Seller <span className="font-semibold">{t.sellerName}</span> (Aadhaar: <span className="font-mono">{t.sellerAadhaarNumber}</span>) has initiated a sale of property <span className="font-mono font-bold">{t.dlpiId}</span> to you for declared value <span className="font-bold">₹{Number(t.declaredValueINR || 0).toLocaleString('en-IN')}</span>.
-                          </p>
-                          <div className="mt-4 flex gap-3">
-                            <button
-                              onClick={() => handleBuyerESign(t.transferId)}
-                              className="bg-[#0F4C81] hover:bg-[#0c3d67] text-white text-sm font-bold py-2 px-5 rounded-lg shadow-sm transition-colors flex items-center gap-2"
-                            >
-                              <FileSignature className="w-4 h-4" /> Consent &amp; eSign to Buy
-                            </button>
-                          </div>
+                          {t.status === 'PENDING_CO_OWNER_CONSENT' ? (
+                            <>
+                              <div className="flex items-center justify-between">
+                                <h3 className="text-base font-bold text-[#0F4C81]">Co-Owner Sale Consent Request ({t.dlpiId})</h3>
+                                <span className="text-xs font-bold bg-amber-200 text-amber-900 px-2 py-0.5 rounded">eSign Required</span>
+                              </div>
+                              <p className="text-sm text-blue-900 mt-1">
+                                Your co-owner <span className="font-semibold">{t.sellerName}</span> has initiated a sale of property <span className="font-mono font-bold">{t.dlpiId}</span> to <span className="font-semibold">{t.buyerName}</span> for <span className="font-bold">₹{Number(t.declaredValueINR || 0).toLocaleString('en-IN')}</span>. Please eSign to authorize this transfer.
+                              </p>
+                              <div className="mt-4 flex gap-3">
+                                <button
+                                  onClick={() => handleCoOwnerTransferESign(t.transferId)}
+                                  className="bg-amber-500 hover:bg-amber-600 text-white text-sm font-bold py-2 px-5 rounded-lg shadow-sm transition-colors flex items-center gap-2"
+                                >
+                                  <FileSignature className="w-4 h-4" /> Co-Owner eSign
+                                </button>
+                              </div>
+                            </>
+                          ) : (
+                            <>
+                              <div className="flex items-center justify-between">
+                                <h3 className="text-base font-bold text-[#0F4C81]">Property Purchase Offer ({t.dlpiId})</h3>
+                                <span className="text-xs font-bold bg-blue-200 text-[#0F4C81] px-2 py-0.5 rounded">eSign Required</span>
+                              </div>
+                              <p className="text-sm text-blue-900 mt-1">
+                                Seller <span className="font-semibold">{t.sellerName}</span> (Aadhaar: <span className="font-mono">{t.sellerAadhaarNumber}</span>) has initiated a sale of property <span className="font-mono font-bold">{t.dlpiId}</span> to you for declared value <span className="font-bold">₹{Number(t.declaredValueINR || 0).toLocaleString('en-IN')}</span>.
+                              </p>
+                              <div className="mt-4 flex gap-3">
+                                <button
+                                  onClick={() => handleBuyerESign(t.transferId)}
+                                  className="bg-[#0F4C81] hover:bg-[#0c3d67] text-white text-sm font-bold py-2 px-5 rounded-lg shadow-sm transition-colors flex items-center gap-2"
+                                >
+                                  <FileSignature className="w-4 h-4" /> Consent &amp; eSign to Buy
+                                </button>
+                              </div>
+                            </>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -581,21 +643,43 @@ export default function CitizenDashboard() {
                           <FileSignature className="w-6 h-6 text-emerald-600" />
                         </div>
                         <div className="flex-1">
-                          <div className="flex items-center justify-between">
-                            <h3 className="text-base font-bold text-emerald-900">Incoming Lease Offer ({l.dlpiId})</h3>
-                            <span className="text-xs font-bold bg-emerald-200 text-emerald-900 px-2 py-0.5 rounded">Action Required</span>
-                          </div>
-                          <p className="text-sm text-emerald-900 mt-1">
-                            You have received a Smart Lease offer from Aadhaar <strong className="font-mono">{l.ownerAadhaar}</strong> for parcel <strong className="font-mono">{l.dlpiId}</strong>. Rent: ₹{l.rentAmount}/mo for {l.durationMonths} months.
-                          </p>
-                          <div className="mt-4">
-                            <button
-                              onClick={() => handleTenantESign(l.leaseId)}
-                              className="bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold py-2 px-5 rounded-lg shadow-sm transition-colors flex items-center gap-2"
-                            >
-                              <CheckCircle className="w-4 h-4" /> Consent & eSign Lease
-                            </button>
-                          </div>
+                          {l.status === 'PENDING_CO_OWNER_CONSENT' ? (
+                            <>
+                              <div className="flex items-center justify-between">
+                                <h3 className="text-base font-bold text-emerald-900">Co-Owner Lease Consent ({l.dlpiId})</h3>
+                                <span className="text-xs font-bold bg-amber-200 text-amber-900 px-2 py-0.5 rounded">eSign Required</span>
+                              </div>
+                              <p className="text-sm text-emerald-900 mt-1">
+                                Your co-owner has initiated a Smart Lease for parcel <strong className="font-mono">{l.dlpiId}</strong> to Tenant Aadhaar <strong className="font-mono">{l.tenantAadhaar}</strong>. Rent: ₹{l.rentAmount}/mo for {l.durationMonths} months.
+                              </p>
+                              <div className="mt-4">
+                                <button
+                                  onClick={() => handleCoOwnerLeaseESign(l.leaseId)}
+                                  className="bg-amber-500 hover:bg-amber-600 text-white text-sm font-bold py-2 px-5 rounded-lg shadow-sm transition-colors flex items-center gap-2"
+                                >
+                                  <FileSignature className="w-4 h-4" /> Co-Owner eSign
+                                </button>
+                              </div>
+                            </>
+                          ) : (
+                            <>
+                              <div className="flex items-center justify-between">
+                                <h3 className="text-base font-bold text-emerald-900">Incoming Lease Offer ({l.dlpiId})</h3>
+                                <span className="text-xs font-bold bg-emerald-200 text-emerald-900 px-2 py-0.5 rounded">Action Required</span>
+                              </div>
+                              <p className="text-sm text-emerald-900 mt-1">
+                                You have received a Smart Lease offer from Aadhaar <strong className="font-mono">{l.ownerAadhaar}</strong> for parcel <strong className="font-mono">{l.dlpiId}</strong>. Rent: ₹{l.rentAmount}/mo for {l.durationMonths} months.
+                              </p>
+                              <div className="mt-4">
+                                <button
+                                  onClick={() => handleTenantESign(l.leaseId)}
+                                  className="bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold py-2 px-5 rounded-lg shadow-sm transition-colors flex items-center gap-2"
+                                >
+                                  <CheckCircle className="w-4 h-4" /> Consent & eSign Lease
+                                </button>
+                              </div>
+                            </>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -1370,5 +1454,4 @@ export default function CitizenDashboard() {
 
 function Edit3Icon(props: any) {
   return <Edit3 {...props} />;
-}
 }

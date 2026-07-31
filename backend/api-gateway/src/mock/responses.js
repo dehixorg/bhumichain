@@ -124,6 +124,30 @@ const DEMO_MY_PARCELS = [
     txHash:            '0xdemo_bihar5_tx',
     updatedAt:         '2026-06-20T09:00:00Z',
   },
+  {
+    dlpiId:            'DLPI-Bihar-PHU-00109',
+    khataNo:           '405',
+    khasraNo:          '109',
+    tehsil:            'Phulwari Sharif',
+    tehsilCode:        'PHU',
+    district:          'Patna',
+    state:             'Bihar',
+    landType:          'Agricultural',
+    landTypeDesc:      'Agricultural plot',
+    areaHectares:      1.5,
+    encumbranceStatus: 'CLEAR',
+    claimStatus:       'VERIFIED',
+    owner:             { name: 'Priya Kumar', aadhaarNumber: '999900010010' },
+    owners: [
+      { name: 'Priya Kumar', aadhaarNumber: '999900010010' },
+      { name: 'Rakesh Agarwal', aadhaarNumber: '999900010011' }
+    ],
+    ownershipType:     'JOINT',
+    location:          { latitude: 25.5600, longitude: 85.0900 },
+    valuation:         { circleRateINR: 6_000_000 },
+    txHash:            '0xdemo_bihar9_tx',
+    updatedAt:         '2026-07-22T10:00:00Z',
+  },
 
   // 3 Bihar Properties for Rakesh Agarwal (999900010011)
   {

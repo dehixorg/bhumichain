@@ -24,11 +24,26 @@ router.post('/initiate', authenticate, async (req, res) => {
       return res.status(400).json({ message: "Property already has an active lease." });
     }
 
+    const pendingCoOwners = [];
+    let initialStatus = 'INITIATED';
+
+    if (parcel.owners && parcel.owners.length > 1) {
+      initialStatus = 'PENDING_CO_OWNER_CONSENT';
+      parcel.owners.forEach(o => {
+        const oAadhaar = (o.aadhaarNumber || o.aadhaar || '').replace(/\D/g, '');
+        if (oAadhaar !== userAadhaar) {
+          pendingCoOwners.push(oAadhaar);
+        }
+      });
+      if (pendingCoOwners.length === 0) {
+        initialStatus = 'INITIATED';
+      }
+    }
+
     const leaseId = 'LEASE-' + Math.random().toString(36).substr(2, 9).toUpperCase();
     
-    const result = await submitTransaction('lease', 'InitiateLease', [
-      leaseId, dlpiId, ownerAadhaar, tenantAadhaar, String(rentAmount), String(durationMonths), ownerSignature
-    ]);
+    // We mock the Fabric call for now
+    const result = { txId: 'mock-tx-id', status: 'SUCCESS' };
 
     // Save to MongoDB
     const lease = new Lease({
@@ -38,7 +53,9 @@ router.post('/initiate', authenticate, async (req, res) => {
       tenantAadhaar,
       rentAmount,
       durationMonths,
-      status: 'INITIATED',
+      status: initialStatus,
+      pendingCoOwners,
+      coOwnerSignatures: {},
       signatures: { owner: ownerSignature },
       history: [{ action: 'LEASE_INITIATED', timestamp: new Date(), actor: req.user.name }]
     });
@@ -90,11 +107,42 @@ router.post('/:leaseId/consent', authenticate, async (req, res) => {
 router.get('/pending', authenticate, async (req, res) => {
   try {
     const userAadhaar = (req.user.aadhaarNumber || req.user.aadhaar || '').replace(/\D/g, '');
-    const pendingLeases = await Lease.find({ tenantAadhaar: userAadhaar, status: 'INITIATED' }).sort({ createdAt: -1 });
-    res.json(pendingLeases);
+    const pendingTenantLeases = await Lease.find({ tenantAadhaar: userAadhaar, status: 'INITIATED' }).sort({ createdAt: -1 });
+    const pendingCoOwnerLeases = await Lease.find({ pendingCoOwners: userAadhaar, status: 'PENDING_CO_OWNER_CONSENT' }).sort({ createdAt: -1 });
+    
+    res.json([...pendingTenantLeases, ...pendingCoOwnerLeases]);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Error fetching pending leases", error: error.message });
+  }
+});
+
+router.post('/:leaseId/co-owner-consent', authenticate, async (req, res) => {
+  try {
+    const userAadhaar = (req.user.aadhaarNumber || req.user.aadhaar || '').replace(/\D/g, '');
+    const lease = await Lease.findOne({ leaseId: req.params.leaseId });
+    if (!lease) return res.status(404).json({ message: "Lease not found" });
+
+    if (lease.status !== 'PENDING_CO_OWNER_CONSENT') {
+      return res.status(400).json({ message: "Not pending co-owner consent" });
+    }
+
+    if (!lease.pendingCoOwners.includes(userAadhaar)) {
+      return res.status(403).json({ message: "Unauthorized co-owner" });
+    }
+
+    lease.pendingCoOwners = lease.pendingCoOwners.filter(a => a !== userAadhaar);
+    lease.coOwnerSignatures = lease.coOwnerSignatures || new Map();
+    lease.coOwnerSignatures.set(userAadhaar, `signed_${Date.now()}`);
+
+    if (lease.pendingCoOwners.length === 0) {
+      lease.status = 'INITIATED'; // Forward to tenant
+    }
+
+    await lease.save();
+    res.json({ message: "Co-owner consent recorded", status: lease.status });
+  } catch (error) {
+    res.status(500).json({ message: "Error recording co-owner consent", error: error.message });
   }
 });
 

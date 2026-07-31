@@ -165,6 +165,21 @@ router.post(
         console.warn(`[transfer initiate] chaincode fallback for ${dlpiId}:`, chainErr.message);
       }
 
+      const pendingCoOwners = [];
+      let initialStatus = 'PENDING_BUYER_CONSENT';
+      
+      if (dlpi && dlpi.owners && dlpi.owners.length > 1) {
+        initialStatus = 'PENDING_CO_OWNER_CONSENT';
+        dlpi.owners.forEach(o => {
+          if (!matchAadhaar(o.aadhaarNumber, sellerAadhaarNumber)) {
+            pendingCoOwners.push(o.aadhaarNumber);
+          }
+        });
+        if (pendingCoOwners.length === 0) {
+          initialStatus = 'PENDING_BUYER_CONSENT';
+        }
+      }
+
       // Persist atomic transfer record to disk & memory so Buyer and Officers can process it immediately
       const transferRecord = {
         transferId,
@@ -177,7 +192,9 @@ router.post(
         declaredValueINR,
         oracleValueINR,
         fraudScore,
-        status: 'PENDING_BUYER_CONSENT',
+        status: initialStatus,
+        pendingCoOwners,
+        coOwnerSignatures: {},
         initiatedAt: new Date().toISOString()
       };
 
@@ -246,22 +263,75 @@ router.get(
       mockTransfers.filter(t => isValidId(t.transferId)).forEach(t => mergedMap.set(t.transferId, t));
 
       const myTransfers = Array.from(mergedMap.values()).filter(t => {
+        // Multi-sig logic
+        if (t.status === 'PENDING_CO_OWNER_CONSENT') {
+          return t.pendingCoOwners && t.pendingCoOwners.some(p => matchAadhaar(p, userHash) || matchAadhaar(p, userRawNumber));
+        }
+
         if (t.status !== 'PENDING_BUYER_CONSENT') return false;
         if (t.buyerConsent && (t.buyerConsent.eSignTxHash || t.buyerConsent.timestamp)) return false;
         
-        // Normalize stored Aadhaar to digits for comparison
-        const bDigits = (t.buyerAadhaarNumber || '').toString().replace(/\D/g, '');
-        const bName = (t.buyerName || '').toLowerCase();
-        
-        if (userRawNumber && bDigits && bDigits === userRawNumber) return true;
-        if (userHash && t.buyerAadhaarNumber === userHash) return true;
-        if (userName && bName && (bName.includes(userName) || userName.includes(bName))) return true;
-        return false;
+        return matchAadhaar(t.buyerAadhaarNumber, userHash) || matchAadhaar(t.buyerAadhaarNumber, userRawNumber) ||
+               (t.buyerName && t.buyerName.toLowerCase() === userName);
       });
 
       res.json(myTransfers);
     } catch (e) {
       res.json([]);
+    }
+  }
+);
+
+// POST /api/transfer/:transferId/co-owner-consent
+router.post(
+  '/:transferId/co-owner-consent',
+  authenticate,
+  requireRole(ROLES.CITIZEN),
+  async (req, res) => {
+    try {
+      const userRawNumber = (
+        req.user.aadhaarNumber || req.user.aadhaar || req.user.aadhaarRaw || req.user.aadhaarNo || ''
+      ).toString().replace(/\D/g, '');
+      const userHash = req.user.aadhaarNumber || userRawNumber;
+
+      const fs = require('fs');
+      let transfers = await mongoStore.getTransfers();
+      const transferIndex = transfers.findIndex(t => t.transferId === req.params.transferId);
+      if (transferIndex === -1) {
+        return res.status(404).json({ error: 'TRANSFER_NOT_FOUND' });
+      }
+
+      const t = transfers[transferIndex];
+      if (t.status !== 'PENDING_CO_OWNER_CONSENT') {
+        return res.status(400).json({ error: 'INVALID_STATE', message: 'Not pending co-owner consent' });
+      }
+
+      let removed = false;
+      t.pendingCoOwners = t.pendingCoOwners.filter(p => {
+        if (matchAadhaar(p, userHash) || matchAadhaar(p, userRawNumber)) {
+          removed = true;
+          return false; // remove from pending
+        }
+        return true;
+      });
+
+      if (!removed) {
+        return res.status(400).json({ error: 'NOT_A_CO_OWNER', message: 'You are not a pending co-owner for this transfer' });
+      }
+
+      t.coOwnerSignatures = t.coOwnerSignatures || {};
+      t.coOwnerSignatures[userRawNumber] = `signed_${Date.now()}`;
+
+      if (t.pendingCoOwners.length === 0) {
+        t.status = 'PENDING_BUYER_CONSENT';
+      }
+
+      transfers[transferIndex] = t;
+      await mongoStore.saveTransfers(transfers);
+
+      res.json({ success: true, status: t.status });
+    } catch (e) {
+      res.status(500).json({ error: 'FABRIC_ERROR', message: e.message });
     }
   }
 );

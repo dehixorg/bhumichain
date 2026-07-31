@@ -10,7 +10,9 @@ const transferSchema = new mongoose.Schema({
   status: String,
   createdAt: String,
   ipfsTitleDeedCID: String,
-  newTitleCID: String
+  newTitleCID: String,
+  pendingCoOwners: [String],
+  coOwnerSignatures: { type: Map, of: String }
 }, { strict: false });
 
 module.exports = mongoose.model('bh_Transfer', transferSchema, 'bh_transfers');
