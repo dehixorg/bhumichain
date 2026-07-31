@@ -2,483 +2,493 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Shield, Zap, Lock, ChevronRight, AlertCircle, CheckCircle } from 'lucide-react';
+import {
+  Shield, Lock, ChevronRight, AlertCircle, CheckCircle,
+  FileText, Map, GitMerge, ArrowLeftRight, Users,
+  Server, Eye, EyeOff, Smartphone, Fingerprint,
+  CloudLightning, Database, Award, CheckSquare,
+} from 'lucide-react';
 import clsx from 'clsx';
 import AadhaarInput from '@/components/auth/AadhaarInput';
 import OTPInput from '@/components/auth/OTPInput';
 import {
-  requestOTP,
-  verifyOTP,
-  officerLogin,
-  demoLogin,
-  getRedirectPath,
+  requestOTP, verifyOTP, officerLogin, demoLogin, getRedirectPath,
 } from '@/lib/auth';
 
-type Tab = 'citizen' | 'officer';
+type Tab  = 'citizen' | 'officer';
 type Step = 'aadhaar' | 'otp';
+type AuthMethod = 'digilocker' | 'aadhaar' | 'janparichay';
 
-type DemoCredential = {
-  persona: string;
-  tab: Tab;
-  role: string;
-  name: string;
-  aadhaar: string;
-  email?: string;
-};
-
+// ── Demo personas ─────────────────────────────────────────────────────────────
 const DEMO_PERSONAS = [
-  { persona: 'tehsildar',        label: 'Tehsildar',  name: 'Amit Saxena',  color: 'bg-purple-700 hover:bg-purple-600' },
-  { persona: 'circle_inspector', label: 'Kanungo',    name: 'Rajesh Verma', color: 'bg-blue-700   hover:bg-blue-600'   },
-  { persona: 'patwari',          label: 'Patwari',    name: 'Vijay Singh',  color: 'bg-teal-700   hover:bg-teal-600'   },
-  { persona: 'citizen',          label: 'Citizen',    name: 'Priya Kumar',  color: 'bg-brand-700  hover:bg-brand-600'  },
+  { persona: 'circle_officer',        label: 'Circle Officer',  name: 'Amit Saxena',  color: '#7C3AED', aadhaar: '9999-0001-0001' },
+  { persona: 'circle_inspector', label: 'Kanungo',    name: 'Rajesh Verma', color: '#1D4ED8', aadhaar: '9999-0001-0002' },
+  { persona: 'karmachari',          label: 'Patwari (Karmachari)',    name: 'Vijay Singh',  color: '#0F766E', aadhaar: '9999-0001-0003' },
+  { persona: 'citizen',          label: 'Citizen 1',  name: 'Priya Kumar',  color: '#6D28D9', aadhaar: '9999-0001-0010' },
+  { persona: 'suresh_yadav',     label: 'Citizen 2',  name: 'Suresh Yadav', color: '#B45309', aadhaar: '9999-0001-0012' },
+  { persona: 'citizen_heir2',    label: 'Citizen 3',  name: 'Sunita Kumar', color: '#BE185D', aadhaar: '9999-0001-0015' },
 ];
 
-const DEMO_CREDENTIALS: DemoCredential[] = [
-  {
-    persona: 'citizen',
-    tab: 'citizen',
-    role: 'Citizen',
-    name: 'Priya Kumar',
-    aadhaar: '999900010010',
-  },
-  {
-    persona: 'citizen_buyer',
-    tab: 'citizen',
-    role: 'Buyer',
-    name: 'Arun Sharma',
-    aadhaar: '999900010011',
-  },
-  {
-    persona: 'citizen_heir1',
-    tab: 'citizen',
-    role: 'Heir',
-    name: 'Suresh Yadav',
-    aadhaar: '999900010012',
-  },
-  {
-    persona: 'citizen_heir2',
-    tab: 'citizen',
-    role: 'Heir',
-    name: 'Meena Devi',
-    aadhaar: '999900010013',
-  },
-  {
-    persona: 'tehsildar',
-    tab: 'officer',
-    role: 'Tehsildar',
-    name: 'Amit Saxena',
-    aadhaar: '999900010001',
-    email: 'amit.saxena@up.gov.in',
-  },
-  {
-    persona: 'circle_inspector',
-    tab: 'officer',
-    role: 'Kanungo / CI',
-    name: 'Rajesh Verma',
-    aadhaar: '999900010002',
-    email: 'rajesh.verma@up.gov.in',
-  },
-  {
-    persona: 'patwari',
-    tab: 'officer',
-    role: 'Patwari',
-    name: 'Vijay Singh',
-    aadhaar: '999900010003',
-    email: 'vijay.singh@up.gov.in',
-  },
+// ── Trust Badges ──────────────────────────────────────────────────────────────
+const TRUST_BADGES = [
+  { label: 'Aadhaar Verified',      color: 'text-[#138808]', bg: 'bg-green-50  border-green-200' },
+  { label: 'DigiLocker Integrated', color: 'text-[#0F4C81]', bg: 'bg-blue-50   border-blue-200'  },
+  { label: 'Blockchain Secured',    color: 'text-purple-700', bg: 'bg-purple-50 border-purple-200'},
+  { label: 'DPDPA Compliant',       color: 'text-[#FF9933]',  bg: 'bg-orange-50 border-orange-200'},
 ];
 
-function formatAadhaar(value: string) {
-  return `${value.slice(0, 4)}-${value.slice(4, 8)}-${value.slice(8, 12)}`;
-}
+// ── Service Cards ─────────────────────────────────────────────────────────────
+const SERVICES = [
+  { icon: FileText,      label: 'View Land Records'   },
+  { icon: Award,         label: 'Download RoR'        },
+  { icon: ArrowLeftRight,label: 'Property Transfer'   },
+  { icon: GitMerge,      label: 'Mutation Services'   },
+  { icon: Users,         label: 'Succession Claims'   },
+  { icon: Map,           label: 'GIS Land Maps'       },
+];
+
+// ── Security Indicators ───────────────────────────────────────────────────────
+const SECURITY = [
+  { icon: Lock,           label: '256-bit Encryption'       },
+  { icon: CloudLightning, label: 'Government Cloud Hosted'  },
+  { icon: Server,         label: 'NIC Infrastructure'       },
+  { icon: Database,       label: 'Blockchain Audit Trail'   },
+];
 
 export default function LoginPage() {
   const router = useRouter();
-  const [tab, setTab]           = useState<Tab>('citizen');
-  const [step, setStep]         = useState<Step>('aadhaar');
-  const [aadhaar, setAadhaar]   = useState('');
-  const [email, setEmail]       = useState('');
-  const [otp, setOtp]           = useState('');
-  const [maskedPhone, setMaskedPhone] = useState('');
-  const [error, setError]       = useState('');
-  const [loading, setLoading]   = useState(false);
-  const [success, setSuccess]   = useState('');
-  const isDev = process.env.NEXT_PUBLIC_FABRIC_MODE === 'mock';
+  const [tab,         setTab]         = useState<Tab>('citizen');
+  const [authMethod,  setAuthMethod]  = useState<AuthMethod>('digilocker');
+  const [step,        setStep]        = useState<Step>('aadhaar');
+  const [aadhaar,     setAadhaar]     = useState('');
+  const [email,       setEmail]       = useState('');
+  const [otp,         setOtp]         = useState('');
+  const [mobile,      setMobile]      = useState('');
+  const [maskedPhone, setMasked]      = useState('');
+  const [error,       setError]       = useState('');
+  const [success,     setSuccess]     = useState('');
+  const [loading,     setLoading]     = useState(false);
 
-  function reset() {
-    setStep('aadhaar');
-    setOtp('');
-    setError('');
-    setSuccess('');
-    setMaskedPhone('');
-  }
-
-  function fillDemoCredential(credential: DemoCredential) {
-    setTab(credential.tab);
-    setStep('aadhaar');
-    setAadhaar(credential.aadhaar);
-    setEmail(credential.email ?? '');
-    setOtp('');
-    setError('');
-    setSuccess('');
-    setMaskedPhone('');
-  }
+  function reset() { setStep('aadhaar'); setOtp(''); setError(''); setSuccess(''); setMasked(''); }
+  function switchTab(t: Tab) { setTab(t); setAuthMethod('digilocker'); reset(); }
 
   async function handleRequestOTP() {
-    if (aadhaar.replace(/\D/g, '').length !== 12) {
-      setError('Enter a valid 12-digit Aadhaar number');
-      return;
-    }
-    if (tab === 'officer' && !email.includes('@')) {
-      setError('Enter a valid department email address');
-      return;
-    }
-    setError('');
-    setLoading(true);
+    const digits = aadhaar.replace(/\D/g, '');
+    if (digits.length !== 12) { setError('Enter a valid 12-digit Aadhaar number'); return; }
+    if (tab === 'officer' && !email.includes('@')) { setError('Enter a valid department email'); return; }
+    setError(''); setLoading(true);
     try {
       const res = await requestOTP(aadhaar);
-      setMaskedPhone(res.maskedPhone);
+      setMasked(res.maskedPhone || 'XXXXXX1234');
       setStep('otp');
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Failed to send OTP');
-    } finally {
-      setLoading(false);
-    }
+    } catch (e: unknown) { setError(e instanceof Error ? e.message : 'Failed to send OTP'); }
+    finally { setLoading(false); }
   }
 
   async function handleVerifyOTP() {
-    if (otp.replace(/\D/g, '').length !== 6) {
-      setError('Enter the complete 6-digit OTP');
-      return;
-    }
-    setError('');
-    setLoading(true);
+    if (otp.replace(/\D/g, '').length < 5) { setError('Enter valid OTP (12356 or 123456)'); return; }
+    setError(''); setLoading(true);
     try {
-      let user;
-      if (tab === 'citizen') {
-        user = await verifyOTP(aadhaar, otp);
-      } else {
-        user = await officerLogin(aadhaar, email, otp);
-      }
+      const user = tab === 'citizen'
+        ? await verifyOTP(aadhaar, otp)
+        : await officerLogin(aadhaar, email, otp);
       setSuccess(`Welcome, ${user.name}`);
-      setTimeout(() => router.push(getRedirectPath(user.role)), 800);
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Verification failed');
-    } finally {
-      setLoading(false);
-    }
+      setTimeout(() => router.push(getRedirectPath(user.role)), 700);
+    } catch (e: unknown) { setError(e instanceof Error ? e.message : 'Verification failed'); }
+    finally { setLoading(false); }
   }
 
   async function handleDemoLogin(persona: string) {
-    setLoading(true);
-    setError('');
+    setLoading(true); setError('');
     try {
       const user = await demoLogin(persona);
       setSuccess(`Logged in as ${user.name}`);
       setTimeout(() => router.push(getRedirectPath(user.role)), 600);
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Demo login failed');
-    } finally {
-      setLoading(false);
-    }
+    } catch (e: unknown) { setError(e instanceof Error ? e.message : 'Demo login failed'); }
+    finally { setLoading(false); }
   }
 
   return (
-    <div className="min-h-screen flex bg-gray-950">
+    <div className="min-h-screen bg-white flex flex-col">
 
-      {/* ── Left panel — branding ─────────────────────────────────────── */}
-      <div className="hidden lg:flex lg:w-1/2 flex-col justify-between p-12 bg-gradient-to-br from-gray-900 via-brand-900 to-gray-950 border-r border-gray-800">
+      {/* ══════════════════════════════════════════════════════════════════════
+          HEADER
+          ════════════════════════════════════════════════════════════════════ */}
+      <header className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50">
+        <div className="max-w-[1400px] mx-auto px-6 sm:px-12 h-[76px] grid grid-cols-3 items-center">
 
-        {/* Logo */}
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-brand-600 flex items-center justify-center shadow-lg">
-            <span className="text-white font-bold text-lg">भू</span>
-          </div>
-          <div>
-            <div className="text-white font-bold text-lg tracking-tight">BhumiChain</div>
-            <div className="text-brand-400 text-xs">भूमि अभिलेख प्रणाली</div>
-          </div>
-        </div>
-
-        {/* Headline */}
-        <div className="space-y-6">
-          <div>
-            <h1 className="text-4xl font-bold text-white leading-tight">
-              India's Land Trust<br />
-              <span className="text-brand-400">Infrastructure</span>
-            </h1>
-            <p className="mt-4 text-gray-400 text-lg leading-relaxed">
-              Tamper-proof land records on Hyperledger Fabric v2.5.
-              Gautam Buddha Nagar Pilot — Noida, Uttar Pradesh.
-            </p>
+          {/* Left: Emblem */}
+          <div className="flex items-center gap-3">
+            <img
+              src="/Government_of_India_logo.svg.webp"
+              alt="Government of India Emblem"
+              className="h-14 w-auto object-contain"
+              onError={(e) => { e.currentTarget.style.display = 'none'; }}
+            />
           </div>
 
-          {/* Stats */}
-          <div className="grid grid-cols-3 gap-4">
-            {[
-              { value: '500', label: 'Khataunis' },
-              { value: '8',   label: 'Smart Contracts' },
-              { value: '0',   label: 'Middlemen' },
-            ].map(s => (
-              <div key={s.label} className="bg-gray-800 bg-opacity-60 rounded-xl p-4 text-center">
-                <div className="text-2xl font-bold text-brand-400">{s.value}</div>
-                <div className="text-gray-400 text-xs mt-1">{s.label}</div>
-              </div>
-            ))}
+          {/* Centre: BhumiChain */}
+          <div className="text-center">
+            <div className="text-[1.6rem] font-black text-[#0F4C81] tracking-tight leading-none">BhumiChain</div>
+            <div className="text-[9px] text-gray-500 font-bold uppercase tracking-[0.18em] mt-1">National Land Registry Platform</div>
           </div>
 
-          {/* Trust badges */}
-          <div className="space-y-3">
-            {[
-              { icon: Shield, text: 'DPDPA 2023 Compliant — Aadhaar never stored' },
-              { icon: Lock,   text: 'All mutations require multi-party eSign' },
-              { icon: Zap,    text: 'Instant Encumbrance Certificate with QR' },
-            ].map(({ icon: Icon, text }) => (
-              <div key={text} className="flex items-center gap-3 text-sm text-gray-400">
-                <Icon className="w-4 h-4 text-brand-500 shrink-0" />
-                <span>{text}</span>
-              </div>
-            ))}
+          {/* Right: Digital India */}
+          <div className="flex items-center justify-end">
+            <img
+              src="/Digital-India-Color.svg"
+              alt="Digital India"
+              className="h-11 w-auto object-contain hidden sm:block"
+              onError={(e) => { e.currentTarget.style.display = 'none'; }}
+            />
           </div>
         </div>
 
-        {/* Demo quick-login */}
-        {isDev && (
-          <div className="space-y-3">
-            <div className="flex items-center gap-2 text-xs text-saffron-400 font-semibold uppercase tracking-wider">
-              <Zap className="w-3 h-3" />
-              Demo Quick Login
+        {/* Tricolor strip */}
+        <div className="h-[3px] w-full grid grid-cols-3">
+          <div className="bg-[#FF9933]" />
+          <div className="bg-white border-y border-gray-100" />
+          <div className="bg-[#138808]" />
+        </div>
+      </header>
+
+      {/* ══════════════════════════════════════════════════════════════════════
+          MAIN CONTENT
+          ════════════════════════════════════════════════════════════════════ */}
+      <div className="flex flex-1 overflow-hidden">
+
+        {/* ── LEFT: HERO ─────────────────────────────────────────────────── */}
+        <div className="hidden lg:flex lg:w-[58%] flex-col bg-white overflow-y-auto custom-scrollbar">
+          <div className="px-14 pt-12 pb-10 flex-1 space-y-10">
+
+            {/* Hero Heading */}
+            <div className="space-y-5">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[#0F4C81]/20 bg-[#0F4C81]/5 text-[#0F4C81] text-xs font-bold uppercase tracking-widest">
+                <div className="w-1.5 h-1.5 rounded-full bg-[#138808] animate-pulse" />
+                Live on Hyperledger Fabric · Bihar Pilot
+              </div>
+
+              <h1 className="text-[3rem] font-black text-gray-900 leading-[1.1] tracking-tight">
+                National Digital<br />
+                <span className="text-[#0F4C81]">Land Registry</span>
+              </h1>
+
+              <p className="text-gray-500 text-[1.05rem] leading-relaxed max-w-[520px]">
+                Secure access to your land records, property transfers, mutation applications,
+                succession services and blockchain-verified ownership documents.
+              </p>
             </div>
-            <div className="grid grid-cols-2 gap-2">
-              {DEMO_PERSONAS.map(p => (
-                <button
-                  key={p.persona}
-                  onClick={() => handleDemoLogin(p.persona)}
-                  disabled={loading}
-                  className={clsx(
-                    'px-3 py-2 rounded-lg text-white text-xs font-medium transition-colors text-left',
-                    p.color, loading && 'opacity-50 cursor-not-allowed',
-                  )}
-                >
-                  <div className="font-semibold">{p.label}</div>
-                  <div className="opacity-70">{p.name}</div>
-                </button>
+
+            {/* Trust Badges */}
+            <div className="grid grid-cols-2 gap-3">
+              {TRUST_BADGES.map(b => (
+                <div key={b.label} className={clsx('flex items-center gap-2.5 px-4 py-3 rounded-xl border text-sm font-semibold', b.bg, b.color)}>
+                  <CheckSquare className="w-4 h-4 shrink-0" />
+                  {b.label}
+                </div>
               ))}
             </div>
-          </div>
-        )}
-      </div>
 
-      {/* ── Right panel — login form ──────────────────────────────────── */}
-      <div className="flex-1 flex items-center justify-center p-8">
-        <div className="w-full max-w-md space-y-8">
-
-          {/* Mobile logo */}
-          <div className="flex items-center gap-3 lg:hidden">
-            <div className="w-9 h-9 rounded-xl bg-brand-600 flex items-center justify-center">
-              <span className="text-white font-bold">भू</span>
-            </div>
-            <span className="text-white font-bold text-lg">BhumiChain</span>
-          </div>
-
-          <div>
-            <h2 className="text-2xl font-bold text-gray-100">Login to BhumiChain</h2>
-            <p className="mt-1 text-gray-400 text-sm">भूमि अभिलेख पोर्टल — Noida, Uttar Pradesh</p>
-          </div>
-
-          {/* Tabs */}
-          <div className="flex rounded-xl bg-gray-900 border border-gray-800 p-1">
-            {(['citizen', 'officer'] as Tab[]).map(t => (
-              <button
-                key={t}
-                onClick={() => { setTab(t); reset(); }}
-                className={clsx(
-                  'flex-1 py-2 rounded-lg text-sm font-medium transition-all',
-                  tab === t
-                    ? 'bg-brand-600 text-white shadow'
-                    : 'text-gray-400 hover:text-gray-200',
-                )}
-              >
-                {t === 'citizen' ? 'Citizen / नागरिक' : 'Officer / अधिकारी'}
-              </button>
-            ))}
-          </div>
-
-          {/* Form */}
-          <div className="card space-y-5">
-
-            {/* Success state */}
-            {success && (
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-green-900 bg-opacity-40 border border-green-700">
-                <CheckCircle className="w-5 h-5 text-green-400 shrink-0" />
-                <span className="text-green-300 text-sm font-medium">{success} — Redirecting...</span>
-              </div>
-            )}
-
-            {/* Error state */}
-            {error && (
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-red-900 bg-opacity-40 border border-red-700">
-                <AlertCircle className="w-5 h-5 text-red-400 shrink-0" />
-                <span className="text-red-300 text-sm">{error}</span>
-              </div>
-            )}
-
-            {step === 'aadhaar' ? (
-              <>
-                {isDev && (
-                  <div className="rounded-xl border border-saffron-500/30 bg-saffron-500/10 p-3 space-y-3">
-                    <div className="flex items-center justify-between gap-3">
-                      <div>
-                        <p className="text-xs font-semibold uppercase tracking-wider text-saffron-300">
-                          Demo Login Details
-                        </p>
-                        <p className="text-xs text-gray-400 mt-0.5">
-                          Pick a person to autofill. OTP is <span className="font-mono text-saffron-300">123456</span>.
-                        </p>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      {DEMO_CREDENTIALS
-                        .filter((credential) => credential.tab === tab)
-                        .map((credential) => (
-                          <button
-                            key={credential.persona}
-                            type="button"
-                            onClick={() => fillDemoCredential(credential)}
-                            disabled={loading}
-                            className={clsx(
-                              'text-left rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 transition-colors',
-                              'hover:border-saffron-500 hover:bg-gray-800',
-                              loading && 'opacity-50 cursor-not-allowed',
-                            )}
-                          >
-                            <div className="flex items-center justify-between gap-2">
-                              <span className="text-sm font-semibold text-gray-100 truncate">{credential.name}</span>
-                              <span className="text-[10px] uppercase tracking-wider text-gray-500 shrink-0">{credential.role}</span>
-                            </div>
-                            <div className="mt-1 font-mono text-xs text-saffron-300">
-                              {formatAadhaar(credential.aadhaar)}
-                            </div>
-                            {credential.email && (
-                              <div className="mt-0.5 text-xs text-gray-500 truncate">{credential.email}</div>
-                            )}
-                          </button>
-                        ))}
-                    </div>
-                  </div>
-                )}
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-300">
-                    Aadhaar Number <span className="text-gray-500">(आधार संख्या)</span>
-                  </label>
-                  <AadhaarInput
-                    value={aadhaar}
-                    onChange={setAadhaar}
-                    disabled={loading}
-                    placeholder="XXXX-XXXX-XXXX"
-                  />
+            {/* Hero Image */}
+            <div className="rounded-2xl overflow-hidden border border-gray-200 shadow-lg relative">
+              <img
+                src="/citizen_land_visual.png"
+                alt="BhumiChain — Blockchain Land Registry"
+                className="w-full h-[440px] object-cover object-top"
+                onError={(e) => {
+                  const p = e.currentTarget.parentElement!;
+                  p.style.background = 'linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 50%, #BFDBFE 100%)';
+                  p.style.minHeight = '240px';
+                  e.currentTarget.style.display = 'none';
+                }}
+              />
+              {/* Overlay badge */}
+              <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
+                <div className="bg-white/90 backdrop-blur-sm border border-white/60 rounded-xl px-4 py-2.5 shadow-sm">
+                  <div className="text-xs font-bold text-gray-500 uppercase tracking-widest">Secured by</div>
+                  <div className="text-sm font-black text-[#0F4C81]">Hyperledger Fabric v2.5</div>
                 </div>
-
-                {tab === 'officer' && (
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-300">
-                      Department Email <span className="text-gray-500">(सरकारी ईमेल)</span>
-                    </label>
-                    <input
-                      type="email"
-                      value={email}
-                      onChange={e => setEmail(e.target.value)}
-                      disabled={loading}
-                      placeholder="name@up.gov.in"
-                      className="input w-full"
-                    />
-                    <p className="text-xs text-gray-500">Accepted: @up.gov.in · @gov.in · @nic.in</p>
-                  </div>
-                )}
-
-                <button
-                  onClick={handleRequestOTP}
-                  disabled={loading}
-                  className="btn-primary w-full flex items-center justify-center gap-2"
-                >
-                  {loading ? (
-                    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  ) : (
-                    <>Send OTP <ChevronRight className="w-4 h-4" /></>
-                  )}
-                </button>
-              </>
-            ) : (
-              <>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-300">
-                    Enter OTP sent to <span className="text-brand-400">{maskedPhone}</span>
-                  </label>
-                  <OTPInput
-                    value={otp}
-                    onChange={setOtp}
-                    disabled={loading}
-                    error={!!error}
-                  />
-                  {isDev && (
-                    <p className="text-xs text-saffron-400">
-                      Demo mode: OTP is always <strong>123456</strong>
-                    </p>
-                  )}
+                <div className="bg-[#138808]/90 backdrop-blur-sm rounded-xl px-4 py-2.5 shadow-sm text-white text-center">
+                  <div className="text-xs font-bold opacity-80 uppercase tracking-widest">Records</div>
+                  <div className="text-sm font-black">2.3 Cr+</div>
                 </div>
-
-                <button
-                  onClick={handleVerifyOTP}
-                  disabled={loading || otp.length < 6}
-                  className="btn-primary w-full flex items-center justify-center gap-2"
-                >
-                  {loading ? (
-                    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  ) : (
-                    <><Lock className="w-4 h-4" /> Login Securely</>
-                  )}
-                </button>
-
-                <button
-                  onClick={reset}
-                  className="w-full text-sm text-gray-400 hover:text-gray-200 transition-colors"
-                >
-                  ← Change Aadhaar number
-                </button>
-              </>
-            )}
-
-            {/* Privacy note */}
-            <div className="pt-2 border-t border-gray-800 flex items-start gap-2 text-xs text-gray-500">
-              <Lock className="w-3 h-3 mt-0.5 shrink-0 text-gray-600" />
-              <span>
-                Your Aadhaar number is <strong className="text-gray-400">never stored</strong> anywhere.
-                Only a cryptographic hash (SHA-256) is used on-chain — compliant with DPDPA 2023.
-              </span>
+              </div>
             </div>
-          </div>
 
-          {/* Mobile demo quick-login */}
-          {isDev && (
-            <div className="lg:hidden space-y-2">
-              <p className="text-xs text-saffron-400 font-semibold uppercase tracking-wider">Demo Quick Login</p>
+            {/* Service Cards */}
+            <div>
+              <div className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Available Services</div>
+              <div className="grid grid-cols-3 gap-3">
+                {SERVICES.map(s => (
+                  <div
+                    key={s.label}
+                    className="flex flex-col items-center gap-2 p-4 rounded-xl border border-gray-200 bg-white hover:border-[#0F4C81]/30 hover:bg-[#F8FAFF] hover:shadow-sm transition-all cursor-default text-center"
+                  >
+                    <div className="w-9 h-9 rounded-lg bg-[#0F4C81]/8 flex items-center justify-center">
+                      <s.icon className="w-4.5 h-4.5 text-[#0F4C81]" style={{ width: 18, height: 18 }} />
+                    </div>
+                    <span className="text-xs font-semibold text-gray-700 leading-tight">{s.label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Demo Quick Login */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-3">
+                <div className="h-px flex-1 bg-gray-200" />
+                <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest px-2">Demo Quick Access</span>
+                <div className="h-px flex-1 bg-gray-200" />
+              </div>
               <div className="grid grid-cols-2 gap-2">
                 {DEMO_PERSONAS.map(p => (
                   <button
                     key={p.persona}
                     onClick={() => handleDemoLogin(p.persona)}
                     disabled={loading}
-                    className={clsx('px-3 py-2 rounded-lg text-white text-xs font-medium transition-colors', p.color)}
+                    title={p.aadhaar ? `Aadhaar No: ${p.aadhaar}` : undefined}
+                    style={{ backgroundColor: p.color }}
+                    className="flex items-center justify-between px-4 py-3 rounded-xl text-white text-left hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-50 shadow-sm"
                   >
-                    <div className="font-semibold">{p.label}</div>
-                    <div className="opacity-70">{p.name}</div>
+                    <div>
+                      <div className="text-sm font-bold leading-tight">{p.label}</div>
+                      <div className="text-xs opacity-75 mt-0.5 flex flex-col gap-0.5">
+                        <span>{p.name}</span>
+                        {p.aadhaar && <span className="font-mono text-[10px] opacity-90 tracking-wider" title={p.aadhaar}>Aadhaar: {p.aadhaar}</span>}
+                      </div>
+                    </div>
+                    <ChevronRight className="w-4 h-4 opacity-60 shrink-0" />
                   </button>
                 ))}
               </div>
             </div>
-          )}
+          </div>
         </div>
+
+        {/* ── RIGHT: AUTH PANEL ────────────────────────────────────────────── */}
+        <div className="flex-1 lg:w-[42%] bg-[#F8FAFC] border-l border-gray-200 flex flex-col overflow-y-auto custom-scrollbar">
+          <div className="flex-1 flex flex-col justify-start py-10 px-6 sm:px-10">
+            <div className="w-full max-w-[440px] mx-auto space-y-5">
+
+              {/* ── Auth Card ──────────────────────────────────────────────── */}
+              <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+
+                {/* Card top bar */}
+                <div className="h-1 w-full grid grid-cols-3">
+                  <div className="bg-[#FF9933]" />
+                  <div className="bg-[#0F4C81]" />
+                  <div className="bg-[#138808]" />
+                </div>
+
+                <div className="p-6 space-y-5">
+                  {/* Header */}
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-9 h-9 rounded-xl bg-[#0F4C81] flex items-center justify-center shadow-sm">
+                      <Shield className="w-4.5 h-4.5 text-white" style={{ width: 18, height: 18 }} />
+                    </div>
+                    <div>
+                      <h2 className="text-[1.05rem] font-black text-gray-900">Government Secure Access</h2>
+                      <p className="text-[11px] text-gray-400 font-medium">Ministry of Rural Development</p>
+                    </div>
+                  </div>
+
+                  {/* Tabs */}
+                  <div className="flex bg-gray-100 rounded-xl p-1">
+                    {(['citizen', 'officer'] as Tab[]).map(t => (
+                      <button
+                        key={t}
+                        onClick={() => switchTab(t)}
+                        className={clsx(
+                          'flex-1 py-2.5 rounded-lg text-sm font-bold transition-all',
+                          tab === t
+                            ? 'bg-white text-[#0F4C81] shadow-sm'
+                            : 'text-gray-500 hover:text-gray-700'
+                        )}
+                      >
+                        {t === 'citizen' ? '🏠 Citizen' : '🏛️ Revenue Officer'}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Status messages */}
+                  {success && (
+                    <div className="flex items-center gap-3 p-3.5 rounded-xl bg-green-50 border border-green-200 text-green-700 text-sm font-medium">
+                      <CheckCircle className="w-5 h-5 shrink-0 text-green-600" />
+                      {success} — Redirecting…
+                    </div>
+                  )}
+                  {error && (
+                    <div className="flex items-center gap-3 p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm font-medium">
+                      <AlertCircle className="w-5 h-5 shrink-0 text-red-500" />
+                      {error}
+                    </div>
+                  )}
+
+                  {/* ── PRIMARY: DigiLocker ─────────────────────────────── */}
+                  <div>
+                    <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Primary Login</div>
+                    <button
+                      onClick={() => {
+                        const target = (aadhaar || '').replace(/\D/g, '');
+                        if (target) localStorage.setItem('bhumichain_login_aadhaar', target);
+                        router.push(target ? `/digilocker-login?aadhaar=${target}` : '/digilocker-login');
+                      }}
+                      className="w-full flex items-center gap-3 px-5 py-4 rounded-xl border-2 border-[#0F4C81] bg-[#0F4C81] hover:bg-[#0a3566] text-white font-bold text-sm transition-all shadow-md shadow-[#0F4C81]/20 group"
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
+                        <Fingerprint className="w-5 h-5" />
+                      </div>
+                      <div className="flex-1 text-left">
+                        <div className="font-black text-[0.9rem]">Sign In / eSign with DigiLocker</div>
+                        <div className="text-[11px] opacity-70 font-medium mt-0.5">Aadhaar-linked · Instant verification</div>
+                      </div>
+                      <ChevronRight className="w-5 h-5 opacity-70 group-hover:translate-x-0.5 transition-transform" />
+                    </button>
+                  </div>
+
+                  {/* Divider */}
+                  <div className="flex items-center gap-3">
+                    <div className="h-px flex-1 bg-gray-200" />
+                    <span className="text-xs text-gray-400 font-semibold">OR USE ANOTHER METHOD</span>
+                    <div className="h-px flex-1 bg-gray-200" />
+                  </div>
+
+                  {/* ── AADHAAR OTP FLOW (CITIZEN) ─────────────────────────────────── */}
+                  {tab === 'citizen' && (
+                    <div className="space-y-3">
+                      {step === 'aadhaar' ? (
+                        <>
+                          <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Aadhaar Number</div>
+                          <AadhaarInput value={aadhaar} onChange={setAadhaar} disabled={loading} />
+                          <button
+                            onClick={handleRequestOTP}
+                            disabled={loading}
+                            className="w-full flex items-center justify-center gap-2 py-3.5 bg-[#0F4C81] hover:bg-[#0a3566] text-white rounded-xl text-sm font-bold transition-all disabled:opacity-60 shadow-sm"
+                          >
+                            {loading
+                              ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                              : <><ChevronRight className="w-4 h-4" /> Send Aadhaar OTP</>
+                            }
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <p className="text-xs text-gray-500">
+                            OTP sent to <span className="font-bold text-gray-800">{maskedPhone}</span>
+                            <span className="block mt-1 font-bold text-green-700 bg-green-50 px-2 py-1 rounded border border-green-200">
+                              Demo OTP: 123456
+                            </span>
+                          </p>
+                          <OTPInput value={otp} onChange={setOtp} disabled={loading} error={!!error} />
+                          <button
+                            onClick={handleVerifyOTP}
+                            disabled={loading || otp.length < 5}
+                            className="w-full flex items-center justify-center gap-2 py-3.5 bg-[#138808] hover:bg-[#0f6b06] disabled:opacity-50 text-white rounded-xl text-sm font-bold transition-all shadow-sm"
+                          >
+                            {loading
+                              ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                              : <><Lock className="w-4 h-4" /> Verify & Authenticate</>
+                            }
+                          </button>
+                          <button onClick={reset} className="w-full text-xs text-gray-400 hover:text-gray-600 transition-colors">← Change Aadhaar</button>
+                        </>
+                      )}
+                    </div>
+                  )}
+
+                  {/* ── OFFICER FLOW ─────────────────────────────────────── */}
+                  {tab === 'officer' && (
+                    <div className="space-y-3">
+                      {step === 'aadhaar' ? (
+                        <>
+                          <div>
+                            <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Officer Aadhaar Number</div>
+                            <AadhaarInput value={aadhaar} onChange={setAadhaar} disabled={loading} />
+                          </div>
+                          <div>
+                            <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Department Email</div>
+                            <input
+                              type="email"
+                              value={email}
+                              onChange={e => setEmail(e.target.value)}
+                              disabled={loading}
+                              placeholder="name@bihar.gov.in"
+                              className="input"
+                            />
+                            <p className="text-[11px] text-gray-400 mt-1">Accepted: @bihar.gov.in · @gov.in · @nic.in</p>
+                          </div>
+                          <button
+                            onClick={handleRequestOTP}
+                            disabled={loading}
+                            className="w-full flex items-center justify-center gap-2 py-3.5 bg-[#0F4C81] hover:bg-[#0a3566] text-white rounded-xl text-sm font-bold transition-all disabled:opacity-60 shadow-sm"
+                          >
+                            {loading
+                              ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                              : <><Lock className="w-4 h-4" /> Send Officer OTP</>
+                            }
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <p className="text-xs text-gray-500">OTP sent to <span className="font-bold text-gray-800">{maskedPhone}</span></p>
+                          <OTPInput value={otp} onChange={setOtp} disabled={loading} error={!!error} />
+                          <button
+                            onClick={handleVerifyOTP}
+                            disabled={loading || otp.length < 6}
+                            className="w-full flex items-center justify-center gap-2 py-3.5 bg-[#138808] hover:bg-[#0f6b06] disabled:opacity-50 text-white rounded-xl text-sm font-bold transition-all shadow-sm"
+                          >
+                            {loading
+                              ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                              : <><Lock className="w-4 h-4" /> Officer Authenticate</>
+                            }
+                          </button>
+                          <button onClick={reset} className="w-full text-xs text-gray-400 hover:text-gray-600 transition-colors">← Back</button>
+                        </>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Security note */}
+                  <div className="flex items-start gap-2 pt-2 border-t border-gray-100 text-[11px] text-gray-400 leading-relaxed">
+                    <Shield className="w-3.5 h-3.5 shrink-0 mt-0.5 text-[#138808]" />
+                    100% Paperless · DPDPA 2023 Compliant · Aadhaar data never stored on BhumiChain servers
+                  </div>
+                </div>
+              </div>
+
+              {/* ── Security Indicators ─────────────────────────────────── */}
+              <div className="grid grid-cols-2 gap-2">
+                {SECURITY.map(s => (
+                  <div key={s.label} className="flex items-center gap-2.5 px-3.5 py-2.5 bg-white rounded-xl border border-gray-200 shadow-sm">
+                    <s.icon className="w-4 h-4 text-[#0F4C81] shrink-0" />
+                    <span className="text-[11px] font-semibold text-gray-600">{s.label}</span>
+                  </div>
+                ))}
+              </div>
+
+
+            </div>
+          </div>
+
+          {/* ── Footer ─────────────────────────────────────────────────── */}
+          <div className="border-t border-gray-200 bg-white px-8 py-4">
+            <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-1 text-[11px] text-gray-400 font-medium text-center">
+              <span className="font-semibold text-gray-600">Government of India</span>
+              <span>·</span>
+              <span>Ministry of Rural Development</span>
+              <span>·</span>
+              <span>NIC</span>
+              <span>·</span>
+              <span>Digital India</span>
+              <span>·</span>
+              <span>Revenue Department, Bihar</span>
+            </div>
+            <div className="text-center text-[10px] text-gray-400 mt-1">
+              © 2026 · v2.5 Hyperledger Fabric · Secured under IT Act 2000 & DPDPA 2023
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
   );

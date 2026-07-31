@@ -63,7 +63,14 @@ export function useWebSocket(dlpiId?: string) {
 
   // Trigger a pre-scripted mock event (demo presenter tool)
   const triggerMock = useCallback((key: string) => {
-    wsRef.current?.send(JSON.stringify({ type: 'TRIGGER_MOCK_EVENT', key }));
+    const ws = wsRef.current;
+    if (!ws) return;
+    const payload = JSON.stringify({ type: 'TRIGGER_MOCK_EVENT', key });
+    if (ws.readyState === WebSocket.OPEN) {
+      ws.send(payload);
+    } else if (ws.readyState === WebSocket.CONNECTING) {
+      ws.addEventListener('open', () => ws.send(payload), { once: true });
+    }
   }, []);
 
   return { on, triggerMock };

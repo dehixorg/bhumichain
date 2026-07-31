@@ -8,6 +8,31 @@ import (
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
 )
 
+func matchAadhaar(a, b string) bool {
+	if a == "" || b == "" {
+		return false
+	}
+	if a == b {
+		return true
+	}
+	aDigits := ""
+	for _, ch := range a {
+		if ch >= '0' && ch <= '9' {
+			aDigits += string(ch)
+		}
+	}
+	bDigits := ""
+	for _, ch := range b {
+		if ch >= '0' && ch <= '9' {
+			bDigits += string(ch)
+		}
+	}
+	if len(aDigits) >= 12 && len(bDigits) >= 12 && aDigits == bDigits {
+		return true
+	}
+	return false
+}
+
 // ─── Uttaradhikar Engine — Complete Inheritance Module ────────────────────
 //
 // Three inheritance trigger scenarios:
@@ -108,7 +133,7 @@ type InheritancePlan struct {
 
 // PlannedHeir — one heir in the owner's pre-registration
 type PlannedHeir struct {
-	AadhaarHash      string  `json:"aadhaarHash"`
+	AadhaarNumber      string  `json:"aadhaarNumber"`
 	Name             string  `json:"name"`
 	Relation         string  `json:"relation"`          // Son | Daughter | Wife | Mother | Father |
 	                                                     //  GrandSon | GrandDaughter | Brother | Sister
@@ -128,30 +153,30 @@ type SuccessionCase struct {
 	DLPIId            string          `json:"dlpiId"`
 	FamilyID          string          `json:"familyId"`
 	DeceasedName      string          `json:"deceasedName"`
-	DeceasedHash      string          `json:"deceasedHash"`
-	DateOfDeath       string          `json:"dateOfDeath,omitempty"`
-	DeathCertCID      string          `json:"deathCertCid,omitempty"`
-	CRSRegistrationNo string          `json:"crsRegistrationNo,omitempty"`
+	DeceasedHash      string          `json:"deceasedAadhaar"`
+	DateOfDeath       string          `json:"dateOfDeath,omitempty" metadata:",optional"`
+	DeathCertCID      string          `json:"deathCertCid,omitempty" metadata:",optional"`
+	CRSRegistrationNo string          `json:"crsRegistrationNo,omitempty" metadata:",optional"`
 
 	// Trigger source
 	TriggerSource     string          `json:"triggerSource"` // DEATH_CERT | OWNER_ALIVE | HEIR_PETITION
 	TriggeredByHash   string          `json:"triggeredByHash"`
-	DeathAffidavitCID string          `json:"deathAffidavitCid,omitempty"` // for HEIR_PETITION without CRS
+	DeathAffidavitCID string          `json:"deathAffidavitCid,omitempty" metadata:",optional"` // for HEIR_PETITION without CRS
 
 	// Pre-registered plan (if any)
 	HasInheritancePlan  bool          `json:"hasInheritancePlan"`
-	InheritancePlanID   string        `json:"inheritancePlanId,omitempty"`
+	InheritancePlanID   string        `json:"inheritancePlanId,omitempty" metadata:",optional"`
 
 	// Law + heirs
 	ApplicableLaw     string          `json:"applicableLaw"`
 	Religion          string          `json:"religion"`
 	Heirs             []SuccessionHeir `json:"heirs"`
 	TotalHeirs        int             `json:"totalHeirs"`
-	MinorHeirs        []MinorHeir     `json:"minorHeirs,omitempty"`
+	MinorHeirs        []MinorHeir     `json:"minorHeirs,omitempty" metadata:",optional"`
 
 	// Law enforcement flags
-	LegalEdgeCases    []string        `json:"legalEdgeCases,omitempty"`
-	LegalWarnings     []string        `json:"legalWarnings,omitempty"`  // non-blocking, just alerts
+	LegalEdgeCases    []string        `json:"legalEdgeCases,omitempty" metadata:",optional"`
+	LegalWarnings     []string        `json:"legalWarnings,omitempty" metadata:",optional"`  // non-blocking, just alerts
 
 	// AI computation
 	AIComputationCID  string          `json:"aiComputationCid"`
@@ -159,14 +184,14 @@ type SuccessionCase struct {
 
 	// Consent tracking
 	ConsentDeadline   string          `json:"consentDeadline"`
-	AllConsentedAt    string          `json:"allConsentedAt,omitempty"`
+	AllConsentedAt    string          `json:"allConsentedAt,omitempty" metadata:",optional"`
 
 	// Dispute
-	DisputeInfo       *DisputeRecord  `json:"disputeInfo,omitempty"`
+	DisputeInfo       *DisputeRecord  `json:"disputeInfo,omitempty" metadata:",optional"`
 
 	// Execution
-	AutoMutatedAt     string          `json:"autoMutatedAt,omitempty"`
-	MutationCaseID    string          `json:"mutationCaseId,omitempty"` // linked mutation-manager ID
+	AutoMutatedAt     string          `json:"autoMutatedAt,omitempty" metadata:",optional"`
+	MutationCaseID    string          `json:"mutationCaseId,omitempty" metadata:",optional"` // linked mutation-manager ID
 
 	Status            string          `json:"status"`
 	// INITIATED → HEIRS_IDENTIFIED → AWAITING_CONSENTS →
@@ -181,7 +206,7 @@ type SuccessionCase struct {
 type SuccessionHeir struct {
 	HeirID          string  `json:"heirId"`
 	Name            string  `json:"name"`
-	AadhaarHash     string  `json:"aadhaarHash"`
+	AadhaarNumber     string  `json:"aadhaarNumber"`
 	Relation        string  `json:"relation"`
 	Gender          string  `json:"gender"`
 	DOB             string  `json:"dob"`
@@ -194,25 +219,25 @@ type SuccessionHeir struct {
 	LegalBasis      string  `json:"legalBasis"`    // which law section gives them this
 	LegalShare      string  `json:"legalShare"`    // what LAW mandates: "1/4"
 	LegalShareDec   float64 `json:"legalShareDec"`
-	IntendedShare   string  `json:"intendedShare,omitempty"` // what owner WANTED (from plan)
-	IntendedShareDec float64 `json:"intendedShareDec,omitempty"`
+	IntendedShare   string  `json:"intendedShare,omitempty" metadata:",optional"` // what owner WANTED (from plan)
+	IntendedShareDec float64 `json:"intendedShareDec,omitempty" metadata:",optional"`
 	FinalShare      string  `json:"finalShare"`    // what they actually receive
 	FinalShareDec   float64 `json:"finalShareDec"`
-	LegalNote       string  `json:"legalNote,omitempty"`
+	LegalNote       string  `json:"legalNote,omitempty" metadata:",optional"`
 
 	// For minor heirs
-	GuardianHash    string  `json:"guardianHash,omitempty"`
-	GuardianName    string  `json:"guardianName,omitempty"`
+	GuardianHash    string  `json:"guardianHash,omitempty" metadata:",optional"`
+	GuardianName    string  `json:"guardianName,omitempty" metadata:",optional"`
 
 	// Consent tracking
-	NotifiedAt      string  `json:"notifiedAt,omitempty"`
-	NotifyChannel   string  `json:"notifyChannel,omitempty"`
+	NotifiedAt      string  `json:"notifiedAt,omitempty" metadata:",optional"`
+	NotifyChannel   string  `json:"notifyChannel,omitempty" metadata:",optional"`
 	HasConsented    bool    `json:"hasConsented"`
-	ConsentedAt     string  `json:"consentedAt,omitempty"`
-	ConsentTxHash   string  `json:"consentTxHash,omitempty"`
+	ConsentedAt     string  `json:"consentedAt,omitempty" metadata:",optional"`
+	ConsentTxHash   string  `json:"consentTxHash,omitempty" metadata:",optional"`
 	HasObjected     bool    `json:"hasObjected"`
-	ObjectedAt      string  `json:"objectedAt,omitempty"`
-	ObjectionReason string  `json:"objectionReason,omitempty"`
+	ObjectedAt      string  `json:"objectedAt,omitempty" metadata:",optional"`
+	ObjectionReason string  `json:"objectionReason,omitempty" metadata:",optional"`
 }
 
 type MinorHeir struct {
@@ -230,11 +255,11 @@ type DisputeRecord struct {
 	DisputedBy      string `json:"disputedByHash"`
 	DisputeType     string `json:"disputeType"`  // ShareDispute | RightToInherit | OmittedHeir | WillValidity
 	FiledAt         string `json:"filedAt"`
-	ECourtsCaseNo   string `json:"eCourtsCaseNo,omitempty"`
-	NyayaAIBriefCID string `json:"nyayaAIBriefCid,omitempty"`
+	ECourtsCaseNo   string `json:"eCourtsCaseNo,omitempty" metadata:",optional"`
+	NyayaAIBriefCID string `json:"nyayaAIBriefCid,omitempty" metadata:",optional"`
 	Status          string `json:"status"`       // FILED | HEARING | RESOLVED
-	ResolvedAt      string `json:"resolvedAt,omitempty"`
-	CourtOrderCID   string `json:"courtOrderCid,omitempty"`
+	ResolvedAt      string `json:"resolvedAt,omitempty" metadata:",optional"`
+	CourtOrderCID   string `json:"courtOrderCid,omitempty" metadata:",optional"`
 }
 
 // ─── Smart Contract ────────────────────────────────────────────────────────
@@ -415,7 +440,7 @@ func (c *UttaradhikarContract) RevokeInheritancePlan(
 // After execution: becomes a GIFT mutation in mutation-manager.
 //
 // planID: can be "" if owner hasn't pre-registered — but then receipientsJSON must be provided
-// recipientsJSON: [{aadhaarHash, name, relation, finalShare, finalShareDec}]
+// recipientsJSON: [{aadhaarNumber, name, relation, finalShare, finalShareDec}]
 func (c *UttaradhikarContract) TriggerAliveTransfer(
 	ctx contractapi.TransactionContextInterface,
 	dlpiId, ownerHash, ownerName, planID string,
@@ -440,7 +465,7 @@ func (c *UttaradhikarContract) TriggerAliveTransfer(
 	}
 
 	var rawRecipients []struct {
-		AadhaarHash    string  `json:"aadhaarHash"`
+		AadhaarNumber    string  `json:"aadhaarNumber"`
 		Name           string  `json:"name"`
 		Relation       string  `json:"relation"`
 		FinalShare     string  `json:"finalShare"`
@@ -476,9 +501,9 @@ func (c *UttaradhikarContract) TriggerAliveTransfer(
 			continue
 		}
 		heirs = append(heirs, SuccessionHeir{
-			HeirID:        fmt.Sprintf("H-%s", r.AadhaarHash[:8]),
+			HeirID:        fmt.Sprintf("H-%s", r.AadhaarNumber[:8]),
 			Name:          r.Name,
-			AadhaarHash:   r.AadhaarHash,
+			AadhaarNumber:   r.AadhaarNumber,
 			Relation:      r.Relation,
 			IsAdult:       true,
 			IsAlive:       true,
@@ -545,7 +570,7 @@ func (c *UttaradhikarContract) TriggerAliveTransfer(
 	// Notify all recipients
 	recipientHashes := make([]string, len(heirs))
 	for i, h := range heirs {
-		recipientHashes[i] = h.AadhaarHash
+		recipientHashes[i] = h.AadhaarNumber
 	}
 	notifyEvent, _ := json.Marshal(map[string]interface{}{
 		"caseId":          caseID,
@@ -571,7 +596,7 @@ func (c *UttaradhikarContract) TriggerAliveTransfer(
 // This is the original existing function, now enhanced.
 func (c *UttaradhikarContract) InitiateSuccessionByDeathCert(
 	ctx contractapi.TransactionContextInterface,
-	dlpiId, familyId, deceasedName, deceasedHash,
+	dlpiId, familyId, deceasedName, deceasedAadhaar,
 	dateOfDeath, deathCertCID, crsRegNo,
 	religion, applicableLaw,
 	heirsJSON, minorHeirsJSON,
@@ -583,10 +608,10 @@ func (c *UttaradhikarContract) InitiateSuccessionByDeathCert(
 		return "", fmt.Errorf("CRS_REQUIRED: succession by death certificate requires Civil Registration System registration number")
 	}
 
-	return c.createSuccessionCase(ctx, dlpiId, familyId, deceasedName, deceasedHash,
+	return c.createSuccessionCase(ctx, dlpiId, familyId, deceasedName, deceasedAadhaar,
 		dateOfDeath, deathCertCID, crsRegNo, "", religion, applicableLaw,
 		heirsJSON, minorHeirsJSON, aiComputationCID, aiConfidenceScore,
-		"DEATH_CERT", deceasedHash)
+		"DEATH_CERT", deceasedAadhaar)
 }
 
 // InitiateSuccessionByHeirPetition — heirs petition after death WITHOUT official CRS cert
@@ -600,7 +625,7 @@ func (c *UttaradhikarContract) InitiateSuccessionByDeathCert(
 // heirsJSON: can add heirs not in the plan (missing heirs can always claim)
 func (c *UttaradhikarContract) InitiateSuccessionByHeirPetition(
 	ctx contractapi.TransactionContextInterface,
-	dlpiId, familyId, deceasedName, deceasedHash,
+	dlpiId, familyId, deceasedName, deceasedAadhaar,
 	dateOfDeath, deathAffidavitCID,
 	planID, religion, applicableLaw string,
 	heirsJSON, minorHeirsJSON string,
@@ -631,9 +656,9 @@ func (c *UttaradhikarContract) InitiateSuccessionByHeirPetition(
 			seedHeirs := make([]SuccessionHeir, len(plan.PlannedHeirs))
 			for i, ph := range plan.PlannedHeirs {
 				seedHeirs[i] = SuccessionHeir{
-					HeirID:           fmt.Sprintf("H-%s", ph.AadhaarHash[:8]),
+					HeirID:           fmt.Sprintf("H-%s", ph.AadhaarNumber[:8]),
 					Name:             ph.Name,
-					AadhaarHash:      ph.AadhaarHash,
+					AadhaarNumber:      ph.AadhaarNumber,
 					Relation:         ph.Relation,
 					Gender:           ph.Gender,
 					DOB:              ph.DOB,
@@ -654,7 +679,7 @@ func (c *UttaradhikarContract) InitiateSuccessionByHeirPetition(
 		}
 	}
 
-	caseID, err := c.createSuccessionCase(ctx, dlpiId, familyId, deceasedName, deceasedHash,
+	caseID, err := c.createSuccessionCase(ctx, dlpiId, familyId, deceasedName, deceasedAadhaar,
 		dateOfDeath, "", "", deathAffidavitCID, religion, applicableLaw,
 		heirsJSON, minorHeirsJSON, aiComputationCID, aiConfidenceScore,
 		"HEIR_PETITION", petitionerHash)
@@ -679,7 +704,7 @@ func (c *UttaradhikarContract) InitiateSuccessionByHeirPetition(
 // createSuccessionCase — internal: builds SuccessionCase and saves it
 func (c *UttaradhikarContract) createSuccessionCase(
 	ctx contractapi.TransactionContextInterface,
-	dlpiId, familyId, deceasedName, deceasedHash,
+	dlpiId, familyId, deceasedName, deceasedAadhaar,
 	dateOfDeath, deathCertCID, crsRegNo, deathAffidavitCID,
 	religion, applicableLaw,
 	heirsJSON, minorHeirsJSON, aiComputationCID string,
@@ -754,7 +779,7 @@ func (c *UttaradhikarContract) createSuccessionCase(
 		DLPIId:              dlpiId,
 		FamilyID:            familyId,
 		DeceasedName:        deceasedName,
-		DeceasedHash:        deceasedHash,
+		DeceasedHash:        deceasedAadhaar,
 		DateOfDeath:         dateOfDeath,
 		DeathCertCID:        deathCertCID,
 		CRSRegistrationNo:   crsRegNo,
@@ -823,7 +848,7 @@ func (c *UttaradhikarContract) createSuccessionCase(
 // RecordHeirNotification — oracle confirms delivery
 func (c *UttaradhikarContract) RecordHeirNotification(
 	ctx contractapi.TransactionContextInterface,
-	caseID, heirAadhaarHash, channel, deliveredAt string,
+	caseID, heirAadhaarNumber, channel, deliveredAt string,
 ) error {
 	sCase, err := c.getCase(ctx, caseID)
 	if err != nil {
@@ -832,7 +857,7 @@ func (c *UttaradhikarContract) RecordHeirNotification(
 	allNotified := true
 	found := false
 	for i, h := range sCase.Heirs {
-		if h.AadhaarHash == heirAadhaarHash {
+		if matchAadhaar(h.AadhaarNumber, heirAadhaarNumber) {
 			sCase.Heirs[i].NotifiedAt = deliveredAt
 			sCase.Heirs[i].NotifyChannel = channel
 			found = true
@@ -842,7 +867,7 @@ func (c *UttaradhikarContract) RecordHeirNotification(
 		}
 	}
 	if !found {
-		return fmt.Errorf("heir %s not in case %s", heirAadhaarHash, caseID)
+		return fmt.Errorf("heir %s not in case %s", heirAadhaarNumber, caseID)
 	}
 	if allNotified {
 		sCase.Status = "AWAITING_CONSENTS"
@@ -854,7 +879,7 @@ func (c *UttaradhikarContract) RecordHeirNotification(
 // RecordHeirConsent — heir provides Aadhaar eSign acceptance
 func (c *UttaradhikarContract) RecordHeirConsent(
 	ctx contractapi.TransactionContextInterface,
-	caseID, heirAadhaarHash, eSignTxHash string,
+	caseID, heirAadhaarNumber, eSignTxHash string,
 ) error {
 	sCase, err := c.getCase(ctx, caseID)
 	if err != nil {
@@ -870,7 +895,7 @@ func (c *UttaradhikarContract) RecordHeirConsent(
 	now := time.Now().UTC().Format(time.RFC3339)
 	found := false
 	for i, h := range sCase.Heirs {
-		if h.AadhaarHash == heirAadhaarHash {
+		if matchAadhaar(h.AadhaarNumber, heirAadhaarNumber) {
 			if h.HasObjected {
 				return fmt.Errorf("heir %s already objected — cannot consent after objecting", h.Name)
 			}
@@ -882,15 +907,16 @@ func (c *UttaradhikarContract) RecordHeirConsent(
 		}
 	}
 	if !found {
-		return fmt.Errorf("heir %s not found in case", heirAadhaarHash)
+		return fmt.Errorf("heir %s not found in case", heirAadhaarNumber)
 	}
 
 	// Sync to DLPI chaincode
-	dlpiArgs := [][]byte{[]byte("RecordHeirConsent"), []byte(sCase.DLPIId), []byte(heirAadhaarHash), []byte(eSignTxHash)}
+	dlpiArgs := [][]byte{[]byte("RecordHeirConsent"), []byte(sCase.DLPIId), []byte(heirAadhaarNumber), []byte(eSignTxHash)}
 	_ = ctx.GetStub().InvokeChaincode("dlpi", dlpiArgs, "")
 
 	if c.allAdultHeirsConsented(sCase) {
-		return c.executeAutoMutation(ctx, sCase, now)
+		sCase.Status = "PENDING_TEHSILDAR_APPROVAL"
+		sCase.AllConsentedAt = now
 	}
 	sCase.UpdatedAt = now
 	return c.saveCase(ctx, sCase)
@@ -899,7 +925,7 @@ func (c *UttaradhikarContract) RecordHeirConsent(
 // RecordHeirObjection — heir disputes share computation or right to inherit
 func (c *UttaradhikarContract) RecordHeirObjection(
 	ctx contractapi.TransactionContextInterface,
-	caseID, heirAadhaarHash, disputeType, reason, evidenceCID string,
+	caseID, heirAadhaarNumber, disputeType, reason, evidenceCID string,
 ) error {
 	sCase, err := c.getCase(ctx, caseID)
 	if err != nil {
@@ -908,7 +934,7 @@ func (c *UttaradhikarContract) RecordHeirObjection(
 	now := time.Now().UTC().Format(time.RFC3339)
 	heirName := ""
 	for i, h := range sCase.Heirs {
-		if h.AadhaarHash == heirAadhaarHash {
+		if matchAadhaar(h.AadhaarNumber, heirAadhaarNumber) {
 			if h.HasConsented {
 				return fmt.Errorf("heir %s already consented — cannot object after consenting", h.Name)
 			}
@@ -925,7 +951,7 @@ func (c *UttaradhikarContract) RecordHeirObjection(
 
 	sCase.Status = "COURT_REFERRED"
 	sCase.DisputeInfo = &DisputeRecord{
-		DisputedBy:  heirAadhaarHash,
+		DisputedBy:  heirAadhaarNumber,
 		DisputeType: disputeType,
 		FiledAt:     now,
 		Status:      "FILED",
@@ -1288,6 +1314,26 @@ func (c *UttaradhikarContract) executeAutoMutation(
 }
 
 // ──────────────────────────────────────────────────────────────────────────
+// OFFICER EXECUTION
+// ──────────────────────────────────────────────────────────────────────────
+
+func (c *UttaradhikarContract) ExecuteSuccession(ctx contractapi.TransactionContextInterface, caseID string) (*SuccessionCase, error) {
+	sCase, err := c.getCase(ctx, caseID)
+	if err != nil {
+		return nil, err
+	}
+	if sCase.Status != "PENDING_TEHSILDAR_APPROVAL" && sCase.Status != "COURT_REFERRED" && sCase.Status != "ALL_CONSENTED" {
+		return nil, fmt.Errorf("case not ready for execution, current status: %s", sCase.Status)
+	}
+	now := time.Now().UTC().Format(time.RFC3339)
+	err = c.executeAutoMutation(ctx, sCase, now)
+	if err != nil {
+		return nil, err
+	}
+	return sCase, nil
+}
+
+// ──────────────────────────────────────────────────────────────────────────
 // QUERY FUNCTIONS
 // ──────────────────────────────────────────────────────────────────────────
 
@@ -1309,7 +1355,12 @@ func (c *UttaradhikarContract) GetSuccessionByDLPI(ctx contractapi.TransactionCo
 }
 
 func (c *UttaradhikarContract) QueryPendingSuccessions(ctx contractapi.TransactionContextInterface) ([]*SuccessionCase, error) {
-	query := `{"selector":{"status":{"$in":["AWAITING_CONSENTS","HEIRS_IDENTIFIED"]}}}`
+	query := `{"selector":{"status":{"$in":["AWAITING_CONSENTS","HEIRS_IDENTIFIED","PENDING_TEHSILDAR_APPROVAL"]}}}`
+	return c.executeQuery(ctx, query)
+}
+
+func (c *UttaradhikarContract) GetMyPendingSuccessions(ctx contractapi.TransactionContextInterface, aadhaarNumber string) ([]*SuccessionCase, error) {
+	query := fmt.Sprintf(`{"selector":{"status":{"$in":["AWAITING_CONSENTS","HEIRS_IDENTIFIED","PENDING_TEHSILDAR_APPROVAL"]},"heirs":{"$elemMatch":{"aadhaarNumber":"%s"}}}}`, aadhaarNumber)
 	return c.executeQuery(ctx, query)
 }
 

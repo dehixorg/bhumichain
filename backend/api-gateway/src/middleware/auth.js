@@ -4,9 +4,10 @@ const jwt = require('jsonwebtoken');
 
 const ROLES = {
   CITIZEN:          'citizen',
-  PATWARI:          'patwari',
-  CIRCLE_INSPECTOR: 'circle_inspector',
-  TEHSILDAR:        'tehsildar',
+  KARMACHARI:       'karmachari',
+  ANCHAL_NIRIKSHAK: 'anchalNirikshak',
+  KANUNGO:          'kanungo',
+  ANCHAL_ADHIKARI:  'anchalAdhikari',
   KOTWAL:           'kotwal',
   // Production roles — wired but not demoed
   SRO:              'sro',
@@ -17,9 +18,9 @@ const ROLES = {
   SUPER_ADMIN:      'super_admin',
 };
 
-const OFFICER_ROLES = ['patwari', 'circle_inspector', 'tehsildar', 'kotwal', 'sro', 'collector', 'super_admin'];
-const CAN_CREATE_DLPI    = ['patwari', 'tehsildar', 'collector', 'super_admin'];
-const CAN_APPROVE_MUTATION = ['circle_inspector', 'tehsildar', 'collector', 'super_admin'];
+const OFFICER_ROLES = ['karmachari', 'anchalNirikshak', 'kanungo', 'anchalAdhikari', 'kotwal', 'sro', 'collector', 'super_admin'];
+const CAN_CREATE_DLPI    = ['karmachari', 'anchalAdhikari', 'collector', 'super_admin'];
+const CAN_APPROVE_MUTATION = ['anchalNirikshak', 'kanungo', 'anchalAdhikari', 'collector', 'super_admin'];
 
 function authenticate(req, res, next) {
   const header = req.headers.authorization;
@@ -37,7 +38,9 @@ function authenticate(req, res, next) {
 function requireRole(...roles) {
   return (req, res, next) => {
     if (!req.user) return res.status(401).json({ error: 'UNAUTHENTICATED' });
+    console.log(`[AUTH DEBUG] requireRole checking. req.user.role: '${req.user.role}' (type: ${typeof req.user.role}), roles array:`, roles);
     if (!roles.includes(req.user.role)) {
+      console.log(`[AUTH DEBUG] FAILING! includes returned false!`);
       return res.status(403).json({ error: 'FORBIDDEN', required: roles, current: req.user.role });
     }
     next();
@@ -51,8 +54,8 @@ function mintToken(payload) {
 }
 
 function issueDemoToken(role, name, extra = {}) {
-  if (process.env.FABRIC_MODE !== 'mock') {
-    throw new Error('Demo tokens only available in mock mode');
+  if (process.env.FABRIC_MODE !== 'mock' && process.env.AADHAAR_MOCK !== 'true') {
+    throw new Error('Demo tokens only available in mock mode (unless AADHAAR_MOCK is true)');
   }
   return mintToken({ role, name, demo: true, ...extra });
 }

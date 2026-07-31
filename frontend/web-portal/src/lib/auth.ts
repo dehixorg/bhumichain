@@ -3,16 +3,22 @@ const API = process.env.NEXT_PUBLIC_API_URL || 'mock';
 import { handleMockApi } from './mockBackend';
 
 async function unifiedFetch(path: string, options: RequestInit = {}): Promise<Response> {
+  // Use mock backend ONLY when in full mock mode (local dev)
   if (API === 'mock') {
     return handleMockApi(path, options);
   }
+  // On real VM: all calls go to actual backend
   return fetch(`${API}${path}`, options);
 }
 
 export interface JWTUser {
   role: string;
   name: string;
-  aadhaarHash: string;
+  aadhaarNumber: string;
+  aadhaarId?: string;
+  aadhaarRaw?: string;
+  aadhaar?: string;
+  aadhaarNo?: string;
   jurisdictionCode?: string;
   tehsilCode?: string;
   circleCode?: string;
@@ -32,19 +38,53 @@ export function getToken(): string | null {
 
 export function setToken(token: string): void {
   localStorage.setItem(TOKEN_KEY, token);
+  try { localStorage.setItem('bhumichain_last_login', new Date().toISOString()); } catch(e) {}
 }
 
 export function clearToken(): void {
   localStorage.removeItem(TOKEN_KEY);
 }
 
+export function formatMaskedAadhaar(user: any): string {
+  if (!user) return 'XXXX-XXXX-XXXX';
+  const rawDigits = (user.aadhaarNumber || user.aadhaar || user.aadhaarNo || user.aadhaarId || user.aadhaarNumber || '').replace(/\D/g, '');
+  if (rawDigits.length >= 4) {
+    const last4 = rawDigits.slice(-4);
+    return `XXXX-XXXX-${last4}`;
+  }
+  return 'XXXX-XXXX-XXXX';
+}
+
+export function formatLastLogin(): string {
+  if (typeof window === 'undefined') return 'Today, 10:24 AM';
+  try {
+    const stored = localStorage.getItem('bhumichain_last_login');
+    if (stored) {
+      const dt = new Date(stored);
+      if (!isNaN(dt.getTime())) {
+        return dt.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) + ', ' + dt.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+      }
+    }
+  } catch(e) {}
+  const now = new Date();
+  try { localStorage.setItem('bhumichain_last_login', now.toISOString()); } catch(e) {}
+  return now.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) + ', ' + now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+}
+
 // ─── User decoding ────────────────────────────────────────────────────────────
+
+// Converts base64url → standard base64 so atob() works on real JWTs
+function base64urlDecode(base64url: string): string {
+  const base64 = base64url.replace(/-/g, '+').replace(/_/g, '/');
+  const padded = base64.padEnd(base64.length + (4 - (base64.length % 4)) % 4, '=');
+  return atob(padded);
+}
 
 export function getUser(): JWTUser | null {
   const token = getToken();
   if (!token) return null;
   try {
-    const payload = JSON.parse(atob(token.split('.')[1])) as JWTUser;
+    const payload = JSON.parse(base64urlDecode(token.split('.')[1])) as JWTUser;
     if (payload.exp && Date.now() / 1000 > payload.exp) {
       clearToken();
       return null;
@@ -65,16 +105,27 @@ export function getRole(): string | null {
 }
 
 export function isOfficer(): boolean {
-  return ['patwari', 'circle_inspector', 'tehsildar', 'kotwal'].includes(getRole() ?? '');
+  const role = getRole() ?? '';
+  return ['karmachari', 'patwari', 'circle_inspector', 'anchalNirikshak', 'kanungo', 'circle_officer', 'anchalAdhikari', 'tehsildar', 'sro', 'collector', 'super_admin', 'kotwal', 'revenue_officer'].includes(role);
 }
 
 export function isTehsildar(): boolean {
-  return getRole() === 'tehsildar';
+  const role = getRole() ?? '';
+  return ['circle_officer', 'anchalAdhikari', 'tehsildar'].includes(role);
 }
 
 export function getRedirectPath(role: string): string {
   if (role === 'citizen') return '/my-parcels';
   return '/officer-dashboard';
+}
+
+async function safeParseJson(res: Response): Promise<any> {
+  const text = await res.text();
+  try {
+    return JSON.parse(text);
+  } catch {
+    return { error: text || `Server error (${res.status})` };
+  }
 }
 
 // ─── Auth API calls ───────────────────────────────────────────────────────────
@@ -85,7 +136,7 @@ export async function requestOTP(aadhaarNumber: string): Promise<{ maskedPhone: 
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ aadhaarNumber }),
   });
-  const data = await res.json();
+  const data = await safeParseJson(res);
   if (!res.ok) throw new Error(data.message || data.error || 'Failed to send OTP');
   return data;
 }
@@ -96,7 +147,7 @@ export async function verifyOTP(aadhaarNumber: string, otp: string): Promise<JWT
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ aadhaarNumber, otp }),
   });
-  const data = await res.json();
+  const data = await safeParseJson(res);
   if (!res.ok) throw new Error(data.message || data.error || 'Login failed');
   setToken(data.token);
   return data.user;
@@ -112,7 +163,7 @@ export async function officerLogin(
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ aadhaarNumber, deptEmail, otp }),
   });
-  const data = await res.json();
+  const data = await safeParseJson(res);
   if (!res.ok) throw new Error(data.message || data.error || 'Officer login failed');
   setToken(data.token);
   return data.user;
@@ -124,8 +175,8 @@ export async function demoLogin(persona: string): Promise<JWTUser> {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ persona }),
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'Demo login failed');
+  const data = await safeParseJson(res);
+  if (!res.ok) throw new Error(data.error || data.message || 'Demo login failed');
   setToken(data.token);
   return data.user;
 }

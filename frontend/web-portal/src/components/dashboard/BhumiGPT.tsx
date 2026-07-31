@@ -224,7 +224,7 @@ export default function BhumiGPT({ className }: BhumiGPTProps) {
               key={p.q}
               onClick={() => handlePreset(p.q)}
               disabled={isTyping}
-              className="text-xs bg-gray-800 hover:bg-gray-700 border border-gray-700 hover:border-gray-600 text-gray-300 rounded-full px-3 py-1.5 transition-colors truncate max-w-[180px]"
+              className="text-xs bg-[#F8FAFC] hover:bg-gray-700 border border-gray-200 hover:border-gray-300 text-gray-600 rounded-full px-3 py-1.5 transition-colors truncate max-w-[180px]"
             >
               {p.q}
             </button>
@@ -233,7 +233,7 @@ export default function BhumiGPT({ className }: BhumiGPTProps) {
       )}
 
       {/* Input */}
-      <div className="px-4 pb-4 pt-2 border-t border-gray-800">
+      <div className="px-4 pb-4 pt-2 border-t border-gray-200">
         <form onSubmit={handleSubmit} className="flex gap-2">
           <input
             ref={inputRef}
@@ -268,10 +268,10 @@ export default function BhumiGPT({ className }: BhumiGPTProps) {
 function WelcomeScreen({ onPreset }: { onPreset: (q: string) => void }) {
   return (
     <div className="flex flex-col items-center py-6 text-center">
-      <div className="w-14 h-14 rounded-2xl bg-brand-900 border border-brand-700 flex items-center justify-center mb-4">
-        <span className="text-2xl font-bold text-brand-300">भू</span>
+      <div className="w-14 h-14 rounded-2xl bg-[#DBEAFE] border border-blue-300 flex items-center justify-center mb-4">
+        <span className="text-2xl font-bold text-[#0F4C81]">भू</span>
       </div>
-      <div className="text-gray-200 font-semibold mb-1">BhumiGPT</div>
+      <div className="text-gray-700 font-semibold mb-1">BhumiGPT</div>
       <div className="text-gray-500 text-sm mb-6 max-w-xs">
         जमीन हक्क, वारसा, आणि नोंदणी विषयी मराठी, हिंदी, किंवा इंग्रजीत विचारा.
       </div>
@@ -281,9 +281,9 @@ function WelcomeScreen({ onPreset }: { onPreset: (q: string) => void }) {
           <button
             key={p.q}
             onClick={() => onPreset(p.q)}
-            className="w-full text-left text-xs bg-gray-800 hover:bg-gray-750 border border-gray-700 hover:border-brand-700 text-gray-300 rounded-xl px-3 py-2.5 transition-colors flex items-center gap-2 group"
+            className="w-full text-left text-xs bg-[#F8FAFC] hover:bg-gray-50 border border-gray-200 hover:border-blue-300 text-gray-600 rounded-xl px-3 py-2.5 transition-colors flex items-center gap-2 group"
           >
-            <ChevronRight className="w-3 h-3 text-brand-500 shrink-0 group-hover:translate-x-0.5 transition-transform" />
+            <ChevronRight className="w-3 h-3 text-[#0F4C81] shrink-0 group-hover:translate-x-0.5 transition-transform" />
             <span className="flex-1">{p.q}</span>
             <span className="text-gray-600 shrink-0 text-xs">{p.lang === 'mr' ? 'मराठी' : p.lang === 'hi' ? 'हिंदी' : 'English'}</span>
           </button>
@@ -304,8 +304,8 @@ function MessageBubble({ msg }: { msg: ChatMessage }) {
         <div className={clsx(
           'rounded-2xl px-4 py-3 text-sm leading-relaxed',
           isUser
-            ? 'bg-brand-700 text-white rounded-br-sm'
-            : 'bg-gray-800 border border-gray-700 text-gray-200 rounded-bl-sm',
+            ? 'bg-[#0a3566] text-white rounded-br-sm'
+            : 'bg-[#F8FAFC] border border-gray-200 text-gray-700 rounded-bl-sm',
         )}>
           <FormattedText text={msg.text} />
         </div>
@@ -318,9 +318,9 @@ function MessageBubble({ msg }: { msg: ChatMessage }) {
           {!isUser && msg.confidence !== undefined && msg.confidence > 0 && (
             <span className={clsx(
               'text-xs font-semibold px-2 py-0.5 rounded-full',
-              msg.confidence >= 0.95 ? 'bg-brand-950 text-brand-400' :
+              msg.confidence >= 0.95 ? 'bg-[#EFF6FF] text-[#0F4C81]' :
               msg.confidence >= 0.80 ? 'bg-amber-950 text-amber-400' :
-                                       'bg-gray-800 text-gray-500',
+                                       'bg-[#F8FAFC] text-gray-500',
             )}>
               {Math.round(msg.confidence * 100)}% confidence
             </span>
@@ -336,7 +336,7 @@ function MessageBubble({ msg }: { msg: ChatMessage }) {
             </div>
             {msg.sources.map((s, i) => (
               <div key={i} className="flex items-start gap-1 text-xs text-gray-500">
-                <ExternalLink className="w-3 h-3 shrink-0 mt-0.5 text-brand-600" />
+                <ExternalLink className="w-3 h-3 shrink-0 mt-0.5 text-[#0F4C81]" />
                 <span>{s}</span>
               </div>
             ))}
@@ -350,7 +350,7 @@ function MessageBubble({ msg }: { msg: ChatMessage }) {
 function TypingIndicator() {
   return (
     <div className="flex justify-start">
-      <div className="bg-gray-800 border border-gray-700 rounded-2xl rounded-bl-sm px-4 py-3 flex items-center gap-1">
+      <div className="bg-[#F8FAFC] border border-gray-200 rounded-2xl rounded-bl-sm px-4 py-3 flex items-center gap-1">
         {[0, 1, 2].map((i) => (
           <div
             key={i}

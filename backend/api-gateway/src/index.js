@@ -14,15 +14,20 @@ const dlpiRoutes        = require('./routes/dlpi');
 const transferRoutes    = require('./routes/transfer');
 const mutationRoutes    = require('./routes/mutation');
 const uttaradhikarRoutes = require('./routes/uttaradhikar');
-const tribalRoutes      = require('./routes/tribal');
 const encumbranceRoutes = require('./routes/encumbrance');
 const auctionRoutes     = require('./routes/auction');
+const bhuNakshaRoutes   = require('./routes/bhu-naksha');
+const leaseRoutes       = require('./routes/lease');
 const { authenticate, ROLES } = require('./middleware/auth');
 const { init: initWs, triggerMockEvent } = require('./services/websocket');
 const { isMock } = require('./services/fabric');
 
 const app = express();
 const server = http.createServer(app);
+
+// Connect to MongoDB
+const connectDB = require('./config/db');
+connectDB();
 
 // ─── Security & Middleware ────────────────────────────────────────────────────
 
@@ -34,9 +39,10 @@ app.use(morgan('dev'));
 app.use(
   rateLimit({
     windowMs: Number(process.env.RATE_LIMIT_WINDOW_MS) || 60_000,
-    max: Number(process.env.RATE_LIMIT_MAX) || 100,
+    max: Number(process.env.RATE_LIMIT_MAX) || 2000,
     standardHeaders: true,
     legacyHeaders: false,
+    message: { error: 'Too many requests, please try again in a minute.' },
   }),
 );
 
@@ -65,6 +71,18 @@ app.post('/api/demo/trigger', authenticate, (req, res) => {
   res.json({ fired: true, key });
 });
 
+// POST /api/system/reset
+// Used to reset all mock data to the initial state for the next demo.
+app.post('/api/system/reset', authenticate, async (req, res) => {
+  try {
+    const { resetDemoData } = require('./mock/responses');
+    await resetDemoData();
+    res.json({ success: true, message: 'Demo data reset successfully.' });
+  } catch (err) {
+    res.status(500).json({ error: 'RESET_FAILED', message: err.message });
+  }
+});
+
 // ─── API Routes ───────────────────────────────────────────────────────────────
 
 app.use('/api/auth',        authRoutes);
@@ -72,9 +90,10 @@ app.use('/api/dlpi',        dlpiRoutes);
 app.use('/api/transfer',    transferRoutes);
 app.use('/api/mutation',    mutationRoutes);
 app.use('/api/succession',  uttaradhikarRoutes);
-app.use('/api/tribal',      tribalRoutes);
 app.use('/api/encumbrance', encumbranceRoutes);
 app.use('/api/auction',     auctionRoutes);
+app.use('/api/bhu-naksha',  bhuNakshaRoutes);
+app.use('/api/lease',       leaseRoutes);
 
 // Oracle proxy — forward to oracle-service (avoids CORS on frontend)
 const axios = require('axios');
@@ -90,6 +109,24 @@ app.use('/api/oracle', authenticate, async (req, res) => {
   } catch (e) {
     const status = e.response?.status || 502;
     res.status(status).json(e.response?.data || { error: 'ORACLE_UNREACHABLE' });
+  }
+});
+
+// BhumiBot AI proxy — forward to BhumiBot microservice (port 8015)
+app.use('/api/bhumibot', async (req, res) => {
+  try {
+    const targetUrl = `${process.env.BHUMIBOT_SERVICE_URL || 'http://localhost:8015'}${req.path}`;
+    const botRes = await axios({
+      method: req.method,
+      url: targetUrl,
+      data: req.body,
+      params: req.query,
+      headers: { 'Content-Type': 'application/json' }
+    });
+    res.status(botRes.status).json(botRes.data);
+  } catch (e) {
+    const status = e.response?.status || 502;
+    res.status(status).json(e.response?.data || { error: 'BHUMIBOT_SERVICE_UNREACHABLE', message: e.message });
   }
 });
 
@@ -168,7 +205,7 @@ Jurisdiction: Uttar Pradesh Revenue Law, Hindu Succession Act 1956/2005, UP Zami
   try {
     const url = `${process.env.NYAYA_URL || 'http://localhost:8012'}/nyaya/predict`;
     const r = await axios.post(url, req.body, {
-      headers: { 'x-user-role': req.user.role, 'x-aadhaar-hash': req.user.aadhaarHash },
+      headers: { 'x-user-role': req.user.role, 'x-aadhaar-hash': req.user.aadhaarNumber },
     });
     res.json({ ...r.data, source: 'local' });
   } catch (e) {
@@ -181,7 +218,7 @@ app.use('/api/ai/nyaya', authenticate, async (req, res) => {
   try {
     const url = `${process.env.NYAYA_URL || 'http://localhost:8012'}/nyaya${req.path}`;
     const r = await axios({ method: req.method, url, data: req.body, params: req.query,
-      headers: { 'x-user-role': req.user.role, 'x-aadhaar-hash': req.user.aadhaarHash } });
+      headers: { 'x-user-role': req.user.role, 'x-aadhaar-hash': req.user.aadhaarNumber } });
     res.status(r.status).json(r.data);
   } catch (e) {
     res.status(e.response?.status || 502).json(e.response?.data || { error: 'NYAYA_AI_UNREACHABLE' });

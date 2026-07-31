@@ -1,0 +1,1 @@
+require('dotenv').config({path: './backend/api-gateway/.env'}); const { issueDemoToken } = require('./backend/api-gateway/src/middleware/auth'); const token = issueDemoToken('patwari', 'Vijay Singh', { jurisdictionCode: 'GBN-DAD', tehsilCode: 'DAD' }); console.log(token);

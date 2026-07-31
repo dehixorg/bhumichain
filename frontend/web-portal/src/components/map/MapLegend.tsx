@@ -16,21 +16,21 @@ interface Props {
 export default function MapLegend({ stats }: Props) {
   return (
     <div className="absolute bottom-6 left-4 z-[1000] card min-w-[200px] shadow-2xl">
-      <div className="text-xs font-semibold text-gray-300 mb-2 uppercase tracking-wider">
+      <div className="text-xs font-semibold text-gray-600 mb-2 uppercase tracking-wider">
         Land Type
       </div>
       {(Object.entries(LAND_TYPE_LABELS) as [LandType, string][]).map(([type, label]) => (
         <div key={type} className="flex items-center gap-2 py-0.5">
           <div
-            className="w-3 h-3 rounded-sm shrink-0 border border-gray-700"
+            className="w-3 h-3 rounded-sm shrink-0 border border-gray-200"
             style={{ backgroundColor: LAND_TYPE_COLOR[type] }}
           />
           <span className="text-xs text-gray-400">{label}</span>
         </div>
       ))}
 
-      <div className="mt-3 pt-3 border-t border-gray-800">
-        <div className="text-xs font-semibold text-gray-300 mb-2 uppercase tracking-wider">
+      <div className="mt-3 pt-3 border-t border-gray-200">
+        <div className="text-xs font-semibold text-gray-600 mb-2 uppercase tracking-wider">
           Boundaries
         </div>
         <div className="flex items-center gap-2 py-0.5">
@@ -47,17 +47,17 @@ export default function MapLegend({ stats }: Props) {
         </div>
       </div>
 
-      <div className="mt-3 pt-3 border-t border-gray-800 grid grid-cols-2 gap-2">
-        <Stat label="Total" value={stats.total.toLocaleString()} />
-        <Stat label="Tribal" value={stats.tribal.toLocaleString()} color="text-amber-400" />
-        <Stat label="Coparcenary" value={stats.coparcenary.toLocaleString()} color="text-purple-400" />
-        <Stat label="Encumbered" value={stats.encumbered.toLocaleString()} color="text-red-400" />
+      <div className="mt-3 pt-3 border-t border-gray-200 grid grid-cols-2 gap-2">
+        <Stat label="Total" value={stats.total.toLocaleString()} color="text-[#0F4C81]" />
+        <Stat label="Tribal" value={stats.tribal.toLocaleString()} color="text-amber-600" />
+        <Stat label="Coparcenary" value={stats.coparcenary.toLocaleString()} color="text-purple-600" />
+        <Stat label="Encumbered" value={stats.encumbered.toLocaleString()} color="text-red-600" />
       </div>
     </div>
   );
 }
 
-function Stat({ label, value, color = 'text-brand-400' }: { label: string; value: string; color?: string }) {
+function Stat({ label, value, color = 'text-[#0F4C81]' }: { label: string; value: string; color?: string }) {
   return (
     <div className="text-center">
       <div className={`text-sm font-bold ${color}`}>{value}</div>

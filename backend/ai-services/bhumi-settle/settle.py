@@ -29,7 +29,7 @@ app = FastAPI(title="BhumiSettle AI", version="1.0.0")
 
 @dataclass
 class Party:
-    aadhaar_hash: str
+    aadhaar_number: str
     name: str
     fair_value: float          # their share fraction × total pool value
     assigned_value: float = 0.0
@@ -69,16 +69,16 @@ def greedy_assign(parties: list[Party], properties: list[Property]) -> tuple[lis
 
     for prop in props:
         # Find party with biggest shortfall (fair_value - assigned_value)
-        best = max(parties, key=lambda p: p.fair_value - assigned[p.aadhaar_hash])
-        prop.assigned_to = best.aadhaar_hash
-        assigned[best.aadhaar_hash] += prop.value_inr
+        best = max(parties, key=lambda p: p.fair_value - assigned[p.aadhaar_number])
+        prop.assigned_to = best.aadhaar_number
+        assigned[best.aadhaar_number] += prop.value_inr
 
     # Calculate equalization payments
     # Those who received more than fair share pay those who received less
     overpaid: list[tuple[Party, float]] = []
     underpaid: list[tuple[Party, float]] = []
     for p in parties:
-        diff = assigned[p.aadhaar_hash] - p.fair_value
+        diff = assigned[p.aadhaar_number] - p.fair_value
         if diff > 100:
             overpaid.append((p, diff))
         elif diff < -100:
@@ -94,8 +94,8 @@ def greedy_assign(parties: list[Party], properties: list[Property]) -> tuple[lis
             pay_amount = min(remaining, need)
             if pay_amount > 0:
                 payments.append(Payment(
-                    from_hash=op.aadhaar_hash,
-                    to_hash=up.aadhaar_hash,
+                    from_hash=op.aadhaar_number,
+                    to_hash=up.aadhaar_number,
                     amount_inr=round(pay_amount, 2)
                 ))
                 remaining -= pay_amount
@@ -108,14 +108,14 @@ def max_deviation(parties: list[Party], assigned: dict[str, float]) -> float:
     devs = []
     for p in parties:
         if p.fair_value > 0:
-            devs.append(abs(assigned[p.aadhaar_hash] - p.fair_value) / p.fair_value)
+            devs.append(abs(assigned[p.aadhaar_number] - p.fair_value) / p.fair_value)
     return max(devs) if devs else 0.0
 
 
 class SettlementRequest(BaseModel):
     proposal_id: str
     pool_id: str
-    parties: list[dict]      # {aadhaarHash, name, fairValueInr}
+    parties: list[dict]      # {aadhaarNumber, name, fairValueInr}
     properties: list[dict]   # {dlpiId, village, areaHectares, landType, valueInr}
     total_pool_value: float
 
@@ -140,7 +140,7 @@ def recommend_settlement(req: SettlementRequest) -> SettlementResponse:
     """
     parties = [
         Party(
-            aadhaar_hash=p["aadhaarHash"],
+            aadhaar_number=p["aadhaarNumber"],
             name=p.get("name", ""),
             fair_value=p["fairValueInr"]
         )
@@ -235,7 +235,7 @@ def _build_explanation(
         "Assignment summary:"
     ]
     for p in parties:
-        assigned = assigned_totals.get(p.aadhaar_hash, 0)
+        assigned = assigned_totals.get(p.aadhaar_number, 0)
         diff = assigned - p.fair_value
         direction = "adhik mile" if diff > 0 else "kam mile"
         lines.append(
@@ -264,7 +264,7 @@ class MutationEvent(BaseModel):
     officer_hash: str
     officer_name: str
     officer_rank: str
-    new_owners: list[dict]       # [{aadhaarHash, name, share}]
+    new_owners: list[dict]       # [{aadhaarNumber, name, share}]
     dilrmp_name_count: int        # how many names DILRMP shows for this Khasra
     declared_value: float
     circle_rate_value: float      # what the property should be worth at circle rate
@@ -340,7 +340,7 @@ def check_officer_pattern(event: MutationEvent) -> FraudCheckResponse:
     buyer_counter: dict[str, int] = defaultdict(int)
     for m in log:
         for owner in m.get("new_owners", []):
-            buyer_counter[owner["aadhaarHash"]] += 1
+            buyer_counter[owner["aadhaarNumber"]] += 1
     concentrated_buyers = [(b, c) for b, c in buyer_counter.items() if c >= 5]
     if concentrated_buyers:
         score = min(0.70 + len(concentrated_buyers) * 0.05, 0.88)

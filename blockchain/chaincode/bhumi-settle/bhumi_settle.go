@@ -65,7 +65,7 @@ type CircleRate struct {
 	RatePerSqMtr float64 `json:"ratePerSqMtr"`          // ₹ per sq metre
 	RatePerHa    float64 `json:"ratePerHa"`             // ₹ per hectare (for agricultural)
 	EffectiveFrom string `json:"effectiveFrom"`
-	SetByHash    string  `json:"setByHash"`             // Tehsildar's aadhaarHash
+	SetByHash    string  `json:"setByHash"`             // Tehsildar's aadhaarNumber
 	UpdatedAt    string  `json:"updatedAt"`
 }
 
@@ -73,7 +73,7 @@ type CircleRate struct {
 
 // SettlementParty — one co-owner participating in this settlement
 type SettlementParty struct {
-	AadhaarHash   string  `json:"aadhaarHash"`
+	AadhaarNumber   string  `json:"aadhaarNumber"`
 	Name          string  `json:"name"`
 	CurrentShare  string  `json:"currentShare"`   // "1/4", "3/16" etc.
 	ShareDecimal  float64 `json:"shareDecimal"`
@@ -94,7 +94,7 @@ type PropertyAssignment struct {
 	AreaHectares float64 `json:"areaHectares"`
 	LandType     string  `json:"landType"`
 	ValueINR     float64 `json:"valueInr"`         // area × circle rate
-	AssignedTo   string  `json:"assignedTo"`        // aadhaarHash (empty = remains in subgroup pool)
+	AssignedTo   string  `json:"assignedTo"`        // aadhaarNumber (empty = remains in subgroup pool)
 	IsFullTransfer bool  `json:"isFullTransfer"`    // true if sole ownership; false if partial
 	NewShareFraction string `json:"newShareFraction,omitempty"` // for partial assignments
 }
@@ -187,7 +187,7 @@ type OfficerFraudAlert struct {
 	EvidenceDLPIIds []string `json:"evidenceDlpiIds"`
 	Description     string   `json:"description"`    // human-readable summary
 	EscalatedTo     string   `json:"escalatedTo"`    // which officer level notified
-	EscalatedToHash string   `json:"escalatedToHash"` // specific officer's aadhaarHash
+	EscalatedToHash string   `json:"escalatedToHash"` // specific officer's aadhaarNumber
 	Status          string   `json:"status"`          // PENDING | UNDER_REVIEW | DISMISSED | ACTION_TAKEN
 	CreatedAt       string   `json:"createdAt"`
 	ResolvedAt      string   `json:"resolvedAt,omitempty"`
@@ -295,7 +295,7 @@ func (c *BhumiSettleContract) GetCircleRate(
 // This can be called by any co-owner (citizen) or by an officer on their behalf.
 // The AI recommendation is requested as a separate call (RequestAIRecommendation).
 //
-// partiesJSON: array of { aadhaarHash, name, currentShare, shareDecimal }
+// partiesJSON: array of { aadhaarNumber, name, currentShare, shareDecimal }
 // dlpiDetailsJSON: array of { dlpiId, village, areaHectares, landType } for valuation
 // settlementType: EQUITABLE_PARTITION | SUBGROUP | DIRECT_BUYOUT
 func (c *BhumiSettleContract) InitiateSettlement(
@@ -307,7 +307,7 @@ func (c *BhumiSettleContract) InitiateSettlement(
 ) (string, error) {
 
 	var rawParties []struct {
-		AadhaarHash  string  `json:"aadhaarHash"`
+		AadhaarNumber  string  `json:"aadhaarNumber"`
 		Name         string  `json:"name"`
 		CurrentShare string  `json:"currentShare"`
 		ShareDecimal float64 `json:"shareDecimal"`
@@ -358,7 +358,7 @@ func (c *BhumiSettleContract) InitiateSettlement(
 	parties := make([]SettlementParty, len(rawParties))
 	for i, rp := range rawParties {
 		parties[i] = SettlementParty{
-			AadhaarHash:  rp.AadhaarHash,
+			AadhaarNumber:  rp.AadhaarNumber,
 			Name:         rp.Name,
 			CurrentShare: rp.CurrentShare,
 			ShareDecimal: rp.ShareDecimal,
@@ -440,7 +440,7 @@ func (c *BhumiSettleContract) RecordAIRecommendation(
 		assignedByParty[a.AssignedTo] += a.ValueINR
 	}
 	for i, p := range proposal.Parties {
-		assigned := assignedByParty[p.AadhaarHash]
+		assigned := assignedByParty[p.AadhaarNumber]
 		proposal.Parties[i].AssignedValue = assigned
 		proposal.Parties[i].EqualizationINR = assigned - p.FairValueINR
 	}
@@ -467,7 +467,7 @@ func (c *BhumiSettleContract) RecordAIRecommendation(
 	// Notify all parties to review the AI recommendation
 	partyHashes := make([]string, len(proposal.Parties))
 	for i, p := range proposal.Parties {
-		partyHashes[i] = p.AadhaarHash
+		partyHashes[i] = p.AadhaarNumber
 	}
 	notifyEvent, _ := json.Marshal(map[string]interface{}{
 		"proposalId":    proposalID,
@@ -498,7 +498,7 @@ func (c *BhumiSettleContract) ConsentToSettlement(
 	now := time.Now().UTC().Format(time.RFC3339)
 	found := false
 	for i, p := range proposal.Parties {
-		if p.AadhaarHash == partyHash {
+		if p.AadhaarNumber == partyHash {
 			proposal.Parties[i].HasConsented = true
 			proposal.Parties[i].ConsentedAt = now
 			proposal.Parties[i].ESignHash = eSignHash
@@ -555,7 +555,7 @@ func (c *BhumiSettleContract) ObjectToSettlement(
 
 	now := time.Now().UTC().Format(time.RFC3339)
 	for i, p := range proposal.Parties {
-		if p.AadhaarHash == partyHash {
+		if p.AadhaarNumber == partyHash {
 			proposal.Parties[i].HasObjected = true
 			proposal.Parties[i].ObjectionReason = reason
 			break
@@ -747,7 +747,7 @@ func (c *BhumiSettleContract) EscalateSettlement(
 //                         when DILRMP records show multiple names
 //   UNDERVALUATION      — declared value < 60% of circle rate (stamp duty evasion)
 //   DELAYED_MUTATION    — mutation filed >2 years after death cert date
-//   SELF_DEALING        — officer's own aadhaarHash family member's property
+//   SELF_DEALING        — officer's own aadhaarNumber family member's property
 //   BUYER_CONCENTRATION — same buyer in >5 mutations by same officer in 30 days
 //   OFF_HOURS_ENTRY     — mutations filed between 11pm and 5am repeatedly
 func (c *BhumiSettleContract) RecordOfficerFraudAlert(
@@ -970,14 +970,14 @@ func greedyAssign(parties []SettlementParty, properties []PropertyAssignment) ([
 		bestIdx := 0
 		bestShortfall := -1e18
 		for j, p := range parties {
-			shortfall := p.FairValueINR - assigned[p.AadhaarHash]
+			shortfall := p.FairValueINR - assigned[p.AadhaarNumber]
 			if shortfall > bestShortfall {
 				bestShortfall = shortfall
 				bestIdx = j
 			}
 		}
-		properties[i].AssignedTo = parties[bestIdx].AadhaarHash
-		assigned[parties[bestIdx].AadhaarHash] += prop.ValueINR
+		properties[i].AssignedTo = parties[bestIdx].AadhaarNumber
+		assigned[parties[bestIdx].AadhaarNumber] += prop.ValueINR
 	}
 
 	// Calculate equalization payments
@@ -990,17 +990,17 @@ func greedyAssign(parties []SettlementParty, properties []PropertyAssignment) ([
 	_ = avgValue
 
 	for _, p := range parties {
-		diff := assigned[p.AadhaarHash] - p.FairValueINR
+		diff := assigned[p.AadhaarNumber] - p.FairValueINR
 		if diff > 100 { // received more than fair share by > ₹100
 			// This person owes money to those who received less
 			for _, q := range parties {
-				qdiff := assigned[q.AadhaarHash] - q.FairValueINR
+				qdiff := assigned[q.AadhaarNumber] - q.FairValueINR
 				if qdiff < -100 { // q received less than fair share
 					// Simplified: p pays q proportionally
 					payAmt := diff * ((-qdiff) / (totalPool))
 					payments = append(payments, EqualizationPayment{
-						FromHash:  p.AadhaarHash,
-						ToHash:    q.AadhaarHash,
+						FromHash:  p.AadhaarNumber,
+						ToHash:    q.AadhaarNumber,
 						AmountINR: payAmt,
 						Status:    "PENDING",
 					})

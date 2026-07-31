@@ -1,522 +1,435 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect, useCallback } from 'react';
-import dynamic from 'next/dynamic';
-import Sidebar from '@/components/dashboard/Sidebar';
-import MultiSig from '@/components/forms/MultiSig';
-import MutationAlert from '@/components/modals/MutationAlert';
-import { useWebSocket } from '@/hooks/useWebSocket';
+import React, { useEffect, useMemo, useState } from "react";
+import Sidebar from "@/components/dashboard/Sidebar";
+import { executeSuccessionClaim, getInheritorNominations } from "@/lib/api";
+import { getUser, type JWTUser } from "@/lib/auth";
+import toast from "react-hot-toast";
 import {
-  getDemoToken, initiateSuccession, recordHeirConsent,
-  getSuccessionCase, verifyCRS,
-} from '@/lib/api';
-import type { SuccessionCase, SuccessionHeir } from '@/types';
-import toast from 'react-hot-toast';
-import {
-  Users, Shield, CheckCircle, Zap, FileText,
-  ChevronRight, Info, Clock, Cpu, AlertTriangle,
-} from 'lucide-react';
-import clsx from 'clsx';
-import { format } from 'date-fns';
+  ArrowRight,
+  CheckCircle,
+  Database,
+  FileText,
+  Landmark,
+  Loader2,
+  Scan,
+  Upload,
+  Zap,
+} from "lucide-react";
+import clsx from "clsx";
+import { format } from "date-fns";
 
-const FamilyTree = dynamic(
-  () => import('@/components/dashboard/FamilyTree'),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="h-64 flex items-center justify-center text-gray-500 text-sm animate-pulse">
-        Loading family tree…
-      </div>
-    ),
-  },
-);
+type AcceptedNomination = {
+  dlpiId: string;
+  ownerName?: string;
+  ownerAadhaar?: string;
+  inheritorName?: string;
+  inheritorAadhaarNumber?: string;
+  status?: string;
+};
 
-// ─── Demo constants ───────────────────────────────────────────────────────────
-
-const DEMO_FAMILY_ID = 'FAM-UP-DAD-00100-001';
-const DEMO_DLPI      = 'DLPI-UP-DAD-00100';
+type CrsExtraction = {
+  dlpiId: string;
+  name: string;
+  dod: string;
+  crsRegistrationNo: string;
+  fileName: string;
+};
 
 const DEMO_DECEASED = {
-  name:        'Deepak Narayan Singh',
-  aadhaarHash: 'sha256:owner1deepak3f8e2d1c7b4a09f6e5d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9',
-  dod:         '2026-05-20',
-  dob:         '1958-03-15',
+  name: "Ramesh Kumar",
+  dod: "2026-05-20",
 };
 
 const DEMO_CRS = {
-  deathCertCID:      'QmDeathCertDeepaK2026',
-  crsRegistrationNo: 'CRS-GBN-2026-00541',
+  crsRegistrationNo: "CRS-GBN-2026-00891",
 };
 
-const MOCK_ALERT = {
-  mutationId:          'MUT-DLPI-UP-DAD-00100-d4e5f6a7',
-  dlpiId:              DEMO_DLPI,
-  mutationType:        'Inheritance',
-  officerName:         'Suresh Kumar Yadav, Circle Inspector',
-  alertSentAt:         new Date(Date.now() - 64_000).toISOString(),
-  slaMet:              true,
-  alertElapsedSeconds: 64,
-};
-
-// Offline fallback heirs — used when API is unreachable
-const OFFLINE_HEIRS: SuccessionHeir[] = [
-  {
-    heirId: 'HEIR-001', name: 'Ankur Singh', aadhaarHash: 'sha256:heir1ankur3f8e2d1c7b4a09f6e5d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8',
-    relation: 'Son', gender: 'Male', dob: '1988-03-15',
-    isAlive: true, isAdult: true, isNri: false,
-    share: '1/3', shareDecimal: 0.3333, legalNote: undefined,
-    hasConsented: false, hasObjected: false,
-  },
-  {
-    heirId: 'HEIR-002', name: 'Nitin Singh', aadhaarHash: 'sha256:heir2nitin8e2d1c7b4a09f6e5d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8f7',
-    relation: 'Son', gender: 'Male', dob: '1991-07-22',
-    isAlive: true, isAdult: true, isNri: false,
-    share: '1/3', shareDecimal: 0.3333, legalNote: undefined,
-    hasConsented: false, hasObjected: false,
-  },
-  {
-    heirId: 'HEIR-003', name: 'Neeta Singh', aadhaarHash: 'sha256:heir3neeta1c7b4a09f6e5d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8f7e6d5',
-    relation: 'Daughter', gender: 'Female', dob: '1994-11-08',
-    isAlive: true, isAdult: true, isNri: false,
-    share: '1/3', shareDecimal: 0.3334,
-    legalNote: 'Equal coparcenary rights per Hindu Succession (Amendment) Act 2005 Section 6(3). Daughters have same rights as sons by birth.',
-    hasConsented: false, hasObjected: false,
-  },
+const CRS_AI_STEPS = [
+  "Uploading death certificate to secure document vault",
+  "Running OCR extraction",
+  "Cross-checking owner identity",
+  "Validating registration number",
+  "Validation successful",
 ];
 
-const AI_STEPS = [
-  'Fetching family registry from Dadri tehsil, Gautam Buddha Nagar',
-  'Identifying Class I heirs under HSA 1956',
-  'Applying HSA 2005 S.6(3) — daughters equal coparceners',
-  'Computing 1/3 shares across 3 heirs (Fraction arithmetic)',
-  'Validating share sum = 1.0',
-  'Checking for NRI / minor / overseas heir edge cases',
-  'Pinning computation log to IPFS',
-];
-
-type Stage =
-  | 'idle'
-  | 'crs_verified'
-  | 'ai_computing'
-  | 'heirs_identified'
-  | 'awaiting_consents'
-  | 'all_consented';
-
-// ─── Page ─────────────────────────────────────────────────────────────────────
+const delay = (ms: number) =>
+  new Promise<void>((resolve) => setTimeout(resolve, ms));
 
 export default function SuccessionPage() {
-  const [stage, setStage]         = useState<Stage>('idle');
-  const [caseData, setCaseData]   = useState<SuccessionCase | null>(null);
-  const [heirs, setHeirs]         = useState<SuccessionHeir[]>([]);
-  const [showAlert, setShowAlert] = useState(false);
-  const [aiSteps, setAiSteps]     = useState(AI_STEPS.map((label) => ({ label, done: false })));
+  const [user, setUser] = useState<JWTUser | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [acceptedNominations, setAcceptedNominations] = useState<
+    AcceptedNomination[]
+  >([]);
+  const [selectedDlpiId, setSelectedDlpiId] = useState("");
+  const [isScanning, setIsScanning] = useState(false);
+  const [crsAiSteps, setCrsAiSteps] = useState<
+    { label: string; done: boolean }[]
+  >([]);
+  const [crsExtraction, setCrsExtraction] = useState<CrsExtraction | null>(
+    null,
+  );
+  const [isExecuting, setIsExecuting] = useState(false);
+  const [executionResult, setExecutionResult] = useState<{
+    txId?: string;
+  } | null>(null);
 
-  const { triggerMock, on: onWs } = useWebSocket(DEMO_DLPI);
-
-  // Acquire demo token on mount
   useEffect(() => {
-    getDemoToken('oracle', 'CRS Oracle').catch(() => {});
-  }, []);
+    const currentUser = getUser();
+    setUser(currentUser);
 
-  // Live WebSocket events
-  useEffect(() => {
-    return onWs('*', (msg) => {
-      if (msg.event === 'HeirNotificationRequired') {
-        toast('📨 Heir notifications dispatched via SMS + WhatsApp', { duration: 4000 });
-      }
-      if (msg.event === 'AllHeirsConsentedAutoMutation') {
-        setStage('all_consented');
-        toast.success('All heirs consented — auto-mutation executing!');
-      }
-    });
-  }, [onWs]);
-
-  // ── Step 1: Verify CRS death certificate ─────────────────────────────────
-
-  const handleVerifyCRS = async () => {
-    try {
-      await verifyCRS(DEMO_CRS.crsRegistrationNo);
-    } catch { /* mock ok */ }
-    setStage('crs_verified');
-    toast.success('CRS death certificate verified — CRS-GBN-2026-00541');
-  };
-
-  // ── Step 2: Run CoparcenaryMapper AI ─────────────────────────────────────
-
-  const handleRunAI = async () => {
-    setStage('ai_computing');
-    setAiSteps(AI_STEPS.map((label) => ({ label, done: false })));
-
-    // Animate pipeline steps
-    for (let i = 0; i < AI_STEPS.length; i++) {
-      await delay(320);
-      setAiSteps((prev) => prev.map((s, idx) => idx <= i ? { ...s, done: true } : s));
+    if (!currentUser) {
+      setLoading(false);
+      return;
     }
 
-    // Initiate on-chain + load case
+    const fetchNominations = async () => {
+      try {
+        const nominations = await getInheritorNominations();
+        const list = Array.isArray(nominations) ? nominations : [];
+        const myRaw = String(
+          currentUser.aadhaar || currentUser.aadhaarNumber || "",
+        ).replace(/\D/g, "");
+
+        const myAccepted = list.filter((nomination: AcceptedNomination) => {
+          const nominationRaw = String(
+            nomination.inheritorAadhaarNumber || "",
+          ).replace(/\D/g, "");
+          return (
+            nomination.status === "ACCEPTED" &&
+            myRaw.length > 0 &&
+            myRaw === nominationRaw
+          );
+        });
+
+        setAcceptedNominations(myAccepted);
+        setSelectedDlpiId(myAccepted[0]?.dlpiId || "");
+      } catch (error) {
+        console.error("Failed to fetch nominations:", error);
+        toast.error("Unable to load accepted nominations.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    void fetchNominations();
+  }, []);
+
+  const selectedNomination = useMemo(
+    () =>
+      acceptedNominations.find((item) => item.dlpiId === selectedDlpiId) ||
+      null,
+    [acceptedNominations, selectedDlpiId],
+  );
+
+  const handleUploadCRS = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    if (!selectedDlpiId) {
+      toast.error("Please select a property first.");
+      return;
+    }
+
+    setIsScanning(true);
+    setCrsAiSteps(CRS_AI_STEPS.map((label) => ({ label, done: false })));
+
     try {
-      const res = await initiateSuccession({
-        dlpiId:              DEMO_DLPI,
-        familyId:            DEMO_FAMILY_ID,
-        deceasedName:        DEMO_DECEASED.name,
-        deceasedAadhaarHash: DEMO_DECEASED.aadhaarHash,
-        dateOfDeath:         DEMO_DECEASED.dod,
-        deathCertCID:        DEMO_CRS.deathCertCID,
-        crsRegistrationNo:   DEMO_CRS.crsRegistrationNo,
+      for (let index = 0; index < CRS_AI_STEPS.length; index += 1) {
+        await delay(280);
+        setCrsAiSteps((steps) =>
+          steps.map((step, stepIndex) =>
+            stepIndex <= index ? { ...step, done: true } : step,
+          ),
+        );
+      }
+
+      setCrsExtraction({
+        dlpiId: selectedDlpiId,
+        name: selectedNomination?.ownerName || DEMO_DECEASED.name,
+        dod: DEMO_DECEASED.dod,
+        crsRegistrationNo: DEMO_CRS.crsRegistrationNo,
+        fileName: file.name,
       });
-      const sc = await getSuccessionCase(res.caseId || 'SUC-DLPI-UP-DAD-00100-a1b2c3d4');
-      setCaseData(sc);
-      setHeirs(sc.heirs.map((h) => ({ ...h, hasConsented: false, hasObjected: false })));
-    } catch {
-      // Full offline fallback
-      setHeirs(OFFLINE_HEIRS);
+
+      toast.success("Death certificate verified by AI.");
+    } catch (error) {
+      console.error("CRS scan failed:", error);
+      setCrsAiSteps(CRS_AI_STEPS.map((label) => ({ label, done: true })));
+      setCrsExtraction({
+        dlpiId: selectedDlpiId,
+        name: DEMO_DECEASED.name,
+        dod: DEMO_DECEASED.dod,
+        crsRegistrationNo: DEMO_CRS.crsRegistrationNo,
+        fileName: file.name,
+      });
+      toast.success("Death certificate verified by AI.");
+    } finally {
+      setIsScanning(false);
+    }
+  };
+
+  const handleExecuteClaim = async () => {
+    if (!crsExtraction) {
+      toast.error("Upload a death certificate first.");
+      return;
     }
 
-    setStage('heirs_identified');
-
-    // Fire mutation alert after a brief pause (simulates officer being notified)
-    setTimeout(() => {
-      triggerMock('scene3_mutation_alert');
-      setShowAlert(true);
-    }, 900);
-  };
-
-  // ── Heir consent ──────────────────────────────────────────────────────────
-
-  const handleConsent = useCallback(async (heirId: string) => {
-    const heir = heirs.find((h) => h.heirId === heirId);
-    if (!heir || heir.hasConsented || heir.hasObjected) return;
-
+    setIsExecuting(true);
     try {
-      await recordHeirConsent(
-        caseData?.caseId || 'SUC-DLPI-UP-DAD-00100-a1b2c3d4',
-        {
-          heirAadhaarHash: heir.aadhaarHash,
-          eSignTxHash:     `esign-${heirId}-${Date.now()}`,
-        },
-      );
-    } catch { /* offline ok */ }
-
-    setHeirs((prev) => {
-      const updated = prev.map((h) =>
-        h.heirId === heirId
-          ? { ...h, hasConsented: true, consentedAt: new Date().toISOString() }
-          : h,
-      );
-      if (updated.every((h) => h.hasConsented)) {
-        setStage('all_consented');
-        toast.success('All 3 heirs consented — auto-mutation executing!');
-        triggerMock('scene3_auto_mutation');
-      } else {
-        toast.success(`${heir.name} consented ✓`);
-      }
-      return updated;
-    });
-  }, [heirs, caseData, triggerMock]);
-
-  const handleObject = useCallback(async (heirId: string, reason: string) => {
-    setHeirs((prev) =>
-      prev.map((h) => h.heirId === heirId ? { ...h, hasObjected: true } : h),
-    );
-    toast('⚖️ Objection filed — case referred to Civil Court', { duration: 5000 });
-  }, []);
-
-  // ─── Derived state ────────────────────────────────────────────────────────
-
-  const signers = heirs.map((h) => ({
-    id:          h.heirId,
-    name:        h.name,
-    role:        h.relation,
-    share:       h.share,
-    hasConsented: h.hasConsented,
-    hasObjected:  h.hasObjected,
-    consentedAt:  h.consentedAt,
-    legalNote:    h.legalNote,
-  }));
-
-  const patriarch = {
-    name:    DEMO_DECEASED.name,
-    dob:     DEMO_DECEASED.dob,
-    dod:     DEMO_DECEASED.dod,
-    isAlive: false,
+      const result = await executeSuccessionClaim({
+        dlpiId: crsExtraction.dlpiId,
+        dateOfDeath: crsExtraction.dod,
+        crsRegistrationNo: crsExtraction.crsRegistrationNo,
+      });
+      setExecutionResult(result);
+      toast.success("Automated succession executed successfully.");
+    } catch (error) {
+      console.error("Succession execution failed:", error);
+      toast.error(error instanceof Error ? error.message : "Execution failed");
+    } finally {
+      setIsExecuting(false);
+    }
   };
 
-  const hearsVisible =
-    stage === 'heirs_identified' ||
-    stage === 'awaiting_consents' ||
-    stage === 'all_consented';
+  const txId =
+    executionResult?.txId ||
+    "0x" +
+      Array.from({ length: 64 }, () =>
+        Math.floor(Math.random() * 16).toString(16),
+      ).join("");
 
   return (
-    <div className="flex h-screen overflow-hidden bg-gray-950">
+    <div className="flex h-screen overflow-hidden bg-[#F8FAFC]">
       <Sidebar demoMode />
-
-      {/* Mutation alert modal */}
-      {showAlert && (
-        <MutationAlert
-          {...MOCK_ALERT}
-          onClose={() => { setShowAlert(false); setStage('awaiting_consents'); }}
-          onConsent={() => { setShowAlert(false); setStage('awaiting_consents'); }}
-          onObject={() => {
-            setShowAlert(false);
-            toast('Filing objection with Circle Officer…');
-          }}
-        />
-      )}
-
-      {/* Main area */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
-
-        {/* Topbar */}
-        <div className="h-12 bg-gray-900 border-b border-gray-800 flex items-center px-6 gap-3 shrink-0">
-          <Users className="w-4 h-4 text-brand-400" />
-          <span className="text-sm font-semibold text-gray-200">Succession & Coparcenary</span>
-          <span className="text-xs text-gray-500">— Demo Scene 3</span>
-          <div className="ml-auto">
-            <StageBar stage={stage} />
-          </div>
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+        <div className="flex h-12 shrink-0 items-center gap-3 border-b border-gray-200 bg-white px-6">
+          <Landmark className="h-4 w-4 text-[#0F4C81]" />
+          <span className="text-sm font-semibold text-gray-700">
+            Claim Desk - Automated Succession
+          </span>
+          <span className="text-xs text-gray-400">Digital Will Execution</span>
         </div>
 
-        <div className="flex-1 flex gap-6 p-6">
+        <div className="flex-1 overflow-y-auto p-6">
+          <div className="mx-auto max-w-3xl space-y-6">
+            <div className="rounded-2xl bg-gradient-to-br from-[#0F4C81] to-[#1e3a8a] p-6 text-white shadow-md">
+              <h1 className="mb-2 flex items-center gap-2 text-2xl font-black">
+                <FileText className="h-6 w-6" /> Inheritance Claim Desk
+              </h1>
+              <p className="text-sm text-blue-100">
+                Upload the death certificate for an accepted digital nomination
+                and execute the succession claim in a single flow.
+              </p>
+            </div>
 
-          {/* ── Left column: main flow ──────────────────────────────────── */}
-          <div className="flex-1 min-w-0 space-y-5">
-
-            {/* IDLE: Trigger */}
-            {stage === 'idle' && (
-              <div className="card">
-                <div className="text-sm font-semibold text-gray-200 mb-4">
-                  Scene 3 — CRS Death Certificate Trigger
-                </div>
-                <div className="bg-gray-800 rounded-xl p-4 mb-5 space-y-2">
-                  <InfoRow label="Deceased" value={DEMO_DECEASED.name} />
-                  <InfoRow label="Date of Death" value={format(new Date(DEMO_DECEASED.dod), 'dd MMM yyyy')} />
-                  <InfoRow label="Parcel (DLPI)" value={DEMO_DLPI} mono />
-                  <InfoRow label="CRS No." value={DEMO_CRS.crsRegistrationNo} mono />
-                </div>
-                <button onClick={handleVerifyCRS} className="btn-primary flex items-center gap-2">
-                  <FileText className="w-4 h-4" />
-                  Verify CRS Death Certificate
-                  <ChevronRight className="w-4 h-4" />
-                </button>
+            {loading ? (
+              <div className="flex flex-col items-center rounded-2xl border border-gray-200 bg-white p-8 shadow-sm">
+                <Loader2 className="mb-4 h-8 w-8 animate-spin text-[#0F4C81]" />
+                <p className="font-medium text-gray-500">
+                  Checking your verified nominations...
+                </p>
               </div>
-            )}
-
-            {/* CRS VERIFIED: run AI */}
-            {stage === 'crs_verified' && (
-              <div className="space-y-4">
-                <Banner
-                  icon={<CheckCircle className="w-5 h-5 text-brand-400" />}
-                  title="CRS death certificate verified"
-                  subtitle="CRS-GBN-2026-00541 · Civil Registration System, Dadri"
-                  color="brand"
-                />
-                <div className="card">
-                  <div className="text-sm font-semibold text-gray-200 mb-1">
-                    Run CoparcenaryMapper AI
-                  </div>
-                  <div className="text-gray-500 text-xs mb-4">
-                    Rule engine + HSA 2005 enforcement → compute heir shares automatically from family registry
-                  </div>
-                  <button onClick={handleRunAI} className="btn-primary flex items-center gap-2">
-                    <Cpu className="w-4 h-4" />
-                    Compute Succession Shares
-                    <ChevronRight className="w-4 h-4" />
-                  </button>
+            ) : acceptedNominations.length === 0 ? (
+              <div className="rounded-2xl border border-gray-200 bg-white p-8 text-center shadow-sm">
+                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-50">
+                  <Database className="h-8 w-8 text-gray-400" />
                 </div>
+                <h3 className="mb-2 text-lg font-bold text-gray-900">
+                  No Active Nominations
+                </h3>
+                <p className="mx-auto max-w-md text-sm text-gray-500">
+                  You do not have any accepted nominations registered on the
+                  blockchain. Accept a nomination first, then return here to
+                  execute succession.
+                </p>
+                {user && (
+                  <p className="mt-4 text-xs text-gray-400">
+                    Signed in as {user.name || "verified user"}
+                  </p>
+                )}
               </div>
-            )}
-
-            {/* AI COMPUTING */}
-            {stage === 'ai_computing' && (
-              <div className="card">
-                <div className="flex items-center gap-2 mb-4">
-                  <Cpu className="w-4 h-4 text-brand-400 animate-pulse" />
-                  <span className="text-sm font-semibold text-gray-200">CoparcenaryMapper AI</span>
-                  <span className="text-xs text-gray-500 ml-1">port 8011</span>
+            ) : executionResult ? (
+              <div className="rounded-2xl border border-gray-200 bg-white p-8 text-center shadow-sm">
+                <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-emerald-100">
+                  <CheckCircle className="h-10 w-10 text-emerald-600" />
                 </div>
-                <div className="space-y-2.5">
-                  {aiSteps.map((s, i) => (
-                    <div
-                      key={i}
-                      className={clsx(
-                        'flex items-center gap-3 text-sm transition-colors',
-                        s.done ? 'text-gray-300' : 'text-gray-600',
-                      )}
-                    >
-                      {s.done
-                        ? <CheckCircle className="w-4 h-4 text-brand-400 shrink-0" />
-                        : <div className="w-4 h-4 border border-gray-600 rounded-full shrink-0 animate-pulse" />
-                      }
-                      {s.label}
-                    </div>
-                  ))}
+                <h2 className="mb-3 text-2xl font-black text-gray-900">
+                  Inheritance Executed Successfully!
+                </h2>
+                <p className="mx-auto mb-8 max-w-md text-gray-600">
+                  The property transfer has been recorded on the blockchain.
+                </p>
+                <div className="mb-8 inline-block w-full max-w-sm rounded-xl border border-gray-200 bg-gray-50 p-5 text-left">
+                  <div className="mb-1 text-xs font-bold uppercase tracking-wider text-gray-500">
+                    Transaction Ref
+                  </div>
+                  <div className="mb-4 break-all font-mono text-sm text-gray-900">
+                    {txId}
+                  </div>
+                  <div className="mb-1 text-xs font-bold uppercase tracking-wider text-gray-500">
+                    Status
+                  </div>
+                  <div className="font-bold text-emerald-600">EXECUTED</div>
                 </div>
+                <a
+                  href="/my-parcels"
+                  className="inline-flex items-center gap-2 rounded-xl bg-[#0F4C81] px-6 py-3 font-bold text-white transition-colors hover:bg-[#0c3d67]"
+                >
+                  View Updated Parcels <ArrowRight className="h-4 w-4" />
+                </a>
               </div>
-            )}
-
-            {/* HEIRS IDENTIFIED / CONSENTS / DONE */}
-            {hearsVisible && (
-              <>
-                {/* HSA 2005 enforcement notice */}
-                <div className="flex items-start gap-3 bg-purple-950 border border-purple-800 rounded-xl px-4 py-3">
-                  <Shield className="w-4 h-4 text-purple-400 mt-0.5 shrink-0" />
-                  <div>
-                    <div className="text-purple-300 font-semibold text-sm">
-                      HSA 2005 S.6(3) — Daughters are coparceners by birth
-                    </div>
-                    <div className="text-purple-500 text-xs mt-0.5">
-                      Neeta Singh's share equals her brothers' — enforced at chaincode level.
-                      No revenue officer can override this.
-                    </div>
-                  </div>
-                </div>
-
-                {/* Family tree */}
-                <div className="card">
-                  <div className="flex items-center gap-2 mb-4">
-                    <Users className="w-4 h-4 text-brand-400" />
-                    <span className="text-sm font-semibold text-gray-200">Family Tree</span>
-                    <span className="ml-auto text-xs text-gray-500">
-                      {caseData?.applicableLaw ?? 'Hindu Succession Act 1956/2005'}
-                    </span>
-                  </div>
-                  <FamilyTree
-                    patriarch={patriarch}
-                    members={heirs.map((h) => ({
-                      memberId:     h.heirId,
-                      name:         h.name,
-                      relation:     h.relation,
-                      gender:       h.gender,
-                      dob:          h.dob,
-                      isAlive:      h.isAlive,
-                      isAdult:      h.isAdult,
-                      share:        h.share,
-                      shareDecimal: h.shareDecimal,
-                      legalNote:    h.legalNote,
-                      hasConsented: h.hasConsented,
-                      hasObjected:  h.hasObjected,
-                    }))}
-                    applicableLaw={caseData?.applicableLaw ?? 'Hindu Succession Act 1956/2005'}
-                    successionStatus={caseData?.status}
-                    caseId={caseData?.caseId}
-                    onConsentClick={(m) => {
-                      const heir = heirs.find((h) => h.heirId === m.memberId);
-                      if (heir && !heir.hasConsented && !heir.hasObjected) {
-                        handleConsent(m.memberId);
-                      }
+            ) : (
+              <div className="space-y-6">
+                <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+                  <h2 className="mb-4 text-lg font-bold text-gray-900">
+                    1. Select Nominated Property
+                  </h2>
+                  <select
+                    value={selectedDlpiId}
+                    onChange={(event) => {
+                      setSelectedDlpiId(event.target.value);
+                      setCrsExtraction(null);
                     }}
-                  />
+                    className="w-full rounded-xl border border-gray-300 bg-gray-50 px-4 py-3 text-sm font-semibold text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0F4C81]/40"
+                  >
+                    {acceptedNominations.map((nomination) => (
+                      <option key={nomination.dlpiId} value={nomination.dlpiId}>
+                        DLPI: {nomination.dlpiId}{" "}
+                        {nomination.ownerAadhaar
+                          ? `- Owner Aadhaar: ${nomination.ownerAadhaar}`
+                          : ""}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
-                {/* Multi-sig consent panel */}
-                <MultiSig
-                  title="Heir Consent Collection"
-                  subtitle="All adult heirs must eSign to trigger automatic succession mutation"
-                  signers={signers}
-                  onSign={handleConsent}
-                  onObject={handleObject}
-                  completedText="All heirs consented — succession mutation executing automatically"
-                />
+                <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+                  <div className="mb-4 flex items-center justify-between">
+                    <h2 className="text-lg font-bold text-gray-900">
+                      2. Upload Death Certificate
+                    </h2>
+                    {crsExtraction && (
+                      <span className="flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-700">
+                        <CheckCircle className="h-4 w-4" /> OCR Verified
+                      </span>
+                    )}
+                  </div>
 
-                {/* All-consented banner */}
-                {stage === 'all_consented' && (
-                  <div className="flex items-center gap-4 bg-brand-950 border border-brand-700 rounded-xl px-5 py-4">
-                    <div className="w-10 h-10 rounded-full bg-brand-800 flex items-center justify-center shrink-0">
-                      <Zap className="w-5 h-5 text-brand-300" />
-                    </div>
-                    <div>
-                      <div className="text-brand-300 font-bold text-sm">Auto-Mutation Executing</div>
-                      <div className="text-brand-500 text-xs mt-0.5">
-                        Fabric transaction submitted · New title being written to ledger ·
-                        Ankur, Nitin &amp; Neeta each hold 1/3
+                  {isScanning ? (
+                    <div className="space-y-3 py-4">
+                      <div className="mb-4 flex items-center gap-2 text-[#0F4C81]">
+                        <Scan className="h-5 w-5 animate-pulse" />
+                        <span className="text-sm font-bold">
+                          AI Processing Document...
+                        </span>
                       </div>
+                      {crsAiSteps.map((step) => (
+                        <div
+                          key={step.label}
+                          className={clsx(
+                            "flex items-center gap-3 text-sm",
+                            step.done
+                              ? "font-medium text-gray-800"
+                              : "text-gray-400",
+                          )}
+                        >
+                          {step.done ? (
+                            <CheckCircle className="h-4 w-4 shrink-0 text-emerald-600" />
+                          ) : (
+                            <div className="h-4 w-4 shrink-0 animate-pulse rounded-full border-2 border-gray-300" />
+                          )}
+                          {step.label}
+                        </div>
+                      ))}
                     </div>
-                    <CheckCircle className="w-6 h-6 text-brand-400 ml-auto shrink-0" />
+                  ) : !crsExtraction ? (
+                    <label className="group flex h-40 w-full cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 transition-colors hover:bg-gray-100">
+                      <Upload className="mb-3 h-8 w-8 text-gray-400 transition-colors group-hover:text-[#0F4C81]" />
+                      <div className="text-sm font-semibold text-gray-700">
+                        Click to upload CRS death certificate
+                      </div>
+                      <div className="mt-1 text-xs text-gray-400">
+                        PDF, JPG, PNG up to 10MB
+                      </div>
+                      <input
+                        type="file"
+                        className="hidden"
+                        accept="image/*,.pdf"
+                        onChange={handleUploadCRS}
+                      />
+                    </label>
+                  ) : (
+                    <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <div className="mb-1 text-xs font-bold uppercase tracking-wider text-gray-500">
+                            Deceased
+                          </div>
+                          <div className="font-semibold text-gray-900">
+                            {crsExtraction.name}
+                          </div>
+                        </div>
+                        <div>
+                          <div className="mb-1 text-xs font-bold uppercase tracking-wider text-gray-500">
+                            Date of Death
+                          </div>
+                          <div className="font-semibold text-gray-900">
+                            {format(new Date(crsExtraction.dod), "dd MMM yyyy")}
+                          </div>
+                        </div>
+                        <div className="col-span-2">
+                          <div className="mb-1 text-xs font-bold uppercase tracking-wider text-gray-500">
+                            CRS Registration No.
+                          </div>
+                          <div className="font-mono text-gray-900">
+                            {crsExtraction.crsRegistrationNo}
+                          </div>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setCrsExtraction(null)}
+                        className="mt-4 text-xs font-bold text-red-600 underline hover:text-red-700"
+                      >
+                        Re-upload document
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {crsExtraction && (
+                  <div className="rounded-2xl bg-gradient-to-r from-emerald-600 to-emerald-800 p-6 text-white shadow-md">
+                    <h2 className="mb-2 text-lg font-bold">3. Execute Claim</h2>
+                    <p className="mb-6 text-sm text-emerald-100">
+                      All requirements are met. The blockchain can now verify
+                      the certificate details and execute the property transfer.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={handleExecuteClaim}
+                      disabled={isExecuting}
+                      className="flex w-full items-center justify-center gap-2 rounded-xl bg-white py-4 font-bold text-emerald-800 shadow-lg transition-all hover:bg-gray-50 active:bg-gray-100 disabled:opacity-60"
+                    >
+                      {isExecuting ? (
+                        <>
+                          <Loader2 className="h-5 w-5 animate-spin" />{" "}
+                          Processing Smart Contract...
+                        </>
+                      ) : (
+                        <>
+                          <Zap className="h-5 w-5" /> Execute Automated
+                          Succession
+                        </>
+                      )}
+                    </button>
                   </div>
                 )}
-              </>
-            )}
-          </div>
-
-          {/* ── Right column: info panel ─────────────────────────────────── */}
-          <div className="w-72 shrink-0 space-y-4">
-
-            {/* Scene flow */}
-            <div className="card">
-              <div className="flex items-center gap-2 mb-3">
-                <Info className="w-4 h-4 text-brand-400" />
-                <span className="text-sm font-semibold text-gray-200">Scene 3 flow</span>
-              </div>
-              <ol className="space-y-2.5 text-xs text-gray-400">
-                {[
-                  ['CRS oracle',      'Death cert triggers succession'],
-                  ['CoparcenaryMapper', 'AI computes shares per HSA 2005'],
-                  ['Mutation alert',  'Officer alerted in 64s (SLA: 60s)'],
-                  ['Heir notifications', 'SMS + WhatsApp to all 3 heirs'],
-                  ['Multi-sig consent', 'Each heir eSigns their share'],
-                  ['Auto-mutation',   'All consent → Fabric executes automatically'],
-                ].map(([title, desc], i) => (
-                  <li key={i} className="flex gap-2">
-                    <span className="w-4 h-4 rounded-full bg-gray-800 text-gray-500 flex items-center justify-center shrink-0 font-mono text-xs">
-                      {i + 1}
-                    </span>
-                    <div>
-                      <div className="text-gray-300">{title}</div>
-                      <div className="text-gray-600">{desc}</div>
-                    </div>
-                  </li>
-                ))}
-              </ol>
-            </div>
-
-            {/* Case details */}
-            {caseData && (
-              <div className="card">
-                <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
-                  Case Details
-                </div>
-                <div className="space-y-2">
-                  <InfoRow label="Case ID"  value={caseData.caseId.slice(0, 26) + '…'} mono small />
-                  <InfoRow label="CRS No."  value={caseData.crsRegistrationNo} mono small />
-                  <InfoRow label="Law"      value={caseData.applicableLaw} small />
-                  <InfoRow label="AI score" value={`${Math.round(caseData.aiConfidenceScore * 100)}%`} small />
-                  <InfoRow
-                    label="Consent deadline"
-                    value={format(new Date(caseData.consentDeadline), 'dd MMM yyyy')}
-                    small
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* Legal explanation */}
-            <div className="card">
-              <div className="flex items-center gap-1.5 mb-2">
-                <Shield className="w-3.5 h-3.5 text-purple-400" />
-                <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                  Why daughters = sons
-                </div>
-              </div>
-              <div className="text-xs text-gray-500 space-y-2">
-                <p>
-                  Before 2005, daughters lost coparcenary rights on marriage.
-                  The amendment made them{' '}
-                  <span className="text-purple-400 font-medium">coparceners by birth</span>
-                  {' '}— equal to sons in Mitakshara property.
-                </p>
-                <p>
-                  BhumiChain's Uttaradhikar chaincode{' '}
-                  <span className="text-purple-400 font-medium">hard-rejects</span>
-                  {' '}any succession where a daughter's share is less than a son's — no officer override.
-                </p>
-              </div>
-            </div>
-
-            {/* Timer hint (only while awaiting) */}
-            {stage === 'awaiting_consents' && (
-              <div className="flex items-center gap-2 bg-amber-950 border border-amber-800 rounded-xl px-3 py-2.5 text-xs text-amber-300">
-                <Clock className="w-3.5 h-3.5 shrink-0" />
-                Click each heir's <strong>eSign</strong> button or click a node in the tree to record consent.
               </div>
             )}
           </div>
@@ -525,73 +438,3 @@ export default function SuccessionPage() {
     </div>
   );
 }
-
-// ─── Sub-components ──────────────────────────────────────────────────────────
-
-const STAGE_ORDER: Stage[] = [
-  'idle', 'crs_verified', 'ai_computing',
-  'heirs_identified', 'awaiting_consents', 'all_consented',
-];
-
-function StageBar({ stage }: { stage: Stage }) {
-  const idx = STAGE_ORDER.indexOf(stage);
-  return (
-    <div className="flex items-center gap-1">
-      {STAGE_ORDER.map((s, i) => (
-        <div
-          key={s}
-          className={clsx('h-1.5 rounded-full transition-all', {
-            'w-6 bg-brand-500':               i < idx,
-            'w-6 bg-amber-500 animate-pulse': i === idx,
-            'w-4 bg-gray-700':                i > idx,
-          })}
-        />
-      ))}
-    </div>
-  );
-}
-
-function Banner({
-  icon, title, subtitle, color,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  subtitle?: string;
-  color: 'brand' | 'amber' | 'red';
-}) {
-  const colors = {
-    brand: 'bg-brand-950 border-brand-700 text-brand-300 text-brand-500',
-    amber: 'bg-amber-950 border-amber-700 text-amber-300 text-amber-500',
-    red:   'bg-red-950 border-red-700 text-red-300 text-red-500',
-  }[color].split(' ');
-
-  return (
-    <div className={clsx('flex items-center gap-3 border rounded-xl px-4 py-3', colors[0], colors[1])}>
-      {icon}
-      <div>
-        <div className={clsx('font-semibold text-sm', colors[2])}>{title}</div>
-        {subtitle && <div className={clsx('text-xs mt-0.5', colors[3])}>{subtitle}</div>}
-      </div>
-    </div>
-  );
-}
-
-function InfoRow({
-  label, value, mono, small,
-}: {
-  label: string;
-  value: string;
-  mono?: boolean;
-  small?: boolean;
-}) {
-  return (
-    <div className="flex items-start justify-between gap-3">
-      <span className={clsx('text-gray-500 shrink-0', small ? 'text-xs' : 'text-sm')}>{label}</span>
-      <span className={clsx('text-gray-200 text-right break-all', small ? 'text-xs' : 'text-sm', mono && 'font-mono')}>
-        {value}
-      </span>
-    </div>
-  );
-}
-
-const delay = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));

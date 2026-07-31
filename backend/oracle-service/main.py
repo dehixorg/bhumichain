@@ -184,8 +184,8 @@ def cersai_active_charge(dlpi_id: str):
 
 class FraudScoreRequest(BaseModel):
     dlpiId: str
-    sellerAadhaarHash: str
-    buyerAadhaarHash: str
+    sellerAadhaarNumber: str
+    buyerAadhaarNumber: str
     declaredValueINR: int
     oracleValueINR: int
 

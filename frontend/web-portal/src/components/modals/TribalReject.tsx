@@ -36,7 +36,7 @@ export default function TribalReject({
 
   const inner = (
     <div className={clsx(
-      'bg-gray-900 rounded-2xl overflow-hidden',
+      'bg-white rounded-2xl overflow-hidden',
       inline ? 'border-2 border-red-800' : 'w-full max-w-2xl mx-4 border-2 border-red-700 shadow-2xl',
     )}>
 
@@ -72,7 +72,7 @@ export default function TribalReject({
       <div className="p-5 space-y-4">
 
         {/* Parcel + decision */}
-        <div className="bg-gray-800 rounded-xl p-3 text-xs space-y-2">
+        <div className="bg-[#F8FAFC] rounded-xl p-3 text-xs space-y-2">
           <InfoRow label="Parcel (DLPI)"   value={dlpiId} mono />
           {parcelOwner && <InfoRow label="Current owner"    value={parcelOwner} />}
           {attemptedBuyerName && <InfoRow label="Attempted buyer" value={attemptedBuyerName} />}
@@ -127,7 +127,7 @@ export default function TribalReject({
             {AUTO_NOTIFIED.map((n, i) => (
               <div key={i} className="flex items-center gap-2 text-xs">
                 <div className="w-1.5 h-1.5 rounded-full bg-brand-500 shrink-0" />
-                <span className="text-gray-300">{n.name}</span>
+                <span className="text-gray-600">{n.name}</span>
                 <span className="text-gray-600">— {n.role}</span>
               </div>
             ))}
@@ -135,10 +135,10 @@ export default function TribalReject({
         </div>
 
         {/* Cannot override notice */}
-        <div className="flex items-start gap-2 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2.5 text-xs text-gray-400">
+        <div className="flex items-start gap-2 bg-[#F8FAFC] border border-gray-200 rounded-lg px-3 py-2.5 text-xs text-gray-400">
           <Shield className="w-3.5 h-3.5 text-gray-500 shrink-0 mt-0.5" />
           <span>
-            This rejection <strong className="text-gray-300">cannot be overridden</strong> by any revenue officer, SRO, or digital signature.
+            This rejection <strong className="text-gray-600">cannot be overridden</strong> by any revenue officer, SRO, or digital signature.
             It is enforced at the Hyperledger Fabric chaincode level with no admin bypass.
           </span>
         </div>
@@ -171,7 +171,7 @@ function InfoRow({ label, value, mono }: { label: string; value: string; mono?: 
   return (
     <div className="flex items-start justify-between gap-4">
       <span className="text-gray-500 shrink-0">{label}</span>
-      <span className={clsx('text-gray-200 text-right break-all', mono && 'font-mono')}>{value}</span>
+      <span className={clsx('text-gray-700 text-right break-all', mono && 'font-mono')}>{value}</span>
     </div>
   );
 }

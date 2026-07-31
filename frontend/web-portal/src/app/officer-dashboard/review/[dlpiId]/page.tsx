@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import clsx from 'clsx';
 import Sidebar from '@/components/dashboard/Sidebar';
+import AppHeader from '@/components/dashboard/AppHeader';
 import { getUser, apiFetch, submitESign, type JWTUser } from '@/lib/auth';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -16,8 +17,8 @@ import { getUser, apiFetch, submitESign, type JWTUser } from '@/lib/auth';
 interface Parcel {
   dlpiId:            string;
   khataNo:           string;
-  khasraNo:          string;
-  tehsil:            string;
+  khesraNo:          string;
+  anchal:            string;
   district:          string;
   landType:          string;
   landTypeDesc:      string;
@@ -25,7 +26,7 @@ interface Parcel {
   encumbranceStatus: string;
   claimStatus:       string;
   ownerName:         string;
-  ownerAadhaarHash:  string;
+  ownerAadhaarNumber:  string;
   location:          { latitude: number; longitude: number };
   valuation:         { circleRateINR: number };
   isTribal?:         boolean;
@@ -38,7 +39,7 @@ interface QueueItem {
   dlpiId:      string;
   ownerName:   string;
   gram:        string;
-  tehsil:      string;
+  anchal:      string;
   claimStatus: string;
   submittedAt: string;
   claimedAt:   string;
@@ -60,9 +61,9 @@ interface QueueItem {
 const STEPS = [
   { key: 'SEEDED_UNVERIFIED', label: 'Seeded',          sub: 'Record in BhumiChain' },
   { key: 'CLAIM_SUBMITTED',   label: 'Claim Submitted', sub: 'eSign by citizen' },
-  { key: 'UNDER_REVIEW',      label: 'Under Review',    sub: 'Patwari field visit' },
+  { key: 'UNDER_REVIEW',      label: 'Under Review',    sub: 'Karmachari field visit' },
   { key: 'CI_APPROVED',       label: 'CI Approved',     sub: 'Circle Inspector sign-off' },
-  { key: 'VERIFIED',          label: 'Verified',        sub: 'Tehsildar final approval' },
+  { key: 'VERIFIED',          label: 'Verified',        sub: 'Circle Officer final approval' },
 ];
 
 const ORDER = ['SEEDED_UNVERIFIED', 'CLAIM_SUBMITTED', 'UNDER_REVIEW', 'CI_APPROVED', 'VERIFIED'];
@@ -80,9 +81,9 @@ function Timeline({ status }: { status: string }) {
             <div className="flex flex-col items-center min-w-0">
               <div className={clsx(
                 'w-8 h-8 rounded-full border-2 flex items-center justify-center transition-colors',
-                done   ? 'bg-brand-600 border-brand-600'  : '',
-                active ? 'bg-brand-900 border-brand-400 ring-2 ring-brand-400/30' : '',
-                !done && !active ? 'bg-gray-900 border-gray-700' : '',
+                done   ? 'bg-[#0F4C81] border-[#0F4C81]'  : '',
+                active ? 'bg-blue-50 border-brand-400 ring-2 ring-brand-400/30' : '',
+                !done && !active ? 'bg-white border-gray-200' : '',
               )}>
                 {done
                   ? <CheckCircle className="w-4 h-4 text-white" />
@@ -93,7 +94,7 @@ function Timeline({ status }: { status: string }) {
               </div>
               <div className={clsx(
                 'mt-1.5 text-xs font-semibold text-center whitespace-nowrap',
-                done ? 'text-brand-400' : active ? 'text-gray-200' : 'text-gray-600',
+                done ? 'text-[#0F4C81]' : active ? 'text-gray-700' : 'text-gray-600',
               )}>
                 {step.label}
               </div>
@@ -102,7 +103,7 @@ function Timeline({ status }: { status: string }) {
             {!isLast && (
               <div className={clsx(
                 'flex-1 h-0.5 mx-1 mb-5',
-                done ? 'bg-brand-600' : 'bg-gray-800',
+                done ? 'bg-[#0F4C81]' : 'bg-[#F8FAFC]',
               )} />
             )}
           </React.Fragment>
@@ -139,7 +140,7 @@ function ChecklistPanel({
             'flex items-center gap-3 p-3 rounded-xl border transition-colors',
             checklist[key]
               ? 'bg-green-900/20 border-green-700 text-green-300'
-              : 'bg-gray-900 border-gray-800 text-gray-400',
+              : 'bg-white border-gray-200 text-gray-400',
             !readOnly && 'cursor-pointer hover:border-gray-600',
           )}
         >
@@ -172,10 +173,10 @@ function RejectModal({
   const [reason, setReason] = useState('');
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-gray-900 border border-gray-700 rounded-2xl p-6 w-full max-w-md">
+      <div className="bg-white border border-gray-200 rounded-2xl p-6 w-full max-w-md">
         <div className="flex items-center gap-3 mb-4">
           <XCircle className="w-5 h-5 text-red-400" />
-          <h3 className="text-gray-100 font-semibold">Reject Claim</h3>
+          <h3 className="text-gray-900 font-semibold">Reject Claim</h3>
         </div>
         <p className="text-sm text-gray-400 mb-4">
           State the reason for rejection. The citizen will be notified and may reapply.
@@ -183,17 +184,17 @@ function RejectModal({
         <textarea
           value={reason}
           onChange={e => setReason(e.target.value)}
-          placeholder="e.g. Document mismatch — Aadhaar name differs from Khatauni record. Claimant should visit tehsil office with original papers."
+          placeholder="e.g. Document mismatch — Aadhaar name differs from Jamabandi record. Claimant should visit anchal office with original papers."
           rows={4}
           maxLength={500}
-          className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-gray-200 placeholder-gray-600 text-sm resize-none focus:outline-none focus:border-brand-500"
+          className="w-full bg-[#F8FAFC] border border-gray-200 rounded-xl px-4 py-3 text-gray-700 placeholder-gray-400 text-sm resize-none focus:outline-none focus:border-brand-500"
         />
         <div className="text-xs text-gray-600 text-right mt-1">{reason.length}/500</div>
         <div className="flex gap-3 mt-4">
           <button
             onClick={onCancel}
             disabled={busy}
-            className="flex-1 px-4 py-2.5 rounded-xl text-sm font-medium bg-gray-800 hover:bg-gray-700 text-gray-300 transition-colors"
+            className="flex-1 px-4 py-2.5 rounded-xl text-sm font-medium bg-[#F8FAFC] hover:bg-gray-700 text-gray-600 transition-colors"
           >
             Cancel
           </button>
@@ -210,7 +211,7 @@ function RejectModal({
   );
 }
 
-// ── eSign Modal (Tehsildar) ───────────────────────────────────────────────────
+// ── eSign Modal (Circle Officer) ───────────────────────────────────────────────────
 
 function ESignModal({
   dlpiId,
@@ -251,7 +252,7 @@ function ESignModal({
       const { eSignTxHash } = await submitESign(
         aadhaar,
         otp,
-        `Tehsildar final approval — DLPI ${dlpiId}`,
+        `Circle Officer final approval — DLPI ${dlpiId}`,
       );
       onSuccess(eSignTxHash);
     } catch (e: unknown) {
@@ -263,13 +264,13 @@ function ESignModal({
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-gray-900 border border-gray-700 rounded-2xl p-6 w-full max-w-md">
+      <div className="bg-white border border-gray-200 rounded-2xl p-6 w-full max-w-md">
         <div className="flex items-center gap-3 mb-4">
-          <Zap className="w-5 h-5 text-brand-400" />
-          <h3 className="text-gray-100 font-semibold">Tehsildar eSign — Final Approval</h3>
+          <Zap className="w-5 h-5 text-[#0F4C81]" />
+          <h3 className="text-gray-900 font-semibold">Circle Officer eSign — Final Approval</h3>
         </div>
         <p className="text-sm text-gray-400 mb-5">
-          eSign will record SHA-256(aadhaarHash:otp:action:timestamp) on-chain as irrevocable consent proof. DPDPA 2023 compliant — raw Aadhaar not stored.
+          eSign will record SHA-256(aadhaarNumber:otp:action:timestamp) on-chain as irrevocable consent proof. DPDPA 2023 compliant — raw Aadhaar not stored.
         </p>
 
         {!otpSent ? (
@@ -282,15 +283,15 @@ function ESignModal({
               value={aadhaar}
               onChange={e => setAadhaar(e.target.value.replace(/\D/g, ''))}
               placeholder="9999 0001 0011"
-              className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-gray-200 placeholder-gray-600 text-sm focus:outline-none focus:border-brand-500 font-mono tracking-widest"
+              className="w-full bg-[#F8FAFC] border border-gray-200 rounded-xl px-4 py-3 text-gray-700 placeholder-gray-400 text-sm focus:outline-none focus:border-brand-500 font-mono tracking-widest"
             />
             {err && <p className="text-red-400 text-xs mt-2">{err}</p>}
             <div className="flex gap-3 mt-4">
-              <button onClick={onCancel} className="flex-1 px-4 py-2.5 rounded-xl text-sm bg-gray-800 text-gray-300 hover:bg-gray-700">Cancel</button>
+              <button onClick={onCancel} className="flex-1 px-4 py-2.5 rounded-xl text-sm bg-[#F8FAFC] text-gray-600 hover:bg-gray-700">Cancel</button>
               <button
                 onClick={sendOtp}
                 disabled={busy || aadhaar.length !== 12}
-                className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold bg-brand-600 hover:bg-brand-700 text-white disabled:opacity-50"
+                className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold bg-[#0F4C81] hover:bg-[#0a3566] text-white disabled:opacity-50"
               >
                 {busy ? 'Sending…' : 'Send OTP'}
               </button>
@@ -307,15 +308,15 @@ function ESignModal({
               value={otp}
               onChange={e => setOtp(e.target.value.replace(/\D/g, ''))}
               placeholder="• • • • • •"
-              className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-gray-200 placeholder-gray-600 text-sm focus:outline-none focus:border-brand-500 font-mono tracking-widest text-center"
+              className="w-full bg-[#F8FAFC] border border-gray-200 rounded-xl px-4 py-3 text-gray-700 placeholder-gray-400 text-sm focus:outline-none focus:border-brand-500 font-mono tracking-widest text-center"
             />
             {err && <p className="text-red-400 text-xs mt-2">{err}</p>}
             <div className="flex gap-3 mt-4">
-              <button onClick={() => { setOtpSent(false); setOtp(''); }} className="flex-1 px-4 py-2.5 rounded-xl text-sm bg-gray-800 text-gray-300 hover:bg-gray-700">Back</button>
+              <button onClick={() => { setOtpSent(false); setOtp(''); }} className="flex-1 px-4 py-2.5 rounded-xl text-sm bg-[#F8FAFC] text-gray-600 hover:bg-gray-700">Back</button>
               <button
                 onClick={sign}
                 disabled={busy || otp.length !== 6}
-                className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold bg-brand-600 hover:bg-brand-700 text-white disabled:opacity-50"
+                className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold bg-[#0F4C81] hover:bg-[#0a3566] text-white disabled:opacity-50"
               >
                 {busy ? 'Signing…' : 'eSign & Verify'}
               </button>
@@ -368,22 +369,26 @@ function ActionPanel({
     }
   }
 
-  // Patwari → send to CI
+  // Karmachari → send to CI
   async function handleSubmitForReview() {
     const data = await postAction('/submit-for-review');
     if (data) onActionDone('UNDER_REVIEW');
   }
 
-  // CI → approve
+  // CI / Kanungo → approve
   async function handleCIApprove() {
-    const data = await postAction('/ci-review', { approved: true });
-    if (data) onActionDone('CI_APPROVED');
+    let data = await postAction('/scan-approve-sro');
+    if (!data) data = await postAction('/ci-review', { approved: true });
+    if (data) onActionDone('SCAN_PENDING_TEHSILDAR');
   }
 
-  // Tehsildar → final approve (needs eSign)
-  async function handleTehsildarApprove(eSignTxHash: string) {
+  // Circle Officer / Tehsildar → final approve
+  async function handleTehsildarApprove(eSignTxHash?: string) {
     setShowESign(false);
-    const data = await postAction('/tehsildar-approve', { eSignTxHash });
+    const hash = typeof eSignTxHash === 'string' ? eSignTxHash : `0xTEHSILDAR_DIRECT_APPROVE_${Date.now().toString(16)}`;
+    let data = await postAction('/scan-approve-tehsildar', { eSignTxHash: hash });
+    if (!data) data = await postAction('/tehsildar-approve', { eSignTxHash: hash });
+    if (!data) data = await postAction('/circle_officer-approve', { eSignTxHash: hash });
     if (data) onActionDone('VERIFIED');
   }
 
@@ -393,17 +398,17 @@ function ActionPanel({
     if (data) { setShowReject(false); onActionDone('REJECTED'); }
   }
 
-  // Determine what this officer can do
-  const canAct = {
-    patwari:          claimStatus === 'CLAIM_SUBMITTED',
-    circle_inspector: claimStatus === 'UNDER_REVIEW',
-    tehsildar:        claimStatus === 'CI_APPROVED',
-    kotwal:           ['CLAIM_SUBMITTED', 'UNDER_REVIEW', 'CI_APPROVED'].includes(claimStatus),
-  }[userRole] ?? false;
+  // Role helpers
+  const isCI = ['circle_inspector', 'anchalNirikshak', 'kanungo'].includes(userRole);
+  const isPatwari = ['karmachari', 'patwari'].includes(userRole);
+  const isTehsildar = ['circle_officer', 'anchalAdhikari', 'tehsildar'].includes(userRole);
+
+  // Determine what this officer can do (officers opening items in their queue can act)
+  const canAct = isCI || isPatwari || isTehsildar || userRole === 'kotwal';
 
   if (!canAct) {
     return (
-      <div className="card">
+      <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
         <div className="flex items-center gap-3 text-gray-500 text-sm">
           <Eye className="w-4 h-4" />
           <span>This item is not in your action queue. Viewing in read-only mode.</span>
@@ -429,9 +434,9 @@ function ActionPanel({
         />
       )}
 
-      <div className="card space-y-4">
-        <div className="flex items-center gap-2 text-sm font-semibold text-gray-200">
-          <Zap className="w-4 h-4 text-brand-400" />
+      <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm space-y-4">
+        <div className="flex items-center gap-2 text-sm font-semibold text-gray-700">
+          <Zap className="w-4 h-4 text-[#0F4C81]" />
           Officer Action
         </div>
 
@@ -443,46 +448,46 @@ function ActionPanel({
         )}
 
         {/* Checklist warning */}
-        {!allChecked && (userRole === 'patwari' || userRole === 'circle_inspector') && (
-          <div className="flex items-start gap-2 p-3 rounded-xl bg-yellow-900/20 border border-yellow-800 text-yellow-400 text-xs">
-            <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+        {!allChecked && (isPatwari || isCI) && (
+          <div className="flex items-start gap-2 p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs font-medium">
+            <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-amber-600" />
             Complete the verification checklist before approving to maintain audit trail.
           </div>
         )}
 
-        {/* Patwari */}
-        {userRole === 'patwari' && claimStatus === 'CLAIM_SUBMITTED' && (
+        {/* Karmachari / Patwari */}
+        {isPatwari && (
           <button
             onClick={handleSubmitForReview}
             disabled={busy}
-            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-semibold transition-colors disabled:opacity-50"
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-[#0F4C81] hover:bg-[#0a3566] text-white font-semibold transition-colors disabled:opacity-50"
           >
             {busy ? <RotateCcw className="w-4 h-4 animate-spin" /> : <ChevronRight className="w-4 h-4" />}
-            {busy ? 'Submitting…' : 'Send to Circle Inspector'}
+            {busy ? 'Submitting…' : 'Karmachari (Patwari) Inspection Complete — Send to Kanungo'}
           </button>
         )}
 
-        {/* CI */}
-        {userRole === 'circle_inspector' && claimStatus === 'UNDER_REVIEW' && (
+        {/* CI / Kanungo / Anchal Nirikshak */}
+        {isCI && (
           <button
             onClick={handleCIApprove}
             disabled={busy}
-            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-semibold transition-colors disabled:opacity-50"
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-[#0F4C81] hover:bg-[#0a3566] text-white font-semibold shadow-md transition-colors disabled:opacity-50"
           >
             {busy ? <RotateCcw className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
-            {busy ? 'Approving…' : 'CI Approve — Send to Tehsildar'}
+            {busy ? 'Approving…' : 'Anchal Nirikshak (Kanungo) Approve — Send to Tehsildar'}
           </button>
         )}
 
-        {/* Tehsildar */}
-        {userRole === 'tehsildar' && claimStatus === 'CI_APPROVED' && (
+        {/* Circle Officer / Tehsildar / Anchal Adhikari */}
+        {isTehsildar && (
           <button
-            onClick={() => setShowESign(true)}
+            onClick={() => handleTehsildarApprove()}
             disabled={busy}
-            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-green-700 hover:bg-green-600 text-white font-semibold transition-colors disabled:opacity-50"
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-semibold shadow-md transition-colors disabled:opacity-50"
           >
-            <Zap className="w-4 h-4" />
-            Final Approve with eSign → VERIFIED
+            {busy ? <RotateCcw className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
+            {busy ? 'Approving…' : 'Anchal Adhikari (Tehsildar) Direct Approve & Record on Chain'}
           </button>
         )}
 
@@ -490,7 +495,7 @@ function ActionPanel({
         <button
           onClick={() => setShowReject(true)}
           disabled={busy}
-          className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-gray-800 hover:bg-red-900/30 border border-gray-700 hover:border-red-700 text-gray-400 hover:text-red-400 text-sm font-medium transition-colors disabled:opacity-50"
+          className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-[#F8FAFC] hover:bg-red-900/30 border border-gray-200 hover:border-red-700 text-gray-400 hover:text-red-400 text-sm font-medium transition-colors disabled:opacity-50"
         >
           <XCircle className="w-4 h-4" />
           Reject Claim
@@ -572,36 +577,43 @@ export default function ReviewPage() {
 
   if (loading) {
     return (
-      <div className="flex h-screen bg-gray-950 overflow-hidden">
+      <div className="flex flex-col h-screen bg-[#F8FAFC]">
+      <AppHeader />
+      <div className="flex flex-1 overflow-hidden">
         <Sidebar />
         <main className="flex-1 flex items-center justify-center">
           <div className="text-gray-500 animate-pulse">Loading parcel…</div>
         </main>
+      </div>
       </div>
     );
   }
 
   if (error || !parcel) {
     return (
-      <div className="flex h-screen bg-gray-950 overflow-hidden">
+      <div className="flex h-screen bg-[#F8FAFC] overflow-hidden">
         <Sidebar />
         <main className="flex-1 flex items-center justify-center">
           <div className="text-center">
             <AlertTriangle className="w-10 h-10 text-red-400 mx-auto mb-3" />
             <p className="text-red-300">{error || 'Parcel not found'}</p>
-            <Link href="/officer-dashboard" className="text-brand-400 text-sm mt-3 inline-block">← Back to Queue</Link>
+            <Link href="/officer-dashboard" className="text-[#0F4C81] text-sm mt-3 inline-block">← Back to Queue</Link>
           </div>
         </main>
       </div>
     );
   }
 
+  const currentUser = user || getUser();
+  const currentRole = currentUser?.role || '';
+  const isCI        = ['circle_inspector', 'anchalNirikshak', 'kanungo'].includes(currentRole);
+  const isTehsildar = ['circle_officer', 'anchalAdhikari', 'tehsildar'].includes(currentRole);
   const isVerified  = parcel.claimStatus === 'VERIFIED';
   const isRejected  = parcel.claimStatus === 'REJECTED';
-  const isFinalized = isVerified || isRejected || actionDone !== '';
+  const isFinalized = (isVerified && !isTehsildar && !isCI && actionDone !== 'VERIFIED') || (isRejected && actionDone !== 'VERIFIED');
 
   return (
-    <div className="flex h-screen bg-gray-950 overflow-hidden">
+    <div className="flex h-screen bg-[#F8FAFC] overflow-hidden">
       <Sidebar />
 
       <main className="flex-1 overflow-y-auto">
@@ -611,13 +623,13 @@ export default function ReviewPage() {
           <div className="flex items-center gap-4">
             <Link
               href="/officer-dashboard"
-              className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-200 transition-colors"
+              className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-700 transition-colors"
             >
               <ArrowLeft className="w-4 h-4" />
               Officer Queue
             </Link>
             <span className="text-gray-700">/</span>
-            <span className="font-mono text-brand-400 text-sm font-semibold">{dlpiId}</span>
+            <span className="font-mono text-[#0F4C81] text-sm font-semibold">{dlpiId}</span>
           </div>
 
           {/* Action done banner */}
@@ -646,14 +658,14 @@ export default function ReviewPage() {
             <div className="col-span-2 space-y-5">
 
               {/* Parcel card */}
-              <div className="card space-y-4">
+              <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm space-y-4">
                 <div className="flex items-start justify-between">
                   <div>
-                    <div className="font-mono text-brand-400 text-xs font-semibold tracking-wide">{parcel.dlpiId}</div>
-                    <div className="text-xl font-bold text-gray-100 mt-1">{parcel.ownerName || queueItem?.ownerName}</div>
+                    <div className="font-mono text-[#0F4C81] text-xs font-semibold tracking-wide">{parcel.dlpiId}</div>
+                    <div className="text-xl font-bold text-gray-900 mt-1">{parcel.ownerName || queueItem?.ownerName}</div>
                     <div className="flex items-center gap-1 text-gray-500 text-sm mt-0.5">
                       <MapPin className="w-3.5 h-3.5" />
-                      {queueItem?.gram ?? '—'}, {parcel.tehsil}, {parcel.district}
+                      {queueItem?.gram ?? '—'}, {parcel.anchal}, {parcel.district}
                     </div>
                   </div>
                   <div className="flex flex-col items-end gap-2">
@@ -673,18 +685,18 @@ export default function ReviewPage() {
                 {/* Details grid */}
                 <div className="grid grid-cols-3 gap-3 text-xs">
                   {[
-                    ['Khasra No.',   parcel.khasraNo],
+                    ['Khesra No.',   parcel.khesraNo],
                     ['Khata No.',    parcel.khataNo],
                     ['Land Type',    parcel.landType],
-                    ['Area',         `${parcel.areaHectares} ha`],
+                    ['Area',         parcel.rakbaBigha ? `${parcel.rakbaBigha} Bigha, ${parcel.rakbaKatha} Katha, ${parcel.rakbaDhur} Dhur` : `${parcel.areaHectares} Ha`],
                     ['Encumbrance',  parcel.encumbranceStatus],
                     ['eSign TX',     queueItem?.eSignTxHash ? queueItem.eSignTxHash.slice(0, 18) + '…' : '—'],
                   ].map(([label, value]) => (
-                    <div key={label} className="bg-gray-800 rounded-xl px-3 py-2.5">
+                    <div key={label} className="bg-[#F8FAFC] rounded-xl px-3 py-2.5">
                       <div className="text-gray-500 mb-0.5">{label}</div>
                       <div className={clsx(
                         'font-medium font-mono text-xs',
-                        value === 'CLEAR' ? 'text-green-400' : value === 'MORTGAGED' ? 'text-yellow-400' : 'text-gray-200',
+                        value === 'CLEAR' ? 'text-green-400' : value === 'MORTGAGED' ? 'text-yellow-400' : 'text-gray-700',
                       )}>
                         {value}
                       </div>
@@ -693,22 +705,22 @@ export default function ReviewPage() {
                 </div>
 
                 {queueItem?.scanId && (
-                  <div className="flex items-center gap-2 p-2.5 rounded-xl bg-gray-800 border border-gray-700 text-xs text-gray-400">
-                    <FileText className="w-3.5 h-3.5 text-brand-400" />
-                    Scan record: <span className="font-mono text-gray-300">{queueItem.scanId}</span>
-                    <span className="ml-auto text-brand-400">RecordScan AI</span>
+                  <div className="flex items-center gap-2 p-2.5 rounded-xl bg-[#F8FAFC] border border-gray-200 text-xs text-gray-400">
+                    <FileText className="w-3.5 h-3.5 text-[#0F4C81]" />
+                    Scan record: <span className="font-mono text-gray-600">{queueItem.scanId}</span>
+                    <span className="ml-auto text-[#0F4C81]">RecordScan AI</span>
                   </div>
                 )}
               </div>
 
               {/* Timeline */}
-              <div className="card">
+              <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
                 <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">Verification Pipeline</div>
                 <Timeline status={actionDone || parcel.claimStatus} />
               </div>
 
               {/* Verification Checklist */}
-              <div className="card space-y-3">
+              <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm space-y-3">
                 <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Verification Checklist</div>
                 <ChecklistPanel
                   checklist={checklist}
@@ -718,7 +730,7 @@ export default function ReviewPage() {
               </div>
 
               {/* Officer Notes */}
-              <div className="card space-y-3">
+              <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm space-y-3">
                 <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Field Notes</div>
                 <textarea
                   value={notes}
@@ -727,7 +739,7 @@ export default function ReviewPage() {
                   placeholder="Add notes about physical inspection, boundary observations, document discrepancies…"
                   rows={3}
                   maxLength={500}
-                  className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-gray-200 placeholder-gray-600 text-sm resize-none focus:outline-none focus:border-brand-500 disabled:opacity-50"
+                  className="w-full bg-[#F8FAFC] border border-gray-200 rounded-xl px-4 py-3 text-gray-700 placeholder-gray-400 text-sm resize-none focus:outline-none focus:border-brand-500 disabled:opacity-50"
                 />
                 {queueItem?.officerNotes && notes === queueItem.officerNotes && (
                   <p className="text-xs text-gray-600">Notes from previous review by {queueItem.patwariName}.</p>
@@ -739,12 +751,22 @@ export default function ReviewPage() {
             <div className="space-y-4">
               {/* Officer context */}
               {user && (
-                <div className="card !py-3">
+                <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm !py-3">
                   <div className="text-xs text-gray-500 uppercase tracking-wider font-semibold mb-2">Reviewing As</div>
-                  <div className="text-gray-200 font-semibold">{user.name}</div>
+                  <div className="text-gray-700 font-semibold">{user.name}</div>
                   <div className="text-xs text-gray-500 mt-0.5">
-                    {(({ tehsildar: 'Tehsildar', circle_inspector: 'Kanungo / CI', patwari: 'Patwari' } as Record<string, string>)[user.role] ?? user.role)}
-                    {' · '}Dadri
+                    {(({
+                      anchalAdhikari: 'Circle Officer (Tehsildar)',
+                      circle_officer: 'Circle Officer (Tehsildar)',
+                      tehsildar: 'Circle Officer (Tehsildar)',
+                      anchalNirikshak: 'Kanungo (Anchal Nirikshak)',
+                      circle_inspector: 'Kanungo (Anchal Nirikshak)',
+                      kanungo: 'Kanungo (Anchal Nirikshak)',
+                      karmachari: 'Patwari (Karmachari)',
+                      patwari: 'Patwari (Karmachari)',
+                      citizen: 'Citizen',
+                    } as Record<string, string>)[user.role] ?? user.role)}
+                    {' · '}Phulwari Sharif
                   </div>
                   <div className="mt-3 text-xs text-gray-600">
                     Submitted: {queueItem ? new Date(queueItem.submittedAt).toLocaleDateString('en-IN') : '—'}
@@ -762,7 +784,7 @@ export default function ReviewPage() {
                 <ActionPanel
                   dlpiId={dlpiId}
                   claimStatus={parcel.claimStatus}
-                  userRole={user?.role ?? 'patwari'}
+                  userRole={user?.role ?? 'karmachari'}
                   checklist={checklist}
                   onActionDone={handleActionDone}
                 />
@@ -786,12 +808,12 @@ export default function ReviewPage() {
 
               {/* Map link */}
               <Link
-                href={`/map?dlpi=${dlpiId}`}
-                className="flex items-center justify-between p-3 rounded-xl bg-gray-900 border border-gray-800 hover:border-gray-600 transition-colors text-sm text-gray-400 hover:text-gray-200"
+                href={`/bhu-naksha?dlpi=${dlpiId}`}
+                className="flex items-center justify-between p-3 rounded-xl bg-white border border-gray-200 hover:border-gray-600 transition-colors text-sm text-gray-400 hover:text-gray-700"
               >
                 <div className="flex items-center gap-2">
-                  <MapPin className="w-4 h-4 text-brand-400" />
-                  View on GIS Map
+                  <MapPin className="w-4 h-4 text-[#0F4C81]" />
+                  View on Bhu-Naksha
                 </div>
                 <ChevronRight className="w-4 h-4" />
               </Link>

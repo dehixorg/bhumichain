@@ -20,8 +20,8 @@ import {
 interface Parcel {
   dlpiId:            string;
   khataNo:           string;
-  khasraNo:          string;
-  tehsil:            string;
+  khesraNo:          string;
+  anchal:            string;
   district:          string;
   state:             string;
   landType:          string;
@@ -58,10 +58,10 @@ function Timeline({ status }: { status: string }) {
 
   return (
     <div className="card">
-      <h3 className="text-sm font-semibold text-gray-300 mb-4">Verification Progress</h3>
+      <h3 className="text-sm font-semibold text-gray-600 mb-4">Verification Progress</h3>
       <div className="relative">
         {/* Track */}
-        <div className="absolute left-3.5 top-0 bottom-0 w-0.5 bg-gray-800" />
+        <div className="absolute left-3.5 top-0 bottom-0 w-0.5 bg-[#F8FAFC]" />
         <div className="space-y-5">
           {TIMELINE_STEPS.map((step, i) => {
             const done   = i <= currentIdx;
@@ -72,9 +72,9 @@ function Timeline({ status }: { status: string }) {
                   'w-7 h-7 rounded-full flex items-center justify-center shrink-0 z-10 border-2',
                   done
                     ? active
-                      ? 'bg-brand-600 border-brand-500 text-white'
-                      : 'bg-brand-900 border-brand-700 text-brand-400'
-                    : 'bg-gray-900 border-gray-700 text-gray-600',
+                      ? 'bg-[#0F4C81] border-brand-500 text-white'
+                      : 'bg-blue-50 border-[#0F4C81]/40 text-[#0F4C81]'
+                    : 'bg-white border-gray-200 text-gray-600',
                 )}>
                   {done && !active
                     ? <CheckCircle className="w-4 h-4" />
@@ -85,7 +85,7 @@ function Timeline({ status }: { status: string }) {
                 </div>
                 <span className={clsx(
                   'text-sm',
-                  done ? active ? 'text-brand-400 font-semibold' : 'text-gray-300' : 'text-gray-600',
+                  done ? active ? 'text-[#0F4C81] font-semibold' : 'text-gray-600' : 'text-gray-600',
                 )}>
                   {step.label}
                 </span>
@@ -164,7 +164,7 @@ function ESignClaimForm({
       <div className="card flex flex-col items-center gap-3 py-6">
         <CheckCircle className="w-10 h-10 text-green-400" />
         <p className="text-green-300 font-semibold">Claim submitted successfully!</p>
-        <p className="text-gray-400 text-sm text-center">Your eSign is recorded on BhumiChain. A patwari will verify your claim.</p>
+        <p className="text-gray-400 text-sm text-center">Your eSign is recorded on BhumiChain. A karmachari will verify your claim.</p>
       </div>
     );
   }
@@ -172,7 +172,7 @@ function ESignClaimForm({
   return (
     <div className="card space-y-5">
       <div>
-        <h3 className="font-semibold text-gray-200">Claim Ownership</h3>
+        <h3 className="font-semibold text-gray-700">Claim Ownership</h3>
         <p className="text-sm text-gray-400 mt-1">
           Your Aadhaar OTP serves as a legal eSign under the IT Act 2000. It is never stored — only a cryptographic hash is recorded on-chain.
         </p>
@@ -188,7 +188,7 @@ function ESignClaimForm({
       {step === 'aadhaar' ? (
         <>
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-300">
+            <label className="text-sm font-medium text-gray-600">
               Aadhaar Number <span className="text-gray-500">(for eSign only)</span>
             </label>
             <AadhaarInput value={aadhaar} onChange={setAadhaar} disabled={loading} />
@@ -207,8 +207,8 @@ function ESignClaimForm({
       ) : (
         <>
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-300">
-              OTP sent to <span className="text-brand-400">{maskedPhone}</span>
+            <label className="text-sm font-medium text-gray-600">
+              OTP sent to <span className="text-[#0F4C81]">{maskedPhone}</span>
             </label>
             <OTPInput value={otp} onChange={setOtp} disabled={loading} error={!!error} />
             {isDev && (
@@ -225,13 +225,13 @@ function ESignClaimForm({
               : <><CheckCircle className="w-4 h-4" /> Sign &amp; Claim Parcel</>
             }
           </button>
-          <button onClick={() => { setStep('aadhaar'); setOtp(''); setError(''); }} className="w-full text-sm text-gray-400 hover:text-gray-200">
+          <button onClick={() => { setStep('aadhaar'); setOtp(''); setError(''); }} className="w-full text-sm text-gray-400 hover:text-gray-700">
             ← Change Aadhaar
           </button>
         </>
       )}
 
-      <div className="flex items-start gap-2 text-xs text-gray-500 pt-1 border-t border-gray-800">
+      <div className="flex items-start gap-2 text-xs text-gray-500 pt-1 border-t border-gray-200">
         <Lock className="w-3 h-3 mt-0.5 shrink-0" />
         DPDPA 2023 compliant: raw Aadhaar number is not transmitted or stored. Only SHA-256(Aadhaar + salt) is recorded on-chain as eSignTxHash.
       </div>
@@ -263,9 +263,9 @@ function SubmitReviewButton({ dlpiId, onSuccess }: { dlpiId: string; onSuccess: 
   return (
     <div className="card space-y-3">
       <div>
-        <h3 className="font-semibold text-gray-200">Next Step: Field Verification</h3>
+        <h3 className="font-semibold text-gray-700">Next Step: Field Verification</h3>
         <p className="text-sm text-gray-400 mt-1">
-          Submit your claim for patwari field verification. The patwari will visit the site and verify your possession.
+          Submit your claim for karmachari field verification. The karmachari will visit the site and verify your possession.
         </p>
       </div>
       {error && <p className="text-sm text-red-400">{error}</p>}
@@ -382,16 +382,16 @@ function ParcelDetail({ parcel }: { parcel: Parcel }) {
     <div className="card space-y-4">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <div className="font-mono text-brand-400 text-sm font-semibold">{parcel.dlpiId}</div>
-          <div className="text-gray-200 font-semibold mt-1">Khasra {parcel.khasraNo}</div>
+          <div className="font-mono text-[#0F4C81] text-sm font-semibold">{parcel.dlpiId}</div>
+          <div className="text-gray-700 font-semibold mt-1">Khesra {parcel.khesraNo}</div>
           <div className="flex items-center gap-1 text-gray-500 text-xs mt-0.5">
             <MapPin className="w-3 h-3" />
-            {parcel.tehsil}, {parcel.district}, {parcel.state}
+            {parcel.anchal}, {parcel.district}, {parcel.state}
           </div>
         </div>
         <Link
-          href={`/map?dlpi=${parcel.dlpiId}`}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs transition-colors"
+          href={`/bhu-naksha?dlpi=${parcel.dlpiId}`}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#F8FAFC] hover:bg-gray-700 text-gray-600 text-xs transition-colors"
         >
           <MapPin className="w-3 h-3" />
           View on Map
@@ -401,16 +401,16 @@ function ParcelDetail({ parcel }: { parcel: Parcel }) {
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
         {[
           { label: 'Land Type',    value: parcel.landType },
-          { label: 'Area',         value: formatArea(parcel.areaHectares) },
+          { label: 'Area',         value: parcel.rakbaBigha ? `${parcel.rakbaBigha} Bigha, ${parcel.rakbaKatha} Katha, ${parcel.rakbaDhur} Dhur` : `${parcel.areaHectares} Ha` },
           { label: 'Circle Rate',  value: formatValue(parcel.valuation.circleRateINR) },
           { label: 'Encumbrance',  value: parcel.encumbranceStatus.replace('_', ' '),
             color: parcel.encumbranceStatus === 'CLEAR' ? 'text-green-400' : 'text-red-400' },
           { label: 'Lat/Lon',      value: `${parcel.location.latitude.toFixed(4)}, ${parcel.location.longitude.toFixed(4)}` },
           { label: 'Khata No.',    value: parcel.khataNo },
         ].map(({ label, value, color }) => (
-          <div key={label} className="bg-gray-800 rounded-lg px-3 py-2">
+          <div key={label} className="bg-[#F8FAFC] rounded-lg px-3 py-2">
             <div className="text-gray-500">{label}</div>
-            <div className={clsx('font-medium mt-0.5', color ?? 'text-gray-200')}>{value}</div>
+            <div className={clsx('font-medium mt-0.5', color ?? 'text-gray-700')}>{value}</div>
           </div>
         ))}
       </div>
@@ -437,7 +437,7 @@ function ParcelDetail({ parcel }: { parcel: Parcel }) {
               <div key={i} className="flex items-start gap-3 text-xs">
                 <div className="w-1.5 h-1.5 rounded-full bg-gray-600 mt-1.5 shrink-0" />
                 <div>
-                  <span className="text-gray-300">{m.type}</span>
+                  <span className="text-gray-600">{m.type}</span>
                   <span className="text-gray-500 mx-1.5">·</span>
                   <span className="text-gray-500">{m.date}</span>
                   <span className="text-gray-500 mx-1.5">·</span>
@@ -467,7 +467,7 @@ export default function ClaimPage() {
     if (!dlpiId) return;
     const user = getUser();
     if (!user) { router.replace('/login'); return; }
-    if (user.role !== 'citizen') { router.replace('/dashboard'); return; }
+    if (user.role !== 'citizen') { router.replace('/officer-dashboard'); return; }
     loadParcel();
   }, [dlpiId]);
 
@@ -489,7 +489,7 @@ export default function ClaimPage() {
   function refresh() { loadParcel(); }
 
   return (
-    <div className="flex h-screen bg-gray-950 overflow-hidden">
+    <div className="flex h-screen bg-[#F8FAFC] overflow-hidden">
       <Sidebar />
 
       <main className="flex-1 overflow-y-auto">
@@ -498,7 +498,7 @@ export default function ClaimPage() {
           {/* Back */}
           <Link
             href="/my-parcels"
-            className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-gray-200 transition-colors"
+            className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-gray-700 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
             My Parcels
@@ -510,7 +510,7 @@ export default function ClaimPage() {
               <div className="h-5 w-48 bg-gray-700 rounded" />
               <div className="h-4 w-32 bg-gray-700 rounded" />
               <div className="grid grid-cols-3 gap-2">
-                {[0,1,2,3,4,5].map(i => <div key={i} className="h-12 bg-gray-800 rounded-lg" />)}
+                {[0,1,2,3,4,5].map(i => <div key={i} className="h-12 bg-[#F8FAFC] rounded-lg" />)}
               </div>
             </div>
           )}
@@ -528,7 +528,7 @@ export default function ClaimPage() {
             <>
               {/* Page title */}
               <div>
-                <h1 className="text-xl font-bold text-gray-100">
+                <h1 className="text-xl font-bold text-gray-900">
                   {parcel.claimStatus === 'SEEDED_UNVERIFIED' ? 'Claim Your Land' :
                    parcel.claimStatus === 'VERIFIED'          ? 'Verified Parcel' :
                    parcel.claimStatus === 'DISPUTED'          ? 'Disputed Parcel' :
@@ -550,7 +550,7 @@ export default function ClaimPage() {
                     <AlertTriangle className="w-5 h-5" />
                     <span className="font-semibold">Dispute Active</span>
                   </div>
-                  <p className="text-sm text-gray-400">{parcel.disputeNote || 'A dispute has been raised on this parcel. Contact your Patwari (Vijay Singh, DAD-P1) for resolution.'}</p>
+                  <p className="text-sm text-gray-400">{parcel.disputeNote || 'A dispute has been raised on this parcel. Contact your Karmachari (Vijay Singh, PHU-P1) for resolution.'}</p>
                   <p className="text-xs text-gray-600">Parcel locked until dispute is resolved. 30-day notice period applies.</p>
                 </div>
               )}
@@ -591,13 +591,13 @@ export default function ClaimPage() {
                   <div className="flex items-center gap-2 text-blue-400">
                     <Clock className="w-5 h-5" />
                     <span className="font-semibold">
-                      {parcel.claimStatus === 'CI_APPROVED' ? 'Awaiting Tehsildar Final Approval' : 'Field Verification in Progress'}
+                      {parcel.claimStatus === 'CI_APPROVED' ? 'Awaiting Circle Officer Final Approval' : 'Field Verification in Progress'}
                     </span>
                   </div>
                   <p className="text-sm text-gray-400">
                     {parcel.claimStatus === 'CI_APPROVED'
-                      ? 'Circle Inspector has approved. Tehsildar will issue final VERIFIED status with eSign.'
-                      : 'Patwari Vijay Singh (DAD-P1) will conduct a field visit to verify possession. You will be notified via SMS.'}
+                      ? 'Circle Inspector has approved. Circle Officer will issue final VERIFIED status with eSign.'
+                      : 'Karmachari Vijay Singh (PHU-P1) will conduct a field visit to verify possession. You will be notified via SMS.'}
                   </p>
                 </div>
               )}

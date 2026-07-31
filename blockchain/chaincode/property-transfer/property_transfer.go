@@ -8,6 +8,31 @@ import (
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
 )
 
+func matchAadhaar(a, b string) bool {
+	if a == "" || b == "" {
+		return false
+	}
+	if a == b {
+		return true
+	}
+	aDigits := ""
+	for _, ch := range a {
+		if ch >= '0' && ch <= '9' {
+			aDigits += string(ch)
+		}
+	}
+	bDigits := ""
+	for _, ch := range b {
+		if ch >= '0' && ch <= '9' {
+			bDigits += string(ch)
+		}
+	}
+	if len(aDigits) >= 12 && len(bDigits) >= 12 && aDigits == bDigits {
+		return true
+	}
+	return false
+}
+
 // ─── Transfer Types ───────────────────────────────────────────────────────────
 //
 // FULL_SALE:   ALL current owners sell together → one or more buyers take 100% of parcel.
@@ -32,7 +57,7 @@ const (
 
 // TransferParty — a seller or buyer in a transfer, with their share info
 type TransferParty struct {
-	AadhaarHash   string  `json:"aadhaarHash"`
+	AadhaarNumber   string  `json:"aadhaarNumber"`
 	Name          string  `json:"name"`
 	ShareFraction string  `json:"shareFraction"` // "1/3", "1/2" etc.
 	ShareDecimal  float64 `json:"shareDecimal"`
@@ -98,7 +123,10 @@ const (
 	StatusAwaitingConsent      = "AWAITING_CONSENT"
 	StatusStampDutyPending     = "STAMP_DUTY_PENDING"
 	StatusStampDutyPaid        = "STAMP_DUTY_PAID"
-	StatusCompleted            = "COMPLETED"
+	StatusPatwariApproved      = "PATWARI_APPROVED"
+	StatusCIApproved           = "CI_APPROVED"
+	StatusSROExecuted          = "SRO_EXECUTED"
+	StatusCompleted            = "COMPLETED" // means Tehsildar Approved
 	StatusRejectedFraud        = "REJECTED_FRAUD"
 	StatusRejectedLocked       = "REJECTED_LOCKED"
 	StatusRejectedConsent      = "REJECTED_CONSENT"
@@ -214,6 +242,57 @@ func (c *PropertyTransferContract) InitiateTransfer(
 		proposal.Status = StatusInitiated
 	}
 
+	// ── ACID PRE-CHECK: Verify DLPI exists and each seller is a current on-chain owner ──
+	// This prevents transfers on parcels that haven't gone through Patwari registration
+	dlpiQueryArgs := [][]byte{[]byte("GetDLPI"), []byte(dlpiId)}
+	dlpiResp := ctx.GetStub().InvokeChaincode("dlpi", dlpiQueryArgs, "")
+	if dlpiResp.Status != 200 {
+		return "", fmt.Errorf(
+			"PARCEL_NOT_FOUND: Parcel %s does not exist on the blockchain. "+
+				"A Patwari must upload and register the land record before any transfers can occur. "+
+				"Error: %s", dlpiId, dlpiResp.Message)
+	}
+	// Check that the DLPI is OWNER_VERIFIED (SetTransferLock also checks, but we check early
+	// so the error message is clearer to the caller)
+	type dlpiStatusCheck struct {
+		ClaimStatus string `json:"claimStatus"`
+	}
+	var dlpiStatus dlpiStatusCheck
+	if err := json.Unmarshal(dlpiResp.Payload, &dlpiStatus); err == nil {
+		if dlpiStatus.ClaimStatus != "OWNER_VERIFIED" {
+			return "", fmt.Errorf(
+				"PARCEL_NOT_VERIFIED: Parcel %s has status '%s'. "+
+					"Only parcels with status OWNER_VERIFIED can be transferred. "+
+					"Please complete Patwari upload → SRO approval → Tehsildar approval first.",
+				dlpiId, dlpiStatus.ClaimStatus)
+		}
+	}
+
+	// Verify each seller is a current owner
+	type dlpiOwners struct {
+		Owners []struct {
+			AadhaarNumber string `json:"aadhaarNumber"`
+		} `json:"owners"`
+	}
+	var dlpiWithOwners dlpiOwners
+	if err := json.Unmarshal(dlpiResp.Payload, &dlpiWithOwners); err == nil {
+		for _, seller := range sellers {
+			isOwner := false
+			for _, o := range dlpiWithOwners.Owners {
+				if matchAadhaar(o.AadhaarNumber, seller.AadhaarNumber) {
+					isOwner = true
+					break
+				}
+			}
+			if !isOwner {
+				return "", fmt.Errorf(
+					"OWNERSHIP_DENIED: Seller %s (%s) is not a registered owner of parcel %s on the blockchain. "+
+						"Only the actual current owners listed in the land record can sell this property.",
+					seller.Name, seller.AadhaarNumber, dlpiId)
+			}
+		}
+	}
+
 	if err := c.saveProposal(ctx, &proposal); err != nil {
 		return "", err
 	}
@@ -239,7 +318,7 @@ func (c *PropertyTransferContract) InitiateTransfer(
 // WaivePreemption — co-owner waives their 30-day preemption right for a SHARE_SALE
 func (c *PropertyTransferContract) WaivePreemption(
 	ctx contractapi.TransactionContextInterface,
-	transferID, coOwnerAadhaarHash, eSignTxHash string,
+	transferID, coOwnerAadhaarNumber, eSignTxHash string,
 ) error {
 
 	proposal, err := c.getProposal(ctx, transferID)
@@ -256,7 +335,7 @@ func (c *PropertyTransferContract) WaivePreemption(
 	// Verify this hash is a registered co-owner for preemption
 	isCoOwner := false
 	for _, h := range proposal.Preemption.CoOwnerHashes {
-		if h == coOwnerAadhaarHash {
+		if h == coOwnerAadhaarNumber {
 			isCoOwner = true
 			break
 		}
@@ -267,12 +346,12 @@ func (c *PropertyTransferContract) WaivePreemption(
 
 	// Already waived?
 	for _, w := range proposal.Preemption.Waivers {
-		if w == coOwnerAadhaarHash {
+		if w == coOwnerAadhaarNumber {
 			return fmt.Errorf("preemption already waived by this co-owner")
 		}
 	}
 
-	proposal.Preemption.Waivers = append(proposal.Preemption.Waivers, coOwnerAadhaarHash)
+	proposal.Preemption.Waivers = append(proposal.Preemption.Waivers, coOwnerAadhaarNumber)
 
 	// If all co-owners have waived, move to consent collection
 	if len(proposal.Preemption.Waivers) >= len(proposal.Preemption.CoOwnerHashes) {
@@ -292,7 +371,7 @@ func (c *PropertyTransferContract) WaivePreemption(
 // This converts the transfer into an internal transfer to the co-owner
 func (c *PropertyTransferContract) ExercisePreemption(
 	ctx contractapi.TransactionContextInterface,
-	transferID, coOwnerAadhaarHash, eSignTxHash string,
+	transferID, coOwnerAadhaarNumber, eSignTxHash string,
 ) error {
 
 	proposal, err := c.getProposal(ctx, transferID)
@@ -307,7 +386,7 @@ func (c *PropertyTransferContract) ExercisePreemption(
 	// Share and price remain the same as the original sale
 	isCoOwner := false
 	for _, h := range proposal.Preemption.CoOwnerHashes {
-		if h == coOwnerAadhaarHash {
+		if matchAadhaar(h, coOwnerAadhaarNumber) {
 			isCoOwner = true
 			break
 		}
@@ -321,7 +400,7 @@ func (c *PropertyTransferContract) ExercisePreemption(
 	sellerShare := proposal.Sellers[0].ShareFraction
 	sellerShareDec := proposal.Sellers[0].ShareDecimal
 	proposal.Buyers = []TransferParty{{
-		AadhaarHash:   coOwnerAadhaarHash,
+		AadhaarNumber:   coOwnerAadhaarNumber,
 		Name:          "Co-owner (preemption)",
 		ShareFraction: sellerShare,
 		ShareDecimal:  sellerShareDec,
@@ -329,13 +408,13 @@ func (c *PropertyTransferContract) ExercisePreemption(
 		ConsentedAt:   time.Now().UTC().Format(time.RFC3339),
 		ESignTxHash:   eSignTxHash,
 	}}
-	proposal.Preemption.PreemptionClaimed = coOwnerAadhaarHash
+	proposal.Preemption.PreemptionClaimed = coOwnerAadhaarNumber
 	proposal.Preemption.Resolved = true
 	proposal.Status = StatusPreemptionExercised
 	proposal.UpdatedAt = time.Now().UTC().Format(time.RFC3339)
 
 	event, _ := json.Marshal(map[string]string{
-		"transferId": transferID, "exercisedBy": coOwnerAadhaarHash,
+		"transferId": transferID, "exercisedBy": coOwnerAadhaarNumber,
 	})
 	_ = ctx.GetStub().SetEvent("PreemptionExercised", event)
 	return c.saveProposal(ctx, proposal)
@@ -381,7 +460,7 @@ func (c *PropertyTransferContract) RecordFraudScore(
 // RecordConsent — Step 3: any seller or buyer records their Aadhaar eSign
 func (c *PropertyTransferContract) RecordConsent(
 	ctx contractapi.TransactionContextInterface,
-	transferID, partyRole, aadhaarHash, eSignTxHash string,
+	transferID, partyRole, aadhaarNumber, eSignTxHash string,
 ) error {
 	// partyRole: "SELLER" | "BUYER" | "OFFICER"
 
@@ -402,7 +481,7 @@ func (c *PropertyTransferContract) RecordConsent(
 	switch partyRole {
 	case "SELLER":
 		for i, s := range proposal.Sellers {
-			if s.AadhaarHash == aadhaarHash {
+			if matchAadhaar(s.AadhaarNumber, aadhaarNumber) {
 				proposal.Sellers[i].HasConsented = true
 				proposal.Sellers[i].ConsentedAt = now
 				proposal.Sellers[i].ESignTxHash = eSignTxHash
@@ -412,7 +491,7 @@ func (c *PropertyTransferContract) RecordConsent(
 		}
 	case "BUYER":
 		for i, b := range proposal.Buyers {
-			if b.AadhaarHash == aadhaarHash {
+			if matchAadhaar(b.AadhaarNumber, aadhaarNumber) {
 				proposal.Buyers[i].HasConsented = true
 				proposal.Buyers[i].ConsentedAt = now
 				proposal.Buyers[i].ESignTxHash = eSignTxHash
@@ -422,12 +501,12 @@ func (c *PropertyTransferContract) RecordConsent(
 		}
 	case "OFFICER":
 		// Officer endorsement is stored separately but treated as consent
-		proposal.OfficerHash = aadhaarHash
+		proposal.OfficerHash = aadhaarNumber
 		found = true
 	}
 
 	if !found {
-		return fmt.Errorf("aadhaarHash %s not found as %s in transfer %s", aadhaarHash, partyRole, transferID)
+		return fmt.Errorf("aadhaarNumber %s not found as %s in transfer %s", aadhaarNumber, partyRole, transferID)
 	}
 
 	if c.allConsentsGiven(proposal) {
@@ -471,20 +550,66 @@ func (c *PropertyTransferContract) ConfirmStampDutyPayment(
 	return c.saveProposal(ctx, proposal)
 }
 
-// ExecuteTransfer — Step 5: atomic final execution
-// Removes sellers from DLPI.Owners[], adds buyers — all in one Fabric transaction
-func (c *PropertyTransferContract) ExecuteTransfer(
+// ApproveByPatwari — Patwari reviews and approves the transfer
+func (c *PropertyTransferContract) ApproveByPatwari(
 	ctx contractapi.TransactionContextInterface,
-	transferID, newTitleCID string,
+	transferID, patwariHash string,
 ) error {
-
 	proposal, err := c.getProposal(ctx, transferID)
 	if err != nil {
 		return err
 	}
-
 	if proposal.Status != StatusStampDutyPaid {
-		return fmt.Errorf("transfer %s not ready for execution (status: %s)", transferID, proposal.Status)
+		return fmt.Errorf("transfer %s not ready for Patwari approval (status: %s)", transferID, proposal.Status)
+	}
+
+	proposal.Status = StatusPatwariApproved
+	proposal.UpdatedAt = time.Now().UTC().Format(time.RFC3339)
+
+	event, _ := json.Marshal(map[string]interface{}{
+		"transferId": transferID, "patwariHash": patwariHash,
+	})
+	_ = ctx.GetStub().SetEvent("PatwariApproved", event)
+
+	return c.saveProposal(ctx, proposal)
+}
+
+// ApproveByCI — CI reviews and approves the transfer
+func (c *PropertyTransferContract) ApproveByCI(
+	ctx contractapi.TransactionContextInterface,
+	transferID, ciHash string,
+) error {
+	proposal, err := c.getProposal(ctx, transferID)
+	if err != nil {
+		return err
+	}
+	if proposal.Status != StatusPatwariApproved {
+		return fmt.Errorf("transfer %s not ready for CI approval (status: %s)", transferID, proposal.Status)
+	}
+
+	proposal.Status = StatusCIApproved
+	proposal.UpdatedAt = time.Now().UTC().Format(time.RFC3339)
+
+	event, _ := json.Marshal(map[string]interface{}{
+		"transferId": transferID, "ciHash": ciHash,
+	})
+	_ = ctx.GetStub().SetEvent("CIApproved", event)
+
+	return c.saveProposal(ctx, proposal)
+}
+
+
+// ApproveBySRO — Step 6: SRO execution (registration)
+func (c *PropertyTransferContract) ApproveBySRO(
+	ctx contractapi.TransactionContextInterface,
+	transferID, newTitleCID, sroHash string,
+) error {
+	proposal, err := c.getProposal(ctx, transferID)
+	if err != nil {
+		return err
+	}
+	if proposal.Status != StatusCIApproved {
+		return fmt.Errorf("transfer %s not ready for SRO execution (status: %s)", transferID, proposal.Status)
 	}
 	if proposal.FraudScore >= 0.75 && proposal.FraudScore < 0.90 {
 		return fmt.Errorf("FRAUD_REVIEW_PENDING: score %.2f needs manual Revenue HQ approval", proposal.FraudScore)
@@ -493,28 +618,53 @@ func (c *PropertyTransferContract) ExecuteTransfer(
 		return fmt.Errorf("CONSENT_INCOMPLETE: not all required parties have consented")
 	}
 
+	proposal.Status = StatusSROExecuted
+	proposal.NewTitleCID = newTitleCID
+	proposal.UpdatedAt = time.Now().UTC().Format(time.RFC3339)
+	proposal.OfficerHash = sroHash
+
+	event, _ := json.Marshal(map[string]interface{}{
+		"transferId": transferID, "newTitleCID": newTitleCID, "sroHash": sroHash,
+	})
+	_ = ctx.GetStub().SetEvent("SROExecuted", event)
+
+	return c.saveProposal(ctx, proposal)
+}
+
+// ApproveByTehsildar — Final approval and blockchain mutation
+// Removes sellers from DLPI.Owners[], adds buyers — all in one Fabric transaction
+func (c *PropertyTransferContract) ApproveByTehsildar(
+	ctx contractapi.TransactionContextInterface,
+	transferID, tehsildarHash string,
+) error {
+	proposal, err := c.getProposal(ctx, transferID)
+	if err != nil {
+		return err
+	}
+	if proposal.Status != StatusCIApproved {
+		return fmt.Errorf("transfer %s not ready for Tehsildar approval (status: %s)", transferID, proposal.Status)
+	}
+
 	now := time.Now().UTC()
 	txID := ctx.GetStub().GetTxID()
 
 	// Build seller hashes list for DLPI removal
 	sellerHashes := make([]string, len(proposal.Sellers))
 	for i, s := range proposal.Sellers {
-		sellerHashes[i] = s.AadhaarHash
+		sellerHashes[i] = s.AadhaarNumber
 	}
 
 	// Build CoOwner structs for new buyers
-	// We pass these as JSON — DLPI chaincode will add OwnerSince + IsVerified
 	type CoOwnerInput struct {
-		AadhaarHash   string  `json:"aadhaarHash"`
+		AadhaarNumber   string  `json:"aadhaarNumber"`
 		Name          string  `json:"name"`
 		Share         string  `json:"share"`
 		ShareDecimal  float64 `json:"shareDecimal"`
-		IsTribal      bool    `json:"isTribal"`
 	}
 	newBuyerInputs := make([]CoOwnerInput, len(proposal.Buyers))
 	for i, b := range proposal.Buyers {
 		newBuyerInputs[i] = CoOwnerInput{
-			AadhaarHash:  b.AadhaarHash,
+			AadhaarNumber:  b.AadhaarNumber,
 			Name:         b.Name,
 			Share:        b.ShareFraction,
 			ShareDecimal: b.ShareDecimal,
@@ -533,8 +683,8 @@ func (c *PropertyTransferContract) ExecuteTransfer(
 		sellerHashesJSON,
 		newBuyersJSON,
 		[]byte("Sale"),
-		[]byte("Officer"),
-		[]byte(proposal.OfficerHash),
+		[]byte("Tehsildar"),
+		[]byte(tehsildarHash),
 		[]byte(proposal.MutationNo),
 		[]byte(proposal.SaleAgreementCID),
 		[]byte(description),
@@ -544,7 +694,6 @@ func (c *PropertyTransferContract) ExecuteTransfer(
 	}
 
 	proposal.Status = StatusCompleted
-	proposal.NewTitleCID = newTitleCID
 	proposal.CompletedAt = now.Format(time.RFC3339)
 	proposal.UpdatedAt = now.Format(time.RFC3339)
 
@@ -558,9 +707,10 @@ func (c *PropertyTransferContract) ExecuteTransfer(
 		"sellers":     proposal.Sellers,
 		"buyers":      proposal.Buyers,
 		"mutationNo":  proposal.MutationNo,
-		"newTitleCID": newTitleCID,
+		"newTitleCID": proposal.NewTitleCID,
 		"txHash":      txID,
 		"completedAt": proposal.CompletedAt,
+		"tehsildarHash": tehsildarHash,
 	})
 	_ = ctx.GetStub().SetEvent("TransferCompleted", event)
 
@@ -598,16 +748,75 @@ func (c *PropertyTransferContract) RejectTransfer(
 // GetTransferProposal — retrieve by ID
 func (c *PropertyTransferContract) GetTransferProposal(
 	ctx contractapi.TransactionContextInterface, transferID string,
-) (*TransferProposal, error) {
-	return c.getProposal(ctx, transferID)
+) (string, error) {
+	proposal, err := c.getProposal(ctx, transferID)
+	if err != nil {
+		return "", err
+	}
+	data, err := json.Marshal(proposal)
+	if err != nil {
+		return "", err
+	}
+	return string(data), nil
 }
 
 // QueryTransfersByDLPI — all transfers for a parcel
 func (c *PropertyTransferContract) QueryTransfersByDLPI(
 	ctx contractapi.TransactionContextInterface, dlpiId string,
-) ([]*TransferProposal, error) {
+) (string, error) {
 	query := fmt.Sprintf(`{"selector":{"dlpiId":"%s"}}`, dlpiId)
 	return c.executeQuery(ctx, query)
+}
+
+// QueryPendingTransfers — all transfers awaiting officer approval
+func (c *PropertyTransferContract) QueryPendingTransfers(
+	ctx contractapi.TransactionContextInterface,
+) (string, error) {
+	query := `{"selector":{"status":{"$in":["STAMP_DUTY_PAID","PATWARI_APPROVED","CI_APPROVED","SRO_EXECUTED"]}}}`
+	return c.executeQuery(ctx, query)
+}
+
+// GetTransferHistory — retrieve history of status changes
+func (c *PropertyTransferContract) GetTransferHistory(
+	ctx contractapi.TransactionContextInterface, transferID string,
+) (string, error) {
+	resultsIterator, err := ctx.GetStub().GetHistoryForKey(transferID)
+	if err != nil {
+		return "", err
+	}
+	defer resultsIterator.Close()
+
+	var history []map[string]interface{}
+	for resultsIterator.HasNext() {
+		response, err := resultsIterator.Next()
+		if err != nil {
+			return "", err
+		}
+		
+		var p TransferProposal
+		if len(response.Value) > 0 {
+			if err := json.Unmarshal(response.Value, &p); err != nil {
+				return "", err
+			}
+		}
+
+		timestamp := time.Unix(response.Timestamp.Seconds, int64(response.Timestamp.Nanos)).UTC().Format(time.RFC3339)
+		
+		record := map[string]interface{}{
+			"txId":      response.TxId,
+			"timestamp": timestamp,
+			"isDelete":  response.IsDelete,
+			"status":    p.Status,
+			"officerHash": p.OfficerHash,
+		}
+		history = append(history, record)
+	}
+
+	data, err := json.Marshal(history)
+	if err != nil {
+		return "", err
+	}
+	return string(data), nil
 }
 
 // ─── Internal Helpers ─────────────────────────────────────────────────────────
@@ -639,7 +848,7 @@ func validateBuyerShares(sellers []TransferParty, buyers []TransferParty, transf
 	}
 	for _, b := range buyers {
 		if b.ShareDecimal <= 0 {
-			return fmt.Errorf("buyer %s has invalid share decimal: %f", b.AadhaarHash, b.ShareDecimal)
+			return fmt.Errorf("buyer %s has invalid share decimal: %f", b.AadhaarNumber, b.ShareDecimal)
 		}
 		buyerTotal += b.ShareDecimal
 	}
@@ -696,25 +905,33 @@ func (c *PropertyTransferContract) saveProposal(ctx contractapi.TransactionConte
 	return ctx.GetStub().PutState(p.TransferID, data)
 }
 
-func (c *PropertyTransferContract) executeQuery(ctx contractapi.TransactionContextInterface, query string) ([]*TransferProposal, error) {
+// executeQuery — helper for rich queries
+func (c *PropertyTransferContract) executeQuery(ctx contractapi.TransactionContextInterface, query string) (string, error) {
 	iter, err := ctx.GetStub().GetQueryResult(query)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 	defer iter.Close()
 	var results []*TransferProposal
 	for iter.HasNext() {
 		r, err := iter.Next()
 		if err != nil {
-			return nil, err
+			return "", err
 		}
 		var p TransferProposal
 		if err := json.Unmarshal(r.Value, &p); err != nil {
-			return nil, err
+			return "", err
 		}
 		results = append(results, &p)
 	}
-	return results, nil
+	if results == nil {
+		results = []*TransferProposal{}
+	}
+	data, err := json.Marshal(results)
+	if err != nil {
+		return "", err
+	}
+	return string(data), nil
 }
 
 func main() {

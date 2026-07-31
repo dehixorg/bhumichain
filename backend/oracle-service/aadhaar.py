@@ -4,7 +4,7 @@ Mock mode: returns pre-scripted Noida/UP demo personas.
 Real mode: calls UIDAI API (requires ASA empanelment).
 
 Security: Raw Aadhaar number never stored. Only used transiently to lookup
-persona, then discarded. aadhaarHash (SHA-256) flows downstream.
+persona, then discarded. aadhaarNumber (SHA-256) flows downstream.
 """
 
 import hashlib

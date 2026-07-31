@@ -100,7 +100,7 @@ az containerapp create \
     FABRIC_MODE=real \
     FABRIC_PEER_ENDPOINT=<fabric-vm-ip>:7051 \
     FABRIC_CHANNEL=land-registry \
-    FABRIC_MSPID=RevenueDeptMSP \
+    FABRIC_MSP_ID=RevenueDeptMSP \
     JWT_SECRET=<your-secret> \
     ANTHROPIC_API_KEY=<your-key> \
     TELEGRAM_BOT_TOKEN=<your-token> \

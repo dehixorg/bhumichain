@@ -7,7 +7,7 @@ It has two parts:
 """
 
 from pydantic import BaseModel, Field
-from typing import Optional, List
+from typing import Optional, List, Union
 from enum import Enum
 
 
@@ -76,10 +76,16 @@ class SatbaraExtraction(BaseModel):
 class ScanResult(BaseModel):
     """Full pipeline result returned to the frontend."""
     scanId: str
-    fileName: str
-    fileSizeKB: float
-    ipfsCID: str                         # document stored on IPFS
-    processingSteps: List[dict]          # pipeline trace for UI
-    extraction: SatbaraExtraction
-    suggestedDlpiId: str                 # pre-generated, officer confirms
-    processingTimeMs: int
+    fileName: str = "external-document"
+    fileSizeKB: float = 0.0
+    ipfsCID: str = "QmPending"
+    processingSteps: List[dict] = []
+    extraction: Union[SatbaraExtraction, dict] = {}
+    suggestedDlpiId: str = ""
+    processingTimeMs: int = 0
+    storedInDynamoDB: bool = False
+    status: str = 'COMPLETED'
+    owners: Optional[List[dict]] = None
+    ownerAadhaarNumber: Optional[str] = None
+    patwariName: Optional[str] = None
+    patwariHash: Optional[str] = None

@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /**
  * BhumiChain — District Seed Script
- * Reads noida_parcels.json, resolves demo aadhaar hash placeholders,
- * authenticates as tehsildar, and POSTs to /api/dlpi/bulk-seed in batches.
+ * Reads patna_parcels.json, resolves demo aadhaar hash placeholders,
+ * authenticates as circle_officer, and POSTs to /api/dlpi/bulk-seed in batches.
  *
  * Usage:
  *   node scripts/seed-district.js [--dry-run] [--batch 50]
@@ -101,19 +101,19 @@ async function main() {
   console.log();
 
   // 1. Load parcels
-  const dataPath = path.resolve(__dirname, '../data/synthetic-parcels/noida_parcels.json');
+  const dataPath = path.resolve(__dirname, '../data/synthetic-parcels/patna_parcels.json');
   if (!fs.existsSync(dataPath)) {
-    console.error('ERROR: noida_parcels.json not found. Run:');
+    console.error('ERROR: patna_parcels.json not found. Run:');
     console.error('  cd data/synthetic-parcels && python3 generate_parcels.py');
     process.exit(1);
   }
   const raw     = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
   const parcels = resolvePlaceholders(raw);
-  console.log(`Loaded ${parcels.length} parcels from noida_parcels.json`);
+  console.log(`Loaded ${parcels.length} parcels from patna_parcels.json`);
 
-  // 2. Get tehsildar demo token
-  console.log('Authenticating as tehsildar (demo token)…');
-  const authRes = await request('POST', `${API_URL}/api/auth/demo-token`, { persona: 'tehsildar' });
+  // 2. Get circle_officer demo token
+  console.log('Authenticating as circle_officer (demo token)…');
+  const authRes = await request('POST', `${API_URL}/api/auth/demo-token`, { persona: 'circle_officer' });
   if (authRes.status !== 200 || !authRes.body.token) {
     console.error('Auth failed:', authRes.body);
     process.exit(1);

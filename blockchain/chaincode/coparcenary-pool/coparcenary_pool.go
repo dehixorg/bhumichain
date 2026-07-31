@@ -53,7 +53,7 @@ import (
 
 // PoolMember — one family member's stake in the pool
 type PoolMember struct {
-	AadhaarHash     string  `json:"aadhaarHash"`
+	AadhaarNumber     string  `json:"aadhaarNumber"`
 	Name            string  `json:"name"`
 	Share           string  `json:"share"`         // "1/64", "3/64" (can increase by buying out others)
 	ShareDecimal    float64 `json:"shareDecimal"`
@@ -75,7 +75,7 @@ type PoolAsset struct {
 	LastValuationINR float64 `json:"lastValuationInr,omitempty"`
 	ValuationAt      string  `json:"valuationAt,omitempty"`
 	IsReleased       bool   `json:"isReleased"`     // true after partial dissolution
-	ReleasedTo       string `json:"releasedTo,omitempty"` // aadhaarHash of recipient on release
+	ReleasedTo       string `json:"releasedTo,omitempty"` // aadhaarNumber of recipient on release
 	ReleasedAt       string `json:"releasedAt,omitempty"`
 }
 
@@ -108,7 +108,7 @@ type CoparcenaryPool struct {
 	ShareHistory    []ShareTransfer `json:"shareHistory,omitempty"`
 
 	// Governance
-	KartaHash       string `json:"kartaHash"`      // current Karta's aadhaarHash
+	KartaHash       string `json:"kartaHash"`      // current Karta's aadhaarNumber
 	MinDissolveVote float64 `json:"minDissolveVote"` // fraction required for dissolution (default 0.75 — supermajority)
 
 	// Dissolution
@@ -188,7 +188,7 @@ func (c *CoparcenaryPoolContract) CreatePool(
 	kartaFound := false
 	for _, m := range members {
 		totalShare += m.ShareDecimal
-		if m.IsKarta && m.AadhaarHash == kartaHash {
+		if m.IsKarta && m.AadhaarNumber == kartaHash {
 			kartaFound = true
 		}
 	}
@@ -363,7 +363,7 @@ func (c *CoparcenaryPoolContract) ResolveMissingHeirFlag(
 // The Karta + Tehsildar must co-approve (prevents fake additions)
 func (c *CoparcenaryPoolContract) AddMember(
 	ctx contractapi.TransactionContextInterface,
-	poolId, newMemberAadhaarHash, newMemberName,
+	poolId, newMemberAadhaarNumber, newMemberName,
 	shareFraction string, shareDecimal float64,
 	relation, kartaESignHash, officerHash string,
 ) error {
@@ -386,7 +386,7 @@ func (c *CoparcenaryPoolContract) AddMember(
 
 	now := time.Now().UTC().Format(time.RFC3339)
 	newMember := PoolMember{
-		AadhaarHash:  newMemberAadhaarHash,
+		AadhaarNumber:  newMemberAadhaarNumber,
 		Name:         newMemberName,
 		Share:        shareFraction,
 		ShareDecimal: shareDecimal,
@@ -411,7 +411,7 @@ func (c *CoparcenaryPoolContract) AddMember(
 	pool.UpdatedAt = now
 	event, _ := json.Marshal(map[string]interface{}{
 		"poolId":      poolId,
-		"newMember":   newMemberAadhaarHash,
+		"newMember":   newMemberAadhaarNumber,
 		"share":       shareFraction,
 		"relation":    relation,
 		"kartaApproved": kartaESignHash,
@@ -446,7 +446,7 @@ func (c *CoparcenaryPoolContract) TransferPoolShare(
 	// Find seller and validate they have enough share
 	sellerFound := false
 	for i, m := range pool.Members {
-		if m.AadhaarHash == fromHash {
+		if m.AadhaarNumber == fromHash {
 			if m.ShareDecimal < shareDecimal-0.001 {
 				return "", fmt.Errorf("seller has %.6f share but trying to transfer %.6f", m.ShareDecimal, shareDecimal)
 			}
@@ -463,7 +463,7 @@ func (c *CoparcenaryPoolContract) TransferPoolShare(
 	// Check if buyer is already a member (internal) or new (external)
 	isInternal := false
 	for i, m := range pool.Members {
-		if m.AadhaarHash == toHash {
+		if m.AadhaarNumber == toHash {
 			pool.Members[i].ShareDecimal += shareDecimal
 			pool.Members[i].Share = fractionString(pool.Members[i].ShareDecimal, len(pool.Members))
 			isInternal = true
@@ -473,7 +473,7 @@ func (c *CoparcenaryPoolContract) TransferPoolShare(
 	if !isInternal {
 		// External buyer — add as new member
 		pool.Members = append(pool.Members, PoolMember{
-			AadhaarHash:  toHash,
+			AadhaarNumber:  toHash,
 			Name:         toName,
 			Share:        shareFraction,
 			ShareDecimal: shareDecimal,
@@ -544,7 +544,7 @@ func (c *CoparcenaryPoolContract) VoteForDissolution(
 	now := time.Now().UTC().Format(time.RFC3339)
 	memberShareVoting := 0.0
 	for i, m := range pool.Members {
-		if m.AadhaarHash == memberHash {
+		if m.AadhaarNumber == memberHash {
 			pool.Members[i].HasVotedToDissolve = true
 			pool.Members[i].DissolveVoteAt = now
 			memberShareVoting = m.ShareDecimal
@@ -614,7 +614,7 @@ func (c *CoparcenaryPoolContract) ReleaseAsset(
 
 	var voteWeight float64
 	for _, m := range pool.Members {
-		if voterMap[m.AadhaarHash] && !m.IsDeceased {
+		if voterMap[m.AadhaarNumber] && !m.IsDeceased {
 			voteWeight += m.ShareDecimal
 		}
 	}
@@ -702,7 +702,7 @@ func (c *CoparcenaryPoolContract) QueryPoolsByAncestor(
 func (c *CoparcenaryPoolContract) QueryPoolsByMember(
 	ctx contractapi.TransactionContextInterface, memberHash string,
 ) ([]*CoparcenaryPool, error) {
-	query := fmt.Sprintf(`{"selector":{"members":{"$elemMatch":{"aadhaarHash":"%s"}}}}`, memberHash)
+	query := fmt.Sprintf(`{"selector":{"members":{"$elemMatch":{"aadhaarNumber":"%s"}}}}`, memberHash)
 	return c.executeQuery(ctx, query)
 }
 
