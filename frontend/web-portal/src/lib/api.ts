@@ -325,10 +325,30 @@ export async function getAuctions() {
 export async function placeBid(auctionId: string, payload: {
   bidAmountINR: number;
   bidderAadhaarNumber: string;
+  bidderName?: string;
 }) {
   const res = await apiFetch(`/api/auction/${auctionId}/bid`, {
     method: 'POST',
     body: JSON.stringify(payload),
+  });
+  return res.json();
+}
+
+export async function createAuction(payload: {
+  dlpiId: string;
+  reservePrice: number;
+  durationDays: number;
+}) {
+  const res = await apiFetch('/api/auction/list', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+  return res.json();
+}
+
+export async function closeAuction(auctionId: string) {
+  const res = await apiFetch(`/api/auction/${auctionId}/close`, {
+    method: 'POST',
   });
   return res.json();
 }

@@ -58,12 +58,15 @@ export interface Parcel {
   isCoparcenary: boolean;
   scheduleVArea: boolean;
   encumbranceStatus: EncumbranceStatus;
+  claimStatus?: string;
+  isTribal?: boolean;
   owner: ParcelOwner;
   owners?: ParcelOwner[];
   ownershipType?: string;
   coparcenary?: Coparcenary;
   location: ParcelLocation;
   valuation?: { circleRateINR: number; estimatedValueINR: number };
+  activeLease?: { leaseId: string, tenantName: string, endDate: string };
   ipfsCID?: string;
   createdAt: string;
   txHash?: string;

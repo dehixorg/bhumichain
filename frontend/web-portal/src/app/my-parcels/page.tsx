@@ -3,19 +3,22 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { AnimatePresence } from 'framer-motion';
 import {
   MapPin, ArrowRight, CheckCircle, Clock, AlertTriangle,
   FileText, Shield, Search, ArrowUpRight, Download, Send,
   Landmark, Map, FileSignature, HelpCircle, FileCheck,
   TrendingUp, BellRing, Activity, ArrowLeftRight, X, UserCheck, DollarSign, Edit3,
-  Plus, Database
+  Plus, Database, Gavel, Handshake
 } from 'lucide-react';
+import TitleCardPDF from '@/components/TitleCardPDF';
+import BlockchainAuditTrail from '@/components/modals/BlockchainAuditTrail';
 import clsx from 'clsx';
 import CitizenHeader from '@/components/dashboard/CitizenHeader';
 import CitizenFooter from '@/components/dashboard/CitizenFooter';
 import LegalDeedPDFModal, { LegalDeedData } from '@/components/dashboard/LegalDeedPDFModal';
 import { getUser, apiFetch, type JWTUser, formatMaskedAadhaar, formatLastLogin } from '@/lib/auth';
-import { recordHeirConsent, initiateTransfer, recordConsent, getMyPendingTransfers, nominateHeirs, getInheritorNominations, acceptNomination } from '@/lib/api';
+import { recordHeirConsent, initiateTransfer, recordConsent, getMyPendingTransfers, nominateHeirs, getInheritorNominations, acceptNomination, createAuction } from '@/lib/api';
 import toast from 'react-hot-toast';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -94,9 +97,24 @@ export default function CitizenDashboard() {
   const [nominateHeirsList, setNominateHeirsList] = useState<{name: string, aadhaarNumber: string, share: string}[]>([{name: '', aadhaarNumber: '', share: ''}]);
   const [nominateBusy, setNominateBusy] = useState(false);
 
+  const [auctionModalParcel, setAuctionModalParcel] = useState<any>(null);
+  const [auctionReservePrice, setAuctionReservePrice] = useState('4500000');
+  const [auctionDuration, setAuctionDuration] = useState('7');
+  
+  const [auditTrailParcel, setAuditTrailParcel] = useState<string | null>(null);
+  const [auctionBusy, setAuctionBusy] = useState(false);
+
+  // Lease State
+  const [pendingLeases, setPendingLeases] = useState<any[]>([]);
+  const [leaseModalParcel, setLeaseModalParcel] = useState<any>(null);
+  const [leaseTenantAadhaar, setLeaseTenantAadhaar] = useState('');
+  const [leaseRentAmount, setLeaseRentAmount] = useState('');
+  const [leaseDuration, setLeaseDuration] = useState('12');
+  const [leaseBusy, setLeaseBusy] = useState(false);
+
   // Legal Deed PDF Modal State
   const [deedModalOpen, setDeedModalOpen] = useState(false);
-  const [selectedDeedData, setSelectedDeedData] = useState<LegalDeedData | null>(null);
+  const [selectedDeedData, setSelectedDeedData] = useState<any>(null);
 
   useEffect(() => {
     try {
@@ -126,6 +144,11 @@ export default function CitizenDashboard() {
     getInheritorNominations()
       .then(d => { if (Array.isArray(d)) setNominations(d); })
       .catch(e => console.error("Failed to fetch nominations", e));
+      
+    apiFetch('/api/lease/pending')
+      .then(r => r.json())
+      .then(d => { if (Array.isArray(d)) setPendingLeases(d); })
+      .catch(e => console.error("Failed to fetch pending leases", e));
   }, [router]);
 
   const handleClaimParcel = async (parcel: any) => {
@@ -192,6 +215,27 @@ export default function CitizenDashboard() {
       toast.error(msg, { id: 'init-sale' });
     } finally {
       setSellBusy(false);
+    }
+  };
+
+  const handleListAuction = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!auctionModalParcel || !user) return;
+    setAuctionBusy(true);
+    try {
+      toast.loading('Listing property on Voluntary Open Market...', { id: 'list-auction' });
+      await createAuction({
+        dlpiId: auctionModalParcel.dlpiId,
+        reservePrice: Number(auctionReservePrice),
+        durationDays: Number(auctionDuration),
+      });
+      toast.success(`🎉 Property Listed on BhumiAuction!`, { id: 'list-auction' });
+      setAuctionModalParcel(null);
+    } catch (e: any) {
+      const msg = e.response?.data?.message || e.message || 'Failed to list property';
+      toast.error(msg, { id: 'list-auction' });
+    } finally {
+      setAuctionBusy(false);
     }
   };
 
@@ -317,6 +361,92 @@ export default function CitizenDashboard() {
     } catch (err: any) {
       toast.error('Failed to eSign purchase offer: ' + (err?.message || err), { id: 'buyer-esign' });
       console.error(err);
+    }
+  };
+
+  const handleCoOwnerTransferESign = async (transferId: string) => {
+    try {
+      toast.loading('Verifying identity & executing co-owner eSign...', { id: 'co-owner-esign' });
+      await new Promise(r => setTimeout(r, 1000));
+      const res = await apiFetch(`/api/transfer/${transferId}/co-owner-consent`, {
+        method: 'POST'
+      });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.message || 'eSign failed');
+      }
+      toast.success('Successfully provided co-owner consent!', { id: 'co-owner-esign' });
+      setPendingTransfers(prev => prev.filter(t => t.transferId !== transferId));
+    } catch (err: any) {
+      toast.error('Failed to provide co-owner consent: ' + (err?.message || err), { id: 'co-owner-esign' });
+      console.error(err);
+    }
+  };
+
+  const handleCoOwnerLeaseESign = async (leaseId: string) => {
+    try {
+      toast.loading('Verifying identity & executing co-owner lease eSign...', { id: 'co-owner-lease-esign' });
+      await new Promise(r => setTimeout(r, 1000));
+      const res = await apiFetch(`/api/lease/${leaseId}/co-owner-consent`, {
+        method: 'POST'
+      });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.message || 'eSign failed');
+      }
+      toast.success('Successfully provided co-owner lease consent!', { id: 'co-owner-lease-esign' });
+      setPendingLeases(prev => prev.filter(l => l.leaseId !== leaseId));
+    } catch (err: any) {
+      toast.error('Failed to provide co-owner lease consent: ' + (err?.message || err), { id: 'co-owner-lease-esign' });
+      console.error(err);
+    }
+  };
+
+  const handleInitiateLease = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!leaseModalParcel || !user) return;
+    try {
+      setLeaseBusy(true);
+      const res = await apiFetch('/api/lease/initiate', {
+        method: 'POST',
+        body: JSON.stringify({
+          dlpiId: leaseModalParcel.dlpiId,
+          tenantAadhaar: leaseTenantAadhaar.replace(/\D/g, ''),
+          rentAmount: parseInt(leaseRentAmount),
+          durationMonths: parseInt(leaseDuration),
+          ownerSignature: '0xOWNER_ESIGN_' + Math.random().toString(16).slice(2)
+        })
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || 'Failed to initiate lease');
+      }
+      toast.success('Lease offer submitted to tenant successfully!');
+      setLeaseModalParcel(null);
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setLeaseBusy(false);
+    }
+  };
+
+  const handleTenantESign = async (leaseId: string) => {
+    try {
+      toast.loading('Verifying identity & executing Tenant eSign...', { id: 'tenant-esign' });
+      const res = await apiFetch(`/api/lease/${leaseId}/consent`, {
+        method: 'POST',
+        body: JSON.stringify({
+          tenantSignature: '0xTENANT_ESIGN_' + Math.random().toString(16).slice(2)
+        })
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || 'eSign failed');
+      }
+      toast.success('Lease successfully activated!', { id: 'tenant-esign' });
+      setPendingLeases(prev => prev.filter(l => l.leaseId !== leaseId));
+    } catch (err: any) {
+      toast.error('Failed to eSign lease: ' + err.message, { id: 'tenant-esign' });
     }
   };
 
@@ -469,21 +599,92 @@ export default function CitizenDashboard() {
                           <ArrowLeftRight className="w-6 h-6 text-[#0F4C81]" />
                         </div>
                         <div className="flex-1">
-                          <div className="flex items-center justify-between">
-                            <h3 className="text-base font-bold text-[#0F4C81]">Property Purchase Offer ({t.dlpiId})</h3>
-                            <span className="text-xs font-bold bg-blue-200 text-[#0F4C81] px-2 py-0.5 rounded">eSign Required</span>
-                          </div>
-                          <p className="text-sm text-blue-900 mt-1">
-                            Seller <span className="font-semibold">{t.sellerName}</span> (Aadhaar: <span className="font-mono">{t.sellerAadhaarNumber}</span>) has initiated a sale of property <span className="font-mono font-bold">{t.dlpiId}</span> to you for declared value <span className="font-bold">₹{Number(t.declaredValueINR || 0).toLocaleString('en-IN')}</span>.
-                          </p>
-                          <div className="mt-4 flex gap-3">
-                            <button
-                              onClick={() => handleBuyerESign(t.transferId)}
-                              className="bg-[#0F4C81] hover:bg-[#0c3d67] text-white text-sm font-bold py-2 px-5 rounded-lg shadow-sm transition-colors flex items-center gap-2"
-                            >
-                              <FileSignature className="w-4 h-4" /> Consent &amp; eSign to Buy
-                            </button>
-                          </div>
+                          {t.status === 'PENDING_CO_OWNER_CONSENT' ? (
+                            <>
+                              <div className="flex items-center justify-between">
+                                <h3 className="text-base font-bold text-[#0F4C81]">Co-Owner Sale Consent Request ({t.dlpiId})</h3>
+                                <span className="text-xs font-bold bg-amber-200 text-amber-900 px-2 py-0.5 rounded">eSign Required</span>
+                              </div>
+                              <p className="text-sm text-blue-900 mt-1">
+                                Your co-owner <span className="font-semibold">{t.sellerName}</span> has initiated a sale of property <span className="font-mono font-bold">{t.dlpiId}</span> to <span className="font-semibold">{t.buyerName}</span> for <span className="font-bold">₹{Number(t.declaredValueINR || 0).toLocaleString('en-IN')}</span>. Please eSign to authorize this transfer.
+                              </p>
+                              <div className="mt-4 flex gap-3">
+                                <button
+                                  onClick={() => handleCoOwnerTransferESign(t.transferId)}
+                                  className="bg-amber-500 hover:bg-amber-600 text-white text-sm font-bold py-2 px-5 rounded-lg shadow-sm transition-colors flex items-center gap-2"
+                                >
+                                  <FileSignature className="w-4 h-4" /> Co-Owner eSign
+                                </button>
+                              </div>
+                            </>
+                          ) : (
+                            <>
+                              <div className="flex items-center justify-between">
+                                <h3 className="text-base font-bold text-[#0F4C81]">Property Purchase Offer ({t.dlpiId})</h3>
+                                <span className="text-xs font-bold bg-blue-200 text-[#0F4C81] px-2 py-0.5 rounded">eSign Required</span>
+                              </div>
+                              <p className="text-sm text-blue-900 mt-1">
+                                Seller <span className="font-semibold">{t.sellerName}</span> (Aadhaar: <span className="font-mono">{t.sellerAadhaarNumber}</span>) has initiated a sale of property <span className="font-mono font-bold">{t.dlpiId}</span> to you for declared value <span className="font-bold">₹{Number(t.declaredValueINR || 0).toLocaleString('en-IN')}</span>.
+                              </p>
+                              <div className="mt-4 flex gap-3">
+                                <button
+                                  onClick={() => handleBuyerESign(t.transferId)}
+                                  className="bg-[#0F4C81] hover:bg-[#0c3d67] text-white text-sm font-bold py-2 px-5 rounded-lg shadow-sm transition-colors flex items-center gap-2"
+                                >
+                                  <FileSignature className="w-4 h-4" /> Consent &amp; eSign to Buy
+                                </button>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+
+                  {pendingLeases.map((l: any) => (
+                    <div key={l.leaseId} className="bg-emerald-50 border border-emerald-300 rounded-2xl p-5 shadow-sm">
+                      <div className="flex items-start gap-4">
+                        <div className="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center shrink-0">
+                          <FileSignature className="w-6 h-6 text-emerald-600" />
+                        </div>
+                        <div className="flex-1">
+                          {l.status === 'PENDING_CO_OWNER_CONSENT' ? (
+                            <>
+                              <div className="flex items-center justify-between">
+                                <h3 className="text-base font-bold text-emerald-900">Co-Owner Lease Consent ({l.dlpiId})</h3>
+                                <span className="text-xs font-bold bg-amber-200 text-amber-900 px-2 py-0.5 rounded">eSign Required</span>
+                              </div>
+                              <p className="text-sm text-emerald-900 mt-1">
+                                Your co-owner has initiated a Smart Lease for parcel <strong className="font-mono">{l.dlpiId}</strong> to Tenant Aadhaar <strong className="font-mono">{l.tenantAadhaar}</strong>. Rent: ₹{l.rentAmount}/mo for {l.durationMonths} months.
+                              </p>
+                              <div className="mt-4">
+                                <button
+                                  onClick={() => handleCoOwnerLeaseESign(l.leaseId)}
+                                  className="bg-amber-500 hover:bg-amber-600 text-white text-sm font-bold py-2 px-5 rounded-lg shadow-sm transition-colors flex items-center gap-2"
+                                >
+                                  <FileSignature className="w-4 h-4" /> Co-Owner eSign
+                                </button>
+                              </div>
+                            </>
+                          ) : (
+                            <>
+                              <div className="flex items-center justify-between">
+                                <h3 className="text-base font-bold text-emerald-900">Incoming Lease Offer ({l.dlpiId})</h3>
+                                <span className="text-xs font-bold bg-emerald-200 text-emerald-900 px-2 py-0.5 rounded">Action Required</span>
+                              </div>
+                              <p className="text-sm text-emerald-900 mt-1">
+                                You have received a Smart Lease offer from Aadhaar <strong className="font-mono">{l.ownerAadhaar}</strong> for parcel <strong className="font-mono">{l.dlpiId}</strong>. Rent: ₹{l.rentAmount}/mo for {l.durationMonths} months.
+                              </p>
+                              <div className="mt-4">
+                                <button
+                                  onClick={() => handleTenantESign(l.leaseId)}
+                                  className="bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold py-2 px-5 rounded-lg shadow-sm transition-colors flex items-center gap-2"
+                                >
+                                  <CheckCircle className="w-4 h-4" /> Consent & eSign Lease
+                                </button>
+                              </div>
+                            </>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -641,6 +842,19 @@ export default function CitizenDashboard() {
                           <Link href={`/bhu-naksha?dlpi=${p.dlpiId}`} className="btn-secondary text-xs py-2 px-3 rounded-lg flex-1 text-center justify-center bg-white min-w-[100px]">
                             <Map className="w-4 h-4 mr-1.5 inline" /> View Map
                           </Link>
+                          {p.claimStatus === 'PENDING' && <span className="bg-amber-100 text-amber-800 px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wide border border-amber-200">Pending Review</span>}
+                          {p.activeLease && <span className="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wide border border-emerald-200 flex items-center gap-1"><CheckCircle className="w-3 h-3"/> Active Lease: {p.activeLease.tenantName}</span>}
+                          <button
+                            onClick={() => setAuditTrailParcel(p.dlpiId)}
+                            className="bg-black text-white hover:bg-gray-800 font-bold text-xs py-2 px-3 rounded-lg flex items-center justify-center gap-1.5 transition-colors shadow-sm min-w-[120px]"
+                          >
+                            🔗 Audit Trail
+                          </button>
+                          
+                          <div className="w-full mt-1">
+                            <TitleCardPDF parcel={p} user={user} />
+                          </div>
+
                           {p.claimStatus !== 'OWNER_VERIFIED' && p.claimStatus !== 'VERIFIED' ? (
                             <button
                               onClick={() => handleClaimParcel(p)}
@@ -674,6 +888,27 @@ export default function CitizenDashboard() {
                                 className="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs py-2 px-3 rounded-lg flex items-center justify-center gap-1.5 transition-colors shadow-sm min-w-[100px]"
                               >
                                 <ArrowLeftRight className="w-3.5 h-3.5" /> Sell Property
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setAuctionModalParcel(p);
+                                  setAuctionReservePrice('4500000');
+                                  setAuctionDuration('7');
+                                }}
+                                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs py-2 px-3 rounded-lg flex items-center justify-center gap-1.5 transition-colors shadow-sm min-w-[100px]"
+                              >
+                                <Gavel className="w-3.5 h-3.5" /> List on Market
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setLeaseModalParcel(p);
+                                  setLeaseTenantAadhaar('');
+                                  setLeaseRentAmount('');
+                                  setLeaseDuration('12');
+                                }}
+                                className="bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs py-2 px-3 rounded-lg flex items-center justify-center gap-1.5 transition-colors shadow-sm min-w-[100px]"
+                              >
+                                <Handshake className="w-3.5 h-3.5" /> Lease Property
                               </button>
                             </>
                           )}
@@ -1067,6 +1302,170 @@ export default function CitizenDashboard() {
             </div>
           </div>
         )}
+        {/* Auction Modal */}
+        {auctionModalParcel && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-0">
+            <div className="absolute inset-0 bg-[#0F4C81]/40 backdrop-blur-sm" onClick={() => setAuctionModalParcel(null)} />
+            <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md relative z-10 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+              <div className="bg-gradient-to-r from-emerald-600 to-emerald-800 p-6 text-white relative">
+                <button onClick={() => setAuctionModalParcel(null)} className="absolute top-4 right-4 text-white/70 hover:text-white">
+                  <X className="w-5 h-5" />
+                </button>
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-md border border-white/30">
+                    <DollarSign className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-black">List on Open Market</h3>
+                    <p className="text-emerald-100 text-sm font-medium">Voluntary Auction</p>
+                  </div>
+                </div>
+              </div>
+
+              <form onSubmit={handleListAuction} className="p-6 space-y-5">
+                <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 mb-2">
+                  <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Target Property</p>
+                  <p className="font-mono text-[#0F4C81] font-bold">{auctionModalParcel.dlpiId}</p>
+                  <p className="text-sm text-gray-600 mt-1">Area: {auctionModalParcel.areaHectares} Ha | Khesra: {auctionModalParcel.khesraNo}</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-1.5">Reserve Price (₹)</label>
+                  <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-bold">₹</span>
+                    <input
+                      type="number"
+                      required
+                      min="1"
+                      value={auctionReservePrice}
+                      onChange={e => setAuctionReservePrice(e.target.value)}
+                      className="w-full pl-8 pr-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:border-emerald-500 focus:ring-0 font-mono font-bold text-lg text-gray-900 transition-colors"
+                      placeholder="e.g. 5000000"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-1.5">Auction Duration (Days)</label>
+                  <input
+                    type="number"
+                    required
+                    min="1"
+                    max="30"
+                    value={auctionDuration}
+                    onChange={e => setAuctionDuration(e.target.value)}
+                    className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:border-emerald-500 focus:ring-0 font-bold text-gray-900 transition-colors"
+                  />
+                </div>
+
+                <div className="pt-2 flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setAuctionModalParcel(null)}
+                    className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold text-sm py-3 rounded-xl transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={auctionBusy || !auctionReservePrice}
+                    className="flex-1 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold text-sm py-3 rounded-xl transition-colors flex items-center justify-center gap-2 shadow-md"
+                  >
+                    <Gavel className="w-4 h-4" />
+                    {auctionBusy ? 'Listing...' : 'Confirm Listing'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Lease Modal */}
+        {leaseModalParcel && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-0">
+            <div className="absolute inset-0 bg-[#0F4C81]/40 backdrop-blur-sm" onClick={() => setLeaseModalParcel(null)} />
+            <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md relative z-10 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+              <div className="bg-gradient-to-r from-teal-600 to-teal-800 p-6 text-white relative">
+                <button onClick={() => setLeaseModalParcel(null)} className="absolute top-4 right-4 text-white/70 hover:text-white">
+                  <X className="w-5 h-5" />
+                </button>
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-md border border-white/30">
+                    <Handshake className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-black">Smart Lease (Bataidari)</h3>
+                    <p className="text-teal-100 text-sm font-medium">Time-bound Rental Agreement</p>
+                  </div>
+                </div>
+              </div>
+
+              <form onSubmit={handleInitiateLease} className="p-6 space-y-4">
+                <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 mb-2">
+                  <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Target Property</p>
+                  <p className="font-mono text-[#0F4C81] font-bold">{leaseModalParcel.dlpiId}</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-1.5">Tenant Aadhaar Number</label>
+                  <input
+                    type="text"
+                    required
+                    value={leaseTenantAadhaar}
+                    onChange={e => setLeaseTenantAadhaar(e.target.value)}
+                    className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:border-teal-500 focus:ring-0 font-mono font-bold text-lg text-gray-900 transition-colors"
+                    placeholder="xxxx xxxx xxxx"
+                    maxLength={14}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-1.5">Monthly Rent (₹)</label>
+                    <input
+                      type="number"
+                      required
+                      min="1"
+                      value={leaseRentAmount}
+                      onChange={e => setLeaseRentAmount(e.target.value)}
+                      className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:border-teal-500 focus:ring-0 font-bold text-gray-900 transition-colors"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-1.5">Duration (Months)</label>
+                    <input
+                      type="number"
+                      required
+                      min="1"
+                      max="120"
+                      value={leaseDuration}
+                      onChange={e => setLeaseDuration(e.target.value)}
+                      className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:border-teal-500 focus:ring-0 font-bold text-gray-900 transition-colors"
+                    />
+                  </div>
+                </div>
+
+                <div className="pt-2 flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setLeaseModalParcel(null)}
+                    className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold text-sm py-3 rounded-xl transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={leaseBusy || leaseTenantAadhaar.replace(/\D/g, '').length !== 12 || !leaseRentAmount}
+                    className="flex-1 bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white font-bold text-sm py-3 rounded-xl transition-colors flex items-center justify-center gap-2 shadow-md"
+                  >
+                    <FileSignature className="w-4 h-4" />
+                    {leaseBusy ? 'Submitting...' : 'Offer & eSign'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </main>
 
       <LegalDeedPDFModal
@@ -1076,6 +1475,16 @@ export default function CitizenDashboard() {
       />
 
       <CitizenFooter />
+      {/* Audit Trail Modal */}
+      <AnimatePresence>
+        {auditTrailParcel && (
+          <BlockchainAuditTrail 
+            dlpiId={auditTrailParcel} 
+            onClose={() => setAuditTrailParcel(null)} 
+          />
+        )}
+      </AnimatePresence>
+
     </div>
   );
 }

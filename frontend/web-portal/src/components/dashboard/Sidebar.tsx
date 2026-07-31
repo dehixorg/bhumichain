@@ -163,13 +163,34 @@ export default function Sidebar({ demoMode }: Props = {}) {
         </div>
         <div className="text-[10px] text-gray-400 text-center font-medium">Phulwari Sharif · 500 Khataunis</div>
         {user && (
-          <button
-            onClick={logout}
-            className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-[12px] text-gray-400 hover:text-red-600 hover:bg-red-50 hover:border-red-100 border border-transparent transition-all font-medium"
-          >
-            <LogOut className="w-3.5 h-3.5" />
-            Sign Out
-          </button>
+          <div className="flex flex-col gap-1 w-full mt-2">
+            <button
+              onClick={async () => {
+                const toast = (await import('react-hot-toast')).default;
+                toast.loading('Resetting demo data...', { id: 'reset' });
+                try {
+                  const apiFetch = (await import('@/lib/api')).apiFetch;
+                  const res = await apiFetch('/api/system/reset', { method: 'POST' });
+                  if (!res.ok) throw new Error('Reset failed');
+                  toast.success('Demo data reset successfully!', { id: 'reset' });
+                  setTimeout(() => window.location.reload(), 1000);
+                } catch (e) {
+                  toast.error('Failed to reset demo data', { id: 'reset' });
+                }
+              }}
+              className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-[12px] text-gray-400 hover:text-amber-600 hover:bg-amber-50 hover:border-amber-100 border border-transparent transition-all font-medium"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+              Reset Demo
+            </button>
+            <button
+              onClick={logout}
+              className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-[12px] text-gray-400 hover:text-red-600 hover:bg-red-50 hover:border-red-100 border border-transparent transition-all font-medium"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              Sign Out
+            </button>
+          </div>
         )}
       </div>
     </aside>

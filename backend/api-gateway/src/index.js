@@ -17,12 +17,17 @@ const uttaradhikarRoutes = require('./routes/uttaradhikar');
 const encumbranceRoutes = require('./routes/encumbrance');
 const auctionRoutes     = require('./routes/auction');
 const bhuNakshaRoutes   = require('./routes/bhu-naksha');
+const leaseRoutes       = require('./routes/lease');
 const { authenticate, ROLES } = require('./middleware/auth');
 const { init: initWs, triggerMockEvent } = require('./services/websocket');
 const { isMock } = require('./services/fabric');
 
 const app = express();
 const server = http.createServer(app);
+
+// Connect to MongoDB
+const connectDB = require('./config/db');
+connectDB();
 
 // ─── Security & Middleware ────────────────────────────────────────────────────
 
@@ -66,6 +71,18 @@ app.post('/api/demo/trigger', authenticate, (req, res) => {
   res.json({ fired: true, key });
 });
 
+// POST /api/system/reset
+// Used to reset all mock data to the initial state for the next demo.
+app.post('/api/system/reset', authenticate, async (req, res) => {
+  try {
+    const { resetDemoData } = require('./mock/responses');
+    await resetDemoData();
+    res.json({ success: true, message: 'Demo data reset successfully.' });
+  } catch (err) {
+    res.status(500).json({ error: 'RESET_FAILED', message: err.message });
+  }
+});
+
 // ─── API Routes ───────────────────────────────────────────────────────────────
 
 app.use('/api/auth',        authRoutes);
@@ -76,6 +93,7 @@ app.use('/api/succession',  uttaradhikarRoutes);
 app.use('/api/encumbrance', encumbranceRoutes);
 app.use('/api/auction',     auctionRoutes);
 app.use('/api/bhu-naksha',  bhuNakshaRoutes);
+app.use('/api/lease',       leaseRoutes);
 
 // Oracle proxy — forward to oracle-service (avoids CORS on frontend)
 const axios = require('axios');

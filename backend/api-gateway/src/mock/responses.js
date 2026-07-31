@@ -124,6 +124,30 @@ const DEMO_MY_PARCELS = [
     txHash:            '0xdemo_bihar5_tx',
     updatedAt:         '2026-06-20T09:00:00Z',
   },
+  {
+    dlpiId:            'DLPI-Bihar-PHU-00109',
+    khataNo:           '405',
+    khasraNo:          '109',
+    tehsil:            'Phulwari Sharif',
+    tehsilCode:        'PHU',
+    district:          'Patna',
+    state:             'Bihar',
+    landType:          'Agricultural',
+    landTypeDesc:      'Agricultural plot',
+    areaHectares:      1.5,
+    encumbranceStatus: 'CLEAR',
+    claimStatus:       'VERIFIED',
+    owner:             { name: 'Priya Kumar', aadhaarNumber: '999900010010' },
+    owners: [
+      { name: 'Priya Kumar', aadhaarNumber: '999900010010' },
+      { name: 'Rakesh Agarwal', aadhaarNumber: '999900010011' }
+    ],
+    ownershipType:     'JOINT',
+    location:          { latitude: 25.5600, longitude: 85.0900 },
+    valuation:         { circleRateINR: 6_000_000 },
+    txHash:            '0xdemo_bihar9_tx',
+    updatedAt:         '2026-07-22T10:00:00Z',
+  },
 
   // 3 Bihar Properties for Rakesh Agarwal (999900010011)
   {
@@ -993,6 +1017,19 @@ module.exports = {
   DEMO_AUCTION_ACTIVE,
   DEMO_AUCTION_UPCOMING,
   DEMO_WS_EVENTS,
+  resetDemoData: async () => {
+    const mongoStore = require('../services/mongoStore');
+    MOCK_SCANS = [];
+    MOCK_SUCCESSION_CASES = [];
+    const Transfer = require('../models/Transfer');
+    const Lease = require('../models/Lease');
+    const Mutation = require('../models/Mutation');
+    await Transfer.deleteMany({});
+    await Lease.deleteMany({});
+    await Mutation.deleteMany({});
+    await mongoStore.initializeMongo(DEMO_MY_PARCELS);
+    return true;
+  },
 
   getMockResponse(chaincode, fn, args = []) {
     const key = `${chaincode}::${fn}`;
@@ -1294,6 +1331,30 @@ module.exports = {
         if (myP) myP.claimStatus = 'REJECTED';
         return { dlpiId: args[0], claimStatus: 'REJECTED', rejectedAt: new Date().toISOString() };
       }
+
+      // ── Lease chaincodes ────────────────────────────────────────────────────
+      case 'lease::InitiateLease':
+        return {
+          leaseId: args[0],
+          dlpiId: args[1],
+          ownerAadhaar: args[2],
+          tenantAadhaar: args[3],
+          rentAmount: parseInt(args[4]),
+          durationMonths: parseInt(args[5]),
+          signatures: { owner: args[6] },
+          status: 'INITIATED',
+          initiatedAt: new Date().toISOString()
+        };
+      case 'lease::SignLease':
+        return {
+          leaseId: args[0],
+          tenantAadhaar: args[1],
+          signatures: { tenant: args[2] },
+          tenantName: args[3],
+          status: 'ACTIVE',
+          startDate: new Date().toISOString(),
+          endDate: new Date(Date.now() + (parseInt(args[5] || '12') * 30 * 24 * 60 * 60 * 1000)).toISOString()
+        };
 
       // ── Other chaincodes ────────────────────────────────────────────────────
       case 'property-transfer::InitiateTransfer':
