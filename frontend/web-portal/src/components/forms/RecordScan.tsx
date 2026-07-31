@@ -314,7 +314,7 @@ function ensureEnglish(obj: any): any {
 
     try {
       const name = user ? `${user.name} (${user.role.toUpperCase()})` : 'Vijay Singh (Patwari DAD-P1)';
-      const hashVal = user ? user.aadhaarHash : 'sha256:' + '0'.repeat(64);
+      const hashVal = (user ? (user.aadhaarHash || user.aadhaarNumber || user.aadhaar || '') : '') || ('sha256:' + '0'.repeat(64));
       const res = await fetch('/api/scan/approve', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
