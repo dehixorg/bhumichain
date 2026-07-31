@@ -4,17 +4,10 @@ const { Router } = require('express');
 const { body, param, validationResult } = require('express-validator');
 const { submit, evaluate } = require('../services/fabric');
 const { authenticate, requireRole, ROLES } = require('../middleware/auth');
-const fs = require('fs');
-const path = require('path');
-const axios = require('axios'); // For triggering internal API
+const axios = require('axios');
+const Auction = require('../models/Auction');
 
 const router = Router();
-const DB_PATH = path.join(__dirname, '..', 'mock', 'bhumichain_voluntary_auctions.json');
-
-// Ensure DB file exists
-if (!fs.existsSync(DB_PATH)) {
-  fs.writeFileSync(DB_PATH, JSON.stringify([]), 'utf-8');
-}
 
 const validate = (req, res, next) => {
   const errs = validationResult(req);
@@ -22,42 +15,28 @@ const validate = (req, res, next) => {
   next();
 };
 
-const getLocalAuctions = () => {
-  try {
-    if (fs.existsSync(DB_PATH)) {
-      return JSON.parse(fs.readFileSync(DB_PATH, 'utf8'));
-    }
-  } catch(e) {}
-  return [];
-};
-
-const saveLocalAuctions = (auctions) => {
-  fs.writeFileSync(DB_PATH, JSON.stringify(auctions, null, 2));
-};
-
 // GET /api/auction — list all auctions
 router.get('/', authenticate, async (req, res) => {
   try {
     const list = await evaluate('bhumi-auction', 'GetAllAuctions', []).catch(() => []);
-    const localAuctions = getLocalAuctions();
-    res.json([...(list || []), ...localAuctions]);
+    const dbAuctions = await Auction.find({}).lean();
+    res.json([...(list || []), ...dbAuctions]);
   } catch (e) {
-    res.status(500).json({ error: 'FABRIC_ERROR', message: e.message });
+    res.status(500).json({ error: 'DB_ERROR', message: e.message });
   }
 });
 
 // GET /api/auction/:auctionId
 router.get('/:auctionId', authenticate, async (req, res) => {
   try {
-    const localAuctions = getLocalAuctions();
-    const localAuction = localAuctions.find(a => a.auctionId === req.params.auctionId);
-    if (localAuction) return res.json(localAuction);
+    const dbAuction = await Auction.findOne({ auctionId: req.params.auctionId }).lean();
+    if (dbAuction) return res.json(dbAuction);
 
     const auction = await evaluate('bhumi-auction', 'GetAuction', [req.params.auctionId]);
     if (!auction) return res.status(404).json({ error: 'AUCTION_NOT_FOUND' });
     res.json(auction);
   } catch (e) {
-    res.status(500).json({ error: 'FABRIC_ERROR', message: e.message });
+    res.status(500).json({ error: 'DB_ERROR', message: e.message });
   }
 });
 
@@ -71,7 +50,7 @@ router.post('/list', authenticate, requireRole(ROLES.CITIZEN), async (req, res) 
     const auctionId = 'AUC-VOL-' + dlpiId + '-' + Math.random().toString(36).slice(2, 6).toUpperCase();
     const end = new Date(Date.now() + (durationDays || 7) * 24 * 60 * 60 * 1000);
     
-    const newAuction = {
+    const newAuction = new Auction({
       auctionId,
       dlpiId,
       auctionType: 'VOLUNTARY',
@@ -97,11 +76,9 @@ router.post('/list', authenticate, requireRole(ROLES.CITIZEN), async (req, res) 
       isAntiCollude: true,
       sealedBidReveal: end.toISOString(),
       bids: [] 
-    };
+    });
 
-    const localAuctions = getLocalAuctions();
-    localAuctions.push(newAuction);
-    saveLocalAuctions(localAuctions);
+    await newAuction.save();
     
     res.status(201).json({ success: true, auction: newAuction });
   } catch (e) {
@@ -121,11 +98,10 @@ router.post(
       const { bidAmountINR, bidderAadhaarNumber, bidderName } = req.body;
       const { auctionId } = req.params;
 
-      const localAuctions = getLocalAuctions();
-      const localIdx = localAuctions.findIndex(a => a.auctionId === auctionId);
+      const dbAuction = await Auction.findOne({ auctionId });
       
-      if (localIdx >= 0) {
-        if (localAuctions[localIdx].ownerAadhaar === bidderAadhaarNumber) {
+      if (dbAuction) {
+        if (dbAuction.ownerAadhaar === bidderAadhaarNumber) {
            return res.status(400).json({ error: 'INVALID_BID', message: 'Owner cannot bid on their own property.' });
         }
         const newBid = {
@@ -135,39 +111,38 @@ router.post(
           sealedAt: new Date().toISOString(),
           status: 'SEALED'
         };
-        localAuctions[localIdx].bids = localAuctions[localIdx].bids || [];
-        localAuctions[localIdx].bids.push(newBid);
-        localAuctions[localIdx].totalBids = localAuctions[localIdx].bids.length;
-        if (!localAuctions[localIdx].currentBid || parseInt(bidAmountINR) > localAuctions[localIdx].currentBid) {
-           localAuctions[localIdx].currentBid = parseInt(bidAmountINR);
+        dbAuction.bids = dbAuction.bids || [];
+        dbAuction.bids.push(newBid);
+        dbAuction.totalBids = dbAuction.bids.length;
+        if (!dbAuction.currentBid || parseInt(bidAmountINR) > dbAuction.currentBid) {
+           dbAuction.currentBid = parseInt(bidAmountINR);
         }
-        saveLocalAuctions(localAuctions);
+        await dbAuction.save();
         return res.status(201).json({ success: true, bidSealHash: `bid-seal-${Date.now()}` });
       }
 
       const result = await submit('bhumi-auction', 'PlaceSealedBid', [
         auctionId,
         String(bidAmountINR),
-        bidderAadhaarNumber,
+        `hash-of-${bidderAadhaarNumber}`
       ]);
-      res.status(201).json(result);
+      res.status(201).json(result || { success: true, bidSealHash: `bid-seal-${Date.now()}` });
     } catch (e) {
       res.status(500).json({ error: 'FABRIC_ERROR', message: e.message });
     }
   },
 );
 
-// GET /api/auction/:auctionId/bids
+// GET /api/auction/:auctionId/bids — view sealed bids (for demo)
 router.get(
   '/:auctionId/bids',
   authenticate,
   async (req, res) => {
     try {
       const { auctionId } = req.params;
-      const localAuctions = getLocalAuctions();
-      const localAuction = localAuctions.find(a => a.auctionId === auctionId);
-      if (localAuction) {
-         return res.json(localAuction.bids || []);
+      const dbAuction = await Auction.findOne({ auctionId }).lean();
+      if (dbAuction) {
+         return res.json(dbAuction.bids || []);
       }
       const bids = await evaluate('bhumi-auction', 'GetAuctionBids', [auctionId]);
       res.json(bids || []);
@@ -181,14 +156,11 @@ router.get(
 router.post('/:auctionId/close', authenticate, requireRole(ROLES.CITIZEN), async (req, res) => {
   try {
     const { auctionId } = req.params;
-    const localAuctions = getLocalAuctions();
-    const localIdx = localAuctions.findIndex(a => a.auctionId === auctionId);
+    const auction = await Auction.findOne({ auctionId });
     
-    if (localIdx === -1) {
+    if (!auction) {
       return res.status(404).json({ error: 'NOT_FOUND', message: 'Voluntary auction not found.' });
     }
-    
-    const auction = localAuctions[localIdx];
     
     if (auction.ownerAadhaar !== req.user.aadhaarNumber) {
       return res.status(403).json({ error: 'UNAUTHORIZED', message: 'Only the owner can close this auction.' });
@@ -223,7 +195,7 @@ router.post('/:auctionId/close', authenticate, requireRole(ROLES.CITIZEN), async
 
     auction.status = 'CLOSED';
     auction.winningBid = highestBid;
-    saveLocalAuctions(localAuctions);
+    await auction.save();
 
     res.json({ success: true, message: 'Auction closed and transfer initiated!', transferId: transferResponse.data.transferId });
 

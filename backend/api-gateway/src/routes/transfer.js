@@ -1,6 +1,7 @@
 'use strict';
 
 const { Router } = require('express');
+const mongoStore = require('../services/mongoStore');
 const { body, param, validationResult } = require('express-validator');
 const axios = require('axios');
 const crypto = require('crypto');
@@ -84,9 +85,9 @@ router.post(
         try {
           const fs = require('fs');
           let atomicClaims = {};
-          try { atomicClaims = JSON.parse(fs.readFileSync('/tmp/bhumichain_atomic_claims.json', 'utf8')); } catch(e) {}
+          atomicClaims = await mongoStore.getAtomicClaims();
           let seeded = [];
-          try { seeded = JSON.parse(fs.readFileSync('/tmp/bhumichain_seeded_parcels.json', 'utf8')); } catch(e) {}
+          seeded = await mongoStore.getDLPIs();
           const { getMockResponse } = require('../mock/responses');
           const mockParcels = getMockResponse('dlpi', 'QueryDLPIsByOwner', [sellerAadhaarNumber, '', req.user.name || '']) || [];
           
@@ -154,9 +155,9 @@ router.post(
         ]);
         if (chainRes) {
           if (typeof chainRes === 'string') {
-            transferId = chainRes;
+            transferId = chainRes + '-' + Math.floor(Math.random() * 10000);
           } else if (chainRes && typeof chainRes === 'object') {
-            transferId = chainRes.transferId || chainRes.id || chainRes.txId || `TX-${dlpiId}-${Math.floor(1000 + Math.random() * 9000)}`;
+            transferId = (chainRes.transferId || chainRes.id || chainRes.txId || `TX-${dlpiId}`) + '-' + Math.floor(Math.random() * 10000);
             if (typeof transferId !== 'string') transferId = String(transferId);
           }
         }
@@ -183,11 +184,11 @@ router.post(
       try {
         const fs = require('fs');
         let transfers = [];
-        try { transfers = JSON.parse(fs.readFileSync('/tmp/bhumichain_mock_transfers.json', 'utf8')); } catch(e) {}
+        transfers = await mongoStore.getTransfers();
         if (!Array.isArray(transfers)) transfers = [];
         transfers = transfers.filter(t => t.dlpiId !== dlpiId || t.status !== 'PENDING_BUYER_CONSENT');
         transfers.push(transferRecord);
-        fs.writeFileSync('/tmp/bhumichain_mock_transfers.json', JSON.stringify(transfers, null, 2));
+        await mongoStore.saveTransfers(transfers);
       } catch(e) {}
 
       submit('property-transfer', 'RecordFraudScore', [
@@ -234,7 +235,7 @@ router.get(
       let mockTransfers = [];
       try {
         const fs = require('fs');
-        mockTransfers = JSON.parse(fs.readFileSync('/tmp/bhumichain_mock_transfers.json', 'utf8'));
+        mockTransfers = await mongoStore.getTransfers();
         if (!Array.isArray(mockTransfers)) mockTransfers = [];
       } catch(e) {}
 
@@ -290,7 +291,7 @@ router.get(
       // Always check and merge with mock atomic disk if present
       try {
         const fs = require('fs');
-        const mockTransfers = JSON.parse(fs.readFileSync('/tmp/bhumichain_mock_transfers.json', 'utf8'));
+        const mockTransfers = await mongoStore.getTransfers();
         if (Array.isArray(mockTransfers)) {
           const mockT = mockTransfers.find(t => t.transferId === req.params.transferId);
           if (mockT) {
@@ -324,7 +325,7 @@ router.get(
       if (!history || !Array.isArray(history) || history.length === 0) {
         try {
           const fs = require('fs');
-          const mockTransfers = JSON.parse(fs.readFileSync('/tmp/bhumichain_mock_transfers.json', 'utf8'));
+          const mockTransfers = await mongoStore.getTransfers();
           const t = Array.isArray(mockTransfers) ? mockTransfers.find(x => x.transferId === req.params.transferId) : null;
           if (t) {
             history = [{ status: t.status, timestamp: t.updatedAt || t.initiatedAt, officerHash: t.sellerAadhaarNumber || '' }];
@@ -359,7 +360,7 @@ router.get(
       let mockTransfers = [];
       try {
         const fs = require('fs');
-        mockTransfers = JSON.parse(fs.readFileSync('/tmp/bhumichain_mock_transfers.json', 'utf8'));
+        mockTransfers = await mongoStore.getTransfers();
         if (!Array.isArray(mockTransfers)) mockTransfers = [];
       } catch(e) {}
 
@@ -405,7 +406,7 @@ router.post(
       try {
         const fs = require('fs');
         let transfers = [];
-        try { transfers = JSON.parse(fs.readFileSync('/tmp/bhumichain_mock_transfers.json', 'utf8')); } catch(e) {}
+        transfers = await mongoStore.getTransfers();
         if (!Array.isArray(transfers)) transfers = [];
         const newStatus = partyType === 'BUYER' ? 'PENDING_PATWARI_VERIFICATION' : 'PENDING_BUYER_CONSENT';
         const found = transfers.some(t => t.transferId === req.params.transferId || t.dlpiId === req.params.transferId);
@@ -433,7 +434,7 @@ router.post(
             [`${partyType.toLowerCase()}Consent`]: { aadhaarNumber, eSignTxHash, timestamp: new Date().toISOString() }
           });
         }
-        fs.writeFileSync('/tmp/bhumichain_mock_transfers.json', JSON.stringify(transfers, null, 2));
+        await mongoStore.saveTransfers(transfers);
       } catch(e) {}
 
       broadcast('ConsentRecorded', { transferId: req.params.transferId, partyType });
@@ -493,10 +494,10 @@ async function handlePatwariTransferApprove(req, res) {
 
     try {
       const fs = require('fs');
-      let transfers = JSON.parse(fs.readFileSync('/tmp/bhumichain_mock_transfers.json', 'utf8'));
+      let transfers = await mongoStore.getTransfers();
       if (Array.isArray(transfers)) {
         transfers = transfers.map(t => (t.transferId === tParam || t.dlpiId === tParam) ? { ...t, status: 'PATWARI_APPROVED', patwariApprovedAt: new Date().toISOString() } : t);
-        fs.writeFileSync('/tmp/bhumichain_mock_transfers.json', JSON.stringify(transfers, null, 2));
+        await mongoStore.saveTransfers(transfers);
       }
     } catch(e) {}
 
@@ -535,10 +536,10 @@ async function handleCITransferApprove(req, res) {
 
     try {
       const fs = require('fs');
-      let transfers = JSON.parse(fs.readFileSync('/tmp/bhumichain_mock_transfers.json', 'utf8'));
+      let transfers = await mongoStore.getTransfers();
       if (Array.isArray(transfers)) {
         transfers = transfers.map(t => (t.transferId === tParam || t.dlpiId === tParam) ? { ...t, status: 'CI_APPROVED', ciApprovedAt: new Date().toISOString() } : t);
-        fs.writeFileSync('/tmp/bhumichain_mock_transfers.json', JSON.stringify(transfers, null, 2));
+        await mongoStore.saveTransfers(transfers);
       }
     } catch(e) {}
 
@@ -594,10 +595,43 @@ router.post(
 
       try {
         const fs = require('fs');
-        let transfers = JSON.parse(fs.readFileSync('/tmp/bhumichain_mock_transfers.json', 'utf8'));
+        let transfers = await mongoStore.getTransfers();
         if (Array.isArray(transfers)) {
-          transfers = transfers.map(t => (t.transferId === tParam || t.dlpiId === tParam) ? { ...t, status: 'PENDING_TEHSILDAR_APPROVAL', newTitleCID } : t);
-          fs.writeFileSync('/tmp/bhumichain_mock_transfers.json', JSON.stringify(transfers, null, 2));
+          let targetTransfer = null;
+          transfers = transfers.map(t => {
+            if (t.transferId === tParam || t.dlpiId === tParam) {
+              targetTransfer = t;
+              return { ...t, status: 'PENDING_TEHSILDAR_APPROVAL', newTitleCID };
+            }
+            return t;
+          });
+          await mongoStore.saveTransfers(transfers);
+          
+          // Phase 3: Zero-Click Mutation (Automated Dakhil Kharij)
+          if (targetTransfer) {
+            try {
+              const axios = require('axios');
+              const port = process.env.PORT || 4001;
+              await axios.post(`http://localhost:${port}/api/mutation/initiate`, {
+                dlpiId: targetTransfer.dlpiId,
+                mutationType: 'Sale',
+                officerName: req.user.name || 'Auto SRO',
+                officerAadhaar: req.user.aadhaarNumber || 'mock-sro-hash',
+                officerRank: 'Sub Registrar',
+                newOwnerName: targetTransfer.buyerName || 'New Owner (Auto)',
+                newOwnerAadhaar: targetTransfer.buyerAadhaar || 'auto-buyer-hash',
+                reason: `Automated Mutation initiated via Registration of Transfer ${tParam}`,
+                supportingCID: newTitleCID
+              }, {
+                headers: {
+                  Authorization: req.headers.authorization // Forward SRO's token
+                }
+              });
+              console.log(`[Zero-Click Mutation] Successfully auto-initiated mutation for DLPI: ${targetTransfer.dlpiId}`);
+            } catch (mutationErr) {
+              console.error(`[Zero-Click Mutation] Failed to auto-initiate: ${mutationErr.message}`);
+            }
+          }
         }
       } catch(e) {}
 
@@ -627,12 +661,12 @@ async function handleTehsildarTransferApprove(req, res) {
     try {
       const fs = require('fs');
       let transfers = [];
-      try { transfers = JSON.parse(fs.readFileSync('/tmp/bhumichain_mock_transfers.json', 'utf8')); } catch(e) {}
+      transfers = await mongoStore.getTransfers();
       let transferObj = Array.isArray(transfers) ? transfers.find(t => t.transferId === transferId || t.dlpiId === transferId) : null;
       
       if (Array.isArray(transfers)) {
         transfers = transfers.map(t => (t.transferId === transferId || t.dlpiId === transferId) ? { ...t, status: 'COMPLETED', completedAt: new Date().toISOString() } : t);
-        fs.writeFileSync('/tmp/bhumichain_mock_transfers.json', JSON.stringify(transfers, null, 2));
+        await mongoStore.saveTransfers(transfers);
       }
 
       if (transferObj && transferObj.dlpiId) {
@@ -642,7 +676,7 @@ async function handleTehsildarTransferApprove(req, res) {
         const sellerAadhaar = (transferObj.sellerAadhaarNumber || transferObj.sellerAadhaar || '').replace(/\D/g, '');
 
         let claims = {};
-        try { claims = JSON.parse(fs.readFileSync('/tmp/bhumichain_atomic_claims.json', 'utf8')); } catch(e) {}
+        claims = await mongoStore.getAtomicClaims();
         claims[transferObj.dlpiId] = {
           txHash: transferId,
           dlpiId: transferObj.dlpiId,
@@ -653,10 +687,10 @@ async function handleTehsildarTransferApprove(req, res) {
           claimedAt: new Date().toISOString(),
           status: 'MUTATED_AND_TRANSFERRED'
         };
-        fs.writeFileSync('/tmp/bhumichain_atomic_claims.json', JSON.stringify(claims, null, 2));
+        await mongoStore.saveAtomicClaims(claims);
 
         let seeded = [];
-        try { seeded = JSON.parse(fs.readFileSync('/tmp/bhumichain_seeded_parcels.json', 'utf8')); } catch(e) {}
+        seeded = await mongoStore.getDLPIs();
         if (!Array.isArray(seeded)) seeded = [];
         let foundInSeeded = false;
         seeded = seeded.map(p => {
@@ -687,7 +721,7 @@ async function handleTehsildarTransferApprove(req, res) {
             owners: [{ name: buyerName, aadhaarNumber: buyerAadhaar }]
           });
         }
-        fs.writeFileSync('/tmp/bhumichain_seeded_parcels.json', JSON.stringify(seeded, null, 2));
+        await mongoStore.saveDLPIs(seeded);
       }
     } catch(e) {}
 

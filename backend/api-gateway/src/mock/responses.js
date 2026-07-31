@@ -1295,6 +1295,30 @@ module.exports = {
         return { dlpiId: args[0], claimStatus: 'REJECTED', rejectedAt: new Date().toISOString() };
       }
 
+      // ── Lease chaincodes ────────────────────────────────────────────────────
+      case 'lease::InitiateLease':
+        return {
+          leaseId: args[0],
+          dlpiId: args[1],
+          ownerAadhaar: args[2],
+          tenantAadhaar: args[3],
+          rentAmount: parseInt(args[4]),
+          durationMonths: parseInt(args[5]),
+          signatures: { owner: args[6] },
+          status: 'INITIATED',
+          initiatedAt: new Date().toISOString()
+        };
+      case 'lease::SignLease':
+        return {
+          leaseId: args[0],
+          tenantAadhaar: args[1],
+          signatures: { tenant: args[2] },
+          tenantName: args[3],
+          status: 'ACTIVE',
+          startDate: new Date().toISOString(),
+          endDate: new Date(Date.now() + (parseInt(args[5] || '12') * 30 * 24 * 60 * 60 * 1000)).toISOString()
+        };
+
       // ── Other chaincodes ────────────────────────────────────────────────────
       case 'property-transfer::InitiateTransfer':
         return {

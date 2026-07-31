@@ -524,6 +524,7 @@ JSON schema to populate:
 Rules:
 - STRICT ENGLISH ONLY: All extracted field values, names, locations, crop details, signatures, and encumbrance notes MUST BE strictly in English (Latin characters only).
 - If any OCR text is in Hindi (Devanagari), Marathi, or another Indian language, translate or transliterate every single word directly into English. Never return Devanagari or non-ASCII script anywhere.
+- KAITHI SCRIPT SUPPORT (PHASE 3): If the text appears to be transcribed from a historical document written in the Kaithi script, you MUST decipher and transliterate it into standard Devanagari internally, and then translate it strictly into English for the JSON output. Treat archaic legal terms gracefully.
 - If a field cannot be found or is illegible, use "[Illegible]" or null (never Devanagari).
 - Set requiresManualReview=true if ocrConfidence < 0.75 or any important field is missing.
 - flaggedFields should list keys that were hard to read or uncertain (in English).

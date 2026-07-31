@@ -1,6 +1,7 @@
 "use strict";
 
 const { Router } = require("express");
+const mongoStore = require('../services/mongoStore');
 const { body, param, validationResult } = require("express-validator");
 const axios = require("axios");
 const crypto = require("crypto");
@@ -304,16 +305,16 @@ router.get('/my-parcels', authenticate, requireRole(ROLES.CITIZEN), async (req, 
     
     // Adapt legacy structure and override ownership with any atomic mutation claims/transfers
     let atomicClaims = {};
-    try { atomicClaims = JSON.parse(fs.readFileSync('/tmp/bhumichain_atomic_claims.json', 'utf8')); } catch(e) {}
+    atomicClaims = await mongoStore.getAtomicClaims();
     
     // Also read executed dynamic mutations to update DLPI ownership!
     let dMuts = [];
-    try { dMuts = JSON.parse(fs.readFileSync('/tmp/bhumichain_dynamic_mutations.json', 'utf8')); } catch(e) {}
+    dMuts = await mongoStore.getMutations();
     const executedMuts = dMuts.filter(m => m.status === 'EXECUTED');
 
     // Also read mock transfers to track completed transfers & sellers!
     let mockTransfers = [];
-    try { mockTransfers = JSON.parse(fs.readFileSync('/tmp/bhumichain_mock_transfers.json', 'utf8')); } catch(e) {}
+    mockTransfers = await mongoStore.getTransfers();
     const completedTxMap = new Map();
     if (Array.isArray(mockTransfers)) {
       mockTransfers.forEach(t => {
@@ -324,7 +325,7 @@ router.get('/my-parcels', authenticate, requireRole(ROLES.CITIZEN), async (req, 
     }
 
     let seededParcels = [];
-    try { seededParcels = JSON.parse(fs.readFileSync('/tmp/bhumichain_seeded_parcels.json', 'utf8')); } catch(e) {}
+    seededParcels = await mongoStore.getDLPIs();
     if (Array.isArray(seededParcels)) {
       seededParcels.forEach(sp => {
         // Include parcel if user is listed in owners[] (for succession-inherited properties)
@@ -805,7 +806,7 @@ router.post(
         let claims = {};
         try {
           claims = JSON.parse(
-            fs.readFileSync("/tmp/bhumichain_atomic_claims.json", "utf8"),
+            await mongoStore.getAtomicClaims(),
           );
         } catch (e) {}
         claims[req.params.dlpiId] = atomicReceipt;
@@ -817,7 +818,7 @@ router.post(
         // Also atomically update seeded_parcels file if this parcel was pre-seeded
         if (fs.existsSync("/tmp/bhumichain_seeded_parcels.json")) {
           let seeded = JSON.parse(
-            fs.readFileSync("/tmp/bhumichain_seeded_parcels.json", "utf8"),
+            await mongoStore.getDLPIs(),
           );
           if (Array.isArray(seeded)) {
             seeded = seeded.map((p) =>
@@ -1571,7 +1572,7 @@ router.post("/seed", authenticate, async (req, res) => {
       let seeded = [];
       try {
         seeded = JSON.parse(
-          fs.readFileSync("/tmp/bhumichain_seeded_parcels.json"),
+          await mongoStore.getDLPIs(),
         );
       } catch (e) {}
       seeded.push(dlpiPayload);

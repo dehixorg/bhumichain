@@ -199,7 +199,89 @@ DEMO_DEGRADED = ScanResult(
     processingTimeMs=6536,
 )
 
+
+DEMO_KAITHI = ScanResult(
+    scanId="SCN-DEMO-KAITHI-001",
+    fileName="khatauni_historical_1950_kaithi.jpg",
+    fileSizeKB=1024.5,
+    ipfsCID="QmKaithiHistorical1950",
+    processingSteps=[
+        {
+            "step": "UPLOAD",
+            "label": "Document uploaded",
+            "status": "done",
+            "durationMs": 310,
+        },
+        {
+            "step": "AZURE_OCR",
+            "label": "Azure Document Intelligence OCR (Historical)",
+            "detail": "Detected Kaithi script. Extracted 850 characters.",
+            "confidence": 0.88,
+            "status": "done",
+            "durationMs": 2800,
+        },
+        {
+            "step": "LAYOUT_LM_NER",
+            "label": "LayoutLM NER — Kaithi Translation & Extraction",
+            "detail": "Transliterated Kaithi to Devanagari internally, extracted 18 entities and translated to English.",
+            "confidence": 0.89,
+            "status": "done",
+            "durationMs": 3500,
+        },
+        {
+            "step": "VALIDATION",
+            "label": "Cross-validation vs Bhulekh UP portal",
+            "detail": "Legacy record matched with digitized archive.",
+            "confidence": 0.90,
+            "status": "done",
+            "durationMs": 600,
+        },
+        {
+            "step": "IPFS",
+            "label": "Document pinned to IPFS",
+            "detail": "CID: QmKaithiHistorical1950",
+            "status": "done",
+            "durationMs": 250,
+        },
+    ],
+    extraction=KhatauniExtraction(
+        zila="Ghazipur",
+        tehsil="Zamania",
+        gram="Darauli",
+        fasalVarsh="1950-51",
+        khataNo="114",
+        khasraNo="850",
+        areaHectares=1.5,
+        areaBigha=5.9,
+        landType=LandType.SIRDAR,
+        irrigationSource="Well",
+        cropDetails="Wheat (Rabi)",
+        khatedars=[
+            KhatedaOwner(
+                name="Ram Prasad Singh",
+                fatherHusbandName="Shiv Kumar Singh",
+                share="Full (1/1)",
+                ownershipType="Individual",
+            ),
+        ],
+        hasJointOwnership=False,
+        hasCoparcenary=False,
+        currentPossessor="Ram Prasad Singh",
+        encumbrances=[],
+        khatabandiDate="1950-05-10",
+        lekhpalSignature="Lekhpal Mahadev Prasad",
+        ocrConfidence=0.88,
+        nerConfidence=0.89,
+        overallConfidence=0.88,
+        flaggedFields=["gram (Archaic spelling adjusted)", "area (Converted from local bigha)"],
+        requiresManualReview=False,
+    ),
+    suggestedDlpiId="DLPI-UP-GZP-00850",
+    processingTimeMs=7460,
+)
+
 MOCK_RESPONSES = {
     "demo_clear":    DEMO_CLEAR,
     "demo_degraded": DEMO_DEGRADED,
+    "demo_kaithi":   DEMO_KAITHI,
 }

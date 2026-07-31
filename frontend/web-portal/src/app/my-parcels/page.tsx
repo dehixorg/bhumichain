@@ -3,13 +3,16 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { AnimatePresence } from 'framer-motion';
 import {
   MapPin, ArrowRight, CheckCircle, Clock, AlertTriangle,
   FileText, Shield, Search, ArrowUpRight, Download, Send,
   Landmark, Map, FileSignature, HelpCircle, FileCheck,
   TrendingUp, BellRing, Activity, ArrowLeftRight, X, UserCheck, DollarSign, Edit3,
-  Plus, Database, Gavel
+  Plus, Database, Gavel, Handshake
 } from 'lucide-react';
+import TitleCardPDF from '@/components/TitleCardPDF';
+import BlockchainAuditTrail from '@/components/modals/BlockchainAuditTrail';
 import clsx from 'clsx';
 import CitizenHeader from '@/components/dashboard/CitizenHeader';
 import CitizenFooter from '@/components/dashboard/CitizenFooter';
@@ -96,7 +99,17 @@ export default function CitizenDashboard() {
   const [auctionModalParcel, setAuctionModalParcel] = useState<any>(null);
   const [auctionReservePrice, setAuctionReservePrice] = useState('4500000');
   const [auctionDuration, setAuctionDuration] = useState('7');
+  
+  const [auditTrailParcel, setAuditTrailParcel] = useState<string | null>(null);
   const [auctionBusy, setAuctionBusy] = useState(false);
+
+  // Lease State
+  const [pendingLeases, setPendingLeases] = useState<any[]>([]);
+  const [leaseModalParcel, setLeaseModalParcel] = useState<any>(null);
+  const [leaseTenantAadhaar, setLeaseTenantAadhaar] = useState('');
+  const [leaseRentAmount, setLeaseRentAmount] = useState('');
+  const [leaseDuration, setLeaseDuration] = useState('12');
+  const [leaseBusy, setLeaseBusy] = useState(false);
 
   useEffect(() => {
     try {
@@ -126,6 +139,11 @@ export default function CitizenDashboard() {
     getInheritorNominations()
       .then(d => { if (Array.isArray(d)) setNominations(d); })
       .catch(e => console.error("Failed to fetch nominations", e));
+      
+    apiFetch('/api/lease/pending')
+      .then(r => r.json())
+      .then(d => { if (Array.isArray(d)) setPendingLeases(d); })
+      .catch(e => console.error("Failed to fetch pending leases", e));
   }, [router]);
 
   const handleClaimParcel = async (parcel: any) => {
@@ -339,6 +357,52 @@ export default function CitizenDashboard() {
       toast.error('Failed to eSign purchase offer: ' + (err?.message || err), { id: 'buyer-esign' });
       console.error(err);
     }
+  const handleInitiateLease = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!leaseModalParcel || !user) return;
+    try {
+      setLeaseBusy(true);
+      const res = await apiFetch('/api/lease/initiate', {
+        method: 'POST',
+        body: JSON.stringify({
+          dlpiId: leaseModalParcel.dlpiId,
+          tenantAadhaar: leaseTenantAadhaar.replace(/\D/g, ''),
+          rentAmount: parseInt(leaseRentAmount),
+          durationMonths: parseInt(leaseDuration),
+          ownerSignature: '0xOWNER_ESIGN_' + Math.random().toString(16).slice(2)
+        })
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || 'Failed to initiate lease');
+      }
+      toast.success('Lease offer submitted to tenant successfully!');
+      setLeaseModalParcel(null);
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setLeaseBusy(false);
+    }
+  };
+
+  const handleTenantESign = async (leaseId: string) => {
+    try {
+      toast.loading('Verifying identity & executing Tenant eSign...', { id: 'tenant-esign' });
+      const res = await apiFetch(`/api/lease/${leaseId}/consent`, {
+        method: 'POST',
+        body: JSON.stringify({
+          tenantSignature: '0xTENANT_ESIGN_' + Math.random().toString(16).slice(2)
+        })
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || 'eSign failed');
+      }
+      toast.success('Lease successfully activated!', { id: 'tenant-esign' });
+      setPendingLeases(prev => prev.filter(l => l.leaseId !== leaseId));
+    } catch (err: any) {
+      toast.error('Failed to eSign lease: ' + err.message, { id: 'tenant-esign' });
+    }
   };
 
   if (!user) return null;
@@ -509,6 +573,33 @@ export default function CitizenDashboard() {
                       </div>
                     </div>
                   ))}
+
+                  {pendingLeases.map((l: any) => (
+                    <div key={l.leaseId} className="bg-emerald-50 border border-emerald-300 rounded-2xl p-5 shadow-sm">
+                      <div className="flex items-start gap-4">
+                        <div className="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center shrink-0">
+                          <FileSignature className="w-6 h-6 text-emerald-600" />
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between">
+                            <h3 className="text-base font-bold text-emerald-900">Incoming Lease Offer ({l.dlpiId})</h3>
+                            <span className="text-xs font-bold bg-emerald-200 text-emerald-900 px-2 py-0.5 rounded">Action Required</span>
+                          </div>
+                          <p className="text-sm text-emerald-900 mt-1">
+                            You have received a Smart Lease offer from Aadhaar <strong className="font-mono">{l.ownerAadhaar}</strong> for parcel <strong className="font-mono">{l.dlpiId}</strong>. Rent: ₹{l.rentAmount}/mo for {l.durationMonths} months.
+                          </p>
+                          <div className="mt-4">
+                            <button
+                              onClick={() => handleTenantESign(l.leaseId)}
+                              className="bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold py-2 px-5 rounded-lg shadow-sm transition-colors flex items-center gap-2"
+                            >
+                              <CheckCircle className="w-4 h-4" /> Consent & eSign Lease
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </section>
             )}
@@ -636,6 +727,19 @@ export default function CitizenDashboard() {
                           <Link href={`/map?dlpi=${p.dlpiId}`} className="btn-secondary text-xs py-2 px-3 rounded-lg flex-1 text-center justify-center bg-white min-w-[100px]">
                             <Map className="w-4 h-4 mr-1.5 inline" /> View Map
                           </Link>
+                          {p.claimStatus === 'PENDING' && <span className="bg-amber-100 text-amber-800 px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wide border border-amber-200">Pending Review</span>}
+                          {p.activeLease && <span className="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wide border border-emerald-200 flex items-center gap-1"><CheckCircle className="w-3 h-3"/> Active Lease: {p.activeLease.tenantName}</span>}
+                          <button
+                            onClick={() => setAuditTrailParcel(p.dlpiId)}
+                            className="bg-black text-white hover:bg-gray-800 font-bold text-xs py-2 px-3 rounded-lg flex items-center justify-center gap-1.5 transition-colors shadow-sm min-w-[120px]"
+                          >
+                            🔗 Audit Trail
+                          </button>
+                          
+                          <div className="w-full mt-1">
+                            <TitleCardPDF parcel={p} user={user} />
+                          </div>
+
                           {p.claimStatus !== 'OWNER_VERIFIED' && p.claimStatus !== 'VERIFIED' ? (
                             <button
                               onClick={() => handleClaimParcel(p)}
@@ -679,6 +783,17 @@ export default function CitizenDashboard() {
                                 className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs py-2 px-3 rounded-lg flex items-center justify-center gap-1.5 transition-colors shadow-sm min-w-[100px]"
                               >
                                 <Gavel className="w-3.5 h-3.5" /> List on Market
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setLeaseModalParcel(p);
+                                  setLeaseTenantAadhaar('');
+                                  setLeaseRentAmount('');
+                                  setLeaseDuration('12');
+                                }}
+                                className="bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs py-2 px-3 rounded-lg flex items-center justify-center gap-1.5 transition-colors shadow-sm min-w-[100px]"
+                              >
+                                <Handshake className="w-3.5 h-3.5" /> Lease Property
                               </button>
                             </>
                           )}
@@ -1149,13 +1264,111 @@ export default function CitizenDashboard() {
             </div>
           </div>
         )}
+
+        {/* Lease Modal */}
+        {leaseModalParcel && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-0">
+            <div className="absolute inset-0 bg-[#0F4C81]/40 backdrop-blur-sm" onClick={() => setLeaseModalParcel(null)} />
+            <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md relative z-10 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+              <div className="bg-gradient-to-r from-teal-600 to-teal-800 p-6 text-white relative">
+                <button onClick={() => setLeaseModalParcel(null)} className="absolute top-4 right-4 text-white/70 hover:text-white">
+                  <X className="w-5 h-5" />
+                </button>
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-md border border-white/30">
+                    <Handshake className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-black">Smart Lease (Bataidari)</h3>
+                    <p className="text-teal-100 text-sm font-medium">Time-bound Rental Agreement</p>
+                  </div>
+                </div>
+              </div>
+
+              <form onSubmit={handleInitiateLease} className="p-6 space-y-4">
+                <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 mb-2">
+                  <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Target Property</p>
+                  <p className="font-mono text-[#0F4C81] font-bold">{leaseModalParcel.dlpiId}</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-1.5">Tenant Aadhaar Number</label>
+                  <input
+                    type="text"
+                    required
+                    value={leaseTenantAadhaar}
+                    onChange={e => setLeaseTenantAadhaar(e.target.value)}
+                    className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:border-teal-500 focus:ring-0 font-mono font-bold text-lg text-gray-900 transition-colors"
+                    placeholder="xxxx xxxx xxxx"
+                    maxLength={14}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-1.5">Monthly Rent (₹)</label>
+                    <input
+                      type="number"
+                      required
+                      min="1"
+                      value={leaseRentAmount}
+                      onChange={e => setLeaseRentAmount(e.target.value)}
+                      className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:border-teal-500 focus:ring-0 font-bold text-gray-900 transition-colors"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-1.5">Duration (Months)</label>
+                    <input
+                      type="number"
+                      required
+                      min="1"
+                      max="120"
+                      value={leaseDuration}
+                      onChange={e => setLeaseDuration(e.target.value)}
+                      className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:border-teal-500 focus:ring-0 font-bold text-gray-900 transition-colors"
+                    />
+                  </div>
+                </div>
+
+                <div className="pt-2 flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setLeaseModalParcel(null)}
+                    className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold text-sm py-3 rounded-xl transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={leaseBusy || leaseTenantAadhaar.replace(/\D/g, '').length !== 12 || !leaseRentAmount}
+                    className="flex-1 bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white font-bold text-sm py-3 rounded-xl transition-colors flex items-center justify-center gap-2 shadow-md"
+                  >
+                    <FileSignature className="w-4 h-4" />
+                    {leaseBusy ? 'Submitting...' : 'Offer & eSign'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </main>
 
       <CitizenFooter />
+      {/* Audit Trail Modal */}
+      <AnimatePresence>
+        {auditTrailParcel && (
+          <BlockchainAuditTrail 
+            dlpiId={auditTrailParcel} 
+            onClose={() => setAuditTrailParcel(null)} 
+          />
+        )}
+      </AnimatePresence>
+
     </div>
   );
 }
 
 function Edit3Icon(props: any) {
   return <Edit3 {...props} />;
+}
 }

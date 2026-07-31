@@ -17,12 +17,17 @@ const uttaradhikarRoutes = require('./routes/uttaradhikar');
 const encumbranceRoutes = require('./routes/encumbrance');
 const auctionRoutes     = require('./routes/auction');
 const bhuNakshaRoutes   = require('./routes/bhu-naksha');
+const leaseRoutes       = require('./routes/lease');
 const { authenticate, ROLES } = require('./middleware/auth');
 const { init: initWs, triggerMockEvent } = require('./services/websocket');
 const { isMock } = require('./services/fabric');
 
 const app = express();
 const server = http.createServer(app);
+
+// Connect to MongoDB
+const connectDB = require('./config/db');
+connectDB();
 
 // ─── Security & Middleware ────────────────────────────────────────────────────
 
@@ -76,6 +81,7 @@ app.use('/api/succession',  uttaradhikarRoutes);
 app.use('/api/encumbrance', encumbranceRoutes);
 app.use('/api/auction',     auctionRoutes);
 app.use('/api/bhu-naksha',  bhuNakshaRoutes);
+app.use('/api/lease',       leaseRoutes);
 
 // Oracle proxy — forward to oracle-service (avoids CORS on frontend)
 const axios = require('axios');
